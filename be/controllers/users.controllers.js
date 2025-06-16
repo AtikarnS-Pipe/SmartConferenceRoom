@@ -86,8 +86,8 @@ const getuser = async (req, res) => {
 // controller function for pin validation
 const keyPins = async (req, res) => {
     try {
-        const { room, eventId, pin } = req.body;
-        if (!room || !eventId || !pin) {
+        const { room, startDate, endDate, pin } = req.body;
+        if (!room || !startDate || !endDate || !pin) {
             return res.status(400).json({ error: "Missing required fields" });
         }
 
@@ -99,4 +99,9 @@ const keyPins = async (req, res) => {
     }
 };
 
+// const keyExpired = async (req, res) => {
+//     try {
+//         const { room, eventId}
+//     }
+// }
 module.exports = { getuser, keyPins };

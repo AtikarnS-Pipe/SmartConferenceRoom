@@ -9,8 +9,8 @@ const bcrypt = require('bcryptjs')
  * @param {string} pin
  * @returns {boolean}
  */
-async function compareKey({ room, eventId, pin }) {
-    const booking = await bookingKey.findOne({ room, id: eventId });
+async function compareKey({ room, startDate, endDate, pin }) {
+    const booking = await bookingKey.findOne({ room, startDate, endDate });
     if (!booking) return false;
     return await bcrypt.compare(pin, booking.key);
 }
