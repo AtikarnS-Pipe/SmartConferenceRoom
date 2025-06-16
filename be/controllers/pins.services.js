@@ -1,1 +1,0 @@
-import { fetchAllRoom } from "./admin.controllers";

@@ -1,6 +1,7 @@
+require('dotenv').config({ path: './config/.env'});
 const { authProvider } = require("../AuthProvider");
 const syncAllRooms = require('../services/roomsync.services');
-require('dotenv').config({ path: './config/.env'});
+const { compareKey } = require('../services/pin.services');
 const getGraphClient = require("../graph");
 const jwt = require('jsonwebtoken');
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -82,4 +83,20 @@ const getuser = async (req, res) => {
     }, 10000); 
 };
 
-module.exports = { getuser };
+// controller function for pin validation
+const keyPins = async (req, res) => {
+    try {
+        const { room, eventId, pin } = req.body;
+        if (!room || !eventId || !pin) {
+            return res.status(400).json({ error: "Missing required fields" });
+        }
+
+        const isValid = await compareKey({ room, eventId, pin });
+
+        return res.status(200).json({ pinValid: isValid });
+    } catch (error) {
+        return res.status(500).json({ error: "Internal Server Error" });
+    }
+};
+
+module.exports = { getuser, keyPins };

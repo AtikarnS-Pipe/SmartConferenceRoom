@@ -75,6 +75,8 @@ async function syncAllRooms(req) {
                             room: roomData.room,
                             id: event.id,
                             key: hashedPassword,
+                            start: new Date(event.start?.dateTime + "Z"),
+                            end: new Date(event.end?.dateTime + "Z")
                         });
                     }
                 }
