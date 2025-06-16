@@ -33,7 +33,7 @@ function RoomPage() {
         console.error("SSE error:", err);
         setLoading(false);
         eventSource.close();
-        // window.location.href="/admin/login"; /* ***************** */
+        window.location.href="/admin/login"; /* ***************** */
       };
       return () => {
         eventSource.close();
@@ -61,14 +61,6 @@ function RoomPage() {
       hour12: false,
       timeZone: 'Asia/Bangkok'
     });
-  //   const parseTime = (timeStr) => {
-  //   const [hours, minutes] = timeStr.split(":").map(Number);
-  //   const now = new Date();
-  //   now.setHours(hours, minutes, 0, 0);
-  //   return now;
-  // };
-  
-  // if (loading) return <p>กำลังโหลดข้อมูล...</p>;
     const processedRooms = events.map((room) => {
       const isBusy = room.events.some(ev => {
         const start = new Date(ev.start.dateTime);
@@ -83,7 +75,7 @@ function RoomPage() {
   const unavailableCount = processedRooms.length - availableCount;
 
       const mock_Total = [
-    {id: 1, Name: "Room Available", count: availableCount, total: events.length},
+    {id: 1, Name: "Room Available", count: availableCount, total: events.length}, 
     {id: 2, Name: "Room Unavailable", count: unavailableCount, total: events.length}
   ];
   const iconClass = [
@@ -108,6 +100,7 @@ function RoomPage() {
         });
       };
   const toggleDropdown1 = () => setOpenMenu1(prev => !prev);
+        
   return (
     <div className='font-display'>
         <nav className='shadow-md p-6 items-center md:flex justify-between bg-[#000042] text-white sticky top-0 z-40'>

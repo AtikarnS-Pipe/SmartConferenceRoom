@@ -11,10 +11,10 @@ dayjs.extend(isBetween);
 const HOURS_START = 7;
 const HOURS_END = 24; // ← ขยายถึง 20:00
 const PIXELS_PER_HOUR = 60;
-const DAY_WIDTH = 185;
+const DAY_WIDTH = 180;
 const COLUMN_LEFT_OFFSET = 80;
 const HEADER_HEIGHT = 40;
-const MIN_HEIGHT_FOR_TIME = 20; // ← ถ้าต่ำกว่านี้ไม่แสดงเวลา
+const MIN_HEIGHT_FOR_TIME = 32; // ← ถ้าต่ำกว่านี้ไม่แสดงเวลา
 
 const formatDate = (date) => dayjs(date).format('DDMMYYYY');
 const parseDate = (str) => {
@@ -70,12 +70,16 @@ const Room1501 = () => {
     };
   }, [Room, startdate, enddate]);
 
+  // useEffect(() => {
+  //   const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+  //   return () => clearInterval(timer);
+  // }, []);
+
   useEffect(() => {
     if (startdate && enddate) {
       const start = parseDate(startdate);
       const end = parseDate(enddate);
       setSelectedDate(start.format('YYYY-MM-DD'));
-
       const diff = end.diff(start, 'day');
       setView(diff === 1 ? 'Day' : 'Week');
     }
@@ -105,33 +109,31 @@ const Room1501 = () => {
 
   const renderEvents = () => {
     if (!scheduleApi) return null;
-
     const { start, end } = getViewRange();
-
     const eventsFromApi = scheduleApi
       .flat()
       .map(t => {
-    const organizer = Array.isArray(t.organizer)
-      ? t.organizer[0]?.emailAddress?.name
-      : t.organizer?.emailAddress?.name;
+        const organizer = Array.isArray(t.organizer)
+          ? t.organizer[0]?.emailAddress?.name
+          : t.organizer?.emailAddress?.name;
 
-    const rawStart = t.start.dateTime
-      ? dayjs(t.start.dateTime).add(7, 'hour')
-      : dayjs(t.start.date).startOf('day').add(7, 'hour');
+        const rawStart = t.start.dateTime
+          ? dayjs(t.start.dateTime).add(7, 'hour')
+          : dayjs(t.start.date).startOf('day').add(7, 'hour');
 
-    const rawEnd = t.end.dateTime
-      ? dayjs(t.end.dateTime).add(7, 'hour')
-      : dayjs(t.end.date).startOf('day').add(7, 'hour');
+        const rawEnd = t.end.dateTime
+          ? dayjs(t.end.dateTime).add(7, 'hour')
+          : dayjs(t.end.date).startOf('day').add(7, 'hour');
 
-    const isAllDay = rawEnd.diff(rawStart, 'hour') === 24 && rawStart.hour() === 7;
+        const isAllDay = rawEnd.diff(rawStart, 'hour') === 24 && rawStart.hour() === 7;
 
-    return {
-      start: rawStart,
-      end: rawEnd,
-      title: organizer || 'No Name',
-      isAllDay,
-    };
-  })
+        return {
+          start: rawStart,
+          end: rawEnd,
+          title: organizer || 'No Name',
+          isAllDay,
+        };
+      })
       .filter(event => {
         const eventStart = dayjs(event.start);
         const eventEnd = dayjs(event.end);
@@ -149,7 +151,7 @@ const Room1501 = () => {
       return (
         <div
           key={index}
-          onClick={() => setSelectedEvent(event)} // ← เพิ่ม
+          onClick={() => setSelectedEvent(event)}
           className="absolute bg-white border-l-4 border-red-500 rounded-xl shadow-md p-2 text-sm overflow-hidden cursor-pointer"
           style={{
             top: `${topOffset + HEADER_HEIGHT}px`,
@@ -158,19 +160,14 @@ const Room1501 = () => {
             width: `${columnWidth - 4}px`,
           }}
         >
-          <div
-            className="font-bold overflow-hidden text-ellipsis whitespace-nowrap"
-            style={{ maxHeight: '100%', lineHeight: '1.1em' }}
-          >
+          <div className="font-bold overflow-hidden text-ellipsis whitespace-nowrap" style={{ maxHeight: '100%', lineHeight: '1.1em' }}>
             {event.title}
           </div>
-            {height >= MIN_HEIGHT_FOR_TIME && (
-              <div className="text-xs text-gray-500">
-                {event.isAllDay
-                  ? 'All Day'
-                  : `${startTime.format('HH:mm')} - ${endTime.format('HH:mm')}`}
-              </div>
-            )}
+          {height >= MIN_HEIGHT_FOR_TIME && (
+            <div className="text-xs text-gray-500">
+              {event.isAllDay ? 'All Day' : `${startTime.format('HH:mm')} - ${endTime.format('HH:mm')}`}
+            </div>
+          )}
         </div>
       );
     });
@@ -236,53 +233,57 @@ const Room1501 = () => {
   return (
     <div className="p-4">
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <div className='flex px-3 py-1 mr-12 rounded-xl bg-slate-700 text-white cursor-pointer hover:bg-slate-400' onClick={() => navigate('/admin/api')}>
+      <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 mb-4">
+        <div className="flex flex-col gap-2">
+          <div className='flex px-3 py-1 rounded-xl md:mt-3 bg-slate-700 text-white cursor-pointer hover:bg-slate-400 w-fit' onClick={() => navigate('/admin/api')}>
             <FaHouse className='mt-1 h-5 w-5' />
             <h2 className='text-lg font-bold ml-1'>Home</h2>
           </div>
-          <div className='bg-black text-white p-4 text-xl rounded-xl font-bold shadow-md my-5'>
+          <div className='bg-black text-white p-3 text-lg lg:text-xl md:mt-3 rounded-xl font-bold shadow-md'>
             Room {Room.replace(/(\d{2})(\d{2})/, '$1/$2')}
           </div>
         </div>
-        <div className="text-gray-800 font-bold my-5 text-2xl ml-10">
+
+        <div className="text-gray-800 font-bold text-xl lg:text-2xl">
           {dayjs(selectedDate).format('dddd, DD MMMM ') + (dayjs(selectedDate).year())}
         </div>
-        <div className="space-x-2">
-          <div className='mx-6 mb-3 font-semibold text-xl'>{dayjs(currentTime).format('HH:mm:ss')}</div>
-          {['Day', 'Week'].map((option) => (
-            <button
-              key={option}
-              onClick={() => updateURLForView(option)}
-              className={`px-3 py-1 rounded-xl border ${view === option ? 'bg-black text-white' : 'bg-white'}`}
-            >
-              {option}
+
+        <div className="flex flex-row sm:flex-col items-center gap-2">
+          <div className='font-semibold text-base md:mt-3 lg:text-xl'>{dayjs(currentTime).format('HH:mm:ss')}</div>
+          <div className="flex gap-2">
+            {['Day', 'Week'].map((option) => (
+              <button
+                key={option}
+                onClick={() => updateURLForView(option)}
+                className={`px-3 py-1 rounded-xl border ${view === option ? 'bg-black text-white' : 'bg-white'}`}
+              >
+                {option}
+              </button>
+            ))}
+          </div>
+          <div className="flex items-center gap-2 md:mt-1">
+            <button onClick={() => handleDateChange(-1)} className="px-3 py-1 rounded-xl bg-black hover:bg-gray-500 text-white">
+              <IoIosArrowBack className='w-5 h-5' />
             </button>
-          ))}
-          <div className="space-x-2 flex items-center relative top-3 mt-2">
-            <button onClick={() => handleDateChange(-1)} className="px-4 py-1 rounded-xl bg-black hover:bg-gray-500 text-white">
-              <IoIosArrowBack className='w-6 h-6' />
-            </button>
-            <button onClick={() => handleDateChange(1)} className="px-4 py-1 rounded-xl bg-black hover:bg-gray-500 text-white">
-              <IoIosArrowForward className='w-6 h-6' />
+            <button onClick={() => handleDateChange(1)} className="px-3 py-1 rounded-xl bg-black hover:bg-gray-500 text-white">
+              <IoIosArrowForward className='w-5 h-5' />
             </button>
           </div>
         </div>
       </div>
 
       {/* Calendar */}
-      <div className="relative rounded-lg overflow-auto bg-[#f8f7f1]" style={{ height: `${calendarHeight}px`, width: `${calendarWidth}px` }}>
+      <div className="relative rounded-lg overflow-x-auto bg-[#f8f7f1]" style={{ height: `${calendarHeight}px`, minWidth: '100%' }}>
         {renderDayHeaders()}
         {renderTimeLines()}
         {renderDayColumns()}
         <div className="absolute inset-0">{renderEvents()}</div>
       </div>
 
-      {/* Modal สำหรับรายละเอียด */}
+      {/* Modal */}
       {selectedEvent && (
         <div className="fixed inset-0 backdrop-blur-lg bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-xl shadow-lg w-80">
+          <div className="bg-white p-4 rounded-xl shadow-lg w-[90%] sm:w-80">
             <h2 className="text-lg font-bold mb-2">Booking Detail</h2>
             <p><strong>Name :</strong> {selectedEvent.title}</p>
             <p><strong>Time :</strong> {dayjs(selectedEvent.start).format('HH:mm')} - {dayjs(selectedEvent.end).format('HH:mm')}</p>

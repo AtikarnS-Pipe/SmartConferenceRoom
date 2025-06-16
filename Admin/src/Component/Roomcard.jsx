@@ -3,6 +3,7 @@ import { MdPeople } from "react-icons/md";
 import { FaClock } from "react-icons/fa6";
 import { IoPerson } from "react-icons/io5";
 import { useNavigate } from 'react-router-dom';
+import Switch from './Switch';
 
 function Roomcard(props) {
   const { data, icons } = props
@@ -15,21 +16,11 @@ function Roomcard(props) {
     return () => clearInterval(interval);
   }, []);
 
-  const parseTime = (timeStr) => {
-    const date = new Date(timeStr); // Convert string to Date object
-    const hours = date.getHours() + 7;
-    const minutes = date.getMinutes();
-    const now = new Date();
-    const result = new Date(now);
-    result.setHours(hours, minutes, 0, 0);
-    return result;
-  };
-  const parseBackendTime = (timeStr) => {
-    const [datePart, timePart] = timeStr.split(' ');
-    const [day, month, year] = datePart.split('/').map(Number);
-    const [hour, minute] = timePart.split(':').map(Number);
-    return new Date(year, month - 1, day, hour, minute);
-  };
+const parseTime = (timeStr) => {
+  const date = new Date(timeStr);
+  date.setHours(date.getHours() + 7); // ปรับเป็นเวลาประเทศไทย (UTC+7)
+  return date;
+};
   const roomNameMap = {
     '1501': '15/01',
     '1502': '15/02',
@@ -53,11 +44,11 @@ function Roomcard(props) {
           end = parseTime(inner.end.dateTime)
         })
 
-        const isAvailable = !d.events.some((event) => {
-          const start = parseTime(event.start.dateTime);
-          const end = parseTime(event.end.dateTime);
-          return currentTime >= start && currentTime <= end;
-        });
+      const isAvailable = !d.events.some((event) => {
+      const start = parseTime(event.start.dateTime);
+      const end = parseTime(event.end.dateTime);
+      return currentTime >= start && currentTime < end; // ให้ใช้ < แทน <=
+    });
         const statusColor = isAvailable ? "bg-green-500" : "bg-red-500";
         const renderIcons = (count) => {
           if (count === 1) {
@@ -119,6 +110,7 @@ function Roomcard(props) {
                 >
                   Schedule
                 </div>
+                <div><Switch/></div>
               </div>
             </div>
           </div>

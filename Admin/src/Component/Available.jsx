@@ -50,12 +50,20 @@ function Available() {
               hour12: false,
               timeZone: 'Asia/Bangkok'
             }); 
-
+      const handleSizeNavigate = (peopleSize) => {
+        navigate(`/roomsize/${peopleSize}`, {
+          state: {
+            icons: icons,     // ส่งทั้งหมดไปเลย
+            peopleSize: peopleSize,  // ส่งตัวแปร filter ไปใช้ในหน้าถัดไป
+            rooms: allRooms 
+          }
+        });
+      };
 
   return (
     <div className='font-display'>
         <nav className='shadow-md p-6 items-center md:flex justify-between bg-[#000042] text-white sticky top-0 z-40'>
-            <div className="md:text-2xl text-xl ">Conference Room</div>
+            <div className="md:text-2xl text-xl underline underline-offset-10">Conference Room</div>
             <ul className='flex text-center md:ml-5 max-md:mb-10 max-md:mt-10'>
                 <li className='mr-5 cursor-pointer' onClick={() => navigate('/admin/api')}>Home</li>
                 <li className='md:mr-5 lg:mx-5 cursor-pointer' onClick={toggleDropdown1}>Size Room {openMenu1 ? '▴' : '▾'}
@@ -63,19 +71,19 @@ function Available() {
             <ul className="absolute mt-2 w-25 bg-blue-700 rounded-md shadow-lg z-10">
               <li 
                 className="px-4 py-2 hover:bg-blue-400 rounded-md cursor-pointer"
-                onClick={() => navigate('/Size S')}
+                onClick={() => handleSizeNavigate(2)}
               >
                 Size S
               </li>
               <li 
                 className="px-4 py-2 hover:bg-blue-400  rounded-md cursor-pointer"
-                onClick={() => navigate('/Size M')}
+                onClick={() => handleSizeNavigate(4)}
               >
                 Size M
               </li>
               <li 
                 className="px-4 py-2 hover:bg-blue-400  rounded-md cursor-pointer"
-                onClick={() => navigate('/Size L')}
+                onClick={() => handleSizeNavigate(6)}
               >
                 Size L
               </li>

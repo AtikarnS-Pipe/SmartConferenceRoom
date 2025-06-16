@@ -1,6 +1,8 @@
+import React from 'react'
 import { useNavigate } from 'react-router-dom';
 
-function Roomdata({ rooms, currentTime,icons }) { 
+function Roomdata({ rooms, currentTime,icons }) {
+  console.log("Roomdata - icons:", icons); 
   let availableCount = 0;
   let unavailableCount = 0;
 
