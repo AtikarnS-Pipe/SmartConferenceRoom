@@ -15,7 +15,7 @@ export function useEvents( floor, room) {
       try {
         const data = JSON.parse(e.data);
         setEvents(data.results);
-        console.log(data.results);
+        // console.log(data.results);
         setLoading(false);
       } catch (err) {
         console.error("Error parsing SSE data:", err);

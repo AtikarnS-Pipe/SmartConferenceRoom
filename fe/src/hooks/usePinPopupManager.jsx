@@ -1,46 +1,135 @@
-// import React, { useEffect, useState } from 'react';
-// import PinPopup from '../components/PinPopup'; // ไฟล์นี้คือ component ที่คุณให้มา
-// import { useCurrentEvent } from './useCurrentEvent'; // hook แยก
+import React, { useEffect, useState } from 'react';
+import PinPopup from '../components/PinPopup'; // ไฟล์นี้คือ component ที่คุณให้มา
+import { useCurrentEvent } from './useCurrentEvent'; // hook แยก
 
-// const PinPopupManager = ({ events, onPinSuccess }) => {
-//   const { isOccupied } = useCurrentEvent(events);
-//   const [pinVisible, setPinVisible] = useState(false);
-//   const [pinVerified, setPinVerified] = useState(false);
-//   const [error, setError] = useState('');
+const PinPopupManager = ({ events, room, floor, onPinSuccess }) => {
+  const { currentEvent, isOccupied } = useCurrentEvent(events);
+  const [pinVisible, setPinVisible] = useState(false);
+  const [pinVerified, setPinVerified] = useState(false);
+  const [error, setError] = useState('');
+  const [pinTimeout, setPinTimeout] = useState(null);
+  const [waiting, setWaiting] = useState(false);
+  const [pendingError, setPendingError] = useState('');
+  const roomId = `${floor}${room}`;
 
-//   useEffect(() => {
-//     if (isOccupied && !pinVerified) {
-//       setPinVisible(true);
-//     } else if (!isOccupied) {
-//       setPinVisible(false);
-//       setPinVerified(false); // reset เมื่อตารางหมด
-//       setError('');
-//     }
-//   }, [isOccupied, pinVerified]);
 
-//   const handlePinSubmit = (pin) => {
-//     const correctPin = '1234'; // แก้ให้เหมาะสมกับระบบจริง
-//     if (pin === correctPin) {
-//       setPinVerified(true);
-//       setError('Correct');
-//       setTimeout(() => {
-//         setPinVisible(false);
-//         setError('');
-//       }, 1200);
-//       onPinSuccess?.(pin); // optional callback
-//     } else {
-//       setError('');
-//       setTimeout(() => setError('Incorrect password'), 0);
-//     }
-//   };
+  // Helper: ส่งข้อมูลไป backend
+  const sendPinToBackend = async ({ startEvent, endEvent, roomId, pin, expired = false }) => {
+    console.log('startEvent:',startEvent);
+    console.log('endEvent:',endEvent);
+    console.log('roomEvent:',roomId);
+    console.log('pin:',pin);
+    console.log('ecpired:',expired);
+  //   try {
+  //     const res = await fetch('/api/verify-pin', {
+  //       method: 'POST',
+  //       headers: { 'Content-Type': 'application/json' },
+  //       body: JSON.stringify({ eventId, roomId, pin, expired }),
+  //     });
+  //     return await res.json();
+  //   } catch (e) {
+  //     return { pinCorrect: false, error: 'Network error' };
+  //   }
+  // };
 
-//   return (
-//     <>
-//       {pinVisible && ( //ถ้าเป็น true จะแสดงผล
-//         <PinPopup onSubmit={handlePinSubmit} error={error} />
-//       )}
-//     </>
-//   );
-// };
+  // MOCK: delay 2 วินาที เพื่อให้เห็นสถานะ checking
+    await new Promise(res => setTimeout(res, 2000));
+    // MOCK: ตอบกลับเหมือน backend จริง
+    if (expired) return { pinCorrect: false, expired: true };
+    if (pin === '1234') return { pinCorrect: true };
+    return { pinCorrect: false };
+  };
 
-// export default PinPopupManager;
+  // ฟังก์ชันใหม่: ลบ event เมื่อ timeout (method DELETE)
+  const deleteEventOnBackend = async ({ startEvent, endEvent, roomId }) => {
+    try {
+      const res = await fetch('/api/delete-event', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ startEvent, endEvent, roomId }),
+      });
+      return await res.json();
+    } catch (e) {
+      return { success: false, error: 'Network error' };
+    }
+  };
+
+  // Handle 15-min timeout
+  useEffect(() => {
+    if (currentEvent && pinVisible && !pinVerified) {
+      // คำนวณเวลาที่เหลือจนถึง 15 นาทีหลัง event เริ่ม
+      const start = new Date(currentEvent.start.dateTime + 'Z');
+      const now = new Date();
+      const msSinceStart = now - start;
+      const msToTimeout = Math.max(0, 30 * 60 * 1000 - msSinceStart);
+      if (pinTimeout) clearTimeout(pinTimeout);
+      const timeout = setTimeout(async () => {
+        // เรียก DELETE ไป backend เมื่อครบ 15 นาที
+        await deleteEventOnBackend({ //await รอให้deleteEventOnbackend ทำเสร็จก่อน
+          startEvent: currentEvent.start.dateTime,
+          endEvent: currentEvent.end.dateTime,
+          roomId: roomId,
+        });
+        setPinVisible(false);
+        setError('');
+      }, msToTimeout);
+      setPinTimeout(timeout);
+      return () => clearTimeout(timeout);
+    } else if (!pinVisible && pinTimeout) {
+      clearTimeout(pinTimeout);
+    }
+  }, [currentEvent, pinVisible, pinVerified]);
+
+  useEffect(() => {
+    if (isOccupied && !pinVerified) {
+      setPinVisible(true);
+    } else if (!isOccupied) {
+      setPinVisible(false);
+      setPinVerified(false); // reset เมื่อตารางหมด
+      setError('');
+    }
+  }, [isOccupied, pinVerified]);
+
+  const handlePinSubmit = async (pin) => {
+    if (!currentEvent) return;
+    setWaiting(true);
+    setError(''); // clear error ทันทีที่เริ่ม checking
+    const result = await sendPinToBackend({
+      startEvent: currentEvent.start.dateTime,
+      endEvent: currentEvent.end.dateTime,
+      roomId: roomId,
+      pin: pin,  
+    });
+    setWaiting(false);
+    // เก็บ pending error ไว้ก่อน
+    if (result.pinCorrect) {
+      setPinVerified(true);
+      setPendingError('Correct');
+      setTimeout(() => {
+        setPinVisible(false);
+        setError('');
+        setPendingError('');
+      }, 1200);
+      onPinSuccess?.(pin); // optional callback
+    } else {
+      setPendingError('Incorrect password');
+    }
+  };
+
+  useEffect(() => {
+    if (!waiting && pendingError) {
+      setError(pendingError);
+      setPendingError('');
+    }
+  }, [waiting, pendingError]);
+
+  return (
+    <>
+      {pinVisible && (
+        <PinPopup onSubmit={handlePinSubmit} error={error} waiting={waiting} />
+      )}
+    </>
+  );
+};
+
+export default PinPopupManager;

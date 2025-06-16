@@ -14,7 +14,7 @@ import { getTimeRemaining } from '../hooks/useTimeRemaining'
 // import { useSocket } from '../hooks/useSocket';
 import { useCurrentTime } from '../hooks/useCurrentTime';
 import { useEvents } from '../hooks/useEvents';
-// import PinPopupManager from '../hooks/usePinPopupManager';
+import PinPopupManager from '../hooks/usePinPopupManager';
 
 function Home() {
   // const token = useSocket();
@@ -57,7 +57,7 @@ function Home() {
           </div>
         </div>
       </div>
-      {/* <PinPopupManager events={events} />   phase 2 */}
+      <PinPopupManager events={events} room={room} floor={floor} />
     </div>
   )
 }
