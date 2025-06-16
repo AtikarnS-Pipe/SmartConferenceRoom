@@ -15,9 +15,8 @@ const getAllusers = async (req, res) => {
         'Access-Control-Allow-Origin': process.env.FRONTEND_ADMIN
     });
 
-    if (!code && !req.session.homeAccountId) {
-         console.log("fail session")
-
+    if (!code && !req.session.homeAccountId && req.cookies.user_token) {
+        console.log("fail session")
         res.write(`event: error\ndata: ${JSON.stringify({ error: "No code, please login" })}\n\n`);
         res.end();
         return;
@@ -97,7 +96,8 @@ const getAllusers = async (req, res) => {
 
 const Login = async (req, res) => {
     console.log("welcome to admin/api")
-    if (req.session.homeAccountId) {
+    const token = req.cookies.user_token;
+    if (req.session.homeAccountId || token) {
       res.redirect(`${process.env.FRONTEND_ADMIN}/admin/api`);
       console.log("Redirect to admin/api")
     } else {
