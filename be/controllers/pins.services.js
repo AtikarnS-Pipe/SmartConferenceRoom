@@ -1,1 +1,1 @@
-const { fetchAllRoom } = require("./admin.controllers");
+import { fetchAllRoom } from "./admin.controllers";

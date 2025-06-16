@@ -23,7 +23,6 @@ const { authProvider } = require("./AuthProvider");
 const JWT_SECRET = process.env.JWT_SECRET;
 const allowedOrigins = [process.env.FRONTEND_ADMIN, process.env.FRONTEND_USERS];
 
-
 app.use(cors({
   origin: function (origin, callback) {
     if (!origin || allowedOrigins.includes(origin)) {

@@ -17,7 +17,6 @@ const getAllusers = async (req, res) => {
 
     if (!code && !req.session.homeAccountId) {
          console.log("fail session")
-
         res.write(`event: error\ndata: ${JSON.stringify({ error: "No code, please login" })}\n\n`);
         res.end();
         return;
