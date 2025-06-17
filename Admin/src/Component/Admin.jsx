@@ -14,15 +14,16 @@ function RoomPage() {
 
     useEffect(() => {
       const code = new URLSearchParams(location.search).get("code");
-      if (!code) {
-        window.location.href="/admin/login";
-      }
-      const eventSource = new EventSource(`/admin/sse?code=${code}`);
+      // if (!code) {
+      //   console.error("No code found in URL, plz redirect to '/' to Login");
+      //   return;
+      // }
+      const eventSource = new EventSource(`/admin/sse${code ? `?code=${code}` : ''}`);
       eventSource.onmessage = (e) => {
         try {
           const data = JSON.parse(e.data);
           setEvents(data.results);
-          console.log(data)
+          console.log("Hello world",data)
           setLoading(false);
         } catch (err) {
           console.error("Error parsing SSE data:", err);
@@ -33,11 +34,11 @@ function RoomPage() {
         console.error("SSE error:", err);
         setLoading(false);
         eventSource.close();
-        window.location.href="/admin/login"; /* ***************** */
+        // window.location.href="/admin/login"; /* ***************** */
       };
       return () => {
         eventSource.close();
-      };
+      }; 
     }, []);
   
     useEffect(() => {
@@ -147,4 +148,4 @@ function RoomPage() {
 }
 
 
-export { RoomPage } 
+export { RoomPage }

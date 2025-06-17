@@ -5,13 +5,14 @@ import Unavailable from './Component/Unavailable'
 import './App.css'
 import RoomPages from './Component/Roompages'
 import RoomSize from './Component/Roomsize'
+import LoginPage from './Component/Login'
 
 function App() {
 
   return (
     <Router>
     <Routes>
-        <Route path='/' element={<RoomPage />} />
+        <Route path='/' element={<LoginPage />} />
         <Route path='/admin/api' element={<RoomPage />} />
         <Route path='/room/:Room/:startdate/:enddate' element={<RoomPages />} />
         <Route path='/Available' element={<Available key={location.key}/>} />
