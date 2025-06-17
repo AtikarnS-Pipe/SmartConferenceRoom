@@ -54,10 +54,11 @@ function Home() {
             <div className="schedule-container">
               <TimeSchedule currentTime={currentTime} events={events} zoomLevel={zoomLevel} setZoomLevel={setZoomLevel} />
             </div>
+            <p className = 'touchscreen'>#Touch‑Supported</p>
           </div>
         </div>
       </div>
-      <PinPopupManager events={events} room={room} floor={floor} />
+      <PinPopupManager events={events}/>
     </div>
   )
 }

@@ -4,6 +4,7 @@ const PinPopup = ({ onSubmit, error, waiting }) => {
   const [pin, setPin] = useState('');
   const [blink, setBlink] = useState(false);
 
+  //ส่ง pin อัตโนมัติ
   useEffect(() => {
     if (pin.length === 4 && !waiting) {
       onSubmit(pin);
@@ -11,7 +12,7 @@ const PinPopup = ({ onSubmit, error, waiting }) => {
     }
   }, [pin, waiting]);
 
-  // Trigger blink when error is 'incorrect password'
+  // กระพริบเมื่อ pin ผิด
   useEffect(() => {
     if (typeof error === 'string' && error.toLowerCase() === 'incorrect password') {
       setBlink(true);
@@ -20,6 +21,7 @@ const PinPopup = ({ onSubmit, error, waiting }) => {
     }
   }, [error]);
 
+  // fn การกดปุ่ม
   const handlePress = (num) => {
     if (pin.length < 4) {
       setPin(pin + num);
@@ -45,7 +47,7 @@ const PinPopup = ({ onSubmit, error, waiting }) => {
       </div>
     );
   };
-
+//แป้นกดตัวเลข
   const keypadNumbers = [1,2,3,4,5,6,7,8,9,'',0,'←'];
 
   return (
@@ -75,7 +77,7 @@ const PinPopup = ({ onSubmit, error, waiting }) => {
         {error && (
           <div
             style={{
-              color: error === 'Correct' ? 'green' : 'red',
+              color: error === 'Correct password' ? 'green' : 'red',
               marginBottom: '1rem',
               animation: blink ? 'blink-animation 0.5s linear 2' : 'none',
             }}
@@ -92,6 +94,7 @@ const PinPopup = ({ onSubmit, error, waiting }) => {
             </style>
           </div>
         )}
+{/* เเป้นเลข */}
         <div style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(3, 1fr)',
@@ -110,7 +113,7 @@ const PinPopup = ({ onSubmit, error, waiting }) => {
                 border: '1px solid #ccc',
                 backgroundColor: '#f9f9f9',
                 cursor: key !== '' && !waiting ? 'pointer' : 'default',
-                opacity: waiting ? 0.5 : 1
+                opacity: waiting ? 0.5 : 1 //ถ้ารอเช็คลด op ลงมา
               }}
               onClick={() => {
                 if (waiting) return;

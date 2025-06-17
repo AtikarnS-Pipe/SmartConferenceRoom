@@ -741,5 +741,12 @@ body {
   }
 }
 
+.touchscreen{
+  display: flex;
+  justify-content: end;
+  color:#686868;
+  font-size: small;
+  margin-top: 10px;
+}
 
 
