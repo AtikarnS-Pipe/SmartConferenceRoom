@@ -1,7 +1,7 @@
-require('dotenv').config({ path: './config/.env'});
 const { authProvider } = require("../AuthProvider");
 const syncAllRooms = require('../services/roomsync.services');
 const { compareKey, deleteSchedule } = require('../services/pin.services');
+require('dotenv').config({ path: './config/.env'});
 const getGraphClient = require("../graph");
 const jwt = require('jsonwebtoken');
 const JWT_SECRET = process.env.JWT_SECRET;
