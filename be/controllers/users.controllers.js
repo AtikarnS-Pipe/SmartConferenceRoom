@@ -1,4 +1,4 @@
-const { authProvider } = require("../../AuthProvider");
+const { authProvider } = require("../AuthProvider");
 const syncAllRooms = require('../services/roomsync.services');
 const { compareKey, deleteSchedule } = require('../services/pin.services');
 require('dotenv').config({ path: './config/.env'});

@@ -4,7 +4,7 @@ const sendMailAsync = require("./sendmail.services")
 const bcrypt = require('bcryptjs');
 require('dotenv').config();
 const jwt = require("jsonwebtoken");    
-const { authProvider } = require("../../AuthProvider");
+const { authProvider } = require("../AuthProvider");
 const JWT_SECRET = process.env.JWT_SECRET;
 
 function randomPin() {

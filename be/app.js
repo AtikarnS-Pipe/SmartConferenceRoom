@@ -3,10 +3,8 @@ const {connectToDatabase} = require("./database/mongodb");
 const express = require("express");
 const Adminrouter = require("./routes/admin.routes");
 const Userrouter = require("./routes/users.routes");
-// const Pinrouter = require("./routes/pins.routes");
 const { GetScheduleData } = require("./services/adminsocket.services");
 const cors = require('cors');
-const session = require('express-session');
 const http = require("http");
 const { Server } = require("socket.io"); // มี auto-Fallback เเละลด http api ที่ต้องป้องกัน ลดการ post,get อีกทั้ง (Low-latency) Server “push” ข้อมูลได้ทันที ไม่ต้องรอให้ลูกค้า “poll” ทุก ๆ X วินาที
 const cookie = require("cookie");
@@ -35,17 +33,6 @@ app.use(cors({
   credentials: true
 }));
 
-// app.use(session({
-//   secret: process.env.SESSION_SECRET,
-//   resave: false,
-//   saveUninitialized: true,
-//   cookie: { 
-//     httpOnly: true, 
-//     secure: false , 
-//     // sameSite: "none", เปิดคู่ secure ถ้าจะใช้ none 
-//     maxAge: 1000 * 60 * 60 } // 3 hours
-// }));
-
 app.use(express.json()); // เเปลง http body เป็น json
 app.use(cookieParser());
 
@@ -68,7 +55,7 @@ io.on("connection", (socket) => { //socket เป็นตัวเเทนเ�
       }
       let tokenResponse = await authProvider.acquireTokenSilent(
           account,
-          [process.env.SCOPE]
+          [process.env.SCOPE1, process.env.SCOPE2]
       ); 
       let results = await GetScheduleData(tokenResponse, Room, start, end);
       socket.emit("receive_api", results);
@@ -94,7 +81,6 @@ app.set("io", io); // เพื่อให้เรียก req.app.get("io") 
 
 app.use("/admin", Adminrouter);
 app.use("/user", Userrouter);
-// app.use("/pins", Pinrouter);
 
 app.get('/', (req, res) => {
   res.send('Welcome to the Smart Display Conference System!');
@@ -104,4 +90,3 @@ server.listen(process.env.PORT, async () => {
   console.log(`Server running at http://backend:${process.env.PORT}`);
   await connectToDatabase();
 });
-

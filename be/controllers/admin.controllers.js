@@ -1,6 +1,6 @@
 require('dotenv').config({ path: './config/.env'});
 const getGraphClient = require("../graph");
-const { authProvider } = require("../../AuthProvider");
+const { authProvider } = require("../AuthProvider");
 const jwt = require('jsonwebtoken');
 const JWT_SECRET = process.env.JWT_SECRET;
 
@@ -21,7 +21,7 @@ const getAllusers = async (req, res) => {
             // login ครั้งแรก
             const tokenResponse = await authProvider.acquireTokenByCode({
                 code,
-                scopes: [process.env.SCOPE],
+                scopes: [process.env.SCOPE1, process.env.SCOPE2],
                 redirectUri: `${process.env.FRONTEND_ADMIN}/admin/api`,
             });
             homeAccountId = tokenResponse.account.homeAccountId;
@@ -48,7 +48,7 @@ const getAllusers = async (req, res) => {
                     // ตรวจสอบ account ใน MSAL cache
                     const account = await authProvider.getAccountById(homeAccountId);
                     if (!account) {
-                        res.write(`event: error\ndata: ${JSON.stringify({ error: "Session expired, please login again" })}\n\n`);
+                        res.write(`event: error\ndata: ${JSON.stringify({ error: "Token expired, please login again" })}\n\n`);
                         res.end();
                         return;
                     }
@@ -73,7 +73,7 @@ const getAllusers = async (req, res) => {
 
         let account = await authProvider.getAccountById(homeAccountId);
         if (!account) {
-            res.write(`event: error\ndata: ${JSON.stringify({ error: "Session expired, please login again" })}\n\n`);
+            res.write(`event: error\ndata: ${JSON.stringify({ error: "No homeaccount, please login again" })}\n\n`);
             res.end();
             return;
         }
@@ -102,7 +102,7 @@ const Login = async (req, res) => {
         response_type: "code",
         redirect_uri: `${process.env.FRONTEND_ADMIN}/admin/api`,
         response_mode: "query",
-        scope: process.env.SCOPE
+        scope: `${process.env.SCOPE1} ${process.env.SCOPE2}`
     });
     res.redirect(`https://login.microsoftonline.com/${process.env.TENANT_ID}/oauth2/v2.0/authorize?${params.toString()}`);
 };
@@ -164,4 +164,4 @@ async function fetchAllRoom(res, accessToken) {
     }
 }
         
-module.exports = { getAllusers, Login, fetchAllRoom };
+module.exports = { getAllusers, Login };
