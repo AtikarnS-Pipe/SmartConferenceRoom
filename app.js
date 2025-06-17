@@ -68,7 +68,7 @@ io.on("connection", (socket) => { //socket เป็นตัวเเทนเ�
       }
       let tokenResponse = await authProvider.acquireTokenSilent(
           account,
-          [process.env.SCOPE]
+          [process.env.SCOPE1, process.env.SCOPE2]
       ); 
       let results = await GetScheduleData(tokenResponse, Room, start, end);
       socket.emit("receive_api", results);

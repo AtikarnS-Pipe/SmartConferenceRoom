@@ -36,7 +36,7 @@ const getuser = async (req, res) => {
         }
         let tokenResponse = await authProvider.acquireTokenSilent(
             account,
-            [process.env.SCOPE]
+            [process.env.SCOPE1, process.env.SCOPE2]
         );
 
         const intervalId = setInterval(async () => {

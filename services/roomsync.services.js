@@ -1,5 +1,6 @@
 const getGraphClient = require("../graph");
 const bookingkey = require('../models/bookingkey');
+const sendMailAsync = require("./sendmail.services")
 const bcrypt = require('bcryptjs');
 require('dotenv').config();
 const jwt = require("jsonwebtoken");    
@@ -24,7 +25,7 @@ async function syncAllRooms(req) {
         }
         let tokenResponse = await authProvider.acquireTokenSilent(
             account,
-            [process.env.SCOPE]
+            [process.env.SCOPE1, process.env.SCOPE2]
         );
        
         const roomNumbers = [
@@ -76,6 +77,10 @@ async function syncAllRooms(req) {
                             id: event.id,
                             key: hashedPassword,
                         });
+                        console.log('mail send:', key);
+                        const mailContent = `รหัสผ่านสำหรับห้อง ${roomData.room} คือ ${key}`;
+                        const mail = "Atikarn.S@tcc-technology.com"
+                        await sendMailAsync(event.organizer?.emailAddress?.address, mailContent, mail, tokenResponse.accessToken); //หัวข้ออีเมล, รหัสผ่าน, หมายเลขห้องที่จะส่งไป
                     }
                 }
             }
