@@ -141,7 +141,7 @@ async function fetchAllRoom(res, accessToken) {
                         startDateTime: `${startDateTime}T00:00:00Z`,
                         endDateTime: `${endDateTime}T00:00:00Z`,
                         "$orderby": "start/dateTime",
-                        "$select": "organizer,start,end,locations"
+                        "$select": "id,organizer,start,end,locations"
                     })
                     .get();
 
