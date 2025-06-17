@@ -1,7 +1,7 @@
 require('dotenv').config({ path: './config/.env'});
 const { authProvider } = require("../AuthProvider");
 const syncAllRooms = require('../services/roomsync.services');
-const { compareKey } = require('../services/pin.services');
+const { compareKey, deleteSchedule } = require('../services/pin.services');
 const getGraphClient = require("../graph");
 const jwt = require('jsonwebtoken');
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -55,7 +55,7 @@ const getuser = async (req, res) => {
                         startDateTime: `${startDateTime}T00:00:00Z`,
                         endDateTime: `${endDateTime}T00:00:00Z`,
                         "$orderby": "start/dateTime",
-                        "$select": "organizer,start,end,locations"
+                        "$select": "id,organizer,start,end,locations"
                     })
                     .get();
                 if (!graphResponse || !graphResponse.value) {
@@ -86,12 +86,16 @@ const getuser = async (req, res) => {
 // controller function for pin validation
 const keyPins = async (req, res) => {
     try {
-        const { room, startDate, endDate, pin } = req.body;
-        if (!room || !startDate || !endDate || !pin) {
-            return res.status(400).json({ error: "Missing required fields" });
+        const { eventId, pin } = req.body;
+        if (!eventId || !pin) {
+            return res.status(400).json({ error: "Missing required fields!" });
         }
 
-        const isValid = await compareKey({ room, eventId, pin });
+        const isValid = await compareKey({ eventId, pin });
+
+        if (!isValid) {
+            return res.status(404).json({ error: "Booking not found" });
+        }
 
         return res.status(200).json({ pinValid: isValid });
     } catch (error) {
@@ -99,9 +103,37 @@ const keyPins = async (req, res) => {
     }
 };
 
-// const keyExpired = async (req, res) => {
-//     try {
-//         const { room, eventId}
-//     }
-// }
-module.exports = { getuser, keyPins };
+const keyExpired = async (req, res) => {
+    try {
+        const { eventId } = req.body;
+        if ( !eventId ) {
+            return res.status(400).json({ error: "Missing required fields!" });
+        }
+
+        // const token = req.cookies.user_token;
+        //  if (!token) {
+        //     throw new Error("No accessToken");
+        // }
+        // const payload = jwt.verify(token, JWT_SECRET);
+        // const account = await authProvider.getAccountById(payload.homeAccountId);
+        // if (!account) {
+        //     throw new Error("Session expired, please ask admin to login again");
+        // }
+        // let tokenResponse = await authProvider.acquireTokenSilent(
+        //     account,
+        //     [process.env.SCOPE]
+        // );
+
+        const isCompleted = await deleteSchedule({ eventId });
+        
+        if (!isCompleted) {
+            return res.status(404).json({ error: "Booking not found" });
+        }
+
+        return res.status(200).json({ message: `Event: ${ eventId } has been removed!`});
+    } catch (error) {
+        return res.status(500).json({ error: "Internal Server Error "});
+    }
+};
+
+module.exports = { getuser, keyPins, keyExpired };
