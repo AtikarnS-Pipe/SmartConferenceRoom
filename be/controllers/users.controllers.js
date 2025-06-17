@@ -1,5 +1,6 @@
-const { authProvider } = require("../AuthProvider");
+const { authProvider } = require("../../AuthProvider");
 const syncAllRooms = require('../services/roomsync.services');
+const { compareKey, deleteSchedule } = require('../services/pin.services');
 require('dotenv').config({ path: './config/.env'});
 const getGraphClient = require("../graph");
 const jwt = require('jsonwebtoken');
@@ -82,4 +83,57 @@ const getuser = async (req, res) => {
     }, 10000); 
 };
 
-module.exports = { getuser };
+// controller function for pin validation
+const keyPins = async (req, res) => {
+    try {
+        const { eventId, pin } = req.body;
+        if (!eventId || !pin) {
+            return res.status(400).json({ error: "Missing required fields!" });
+        }
+
+        const isValid = await compareKey({ eventId, pin });
+
+        if (!isValid) {
+            return res.status(404).json({ error: "Booking not found" });
+        }
+
+        return res.status(200).json({ pinValid: isValid });
+    } catch (error) {
+        return res.status(500).json({ error: "Internal Server Error" });
+    }
+};
+
+const keyExpired = async (req, res) => {
+    try {
+        const { eventId } = req.body;
+        if ( !eventId ) {
+            return res.status(400).json({ error: "Missing required fields!" });
+        }
+
+        // const token = req.cookies.user_token;
+        //  if (!token) {
+        //     throw new Error("No accessToken");
+        // }
+        // const payload = jwt.verify(token, JWT_SECRET);
+        // const account = await authProvider.getAccountById(payload.homeAccountId);
+        // if (!account) {
+        //     throw new Error("Session expired, please ask admin to login again");
+        // }
+        // let tokenResponse = await authProvider.acquireTokenSilent(
+        //     account,
+        //     [process.env.SCOPE]
+        // );
+
+        const isCompleted = await deleteSchedule({ eventId });
+        
+        if (!isCompleted) {
+            return res.status(404).json({ error: "Booking not found" });
+        }
+
+        return res.status(200).json({ message: `Event: ${ eventId } has been removed!`});
+    } catch (error) {
+        return res.status(500).json({ error: "Internal Server Error "});
+    }
+};
+
+module.exports = { getuser, keyPins, keyExpired };
