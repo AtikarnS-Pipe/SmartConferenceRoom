@@ -1,0 +1,107 @@
+require('dotenv').config({ path: './config/.env'});
+const getGraphClient = require("../graph");
+const { getTokenByCode, refreshAccessToken } = require("../AuthProvider");
+const jwt = require('jsonwebtoken');
+const JWT_SECRET = process.env.JWT_SECRET;
+
+const getAllusers = async (req, res) => {
+    const code = req.query.code;
+    let tokenResponse, accessToken;
+    res.set({
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+        'Access-Control-Allow-Credentials': 'true',
+        'Access-Control-Allow-Origin': process.env.FRONTEND_ADMIN
+    });
+    
+    try {
+        if (code && code !== "null") {
+            // login ครั้งแรก
+            tokenResponse = await getTokenByCode(code);
+            accessToken = tokenResponse.access_token
+            console.log("refresh token", tokenResponse.refresh_token)
+            // console.log("access_token2", tokenResponse.access_token)
+        } else {
+            throw new Error(`No value in graphResponse for room ${room}: ${JSON.stringify(graphResponse)}`);
+        }
+        console.log("access_token2", accessToken)
+
+        fetchAllRoom(res, accessToken);
+        setInterval(async () => {
+            fetchAllRoom(res, accessToken);
+        }, 10000);
+
+        refreshAccessToken(tokenResponse.refresh_token)
+        setInterval(async () => {
+            refreshAccessToken(tokenResponse.refresh_token)
+        }, 10000);
+
+    } catch (err) {
+        console.error("Error: Checking accesstoken or refreshtoken and function")
+        res.write(`event: error\ndata: ${JSON.stringify({ error: "Failed, please check login, geting token and fetching data", detail: err.message })}\n\n`);
+        res.end();
+        return;
+    }
+};
+
+const Login = async (req, res) => {
+    params = new URLSearchParams({
+        client_id: process.env.CLIENT_ID,
+        response_type: "code",
+        redirect_uri: `${process.env.FRONTEND_ADMIN}/admin/api`,
+        response_mode: "query",
+        scope: `${process.env.SCOPE1} ${process.env.SCOPE2}`
+    });
+    res.redirect(`https://login.microsoftonline.com/${process.env.TENANT_ID}/oauth2/v2.0/authorize?${params.toString()}`);
+};
+
+async function fetchAllRoom(res, accessToken) {
+    try {
+        const now = new Date();
+        const tomorrow = new Date(now);
+        tomorrow.setDate(now.getDate() + 1);
+
+        const startDateTime = now.toISOString().slice(0,10); //"2025-05-19"
+        const endDateTime = tomorrow.toISOString().slice(0,10);
+        const roomNumbers = [
+            1501, 1502, 1503, 1504, 1505,
+            1506, 1514, 1515, 1519, 1520
+        ];
+
+        if (!accessToken) {
+            throw new Error("No accessToken");
+        }
+
+        const results = await Promise.all(
+            roomNumbers.map(async (room) => {
+                const graphResponse = await getGraphClient(accessToken)
+                    .api(`https://graph.microsoft.com/v1.0/users/${room}@tcc-technology.com/calendarView`)
+                    .query({
+                        startDateTime: `${startDateTime}T00:00:00Z`,
+                        endDateTime: `${endDateTime}T00:00:00Z`,
+                        "$orderby": "start/dateTime",
+                        "$select": "id,organizer,start,end,locations"
+                    })
+                    .get();
+
+                if (!graphResponse || !graphResponse.value) {
+                    throw new Error(`No value in graphResponse for room ${room}: ${JSON.stringify(graphResponse)}`);
+                }
+
+                return {
+                    room,
+                    events: graphResponse.value
+                };
+            })
+        );
+
+        console.log(results);
+        res.write(`data: ${JSON.stringify({ results })}\n\n`);
+    } catch (error) {
+        console.error(error);
+        res.write(`event: error\ndata: ${JSON.stringify({ error: "Failed to fetch data (fetchRoomEventsAndSend)" })}\n\n`);
+    }
+}
+        
+module.exports = { getAllusers, Login };
