@@ -229,7 +229,7 @@ export default function TimeSchedule({ currentTime, events = [], zoomLevel, setZ
         {/* Time Labels */}
         <div style={{ display: 'flex', justifyContent: 'space-around', marginBottom: '4px' }}>
           {times.map((time, i) => (
-            <div key={i} style={{ fontSize: '14px', color: '#6B7280' }}>{time}</div>
+            <div key={i} style={{ fontSize: '16px', color: '#4E4E4E' }}>{time}</div>
           ))}
         </div>
 
@@ -237,7 +237,7 @@ export default function TimeSchedule({ currentTime, events = [], zoomLevel, setZ
         <div
           style={{
             position: 'relative',
-            height: '90px',
+            height: '100px',
             backgroundColor: '#F3F4F6',
             borderRadius: '10px',
             overflow: 'hidden',
@@ -278,7 +278,7 @@ export default function TimeSchedule({ currentTime, events = [], zoomLevel, setZ
                     backgroundColor: color,
                     borderRadius: '4px',
                     padding: '2px 6px',
-                    fontSize: '12px',
+                    fontSize: '14px',
                     color: 'white',
                     overflow: 'hidden',
                     whiteSpace: 'nowrap',
@@ -286,7 +286,9 @@ export default function TimeSchedule({ currentTime, events = [], zoomLevel, setZ
                     cursor: 'pointer',
                   }}
                 >
-                  <p style={{display: 'inline-block'}}>{event?.organizer?.emailAddress?.name || 'No Name'}</p>
+                  <p style={{ display: 'inline-block', fontSize: '1rem' }}>
+                      {event?.organizer?.emailAddress?.name || 'No Name'}
+                  </p>
                   <p>{startAMPM} - {endAMPM} (Full Day)</p>
                 </div>
               );
@@ -322,8 +324,8 @@ export default function TimeSchedule({ currentTime, events = [], zoomLevel, setZ
                   cursor: 'pointer',
                 }}
               >
-                <p style={{display: 'inline-block'}}>{event?.organizer?.emailAddress?.name || 'No Name'}</p>
-                <p>{startAMPM} - {endAMPM}</p>
+                <p style={{display: 'inline-block', fontSize: '1rem' }}>{event?.organizer?.emailAddress?.name || 'No Name'}</p>
+                <p style={{ fontSize: '0.875rem' }}>{startAMPM} - {endAMPM}</p>
               </div>
             );
           })}
@@ -359,8 +361,8 @@ export default function TimeSchedule({ currentTime, events = [], zoomLevel, setZ
 
         {/* Bottom Labels */}
         <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px' }}>
-          <div style={{ fontSize: '14px', color: '#6B7280' }}>08:00 AM</div>
-          <div style={{ fontSize: '14px', color: '#6B7280' }}>06:00 PM</div>
+          <div style={{ fontSize: '16px', color: '#4E4E4E' }}>08:00 AM</div>
+          <div style={{ fontSize: '16px', color: '#4E4E4E' }}>06:00 PM</div>
         </div>
       </div>
 

@@ -30,6 +30,9 @@ const PinPopupManager = ({ events, onPinSuccess }) => {
         body: JSON.stringify({ eventId, pin }),
       });
       return await res.json();
+      // const yang = await res.json();
+      // console.log(yang);
+      // return yang;
     } catch (e) {
       return { pinCorrect: false, error: 'Network error' };
     }
@@ -66,7 +69,7 @@ const PinPopupManager = ({ events, onPinSuccess }) => {
       const start = new Date(currentEvent.start.dateTime + 'Z');
       const now = new Date();
       const msSinceStart = now - start;
-      const msToTimeout = Math.max(0, 120 * 60 * 1000 - msSinceStart);
+      const msToTimeout = Math.max(0, 360 * 60 * 1000 - msSinceStart);
       if (pinTimeout) clearTimeout(pinTimeout);
       const timeout = setTimeout(async () => {
         // เรียก DELETE ไป backend เมื่อครบ 15 นาที
@@ -105,7 +108,7 @@ const PinPopupManager = ({ events, onPinSuccess }) => {
     });
     setWaiting(false);
     // เก็บ pending error ไว้ก่อน
-    if (result.pinCorrect) {
+    if (result.pinValid) {
       setPinVerified(true);
       setPendingError('Correct password');
       setTimeout(() => {

@@ -27,7 +27,7 @@ function Home() {
   return (
     <div className="container">
       <div className={`main-container ${isOccupied ? 'occupied' : 'available'}`}>
-        <Lightcontainer isOccupied={isOccupied}/>
+        <Lightcontainer isOccupied={isOccupied} floor={floor} room={room}/>
         <div className="content-wrapper">
           <div className="header-section">
             <div className="left-section">

@@ -265,7 +265,7 @@ body {
   .detail-label {
     padding: 12px 20px;
     margin-right: 20px;
-    font-size: 30px;
+    font-size: 35px;
   }
 }
 
@@ -309,7 +309,7 @@ body {
 
 @media (min-width: 768px) {
   .detail-value {
-    font-size: 25px;
+    font-size: 30px;
     padding: 12px 18px;
   }
 }
@@ -334,7 +334,7 @@ body {
 
 @media (min-width: 768px) {
   .time-value {
-    font-size: 25px;
+    font-size: 30px;
     padding: 12px 18px;
   }
 }

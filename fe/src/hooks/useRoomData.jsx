@@ -24,6 +24,5 @@ export function useRoomData() {
   const floor = parts[3];
   const room = parts[4];
   const capacity = getRoomCapacity(room);
-
   return { floor, room, capacity };
 }

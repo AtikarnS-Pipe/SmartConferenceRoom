@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 
 export function useEvents(floor, room) {
   const [events, setEvents] = useState([]);
+  console.log (events)
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -18,20 +19,20 @@ export function useEvents(floor, room) {
       try {
         const data = JSON.parse(e.data);
 
-        // ✅ ตรวจว่าข้อมูลมาครบหรือไม่
-        if (!data || !data.results || !Array.isArray(data.results)) {
-          console.warn("Data not in expected format", data);
-          setLoading(true); // ยังโหลดอยู่ เพราะข้อมูลไม่ถูกต้อง
-          setEvents([]);
-          return;
-        }
+        // // ✅ ตรวจว่าข้อมูลมาครบหรือไม่
+        // if (!data || !data.results || !Array.isArray(data.results)) {
+        //   console.warn("Data not in expected format", data);
+        //   setLoading(true); // ยังโหลดอยู่ เพราะข้อมูลไม่ถูกต้อง
+        //   setEvents([]);
+        //   return;
+        // }
 
-        // ✅ ถ้าไม่มี event (array ว่าง) ก็ถือว่ายังโหลดอยู่
-        if (data.results.length === 0) {
-          setLoading(true); // ยังรอข้อมูล
-          setEvents([]);
-          return;
-        }
+        // // ✅ ถ้าไม่มี event (array ว่าง) ก็ถือว่ายังโหลดอยู่
+        // if (data.results.length === 0) {
+        //   setLoading(true); // ยังรอข้อมูล
+        //   setEvents([]);
+        //   return;
+        // }
 
         // ✅ ถ้าข้อมูลถูกต้องและมีผลลัพธ์
         setEvents(data.results);
