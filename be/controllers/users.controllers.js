@@ -77,7 +77,7 @@ const getuser = async (req, res) => {
                         "$select": "id,organizer,start,end,locations"
                     })
                     .get();
-                                if (!graphResponse || !graphResponse.value) {
+                if (!graphResponse || !graphResponse.value) {
                     throw new Error(`No value in graphResponse for room ${RoomNumber}: ${JSON.stringify(graphResponse)}`);
                 }
                 const results = graphResponse.value

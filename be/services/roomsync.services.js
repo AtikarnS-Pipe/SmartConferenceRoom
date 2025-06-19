@@ -66,7 +66,7 @@ async function syncAllRooms(req) {
         for (const roomData of results) {
             if (roomData.events && roomData.events.length > 0) {
                 for (const event of roomData.events) {
-                    let booking = await bookingkey.findOne({ room: roomData.room, id: event.id });
+                    let booking = await bookingkey.findOne({ room: roomData.room, eventId: event.id });
                     if (!booking) { // ถ้ายังไม่มี ให้สร้างใหม่
                         console.log('Creating new key for room:', roomData.room, 'event id:', event.id);
                         const key = randomPin();
@@ -74,8 +74,10 @@ async function syncAllRooms(req) {
                         const hashedPassword = await bcrypt.hash(key, salt);
                         booking = await bookingkey.create({
                             room: roomData.room,
-                            id: event.id,
+                            eventId: event.id,
                             key: hashedPassword,
+                            startDateTime: new Date(event.start?.dateTime + "Z"),
+                            endDateTime: new Date(event.end?.dateTime + "Z")
                         });
                         console.log('mail send:', key);
                         const mailContent = `รหัสผ่านสำหรับห้อง ${roomData.room} คือ ${key}`;
