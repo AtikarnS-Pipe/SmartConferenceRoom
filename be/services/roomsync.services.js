@@ -3,31 +3,19 @@ const bookingkey = require('../models/bookingkey');
 const sendMailAsync = require("./sendmail.services")
 const bcrypt = require('bcryptjs');
 require('dotenv').config();
-const jwt = require("jsonwebtoken");    
-const { authProvider } = require("../AuthProvider");
-const JWT_SECRET = process.env.JWT_SECRET;
+const tokenCache = require("../utils/tokenCache")
+const {decryptToken} = require('../utils/encode')
 
 function randomPin() {
   return Math.floor(1000 + Math.random() * 9000).toString(); // 0.000-0.999*9000ได้ 0-8999 + 1000 จะได้ Range 1000-9999 
 }
 
 // สร้างรหัสผ่านแบบสุ่ม 4 หลัก เเละเก็บค่าใน DB เเละมีการเช็คโดยดึง api มาเช็คตลอด
-async function syncAllRooms(req) {
+async function syncAllRooms() {
     try{
-        const token = req.cookies.user_token;
-         if (!token) {
-            throw new Error("No accessToken");
-        }
-        const payload = jwt.verify(token, JWT_SECRET);
-        const account = await authProvider.getAccountById(payload.homeAccountId);
-        if (!account) {
-            throw new Error("Session expired, please ask admin to login again");
-        }
-        let tokenResponse = await authProvider.acquireTokenSilent(
-            account,
-            [process.env.SCOPE1, process.env.SCOPE2]
-        );
-       
+        await tokenCache.isTokenExpired();
+        console.log('check expired roomsync success!')
+
         const roomNumbers = [
         1501, 1502, 1503, 1504, 1505,
         1506, 1514, 1515, 1519, 1520
@@ -42,7 +30,7 @@ async function syncAllRooms(req) {
         // ดึงข้อมูลจาก Microsoft Graph API
         const results = await Promise.all(
             roomNumbers.map(async (room) => {
-                const graphResponse = await getGraphClient(tokenResponse.accessToken)
+                const graphResponse = await getGraphClient(decryptToken(tokenCache.getAccessToken()))
                     .api(`https://graph.microsoft.com/v1.0/users/${room}@tcc-technology.com/calendarView`)
                     .query({
                         startDateTime: `${startDateTime}T00:00:00Z`,
@@ -81,8 +69,8 @@ async function syncAllRooms(req) {
                         });
                         console.log('mail send:', key);
                         const mailContent = `รหัสผ่านสำหรับห้อง ${roomData.room} คือ ${key}`;
-                        const mail = "Atikarn.S@tcc-technology.com"
-                        // await sendMailAsync(event.organizer?.emailAddress?.address, mailContent, mail, tokenResponse.accessToken); //หัวข้ออีเมล, รหัสผ่าน, หมายเลขห้องที่จะส่งไป
+                        const mail = "Chitsanuchat.A@tcc-technology.com" //Atikarn.S
+                        await sendMailAsync(event.organizer?.emailAddress?.address, mailContent, mail, decryptToken(tokenCache.getAccessToken())); //หัวข้ออีเมล, รหัสผ่าน, หมายเลขห้องที่จะส่งไป
                     }
                 }
             }

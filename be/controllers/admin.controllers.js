@@ -1,12 +1,16 @@
 require('dotenv').config({ path: './config/.env'});
 const getGraphClient = require("../graph");
 const { getTokenByCode, refreshAccessToken } = require("../AuthProvider");
-const jwt = require('jsonwebtoken');
-const JWT_SECRET = process.env.JWT_SECRET;
+// const jwt = require('jsonwebtoken');
+const tokenCache = require('../utils/tokenCache')
+const {encryptToken, decryptToken} = require('../utils/encode')
+const {addCacheandDB} = require('../services/adminsocket.services')
+
+const Token = require('../models/token')
 
 const getAllusers = async (req, res) => {
     const code = req.query.code;
-    let tokenResponse, accessToken;
+    let tokenResponse;
     res.set({
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
@@ -18,27 +22,34 @@ const getAllusers = async (req, res) => {
     try {
         if (code && code !== "null") {
             // login ครั้งแรก
+            let encryptedACToken, encryptedRFToken, datatoken;
             tokenResponse = await getTokenByCode(code);
-            accessToken = tokenResponse.access_token
-            console.log("refresh token", tokenResponse.refresh_token)
-            // console.log("access_token2", tokenResponse.access_token)
+            try{
+                encryptedRFToken = encryptToken(tokenResponse.refresh_token);
+                encryptedACToken = encryptToken(tokenResponse.access_token);
+                datatoken = {
+                    accessToken: encryptedACToken, 
+                    refreshToken: encryptedRFToken, 
+                    expiryDate: new Date(Date.now() + 60 * 60 * 1000)
+                }
+                await addCacheandDB(datatoken);
+            } catch(err){
+                throw new Error("error:", err.message) 
+            }
         } else {
-            throw new Error(`No value in graphResponse for room ${room}: ${JSON.stringify(graphResponse)}`);
+            await tokenCache.isTokenExpired();
         }
-        console.log("access_token2", accessToken)
-
-        fetchAllRoom(res, accessToken);
+        
+         
+        fetchAllRoom(res, decryptToken(tokenCache.getAccessToken()));
         setInterval(async () => {
-            fetchAllRoom(res, accessToken);
-        }, 10000);
+            await tokenCache.isTokenExpired();
+            fetchAllRoom(res, decryptToken(tokenCache.getAccessToken()));
+        }, 15000);
 
-        refreshAccessToken(tokenResponse.refresh_token)
-        setInterval(async () => {
-            refreshAccessToken(tokenResponse.refresh_token)
-        }, 10000);
 
     } catch (err) {
-        console.error("Error: Checking accesstoken or refreshtoken and function")
+        console.error("Error: Checking in admin.controllers")
         res.write(`event: error\ndata: ${JSON.stringify({ error: "Failed, please check login, geting token and fetching data", detail: err.message })}\n\n`);
         res.end();
         return;
@@ -96,7 +107,7 @@ async function fetchAllRoom(res, accessToken) {
             })
         );
 
-        console.log(results);
+        console.log("admin GET API success!!");
         res.write(`data: ${JSON.stringify({ results })}\n\n`);
     } catch (error) {
         console.error(error);

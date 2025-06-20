@@ -30,7 +30,7 @@ async function refreshAccessToken(refresh_token) {
     client_secret: process.env.CLIENT_SECRET,
     grant_type: 'refresh_token',
     refresh_token,
-    scope: 'https://graph.microsoft.com/.default'
+    scope:  process.env.SCOPE1 + ' ' + process.env.SCOPE2 + ' ' + process.env.SCOPE3
   };
 
   try {
@@ -39,7 +39,13 @@ async function refreshAccessToken(refresh_token) {
     });
     return response.data;
   } catch (error) {
-    console.error("Error: Refresh token Error", error.message)
+    console.error("Error: Refresh token Error");
+    if (error.response) {
+      console.error("Status Code:", error.response.status);
+      console.error("Response Data:", error.response.data);
+    } else {
+      console.error("Error Message:", error.message);
+    }
     throw error;
   }
 }
