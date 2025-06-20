@@ -2,12 +2,12 @@ import { useEffect } from 'react';
 import axios from 'axios';
 
 const roomDeviceMap = {
-  '1501': { ip: '10.1.66.110', token: '364FF54C6CAB5B19F6BC6C7AE8FB86' },
-  '1502': { ip: '10.1.66.111', token: 'DFFEB5C16017AFB6734FE82DFDC8A976' },
-  '1505': { ip: '10.1.66.128', token: 'FBF3BC17359E5C11C189238A6062' },
-  '1506': { ip: '10.1.66.131', token: 'C8D43F776633A31D837A48D1BE029D' },
-  '1514': { ip: '10.1.66.126', token: 'ED187F5396693A6C27C5B21CA0D456' },
-  '1515': { ip: '10.1.66.106', token: '5469B347B961196E0763B1FF3F2B8B3' },
+  '1501': { ip: '10.1.66.110', token: import.meta.env.VITE_ROOM_1501_TOKEN },
+  '1502': { ip: '10.1.66.111', token: import.meta.env.VITE_ROOM_1502_TOKEN },
+  '1505': { ip: '10.1.66.128', token: import.meta.env.VITE_ROOM_1505_TOKEN },
+  '1506': { ip: '10.1.66.131', token: import.meta.env.VITE_ROOM_1506_TOKEN },
+  '1514': { ip: '10.1.66.126', token: import.meta.env.VITE_ROOM_1514_TOKEN },
+  '1515': { ip: '10.1.66.106', token: import.meta.env.VITE_ROOM_1515_TOKEN },
 };
 
 export default function LightContainer({ isOccupied, floor, room }) {
@@ -24,7 +24,7 @@ export default function LightContainer({ isOccupied, floor, room }) {
 
     axios.post(`http://${device.ip}:8080/v2/hardware/light?access_token=${device.token}`, {
       name: 'frame',
-      brightness: '1',
+      brightness: '0',
       color: color
     })
       .then((res) => {
