@@ -19,7 +19,7 @@ function ZoomControls({ zoomLevel, setZoomLevel }) {
           border: '1px solid #D1D5DB',
           padding: '4px 8px',
           borderRadius: '6px',
-          fontSize: '14px',
+          fontSize: '16px',
           marginRight: '6px',
           cursor: 'pointer'
         }}
@@ -34,7 +34,7 @@ function ZoomControls({ zoomLevel, setZoomLevel }) {
           border: '1px solid #D1D5DB',
           padding: '4px 8px',
           borderRadius: '6px',
-          fontSize: '14px',
+          fontSize: '16px',
           marginRight: '6px',
           cursor: 'pointer'
         }}

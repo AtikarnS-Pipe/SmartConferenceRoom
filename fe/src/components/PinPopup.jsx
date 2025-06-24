@@ -36,8 +36,8 @@ const PinPopup = ({ onSubmit, error, waiting }) => {
     }}>
       {[0, 1, 2, 3].map(i => (
         <div key={i} style={{
-          width: '20px',
-          height: '20px',
+          width: '25px',
+          height: '25px',
           borderRadius: '50%',
           backgroundColor: pin.length > i ? '#1D4ED8' : '#D1D5DB',
           transition: 'background-color 0.2s ease'
@@ -71,7 +71,7 @@ const PinPopup = ({ onSubmit, error, waiting }) => {
         textAlign: 'center',
       }}>
         <h2 style={{
-          fontSize: '1.5rem',
+          fontSize: '1.75rem',
           marginBottom: '1.5rem',
           fontWeight: 600,
           color: '#111827'
@@ -121,8 +121,8 @@ const PinPopup = ({ onSubmit, error, waiting }) => {
             <button
               key={idx}
               style={{
-                width: '80px',
-                height: '80px',
+                width: '100px',
+                height: '100px',
                 borderRadius: '50%',
                 backgroundColor: '#F3F4F6',
                 border: 'none',
