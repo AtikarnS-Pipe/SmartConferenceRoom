@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import PinPopup from '../components/PinPopup'; // ไฟล์นี้คือ component ที่คุณให้มา
 import { useCurrentEvent } from './useCurrentEvent'; // hook แยก
 
-const PinPopupManager = ({ events, onPinSuccess }) => {
+const PinPopupManager = ({ events, onPinSuccess, closeSignal }) => {
   const { currentEvent, isOccupied } = useCurrentEvent(events);
   const [pinVisible, setPinVisible] = useState(false);
   const [pinVerified, setPinVerified] = useState(false);
@@ -69,7 +69,7 @@ const PinPopupManager = ({ events, onPinSuccess }) => {
       const start = new Date(currentEvent.start.dateTime + 'Z');
       const now = new Date();
       const msSinceStart = now - start;
-      const msToTimeout = Math.max(0, 360 * 60 * 1000 - msSinceStart);
+      const msToTimeout = Math.max(0, 10000 * 60 * 1000 - msSinceStart);
       if (pinTimeout) clearTimeout(pinTimeout);
       const timeout = setTimeout(async () => {
         // เรียก DELETE ไป backend เมื่อครบ 15 นาที
@@ -96,6 +96,17 @@ const PinPopupManager = ({ events, onPinSuccess }) => {
       setError('');
     }
   }, [isOccupied, pinVerified]);
+
+  // เปิดหน้า pin ค้างไว้เพื่อเทส
+  // useEffect(() => {
+  //   setPinVisible(true);
+  // }, []);
+
+  useEffect(() => {
+    if (closeSignal) {
+      setPinVisible(false);
+    }
+  }, [closeSignal]);
 
   //รับ pin เเละเรียก fn sendPinToBackend
   const handlePinSubmit = async (pin) => {

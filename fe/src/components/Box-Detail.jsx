@@ -2,8 +2,10 @@ import Title from '../icons/Title.svg'
 import Organizer from '../icons/Organizer.svg'
 import Time from '../icons/Time.svg'
 import TimeRemaining from '../icons/Time-remaining.svg' 
+import { useIsFullDayEvent } from '../hooks/useIsFullDayEvent.jsx';
 
 export default function Boxdetail ({ isOccupied, event, getTimeRemaining, loading }){
+  const isFullDayEvent = useIsFullDayEvent();
   
     return (
         <div className={`box-detail ${isOccupied ? 'occupied' : 'available'}`}>
@@ -29,19 +31,20 @@ export default function Boxdetail ({ isOccupied, event, getTimeRemaining, loadin
                   Time :
                 </span>
                 <span  className="time-value">
-                {new Date(event.start.dateTime + 'Z').toLocaleTimeString('en-US', {
-                  timeZone: 'Asia/Bangkok',
-                  hour: '2-digit',
-                  minute: '2-digit',
-                  hour12: true
-                })}
-                {' - '}
-                {new Date(event.end.dateTime + 'Z').toLocaleTimeString('en-US', {
-                  timeZone: 'Asia/Bangkok',
-                  hour: '2-digit',
-                  minute: '2-digit',
-                  hour12: true
-                })}
+                  {isFullDayEvent(event)
+                    ? 'Full day'
+                    : `${new Date(event.start.dateTime + 'Z').toLocaleTimeString('en-US', {
+                        timeZone: 'Asia/Bangkok',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: true
+                      })} - ${new Date(event.end.dateTime + 'Z').toLocaleTimeString('en-US', {
+                        timeZone: 'Asia/Bangkok',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: true
+                      })}`
+                  }
                 </span>
               </div>
               <div className="detail-row">

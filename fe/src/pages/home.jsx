@@ -11,10 +11,10 @@ import ZoomControl from '../components/ZoomControl'
 import { useCurrentEvent } from '../hooks/useCurrentEvent'; 
 import { useRoomData } from '../hooks/useRoomData'  
 import { getTimeRemaining } from '../hooks/useTimeRemaining'
-// import { useSocket } from '../hooks/useSocket';
 import { useCurrentTime } from '../hooks/useCurrentTime';
 import { useEvents } from '../hooks/useEvents';
 import PinPopupManager from '../hooks/usePinPopupManager';
+import StaffPinPopupManager from '../hooks/useStaffPinPopupManager'
 
 function Home() {
   // const token = useSocket();
@@ -23,7 +23,13 @@ function Home() {
   const {currentEvent,isOccupied } = useCurrentEvent(events);
   const currentTime = useCurrentTime()
   const [zoomLevel, setZoomLevel] = useState(1);
-  
+  const [closeUserPin, setCloseUserPin] = useState(false);
+
+  const handleCloseUserPin = () => {
+    setCloseUserPin(true);
+    setTimeout(() => setCloseUserPin(false), 100); // reset trigger
+  };
+
   return (
     <div className="container">
       <div className={`main-container ${isOccupied ? 'occupied' : 'available'}`}>
@@ -54,11 +60,11 @@ function Home() {
             <div className="schedule-container">
               <TimeSchedule currentTime={currentTime} events={events} zoomLevel={zoomLevel} setZoomLevel={setZoomLevel} />
             </div>
-            <p className = 'touchscreen'>#Touch‑Supported</p>
+            {/* <p className = 'touchscreen'>#Touch‑Supported</p> */}
           </div>
-        </div>
-      </div>
-      <PinPopupManager events={events}/>
+        </div>      </div>
+      <PinPopupManager events={events} closeSignal={closeUserPin} />
+      <StaffPinPopupManager showTestButton closeUserPinPopup={handleCloseUserPin} />
     </div>
   )
 }

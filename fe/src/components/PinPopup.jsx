@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-
-const PinPopup = ({ onSubmit, error, waiting }) => {
+import {DoorClosedLocked} from 'lucide-react'
+import { DoorOpen } from 'lucide-react'
+const PinPopup = ({ onSubmit, error, waiting, title = 'Enter PIN Code', showIcon = true }) => {
   const [pin, setPin] = useState('');
   const [blink, setBlink] = useState(false);
 
@@ -27,6 +28,10 @@ const PinPopup = ({ onSubmit, error, waiting }) => {
     setPin(pin.slice(0, -1));
   };
 
+  const handleClear = () => {
+    setPin('');
+  };
+
   const renderDots = () => (
     <div style={{
       display: 'flex',
@@ -36,8 +41,8 @@ const PinPopup = ({ onSubmit, error, waiting }) => {
     }}>
       {[0, 1, 2, 3].map(i => (
         <div key={i} style={{
-          width: '25px',
-          height: '25px',
+          width: '20px',
+          height: '20px',
           borderRadius: '50%',
           backgroundColor: pin.length > i ? '#1D4ED8' : '#D1D5DB',
           transition: 'background-color 0.2s ease'
@@ -46,7 +51,7 @@ const PinPopup = ({ onSubmit, error, waiting }) => {
     </div>
   );
 
-  const keypad = [1, 2, 3, 4, 5, 6, 7, 8, 9, '', 0, '←'];
+  const keypad = [1, 2, 3, 4, 5, 6, 7, 8, 9, 'Clr', 0, '←'];
 
   return (
     <div style={{
@@ -74,9 +79,14 @@ const PinPopup = ({ onSubmit, error, waiting }) => {
           fontSize: '1.75rem',
           marginBottom: '1.5rem',
           fontWeight: 600,
-          color: '#111827'
+          color: '#111827',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '0.5rem'
         }}>
-          Enter PIN Code
+          {title}
+          {showIcon && (error === 'Correct password' ? <DoorOpen size={30} color="#000000" /> : <DoorClosedLocked size={28} color="#000000" />)}
         </h2>
 
         {renderDots()}
@@ -136,6 +146,7 @@ const PinPopup = ({ onSubmit, error, waiting }) => {
               onClick={() => {
                 if (waiting || key === '') return;
                 if (key === '←') handleBackspace();
+                else if (key === 'Clr') handleClear();
                 else handlePress(key);
               }}
               disabled={key === '' || waiting}

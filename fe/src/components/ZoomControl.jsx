@@ -19,22 +19,21 @@ function ZoomControls({ zoomLevel, setZoomLevel }) {
           border: '1px solid #D1D5DB',
           padding: '4px 8px',
           borderRadius: '6px',
-          fontSize: '16px',
+          fontSize: '18px',
           marginRight: '6px',
           cursor: 'pointer'
         }}
         onClick={handleZoomOut}
       >
         − Zoom Out
-      </button>
-      <button
+      </button>      <button
         style={{
           backgroundColor: '#E5E7EB',
           color: '#374151',
           border: '1px solid #D1D5DB',
           padding: '4px 8px',
           borderRadius: '6px',
-          fontSize: '16px',
+          fontSize: '18px',
           marginRight: '6px',
           cursor: 'pointer'
         }}

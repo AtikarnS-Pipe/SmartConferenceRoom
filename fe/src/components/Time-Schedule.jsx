@@ -1,4 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react'; 
+import { useIsFullDayEvent } from '../hooks/useIsFullDayEvent.jsx';
+import { Timer } from 'lucide-react';
 
 export default function TimeSchedule({ currentTime, events = [], zoomLevel, setZoomLevel  }) {
   const [selectedEvent, setSelectedEvent] = useState(null);
@@ -213,6 +215,8 @@ export default function TimeSchedule({ currentTime, events = [], zoomLevel, setZ
   // Effective zoom level is the max of current zoom and adaptive zoom
   const effectiveZoomLevel = Math.max(zoomLevel, getAdaptiveZoomLevel());
 
+  const isFullDayEvent = useIsFullDayEvent();
+
   return (
     <div 
       ref={containerRef}
@@ -289,7 +293,7 @@ export default function TimeSchedule({ currentTime, events = [], zoomLevel, setZ
                   <p style={{ display: 'inline-block', fontSize: '1rem' }}>
                       {event?.organizer?.emailAddress?.name || 'No Name'}
                   </p>
-                  <p>{startAMPM} - {endAMPM} (Full Day)</p>
+                  <p>(Full Day)</p>
                 </div>
               );
             }
@@ -386,31 +390,36 @@ export default function TimeSchedule({ currentTime, events = [], zoomLevel, setZ
             left: '50%',
             transform: 'translate(-50%, -50%)',
             background: '#fff',
-            padding: '24px',
-            borderRadius: '12px',
-            boxShadow: '0 8px 20px rgba(0,0,0,0.2)',
-            maxWidth: '480px',
-            maxHeight: '85vh',
+            padding: '40px', 
+            borderRadius: '18px', 
+            boxShadow: '0 12px 32px rgba(0,0,0,0.25)', 
+            maxWidth: '700px', 
+            maxHeight: '95vh', 
             overflowY: 'auto',
             zIndex: 1000,
             fontFamily: 'Segoe UI, sans-serif',
+            fontSize: '1.15rem', 
           }}
         >
-          <h2 style={{ marginBottom: '8px', fontSize: '20px', fontWeight: '600', color: '#2E5074' }}>
+          <h2 style={{ marginBottom: '8px', fontSize: '30px', fontWeight: '600', color: '#2E5074' }}>
             {selectedEvent?.organizer?.emailAddress?.name || 'No Name'}
           </h2>
 
-          <div style={{ fontSize: '14px', color: '#374151', marginBottom: '6px' }}>
-            <strong>Start - End:</strong> {toAMPM_UTCplus7(selectedEvent?.start?.dateTime)} - {toAMPM_UTCplus7(selectedEvent?.end?.dateTime)}
+          <div style={{ fontSize: '20px', color: '#374151', marginBottom: '6px' }}>
+            <strong>Start - End:</strong> {isFullDayEvent(selectedEvent) ? 'Full day' : `${toAMPM_UTCplus7(selectedEvent?.start?.dateTime)} - ${toAMPM_UTCplus7(selectedEvent?.end?.dateTime)}`}
           </div>
 
           <div style={{
-            fontSize: '14px',
+            fontSize: '20px',
             color: '#EF4444',
             fontWeight: '500',
-            marginBottom: '12px'
+            marginBottom: '12px',
+            display : 'flex',
+            alignItems: 'center',
+            gap : 'px'
           }}>
-            ⏱ <strong>Time Remaining:</strong> {getTimeRemaining(selectedEvent)}
+            <Timer/> 
+            <strong>Time Remaining:</strong> {getTimeRemaining(selectedEvent)}
           </div>
 
           <div
