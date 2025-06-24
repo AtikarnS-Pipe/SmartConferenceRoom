@@ -2,8 +2,9 @@ require('dotenv').config({ path: './config/.env'});
 const syncAllRooms = require('./services/roomsync.services');
 const {connectToDatabase} = require("./database/mongodb");
 const express = require("express");
-const Adminrouter = require("./routes/admin.routes");
+const Adminrouter = require("./routes/admin_ms.routes");
 const Userrouter = require("./routes/users.routes");
+const Accountrouter = require("./routes/account_manage.routes");
 const { GetScheduleData } = require("./services/adminsocket.services");
 const cors = require('cors');
 const http = require("http");
@@ -35,23 +36,32 @@ app.use(cors({
 
 app.use(express.json()); // เเปลง http body เป็น json
 
+
 io.on("connection", (socket) => { //socket เป็นตัวเเทนเเต่ละการเชื่อมต่อ รอรับ event จาก client
   console.log("User connected:", socket.id);
+  const intervalMap = new Map();
 
   socket.on("get_schedule", async (data) => {
     console.log("get_schedule => ", data);
     const { Room, startdate, enddate } = data;
     const start = `${startdate.slice(4)}-${startdate.slice(2,4)}-${startdate.slice(0,2)}`;
     const end = `${enddate.slice(4)}-${enddate.slice(2,4)}-${enddate.slice(0,2)}`;
+
+    if (intervalMap.has(socket.id)) { // Reduce memory leak
+      clearInterval(intervalMap.get(socket.id)); // clear the previous interval if exists
+    }
+
     try {
       await tokenCache.isTokenExpired();
       let results = await GetScheduleData(decryptToken(tokenCache.getAccessToken()), Room, start, end);
       socket.emit("receive_api", results);
-      setInterval(async () => {
+      const intervalId = setInterval(async () => {
         await tokenCache.isTokenExpired();
         results = await GetScheduleData(decryptToken(tokenCache.getAccessToken()), Room, start, end);
         socket.emit("receive_api", results);
       }, 15000);
+
+      intervalMap.set(socket.id, intervalId);  // Store the interval ID for this socket connection
     } catch (err) {
       console.log("error:", err);
       socket.emit("receive_api", []);
@@ -69,7 +79,7 @@ app.set("io", io); // เพื่อให้เรียก req.app.get("io") 
 
 app.use("/admin", Adminrouter);
 app.use("/user", Userrouter);
-
+app.use("/account", Accountrouter);
 
 app.get('/', (req, res) => {
   res.send('Welcome to the Smart Display Conference System!');
