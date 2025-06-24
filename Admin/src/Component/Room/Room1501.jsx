@@ -43,17 +43,18 @@ const Room1501 = () => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
 
     return () => {
-      socketRef.current.disconnect(); //
+      socketRef.current.disconnect();
       clearInterval(timer);
     } 
   }, []);
   useEffect(() => {
-    const socket = socketRef.current; //
-    // socket.emit("wait_for_token");
+    const socket = socketRef.current; 
 
-    // socket.on("receive_token", (latestToken) => {
+    socket.off("receive_api");
+    socket.off("revoked_api");
+    setScheduleApi(null)
+    
     socket.emit("get_schedule", { Room, startdate, enddate });
-    // });
     console.log("get_schedule => ", { Room, startdate, enddate });
     socket.on("receive_api", (scheduleApi2) => {
       if(JSON.stringify(scheduleApi2) !== JSON.stringify(scheduleApi)){ //
@@ -65,15 +66,9 @@ const Room1501 = () => {
 
     return () => {
       socket.off("receive_api");
-      // socket.off("receive_token"); //
       socket.off("revoked_api");
     };
   }, [Room, startdate, enddate]);
-
-  // useEffect(() => {
-  //   const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-  //   return () => clearInterval(timer);
-  // }, []);
 
   useEffect(() => {
     if (startdate && enddate) {

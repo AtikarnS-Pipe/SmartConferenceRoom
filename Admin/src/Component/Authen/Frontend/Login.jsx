@@ -17,7 +17,7 @@ function Verify( {setAuth} ) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try{
-      const res = await axios.post('/admin/auth', formData);
+      const res = await axios.post('/account/auth', formData);
       alert("Login successful");
       localStorage.setItem('token', res.data.token);
       setAuth(true);
