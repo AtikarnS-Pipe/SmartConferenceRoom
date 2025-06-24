@@ -11,7 +11,8 @@ export default defineConfig({
     proxy: {
       '/rooms': 'http://localhost:4000',
       '/admin/login': 'http://localhost:4000',
-      '/admin/sse': 'http://localhost:4000'
+      '/admin/sse': 'http://localhost:4000',
+      '/admin/auth': 'http://localhost:4000'
     }
   }
 })

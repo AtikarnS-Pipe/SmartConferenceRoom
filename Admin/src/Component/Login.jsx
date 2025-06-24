@@ -1,14 +1,20 @@
 import { useEffect} from 'react'
 
 const LoginPage = () => {
-   useEffect(() => {
-        // เช็ค cookie user_token
-        const code = new URLSearchParams(location.search).get("code");
-        if (!code) {
-          window.location.href = `/admin/login`;
-          return;
-        }
-    },[]);
+  // เช็ค code params
+  useEffect(() => {
+    const code = new URLSearchParams(location.search).get("code");
+    if (!code) {
+      window.location.href = `/admin/login`;
+      return;
+    }
+  }, []);
+  
+  return (
+    <div>
+      Loading...
+    </div>
+  );
 };
 
 export default LoginPage;

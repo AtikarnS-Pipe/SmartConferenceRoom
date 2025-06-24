@@ -1,5 +1,13 @@
 # React + Vite
 
+
+Admin / 1234z
+
+
+mongodb://localhost:27017/
+
+mongodb+srv://Admin:1234z@login.odkzu8w.mongodb.net/
+
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 Currently, two official plugins are available:

@@ -3,7 +3,6 @@ import { MdPeople } from "react-icons/md";
 import { FaClock } from "react-icons/fa6";
 import { IoPerson } from "react-icons/io5";
 import { useNavigate } from 'react-router-dom';
-import Switch from './Switch';
 
 function Roomcard(props) {
   const { data, icons } = props
@@ -16,11 +15,11 @@ function Roomcard(props) {
     return () => clearInterval(interval);
   }, []);
 
-const parseTime = (timeStr) => {
-  const date = new Date(timeStr);
-  date.setHours(date.getHours() + 7); // ปรับเป็นเวลาประเทศไทย (UTC+7)
-  return date;
-};
+  const parseTime = (timeStr) => {
+    const date = new Date(timeStr);
+    date.setHours(date.getHours() + 7); // ปรับเป็นเวลาประเทศไทย (UTC+7)
+    return date;
+  };
   const roomNameMap = {
     '1501': '15/01',
     '1502': '15/02',
@@ -37,19 +36,14 @@ const parseTime = (timeStr) => {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 px-2 sm:px-4 md:px-6">
       {data.map((d, index) => {
-        let start = ''
-        let end = ''
-        d.events.map((inner) => {
-          start = parseTime(inner.start.dateTime)
-          end = parseTime(inner.end.dateTime)
-        })
+        const isAvailable = !d.events.some((event) => {
+          const start = parseTime(event.start.dateTime);
+          const end = parseTime(event.end.dateTime);
+          return currentTime >= start && currentTime < end;
+        });
 
-      const isAvailable = !d.events.some((event) => {
-      const start = parseTime(event.start.dateTime);
-      const end = parseTime(event.end.dateTime);
-      return currentTime >= start && currentTime < end; // ให้ใช้ < แทน <=
-    });
         const statusColor = isAvailable ? "bg-green-500" : "bg-red-500";
+
         const renderIcons = (count) => {
           if (count === 1) {
             return <MdPeople className='mx-auto' size={40} />;
@@ -69,6 +63,7 @@ const parseTime = (timeStr) => {
             return null;
           }
         };
+
         const handleScheduleClick = () => {
           const roomPath = d.room;
           const today = new Date();
@@ -85,6 +80,7 @@ const parseTime = (timeStr) => {
           const url = `/room/${roomPath}/${start}/${end}`;
           navigate(url);
         };
+
         const matchedRoom = icons.find(i => String(i.room).trim() === String(d.room).trim());
         const peopleCount = matchedRoom ? matchedRoom.people : '-';
         const iconClass = renderIcons(matchedRoom?.icons);
@@ -94,7 +90,7 @@ const parseTime = (timeStr) => {
             key={index}
             className="bg-white rounded-[25px] pt-5 pb-10 px-4 shadow-xl flex flex-col justify-between min-h-[250px] max-w-full
               transition-all duration-200 font-medium"
-          > 
+          >
             <div className="flex justify-between items-center mb-3">
               <div className='font-semibold flex items-center text-base sm:text-lg'><IoPerson className='mr-1' />{peopleCount}</div>
               <div className='border text-white bg-black px-3 py-1 rounded-2xl text-sm sm:text-base'>{roomNameMap[d.room] || d.room}</div>
@@ -110,7 +106,6 @@ const parseTime = (timeStr) => {
                 >
                   Schedule
                 </div>
-                <div><Switch/></div>
               </div>
             </div>
           </div>
