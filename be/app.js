@@ -70,6 +70,7 @@ app.set("io", io); // เพื่อให้เรียก req.app.get("io") 
 app.use("/admin", Adminrouter);
 app.use("/user", Userrouter);
 
+
 app.get('/', (req, res) => {
   res.send('Welcome to the Smart Display Conference System!');
 });

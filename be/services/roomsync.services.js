@@ -69,7 +69,7 @@ async function syncAllRooms() {
                         });
                         console.log('mail send:', key);
                         const mailContent = `รหัสผ่านสำหรับห้อง ${roomData.room} คือ ${key}`;
-                        const mail = "Chitsanuchat.A@tcc-technology.com" //Atikarn.S
+                        const mail = "Nareupol.A@tcc-technology.com" //Atikarn.S
                         await sendMailAsync(event.organizer?.emailAddress?.address, mailContent, mail, decryptToken(tokenCache.getAccessToken())); //หัวข้ออีเมล, รหัสผ่าน, หมายเลขห้องที่จะส่งไป
                     }
                 }

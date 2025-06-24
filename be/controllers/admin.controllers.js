@@ -1,12 +1,14 @@
 require('dotenv').config({ path: './config/.env'});
 const getGraphClient = require("../graph");
 const { getTokenByCode, refreshAccessToken } = require("../AuthProvider");
-// const jwt = require('jsonwebtoken');
 const tokenCache = require('../utils/tokenCache')
 const {encryptToken, decryptToken} = require('../utils/encode')
 const {addCacheandDB} = require('../services/adminsocket.services')
-
-const Token = require('../models/token')
+// auth
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const User = require('../models/User');
+// const router = express.Router();
 
 const getAllusers = async (req, res) => {
     const code = req.query.code;
@@ -114,5 +116,22 @@ async function fetchAllRoom(res, accessToken) {
         res.write(`event: error\ndata: ${JSON.stringify({ error: "Failed to fetch data (fetchRoomEventsAndSend)" })}\n\n`);
     }
 }
+
+const Auth = async (req, res) => {
+    const { email, password } = req.body;
+    try{
+        const user = await User.findOne({ email });
+        if(!user) return res.status(404).json({error: "Invalid credentials"});
+
+        const isMatch = await bcrypt.compare(password, user.password);
+        if(!isMatch) return res.status(400).json({error: "Invalid credentials"});
+
+        const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+        res.json({ token })
+    } catch (error) {
+        res.status(500).json({error: error.message});
+
+    }
+}
         
-module.exports = { getAllusers, Login };
+module.exports = { getAllusers, Login, Auth };
