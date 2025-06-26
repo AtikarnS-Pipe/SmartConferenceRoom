@@ -9,6 +9,8 @@ import { Verify } from './Component/Authen/Frontend/Login'
 import RoomSize from './Component/Roomsize'
 import Protect from './Component/Authen/Frontend/Protect'
 import LoginPage from './Component/Login'
+import Account from './Component/Manage/Account'
+import Housekeeper from './Component/Manage/Housekeeper'
 
 function App() {
 
@@ -30,6 +32,8 @@ function App() {
         <Route path='/Available' element={<Available key={location.key}/>} />
         <Route path='/Unavailable' element={<Unavailable />} />
         <Route path='/roomsize/:size' element={<RoomSize />} />
+        <Route path='/account/admin' element={<Account />} />
+        <Route path='/account/housekeeper' element={<Housekeeper />} />
     </Routes>
     </Router>
   )
