@@ -24,7 +24,7 @@ const PinPopupManager = ({ events, onPinSuccess, closeSignal }) => {
     console.log('pin:',pin);
     console.log('eventId:',eventId);
     try {
-      const res = await fetch('http://localhost:4000/user/key', { 
+      const res = await fetch('/user/key', { 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ eventId, pin }),
@@ -51,7 +51,7 @@ const PinPopupManager = ({ events, onPinSuccess, closeSignal }) => {
   // ฟังก์ชัน: ลบ event เมื่อ timeout (method DELETE)
   const deleteEventOnBackend = async ({ eventId }) => {
     try {
-      const res = await fetch('http://localhost:4000/user/key', { 
+      const res = await fetch('/user/key', { 
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ eventId }),
