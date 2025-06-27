@@ -1,5 +1,5 @@
 const getGraphClient = require("../graph"); 
-const Token = require('../models/token')
+const Token = require('../models/token');
 const tokenCache = require('../utils/tokenCache')
 
 
@@ -25,16 +25,26 @@ async function GetScheduleData(actoken, Room, start, end){
       console.log("error:", error);
     }
 }
-
-async function addCacheandDB(tokenobject){
+// Logs token create
+async function addCacheandDB(tokenobject, adminId){
+    let existingUser;
     tokenCache.setToken(tokenobject)
     console.log("Token encrypted and cached. Expiry:", tokenobject.expiryDate);
 
     // If ACCOUNT DB has unique same in TOKEN DB, Update that recode
-    // If not, Create token in DB. ตอนนี้ซ้ำยาว
-    const Tokenstore = await Token.create(tokenobject)
-    console.log("Token saved to DB. ID:", Tokenstore._id);
-    return;
+    existingUser = await Token.findOne({ account:adminId})
+    if(existingUser){
+        existingUser.refreshToken = tokenobject.refreshToken;
+        existingUser.accessToken = tokenobject.accessToken;
+        existingUser.expiryDate = tokenobject.expiryDate;
+        await existingUser.save();
+    } else{
+        // If not, Create token in DB. ตอนนี้ซ้ำยาว
+        existingUser = await Token.create(tokenobject)
+    }
+    console.log("Token saved to DB. ID:", existingUser._id);
+
+    return existingUser; // logs token create and update ส่งไปให้ sse เพื่อทำให้ fe เเสดง logs
 }
 
 module.exports = { GetScheduleData, addCacheandDB };

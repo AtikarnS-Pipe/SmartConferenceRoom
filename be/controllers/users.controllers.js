@@ -1,3 +1,4 @@
+const { DateTime } = require('luxon');
 const { authProvider } = require("../AuthProvider");
 const { compareKey, deleteSchedule } = require('../services/pin.services');
 require('dotenv').config({ path: './config/.env'});
@@ -25,29 +26,14 @@ const getuser = async (req, res) => {
         try {
             await tokenCache.isTokenExpired();
             console.log('check expired success!')
-            const tzOffset = 7 * 60; // Thailand UTC+7 (minutes)
-            // Get current date in Thailand
-            const now = new Date();
-            const thYear = now.getFullYear();
-            const thMonth = now.getMonth();
-            const thDate = now.getDate();
+            const startTH = DateTime.now().setZone('Asia/Bangkok').startOf('day'); //2025-06-27T00:00:00.000+07:00
 
-            // Start of today in Thailand (00:00)
-            const startTH = new Date(Date.UTC(thYear, thMonth, thDate, 0, 0) - tzOffset * 60 * 1000);
-            // End of today in Thailand (23:59)
-            const endTH = new Date(Date.UTC(thYear, thMonth, thDate, 23, 59) - tzOffset * 60 * 1000);
+            const endTH = DateTime.now().setZone('Asia/Bangkok').endOf('day'); // 2025-06-27T23:59:59.999+07:00
 
-            const startDateTime = startTH.toISOString();
-            const endDateTime = endTH.toISOString();
-
-            console.log("Users_startDateTime (UTC):", startDateTime);
-            console.log("Users_endDateTime (UTC):", endDateTime);
-            
-            const startTHLocal = new Date(startDateTime);
-            const endTHLocal = new Date(endDateTime);   
-            startTHLocal.setHours(startTHLocal.getHours() + 7);
-            endTHLocal.setHours(endTHLocal.getHours() + 7);
-
+            const startDateTime = startTH.toISO();
+            const endDateTime = endTH.toISO();
+            console.log("startDateTime:", startDateTime);
+            console.log("endDateTime:", endDateTime);
             if(!decryptToken(tokenCache.getAccessToken())){
                 throw new Error("No access token in Users")
             }

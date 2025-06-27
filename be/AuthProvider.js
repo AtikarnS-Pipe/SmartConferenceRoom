@@ -1,6 +1,6 @@
 const axios = require('axios');
 const qs = require('querystring');
-require('dotenv').config();
+require('dotenv').config({ path: './config/.env' });
 
 async function getTokenByCode(code) {
     const tokenEndpoint = `https://login.microsoftonline.com/${process.env.TENANT_ID}/oauth2/v2.0/token`;

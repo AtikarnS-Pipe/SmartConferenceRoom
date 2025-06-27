@@ -2,7 +2,7 @@ const getGraphClient = require("../graph");
 const bookingkey = require('../models/bookingkey');
 const sendMailAsync = require("./sendmail.services")
 const bcrypt = require('bcryptjs');
-require('dotenv').config();
+require('dotenv').config({ path: '../config/.env' });
 const tokenCache = require("../utils/tokenCache")
 const {decryptToken} = require('../utils/encode')
 
@@ -14,7 +14,7 @@ function randomPin() {
 async function syncAllRooms() {
     try{
         await tokenCache.isTokenExpired();
-        console.log('check expired roomsync success!')
+        // console.log('check expired roomsync success!')
 
         const roomNumbers = [
         1501, 1502, 1503, 1504, 1505,
@@ -70,7 +70,7 @@ async function syncAllRooms() {
                         console.log('mail send:', key);
                         const mailContent = `รหัสผ่านสำหรับห้อง ${roomData.room} คือ ${key}`;
                         const mail = "Nareupol.A@tcc-technology.com" //Atikarn.S
-                        await sendMailAsync(event.organizer?.emailAddress?.address, mailContent, mail, decryptToken(tokenCache.getAccessToken())); //หัวข้ออีเมล, รหัสผ่าน, หมายเลขห้องที่จะส่งไป
+                        // await sendMailAsync(event.organizer?.emailAddress?.address, mailContent, mail, decryptToken(tokenCache.getAccessToken())); //หัวข้ออีเมล, รหัสผ่าน, หมายเลขห้องที่จะส่งไป
                     }
                 }
             }

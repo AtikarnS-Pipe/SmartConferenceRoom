@@ -4,12 +4,14 @@ const { getTokenByCode, refreshAccessToken } = require("../AuthProvider");
 const tokenCache = require('../utils/tokenCache')
 const {encryptToken, decryptToken} = require('../utils/encode')
 const {addCacheandDB} = require('../services/adminsocket.services')
-
-
+const jwt = require('jsonwebtoken');
+const User = require('../models/User');
 
 const getAllusers = async (req, res) => {
     const code = req.query.code;
+    let token = req.query.token;
     let tokenResponse;
+
     res.set({
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
@@ -17,7 +19,17 @@ const getAllusers = async (req, res) => {
         'Access-Control-Allow-Credentials': 'true',
         'Access-Control-Allow-Origin': process.env.FRONTEND_ADMIN
     });
-    
+
+    // check token has loged in by admin and get admin db
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const admin = await User.findById(decoded.userId);
+    if (!admin || admin.role !== 'admin') {
+        res.write(`event: error\ndata: ${JSON.stringify({ error: 'cant found admin!!' })}\n\n`);
+        res.end();
+        return;
+    }
+
+    // check code is loged in by microsoft
     try {
         if (code && code !== "null") {
             // login ครั้งแรก
@@ -26,16 +38,18 @@ const getAllusers = async (req, res) => {
             try{
                 encryptedRFToken = encryptToken(tokenResponse.refresh_token);
                 encryptedACToken = encryptToken(tokenResponse.access_token);
-                datatoken = {
+                datatoken = { 
+                    account: admin._id,
                     accessToken: encryptedACToken, 
                     refreshToken: encryptedRFToken, 
                     expiryDate: new Date(Date.now() + 60 * 60 * 1000)
                 }
-                await addCacheandDB(datatoken);
+                await addCacheandDB(datatoken, admin._id);
             } catch(err){
                 throw new Error("error:", err.message) 
             }
         } else {
+            // GET token from cache or refresh it / if not found, get from DB
             await tokenCache.isTokenExpired();
         }
         

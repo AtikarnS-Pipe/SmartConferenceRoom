@@ -7,6 +7,7 @@ const Userrouter = require("./routes/users.routes");
 const Accountrouter = require("./routes/account_manage.routes");
 const { GetScheduleData } = require("./services/adminsocket.services");
 const cors = require('cors');
+const cookieParser = require('cookie-parser');
 const http = require("http");
 const { Server } = require("socket.io"); // มี auto-Fallback เเละลด http api ที่ต้องป้องกัน ลดการ post,get อีกทั้ง (Low-latency) Server “push” ข้อมูลได้ทันที ไม่ต้องรอให้ลูกค้า “poll” ทุก ๆ X วินาที
 const tokenCache = require("./utils/tokenCache")
@@ -33,9 +34,8 @@ app.use(cors({
   methods: ['GET'],
   credentials: true
 }));
-
 app.use(express.json()); // เเปลง http body เป็น json
-
+app.use(cookieParser()); 
 
 io.on("connection", (socket) => { //socket เป็นตัวเเทนเเต่ละการเชื่อมต่อ รอรับ event จาก client
   console.log("User connected:", socket.id);
