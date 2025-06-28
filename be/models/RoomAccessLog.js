@@ -19,4 +19,4 @@ const RoomAccessLogSchema = new mongoose.Schema({
   timestamps: { createdAt: 'access_time', updatedAt: false }
 });
 
-module.exports = mongoose.model('RoomAccessLog', RoomAccessLogSchema);
+module.exports = mongoose.model('RoomAccessLog', RoomAccessLogSchema, 'Room_access_logs');

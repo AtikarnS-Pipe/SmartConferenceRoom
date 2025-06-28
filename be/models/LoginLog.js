@@ -16,4 +16,4 @@ const LoginLogSchema = new mongoose.Schema({
   }
 }, { timestamps: true });
 
-module.exports = mongoose.model('LoginLog', LoginLogSchema);
+module.exports = mongoose.model('LoginLog', LoginLogSchema, 'Login_logs');
