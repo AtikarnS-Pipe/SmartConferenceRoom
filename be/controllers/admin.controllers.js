@@ -73,7 +73,7 @@ const Login = async (req, res) => {
     params = new URLSearchParams({
         client_id: process.env.CLIENT_ID,
         response_type: "code",
-        redirect_uri: `${process.env.FRONTEND_REDIRECT_URI}`,
+        redirect_uri: `${process.env.REDIRECT_URI}`,
         response_mode: "query",
         scope: `${process.env.SCOPE1} ${process.env.SCOPE2}`
     });
