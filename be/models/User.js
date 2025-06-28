@@ -40,6 +40,18 @@ const Userschema = new mongoose.Schema({
         enum: ['online', 'offline', 'no permission' ],
         required: true
     },
+    otp: {
+        code: {
+            type: String,
+        },
+        expireAt: {
+            type: Date,
+        },
+        used: {
+            type: Boolean,
+            default: false,
+        }
+    }
 }, { timestamps: true })
 
 // Hash password before saving
