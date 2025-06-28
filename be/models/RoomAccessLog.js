@@ -6,12 +6,15 @@ const RoomAccessLogSchema = new mongoose.Schema({
     ref: 'User',
     required: true,
   },
-  room_id: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Room',
+  // room_id: {
+  //   type: mongoose.Schema.Types.ObjectId,
+  //   ref: 'Room',
+  //   required: true,
+  // },
+  room_number: {
+    type: String,
     required: true,
   },
-
 }, {
   timestamps: { createdAt: 'access_time', updatedAt: false }
 });
