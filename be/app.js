@@ -31,7 +31,7 @@ const sintervalId = setInterval(() => {
   syncAllRooms();
 }, 10000); 
 
-server.listen(process.env.PORT, async () => {
+app.listen(process.env.PORT, async () => {
   console.log(`Server running at http://localhost:${process.env.PORT}`);
   await connectToDatabase();
 });
