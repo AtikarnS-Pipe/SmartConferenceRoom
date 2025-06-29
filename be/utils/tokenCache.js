@@ -46,7 +46,7 @@ module.exports = {
         console.error('No token found in DB')
         return;
       }
-      console.log('Display findOne():',Gettoken);
+      // console.log('Display findOne():',Gettoken);
       const newtoken = await refreshAccessToken(decryptToken(Gettoken.refreshToken))
       this.setToken({ accessToken: encryptToken(newtoken.access_token),// opactoken
          refreshToken: encryptToken(newtoken.refresh_token), // oprftoken

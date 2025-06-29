@@ -6,23 +6,31 @@ const User = require('../models/User');
 
 const Auth = async (req, res) => {
     const { email, password } = req.body;
-
+    console.log("ready to auth", email, password);
     try{
       const user = await User.findOne({ email });
       
-      if(!user) return res.status(404).json({error: "User not found"});
-
+      if(!user){
+        console.log("User not found");
+        return res.status(404).json({error: "User not found"});
+      } 
       const isMatch = await bcrypt.compare(password, user.password);
-      if(!isMatch) return res.status(400).json({error: "Invalid credentials"});
+      if(!isMatch){
+        console.log("Invalid credentials");
+        return res.status(400).json({error: "Invalid credentials"});
+      }  
+
       if (user.role !== 'admin') {
-          return res.status(403).json({ message: 'Access denied. Only admin can sign in.' });
+        console.log("invalid role");  
+        return res.status(403).json({ message: 'Access denied. Only admin can sign in.' });
       }
+      console.log("2312312sasasas3Invalid credentials");
 
       user.login_status = 'online';
       await user.save();
-
       // รับ userId:user._id
       const token = refreshalltoken(req, res, user._id);
+      console.log("get token successfully", token);
       res.json({token})
     } catch (error) {
       res.status(500).json({error: error.message});

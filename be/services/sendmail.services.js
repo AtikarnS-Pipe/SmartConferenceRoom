@@ -1,7 +1,7 @@
 const { Client } = require('@microsoft/microsoft-graph-client');
 require('isomorphic-fetch');
 
-async function sendMailAsync(subject, body, recipient, accessToken) {
+async function sendMailAsync(subject, body, recipient, accessToken) { // เเก้ผู้รับเมลให้ตาม api
     try{
     const client = getClient(accessToken);
     const message = {

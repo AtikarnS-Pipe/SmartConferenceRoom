@@ -5,6 +5,7 @@ const bcrypt = require('bcryptjs');
 require('dotenv').config({ path: '../config/.env' });
 const tokenCache = require("../utils/tokenCache")
 const {decryptToken} = require('../utils/encode')
+const getTodaydatetime = require('../utils/getTodaydatetime');
 
 function randomPin() {
   return Math.floor(1000 + Math.random() * 9000).toString(); // 0.000-0.999*9000ได้ 0-8999 + 1000 จะได้ Range 1000-9999 
@@ -21,20 +22,16 @@ async function syncAllRooms() {
         1506, 1514, 1515, 1519, 1520
         ];
 
-        const now = new Date();
-        const tomorrow = new Date(now);
-        tomorrow.setDate(now.getDate() + 1);
-        const startDateTime = now.toISOString().slice(0,10);
-        const endDateTime = tomorrow.toISOString().slice(0,10);
-
+        const {startDateTime, endDateTime} = getTodaydatetime();
+        
         // ดึงข้อมูลจาก Microsoft Graph API
         const results = await Promise.all(
             roomNumbers.map(async (room) => {
                 const graphResponse = await getGraphClient(decryptToken(tokenCache.getAccessToken()))
                     .api(`https://graph.microsoft.com/v1.0/users/${room}@tcc-technology.com/calendarView`)
                     .query({
-                        startDateTime: `${startDateTime}T00:00:00Z`,
-                        endDateTime: `${endDateTime}T00:00:00Z`,
+                        startDateTime: startDateTime,
+                        endDateTime: endDateTime,
                         "$orderby": "start/dateTime",
                         "$select": "id,organizer,start,end,locations"
                     })
@@ -68,8 +65,10 @@ async function syncAllRooms() {
                             endDateTime: new Date(event.end?.dateTime + "Z")
                         });
                         console.log('mail send:', key);
-                        const mailContent = `รหัสผ่านสำหรับห้อง ${roomData.room} คือ ${key}`;
-                        const mail = "Nareupol.A@tcc-technology.com" //Atikarn.S
+                        RoomStr = roomData.room.toString();
+                        const mailContent = `รหัสผ่านสำหรับ L: /${RoomStr.slice(0,2)}>${RoomStr.slice(2,4)} คือ ${key}`;
+                        const mail = "Nareupol.A@tcc-technology.com" //event.organizer?.emailAddress?.address  //Atikarn.S
+                        if(process.env.DEBUG_MODE) console.log('mail content:',mail);
                         // await sendMailAsync(event.organizer?.emailAddress?.address, mailContent, mail, decryptToken(tokenCache.getAccessToken())); //หัวข้ออีเมล, รหัสผ่าน, หมายเลขห้องที่จะส่งไป
                     }
                 }

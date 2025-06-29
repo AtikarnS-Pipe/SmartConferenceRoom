@@ -1,16 +1,15 @@
 require('dotenv').config({ path: './config/.env'});
-const getGraphClient = require("../graph");
-const { getTokenByCode, refreshAccessToken } = require("../AuthProvider");
+const { getTokenByCode } = require("../AuthProvider");
 const tokenCache = require('../utils/tokenCache')
 const {encryptToken, decryptToken} = require('../utils/encode')
-const {addCacheandDB} = require('../services/adminsocket.services')
+const {addCacheandDB, sendscheduledata, fetchAllRoom} = require('../services/admin.services')
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
 const getAllusers = async (req, res) => {
     const code = req.query.code;
     let token = req.query.token;
-    let tokenResponse;
+    let tokenResponse, intervalId;
 
     res.set({
         'Content-Type': 'text/event-stream',
@@ -53,12 +52,27 @@ const getAllusers = async (req, res) => {
             await tokenCache.isTokenExpired();
         }
         
-         
         fetchAllRoom(res, decryptToken(tokenCache.getAccessToken()));
-        setInterval(async () => {
+        intervalId = setInterval(async () => {
             await tokenCache.isTokenExpired();
             fetchAllRoom(res, decryptToken(tokenCache.getAccessToken()));
         }, 15000);
+
+        req.on('close', () => {
+        clearInterval(intervalId);
+        console.log(`SSE connection closed for admin`);
+        });
+
+        req.on('error', (err) => {
+            clearInterval(intervalId);
+            console.error('SSE request error:', err);
+        });
+
+        // จัดการเมื่อ response สิ้นสุด
+        res.on('finish', () => {
+            clearInterval(intervalId);
+            console.log(`Response finished for admin`);
+        });
 
 
     } catch (err) {
@@ -73,59 +87,46 @@ const Login = async (req, res) => {
     params = new URLSearchParams({
         client_id: process.env.CLIENT_ID,
         response_type: "code",
-        redirect_uri: `${process.env.FRONTEND_REDIRECT_URI}`,
+        redirect_uri: `${process.env.REDIRECT_URI}`,
         response_mode: "query",
         scope: `${process.env.SCOPE1} ${process.env.SCOPE2}`
     });
     res.redirect(`https://login.microsoftonline.com/${process.env.TENANT_ID}/oauth2/v2.0/authorize?${params.toString()}`);
 };
 
-async function fetchAllRoom(res, accessToken) {
-    try {
-        const now = new Date();
-        const tomorrow = new Date(now);
-        tomorrow.setDate(now.getDate() + 1);
+const getschedule = async (req, res) => {
+    res.set({
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+        'Access-Control-Allow-Credentials': 'true',
+        'Access-Control-Allow-Origin': process.env.FRONTEND_ADMIN
+    });
 
-        const startDateTime = now.toISOString().slice(0,10); //"2025-05-19"
-        const endDateTime = tomorrow.toISOString().slice(0,10);
-        const roomNumbers = [
-            1501, 1502, 1503, 1504, 1505,
-            1506, 1514, 1515, 1519, 1520
-        ];
+    sendscheduledata(req, res)
+    const intervalId = setInterval(async () => {
+        sendscheduledata(req, res)
+    }, 10000);
 
-        if (!accessToken) {
-            throw new Error("No accessToken");
-        }
+    // *** สำคัญ: จัดการ cleanup เมื่อ client disconnect ***
+    // ปิด connection
+    req.on('close', () => {
+        clearInterval(intervalId);
+        console.log(`SSE connection closed`);
+    });
 
-        const results = await Promise.all(
-            roomNumbers.map(async (room) => {
-                const graphResponse = await getGraphClient(accessToken)
-                    .api(`https://graph.microsoft.com/v1.0/users/${room}@tcc-technology.com/calendarView`)
-                    .query({
-                        startDateTime: `${startDateTime}T00:00:00Z`,
-                        endDateTime: `${endDateTime}T00:00:00Z`,
-                        "$orderby": "start/dateTime",
-                        "$select": "id,organizer,start,end,locations"
-                    })
-                    .get();
+    req.on('error', (err) => {
+        clearInterval(intervalId);
+        console.error('SSE request error:', err);
+    });
 
-                if (!graphResponse || !graphResponse.value) {
-                    throw new Error(`No value in graphResponse for room ${room}: ${JSON.stringify(graphResponse)}`);
-                }
-
-                return {
-                    room,
-                    events: graphResponse.value
-                };
-            })
-        );
-
-        console.log("admin GET API success!!");
-        res.write(`data: ${JSON.stringify({ results })}\n\n`);
-    } catch (error) {
-        console.error(error);
-        res.write(`event: error\ndata: ${JSON.stringify({ error: "Failed to fetch data (fetchRoomEventsAndSend)" })}\n\n`);
-    }
+    // จัดการเมื่อ response สิ้นสุด res.end()
+    res.on('finish', () => {
+        clearInterval(intervalId);
+        console.log(`Response finished for room ${Room}`);
+    });
 }
+
+
         
-module.exports = { getAllusers, Login };
+module.exports = { getAllusers, Login, getschedule };

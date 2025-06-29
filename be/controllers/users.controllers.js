@@ -1,17 +1,14 @@
-const { DateTime } = require('luxon');
 const { authProvider } = require("../AuthProvider");
 const { compareKey, deleteSchedule } = require('../services/pin.services');
 require('dotenv').config({ path: './config/.env'});
-const getGraphClient = require("../graph");
-const tokenCache = require("../utils/tokenCache")
-const {decryptToken} = require('../utils/encode')
-
+const tokenCache = require("../utils/tokenCache");
+const { getuserdatabyroom } = require('../services/users.services')
 
 const getuser = async (req, res) => {
     const floor = req.params.floors;
     const room = req.params.rooms;
     const RoomNumber = `${floor}${room}`;
-    console.log("RoomNumber:",RoomNumber)
+    if(process.env.DEBUG_MODE) console.log("RoomNumber:",RoomNumber)
 
     res.set({
         'Content-Type': 'text/event-stream',
@@ -20,47 +17,27 @@ const getuser = async (req, res) => {
         'Access-Control-Allow-Credentials': 'true',
         'Access-Control-Allow-Origin': process.env.FRONTEND_USERS
     });
-
     
+    getuserdatabyroom(res, RoomNumber);
     const intervalId = setInterval(async () => {
-        try {
-            await tokenCache.isTokenExpired();
-            console.log('check expired success!')
-            const startTH = DateTime.now().setZone('Asia/Bangkok').startOf('day'); //2025-06-27T00:00:00.000+07:00
-
-            const endTH = DateTime.now().setZone('Asia/Bangkok').endOf('day'); // 2025-06-27T23:59:59.999+07:00
-
-            const startDateTime = startTH.toISO();
-            const endDateTime = endTH.toISO();
-            console.log("startDateTime:", startDateTime);
-            console.log("endDateTime:", endDateTime);
-            if(!decryptToken(tokenCache.getAccessToken())){
-                throw new Error("No access token in Users")
-            }
-            const graphResponse = await getGraphClient(decryptToken(tokenCache.getAccessToken()))
-                .api(`https://graph.microsoft.com/v1.0/users/${RoomNumber}@tcc-technology.com/calendarView`)
-                .query({
-                    startDateTime: startDateTime,
-                    endDateTime: endDateTime,
-                    "$orderby": "start/dateTime",
-                    "$select": "id,organizer,start,end,locations"
-                })
-                .get();
-            if (!graphResponse || !graphResponse.value) {
-                throw new Error(`No value in graphResponse for room ${RoomNumber}: ${JSON.stringify(graphResponse)}`);
-            }
-            const results = graphResponse.value
-            console.log("usersdate => ",results)
-            res.write(`data: ${JSON.stringify({ results })}\n\n`);
-            
-        } catch (error) {
-            console.log(error)
-            res.write(`event: error\ndata: ${JSON.stringify({ error: "Failed to fetch data(setinterval)" })}\n\n`);
-            res.end();
-            return;
-        }
+        getuserdatabyroom(res, RoomNumber);
     }, 5000);
 
+    // จัดการ cleanup 
+    req.on('close', () => {
+        clearInterval(intervalId);
+        console.log(`SSE connection closed for room ${RoomNumber}`);
+    });
+
+    req.on('error', (err) => {
+        clearInterval(intervalId);
+        console.error('SSE request error:', err);
+    });
+
+    res.on('finish', () => {
+        clearInterval(intervalId);
+        console.log(`Response finished for room ${RoomNumber}`);
+    });
 };
 
 // controller function for pin validation
