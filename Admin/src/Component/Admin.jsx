@@ -38,7 +38,6 @@ function RoomPage() {
         console.error("SSE error:", err);
         setLoading(false);
         eventSource.close();
-        window.location.href="/admin/login"; /* ***************** */
       };
       return () => {
         eventSource.close();

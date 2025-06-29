@@ -9,10 +9,11 @@ export default defineConfig({
     host: true, // 👈 เปิดให้เข้าจากเครื่องอื่นได้
     port: 5170, // หรือพอร์ตอื่น
     proxy: {
-      '/rooms': 'https:backendcf.tcctech.work',
-      '/admin/login': 'https:backendcf.tcctech.work',
-      '/admin/sse': 'https:backendcf.tcctech.work',
-      '/account/auth': 'https:backendcf.tcctech.work'
+      '/rooms': 'http://localhost:4000',
+      '/admin/login': 'http://localhost:4000',
+      '/admin/sse': 'http://localhost:4000',
+      '/admin/schedule': 'http://localhost:4000',
+      '/account/auth': 'http://localhost:4000'
     }
   }
 })

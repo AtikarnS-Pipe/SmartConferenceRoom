@@ -4,7 +4,6 @@ import isBetween from 'dayjs/plugin/isBetween';
 import { IoIosArrowBack, IoIosArrowForward } from "react-icons/io";
 import { FaHouse } from "react-icons/fa6";
 import { useParams, useNavigate } from 'react-router-dom';
-import io from 'socket.io-client';
 
 dayjs.extend(isBetween);
 
@@ -27,48 +26,44 @@ const parseDate = (str) => {
 const Room1501 = () => {
   const navigate = useNavigate();
   const { Room, startdate, enddate } = useParams();
-  const socketRef = useRef(); //
   const [view, setView] = useState('Day');
   const [selectedDate, setSelectedDate] = useState(dayjs().format('YYYY-MM-DD'));
   const [currentTime, setCurrentTime] = useState(new Date());
   const [scheduleApi, setScheduleApi] = useState(null);
-  const [selectedEvent, setSelectedEvent] = useState(null); 
-
+  const [selectedEvent, setSelectedEvent] = useState(null);
+  
 
   useEffect(() => {
-    socketRef.current = io("https://backendcf.tcctech.work", {
-      withCredentials: true, // ***************
-      transports: ["websocket"], 
-    }); //
-    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-
+    const timer = setInterval(  () => setCurrentTime(new Date()), 1000);
     return () => {
-      socketRef.current.disconnect();
       clearInterval(timer);
     } 
   }, []);
+
   useEffect(() => {
-    const socket = socketRef.current; 
-
-    socket.off("receive_api");
-    socket.off("revoked_api");
-    setScheduleApi(null)
-    
-    socket.emit("get_schedule", { Room, startdate, enddate });
-    console.log("get_schedule => ", { Room, startdate, enddate });
-    socket.on("receive_api", (scheduleApi2) => {
-      if(JSON.stringify(scheduleApi2) !== JSON.stringify(scheduleApi)){ //
-        setScheduleApi(scheduleApi2);
-        console.log("receive_api => ", scheduleApi2);
-      }
-    })
-    socket.on("revoked_api", () => setScheduleApi(null));
-
-    return () => {
-      socket.off("receive_api");
-      socket.off("revoked_api");
+    if (!Room || !startdate || !enddate){
+      console.log("Incomplete parameters entered");
+      return;
     };
-  }, [Room, startdate, enddate]);
+    const eventSource = new EventSource(`/admin/schedule/${Room}/${startdate}/${enddate}`);
+    eventSource.onmessage = (e) => {
+      try {
+        const data = JSON.parse(e.data);
+        setScheduleApi(data.results);
+        console.log(data.results)
+      } catch (err) {
+        console.error("Error parsing SSE data:", err);
+      }
+    };
+    eventSource.onerror = (err) => {
+      console.error("SSE error:", err);
+      eventSource.close();
+    };
+    console.log(selectedEvent)
+    return () => {
+      eventSource.close();
+    };
+  }, [Room, startdate, enddate]); // ค่าเปลี่ยนจะ cleanup fn. เเละทำใหม่
 
   useEffect(() => {
     if (startdate && enddate) {
@@ -76,20 +71,21 @@ const Room1501 = () => {
       const end = parseDate(enddate);
       setSelectedDate(start.format('YYYY-MM-DD'));
       const diff = end.diff(start, 'day');
-      setView(diff === 1 ? 'Day' : 'Week');
+      console.log(`Date difference: ${diff} days`);
+      setView(diff === 0 ? 'Day' : 'Week');
     }
   }, [startdate, enddate]);
 
   const handleDateChange = (days) => {
     const newStart = dayjs(selectedDate).add(days, 'day');
-    const newEnd = view === 'Day' ? newStart.add(1, 'day') : newStart.add(6, 'day');
+    const newEnd = view === 'Day' ? newStart : newStart.add(6, 'day');
     navigate(`/room/${Room}/${formatDate(newStart)}/${formatDate(newEnd)}`);
     setSelectedDate(newStart.format('YYYY-MM-DD'));
   };
 
   const updateURLForView = (newView) => {
     const start = dayjs(selectedDate);
-    const end = newView === 'Day' ? start.add(1, 'day') : start.add(6, 'day');
+    const end = newView === 'Day' ? start : start.add(6, 'day');
     setView(newView);
     navigate(`/room/${Room}/${formatDate(start)}/${formatDate(end)}`);
   };
