@@ -8,4 +8,4 @@ const bookingKeySchema = new mongoose.Schema({
   endDateTime: Date
 }, { timestamps: true });
 
-module.exports = mongoose.model('Bookingkey', bookingKeySchema);
+module.exports = mongoose.model('Bookingkey', bookingKeySchema, 'Event');

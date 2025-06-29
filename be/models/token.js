@@ -10,4 +10,4 @@ const tokenSchema = new mongoose.Schema({
     expiryDate: Date
 }, { timestamps: true});
 
-module.exports = mongoose.model('Token', tokenSchema);
+module.exports = mongoose.model('Token', tokenSchema, 'Token');
