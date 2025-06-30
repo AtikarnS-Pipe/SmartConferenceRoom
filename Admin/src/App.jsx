@@ -21,19 +21,20 @@ function App() {
     <Router>
     <Routes>
         <Route path='/' element={<Verify setAuth={setAuth} />} />
-        <Route path='/login/ms' element={<LoginPage />} />
+        <Route path='/login/ms' element={<Protect><LoginPage /></Protect>} />
         <Route path='/admin/api' element={
           <Protect>
           <RoomPage />
         </Protect>
         } 
           />
-        <Route path='/room/:Room/:startdate/:enddate' element={<RoomPages />} />
-        <Route path='/Available' element={<Available key={location.key}/>} />
-        <Route path='/Unavailable' element={<Unavailable />} />
-        <Route path='/roomsize/:size' element={<RoomSize />} />
-        <Route path='/account/admin' element={<Account />} />
-        <Route path='/account/housekeeper' element={<Housekeeper />} />
+        <Route path='/room/:Room/:startdate/:enddate' element={
+          <Protect><RoomPages /></Protect>} />
+        <Route path='/Available' element={<Protect><Available key={location.key}/></Protect>} />
+        <Route path='/Unavailable' element={<Protect><Unavailable /></Protect>} />
+        <Route path='/roomsize/:size' element={<Protect><RoomSize /></Protect>} />
+        <Route path='/account/admin' element={<Protect><Account /></Protect>} />
+        <Route path='/account/housekeeper' element={<Protect><Housekeeper /></Protect>} />
     </Routes>
     </Router>
   )

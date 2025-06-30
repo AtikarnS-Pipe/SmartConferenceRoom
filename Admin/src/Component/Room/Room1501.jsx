@@ -264,7 +264,7 @@ const Room1501 = () => {
       </div>
 
       {/* Calendar */}
-      <div className="relative rounded-lg overflow-x-auto bg-[#f8f7f1]" style={{ height: `${calendarHeight}px`, minWidth: '100%' }}>
+      <div className="relative rounded-lg 'overflow-x-hidden' : 'overflow-x-auto' bg-[#f8f7f1]" style={{ height: `${calendarHeight}px`, minWidth: '100%' }}>
         {renderDayHeaders()}
         {renderTimeLines()}
         {renderDayColumns()}
@@ -277,7 +277,13 @@ const Room1501 = () => {
           <div className="bg-white p-4 rounded-xl shadow-lg w-[90%] sm:w-80">
             <h2 className="text-lg font-bold mb-2">Booking Detail</h2>
             <p><strong>Name :</strong> {selectedEvent.title}</p>
-            <p><strong>Time :</strong> {dayjs(selectedEvent.start).format('HH:mm')} - {dayjs(selectedEvent.end).format('HH:mm')}</p>
+            <p>
+              <strong>Time :</strong>{' '}
+              {selectedEvent.isAllDay
+                ? 'All Day'
+                : `${dayjs(selectedEvent.start).format('HH:mm')} - ${dayjs(selectedEvent.end).format('HH:mm')}`}
+            </p>
+
             <button
               onClick={() => setSelectedEvent(null)}
               className="mt-4 px-4 py-2 bg-black text-white rounded-xl hover:bg-gray-700 cursor-pointer"
