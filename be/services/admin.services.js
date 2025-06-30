@@ -5,7 +5,9 @@ const {decryptToken} = require('../utils/encode');
 const getTodaydatetime  = require('../utils/getTodaydatetime');
 const userModel = require('../models/User');
 const sendMailAsync = require('../services/sendmail.services')
-
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
+const RESET_SECRET = process.env.JWT_RESET_SECRET || "jwt-reset-secret";
 
 async function GetScheduleData(actoken, Room, start, end){  
     try {
@@ -159,6 +161,7 @@ async function sendOTP(email) {
 
         const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
         user.otp.code = otpCode;
+        user.otp.used = false;
         user.otp.expireAt = new Date(Date.now() + (5 * 60 * 1000));
         await user.save();
         
@@ -183,7 +186,7 @@ Smart Conforence Display System
  * 
  * @param {String} email 
  * @param {String} otpCode 
- * @returns {Object} { success: Boolean, message: String }
+ * @returns {Object} { success: Boolean, message: String, reset_token: String }
  */
 async function verifyOTP(email, otpCode) {
   try {
@@ -213,12 +216,38 @@ async function verifyOTP(email, otpCode) {
 
     user.otp.used = true;
     await user.save();
-    return { success: true, message: 'OTP verified successfully.' };
+    const resetToken = jwt.sign( {email}, RESET_SECRET, { expiresIn: '10m' });
+    
+    return { success: true, message: 'OTP verified successfully.', token: resetToken };
   } catch (err) {
     return { success: false, message: err.message };
   }
 }
 
+/**
+ * 
+ * @param {String} resetToken 
+ * @param {String} newPassword 
+ * @returns {Object} { success: boolean, message: String }
+ */
+async function resetPassword(resetToken, newPassword) {
+    try {
+        const payload = jwt.verify(resetToken, RESET_SECRET);
+        const user = await userModel.findOne({ email: payload.email });
+        if (!user) {
+            return { success: false, message: "User not found!"};
+        }
+        const salt = await bcrypt.genSalt(parseInt(process.env.BCRYPT_SALT_ROUNDS));
+        const hashedPassword = await bcrypt.hash(newPassword, salt);
+        user.password = hashedPassword;
+
+        await user.save();
+
+        return { success: true, message: "Password has been reset." };
+    } catch (err) {
+        return { success: false, message: err.message };
+    }
+}
 
 module.exports = { 
     GetScheduleData, 
@@ -227,4 +256,5 @@ module.exports = {
     fetchAllRoom,
     sendOTP,
     verifyOTP,
+    resetPassword,
 };

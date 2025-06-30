@@ -3,7 +3,7 @@ const bcrypt = require('bcryptjs');
 const { refreshalltoken } = require('../utils/refreshalltoken');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
-const { sendOTP, verifyOTP } = require('../services/admin.services');
+const { sendOTP, verifyOTP, resetPassword } = require('../services/admin.services');
 
 const Auth = async (req, res) => {
     const { email, password } = req.body;
@@ -169,7 +169,7 @@ const verifyEmailOTP = async (req, res) => {
       console.log(result.message);
       return res.status(200).json({ message: `Your OTP is invalid.` });
     }
-    return res.status(200).json({ message: `Your OTP has been verified. `});
+    return res.status(200).json({ message: `Your OTP has been verified. `, reset_token: result.token});
   }
   catch (err) {
     console.log(err.message);
@@ -177,4 +177,22 @@ const verifyEmailOTP = async (req, res) => {
   }
 }
 
-module.exports = { Auth, Createhousekeeper, createadmin, refreshadmintoken, signout, sendEmailOTP, verifyEmailOTP };
+// otp/reset
+const resetEmailPassword = async (req, res) => {
+  try {
+    const { reset_token, new_password } = req.body;
+    console.log(`${req.method} ${req.originalUrl}`);
+    const result = await resetPassword(reset_token, new_password);
+
+    if(!result.success) {
+      console.log(result.message);
+      return res.status(200).json({ message: "Failed to change password."});
+    }
+    return res.status(200).json({ message: result.message });
+  }
+  catch (err) {
+    console.log(err.message);
+    return res.status(500).json({ message: err.message });
+  }
+}
+module.exports = { Auth, Createhousekeeper, createadmin, refreshadmintoken, signout, sendEmailOTP, verifyEmailOTP, resetEmailPassword };
