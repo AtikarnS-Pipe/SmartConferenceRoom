@@ -3,6 +3,9 @@ const Token = require('../models/token');
 const tokenCache = require('../utils/tokenCache')
 const {decryptToken} = require('../utils/encode');
 const getTodaydatetime  = require('../utils/getTodaydatetime');
+const userModel = require('../models/User');
+const sendMailAsync = require('../services/sendmail.services')
+
 
 async function GetScheduleData(actoken, Room, start, end){  
     try {
@@ -141,4 +144,43 @@ async function fetchAllRoom(res, accessToken) {
     }
 }
 
-module.exports = { GetScheduleData, addCacheandDB, sendscheduledata, fetchAllRoom };
+/**
+ * 
+ * @param {String} email 
+ * @returns 
+ */
+async function sendOTP(email) {
+    try {
+        const user = await userModel.findOne({ email: email });
+        if (!user) {
+            return { success: false, message: `User with ${email} not found!` };
+        }
+
+        const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+        user.otp.code = otpCode;
+        user.otp.expireAt = new Date(Date.now() + (5 * 60 * 1000));
+        await user.save();
+        
+        const body = `Hello,
+Your One-Time Password (OTP) is: ${otpCode}
+
+This code will expire in 5 minutes. Please do not share it with anyone.
+
+Thank you,
+Smart Conforence Display System
+        `;
+
+        await sendMailAsync("Your One-Time Password (OTP)", body, user.email, decryptToken(tokenCache.getAccessToken()));
+        return { success: true, message: `Send OTP to ${user.email}` };
+    } catch (err) {
+        return { success: false, message: `${err.message}`};
+    }
+}
+
+module.exports = { 
+    GetScheduleData, 
+    addCacheandDB, 
+    sendscheduledata, 
+    fetchAllRoom,
+    sendOTP 
+};

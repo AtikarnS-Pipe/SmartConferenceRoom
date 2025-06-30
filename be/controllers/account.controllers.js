@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const { refreshalltoken } = require('../utils/refreshalltoken');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const { sendOTP } = require('../services/admin.services');
 
 const Auth = async (req, res) => {
     const { email, password } = req.body;
@@ -139,4 +140,22 @@ const signout = async (req, res) => {
   res.json({ success: true, message: 'User signed out successfully' });
 }
 
-module.exports = { Auth, Createhousekeeper, createadmin, refreshadmintoken, signout };
+const sendEmailOTP = async (req, res) => {
+  try {
+    const { email } = req.body;
+    console.log(`${req.method}, ${req.originalUrl}`);
+    const result = await sendOTP(email);
+    console.log(`${result.message}`);
+
+    if (!result.success) {
+      return res.status(404).json({ message: result.message });
+    } 
+    return res.status(200).json({ message: result.message });
+  } 
+  catch (err) {
+    console.log(`${err.message}`);
+    return res.status(500).json({ message: err.message });
+  }
+}
+
+module.exports = { Auth, Createhousekeeper, createadmin, refreshadmintoken, signout, sendEmailOTP };
