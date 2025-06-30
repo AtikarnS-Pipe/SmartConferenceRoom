@@ -3,7 +3,7 @@ const bcrypt = require('bcryptjs');
 const { refreshalltoken } = require('../utils/refreshalltoken');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
-const { sendOTP } = require('../services/admin.services');
+const { sendOTP, verifyOTP } = require('../services/admin.services');
 
 const Auth = async (req, res) => {
     const { email, password } = req.body;
@@ -140,17 +140,17 @@ const signout = async (req, res) => {
   res.json({ success: true, message: 'User signed out successfully' });
 }
 
+// otp/send
 const sendEmailOTP = async (req, res) => {
   try {
     const { email } = req.body;
     console.log(`${req.method}, ${req.originalUrl}`);
     const result = await sendOTP(email);
-    console.log(`${result.message}`);
 
     if (!result.success) {
-      return res.status(404).json({ message: result.message });
+      return res.status(200).json({ message: `If the email exists in our system, an OTP has been sent.` });
     } 
-    return res.status(200).json({ message: result.message });
+    return res.status(200).json({ message: `If the email exists in our system, an OTP has been sent.` });
   } 
   catch (err) {
     console.log(`${err.message}`);
@@ -158,4 +158,23 @@ const sendEmailOTP = async (req, res) => {
   }
 }
 
-module.exports = { Auth, Createhousekeeper, createadmin, refreshadmintoken, signout, sendEmailOTP };
+// otp/verify
+const verifyEmailOTP = async (req, res) => {
+  try {
+    const { email, otp_code } = req.body;
+    console.log(`${req.method} ${req.originalUrl}`);
+    const result = await verifyOTP(email, otp_code);
+
+    if (!result.success) {
+      console.log(result.message);
+      return res.status(200).json({ message: `Your OTP is invalid.` });
+    }
+    return res.status(200).json({ message: `Your OTP has been verified. `});
+  }
+  catch (err) {
+    console.log(err.message);
+    return res.status(500).json({ message: err.message });
+  }
+}
+
+module.exports = { Auth, Createhousekeeper, createadmin, refreshadmintoken, signout, sendEmailOTP, verifyEmailOTP };

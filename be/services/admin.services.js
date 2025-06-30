@@ -145,9 +145,10 @@ async function fetchAllRoom(res, accessToken) {
 }
 
 /**
+ * ส่ง OTP ไปให้ email ที่มีจริงในระบบ
  * 
  * @param {String} email 
- * @returns 
+ * @returns {Object} { success: Boolean, message: String }
  */
 async function sendOTP(email) {
     try {
@@ -177,10 +178,53 @@ Smart Conforence Display System
     }
 }
 
+/**
+ * ตรวจสอบ OTP ว่าถูกต้อง ใช้ไปแล้ว หรือหมดอายุหรือไม่
+ * 
+ * @param {String} email 
+ * @param {String} otpCode 
+ * @returns {Object} { success: Boolean, message: String }
+ */
+async function verifyOTP(email, otpCode) {
+  try {
+    const user = await userModel.findOne({ email });
+    if (!user) {
+      return { success: false, message: 'Invalid credentials.' }; 
+    }
+
+    const otp = user.otp;
+    if (!otp || !otp.code) {
+      return { success: false, message: 'OTP not found for this user.' };
+    }
+
+    const now = Date.now();
+
+    if (otp.used) {
+      return { success: false, message: 'This OTP has already been used.' };
+    }
+
+    if (now > new Date(otp.expireAt).getTime()) {
+      return { success: false, message: 'This OTP is expired.' };
+    }
+
+    if (otp.code !== otpCode) {
+      return { success: false, message: 'Invalid OTP code.' };
+    }
+
+    user.otp.used = true;
+    await user.save();
+    return { success: true, message: 'OTP verified successfully.' };
+  } catch (err) {
+    return { success: false, message: err.message };
+  }
+}
+
+
 module.exports = { 
     GetScheduleData, 
     addCacheandDB, 
     sendscheduledata, 
     fetchAllRoom,
-    sendOTP 
+    sendOTP,
+    verifyOTP,
 };
