@@ -13,10 +13,16 @@ function RoomPage() {
 
     useEffect(() => {
       const code = new URLSearchParams(location.search).get("code");
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        window.location.href = "/admin/login";
+        return;
+      }
       // if (!code) {
       //   window.location.href="/admin/login";
       // }
-      const eventSource = new EventSource(`/admin/sse?code=${code}`);
+      const eventSource = new EventSource(`/admin/sse?code=${code}&token=${token}`);
       eventSource.onmessage = (e) => {
         try {
           const data = JSON.parse(e.data);
@@ -32,7 +38,6 @@ function RoomPage() {
         console.error("SSE error:", err);
         setLoading(false);
         eventSource.close();
-        window.location.href="/admin/login"; /* ***************** */
       };
       return () => {
         eventSource.close();
