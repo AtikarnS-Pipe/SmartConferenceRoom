@@ -19,5 +19,8 @@ AccountRouter.post('/edithousekeeper', authorize, editpinhousekeeper);
 AccountRouter.post('/deletehousekeeper', authorize, deletehousekeeper);
 AccountRouter.post('/refreshtoken', refreshadmintoken);
 AccountRouter.post('/signout', authorize, signout);
+AccountRouter.post('/otp/send', sendEmailOTP);
+AccountRouter.post('/otp/verify', verifyEmailOTP);
+AccountRouter.post('/otp/reset', resetEmailPassword);
 
 module.exports = AccountRouter;
