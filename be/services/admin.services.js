@@ -3,6 +3,11 @@ const Token = require('../models/token');
 const tokenCache = require('../utils/tokenCache')
 const {decryptToken} = require('../utils/encode');
 const getTodaydatetime  = require('../utils/getTodaydatetime');
+const userModel = require('../models/User');
+const sendMailAsync = require('../services/sendmail.services')
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
+const RESET_SECRET = process.env.JWT_RESET_SECRET || "jwt-reset-secret";
 
 async function GetScheduleData(actoken, Room, start, end){  
     try {
@@ -141,4 +146,115 @@ async function fetchAllRoom(res, accessToken) {
     }
 }
 
-module.exports = { GetScheduleData, addCacheandDB, sendscheduledata, fetchAllRoom };
+/**
+ * ส่ง OTP ไปให้ email ที่มีจริงในระบบ
+ * 
+ * @param {String} email 
+ * @returns {Object} { success: Boolean, message: String }
+ */
+async function sendOTP(email) {
+    try {
+        const user = await userModel.findOne({ email: email });
+        if (!user) {
+            return { success: false, message: `User with ${email} not found!` };
+        }
+
+        const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+        user.otp.code = otpCode;
+        user.otp.used = false;
+        user.otp.expireAt = new Date(Date.now() + (5 * 60 * 1000));
+        await user.save();
+        
+        const body = `Hello,
+Your One-Time Password (OTP) is: ${otpCode}
+
+This code will expire in 5 minutes. Please do not share it with anyone.
+
+Thank you,
+Smart Conforence Display System
+        `;
+
+        await sendMailAsync("Your One-Time Password (OTP)", body, user.email, decryptToken(tokenCache.getAccessToken()));
+        return { success: true, message: `Send OTP to ${user.email}` };
+    } catch (err) {
+        return { success: false, message: `${err.message}`};
+    }
+}
+
+/**
+ * ตรวจสอบ OTP ว่าถูกต้อง ใช้ไปแล้ว หรือหมดอายุหรือไม่
+ * 
+ * @param {String} email 
+ * @param {String} otpCode 
+ * @returns {Object} { success: Boolean, message: String, reset_token: String }
+ */
+async function verifyOTP(email, otpCode) {
+  try {
+    const user = await userModel.findOne({ email });
+    if (!user) {
+      return { success: false, message: 'Invalid credentials.' }; 
+    }
+
+    const otp = user.otp;
+    if (!otp || !otp.code) {
+      return { success: false, message: 'OTP not found for this user.' };
+    }
+
+    const now = Date.now();
+
+    if (otp.used) {
+      return { success: false, message: 'This OTP has already been used.' };
+    }
+
+    if (now > new Date(otp.expireAt).getTime()) {
+      return { success: false, message: 'This OTP is expired.' };
+    }
+
+    if (otp.code !== otpCode) {
+      return { success: false, message: 'Invalid OTP code.' };
+    }
+
+    user.otp.used = true;
+    await user.save();
+    const resetToken = jwt.sign( {email}, RESET_SECRET, { expiresIn: '10m' });
+    
+    return { success: true, message: 'OTP verified successfully.', token: resetToken };
+  } catch (err) {
+    return { success: false, message: err.message };
+  }
+}
+
+/**
+ * 
+ * @param {String} resetToken 
+ * @param {String} newPassword 
+ * @returns {Object} { success: boolean, message: String }
+ */
+async function resetPassword(resetToken, newPassword) {
+    try {
+        const payload = jwt.verify(resetToken, RESET_SECRET);
+        const user = await userModel.findOne({ email: payload.email });
+        if (!user) {
+            return { success: false, message: "User not found!"};
+        }
+        const salt = await bcrypt.genSalt(parseInt(process.env.BCRYPT_SALT_ROUNDS));
+        const hashedPassword = await bcrypt.hash(newPassword, salt);
+        user.password = hashedPassword;
+
+        await user.save();
+
+        return { success: true, message: "Password has been reset." };
+    } catch (err) {
+        return { success: false, message: err.message };
+    }
+}
+
+module.exports = { 
+    GetScheduleData, 
+    addCacheandDB, 
+    sendscheduledata, 
+    fetchAllRoom,
+    sendOTP,
+    verifyOTP,
+    resetPassword,
+};

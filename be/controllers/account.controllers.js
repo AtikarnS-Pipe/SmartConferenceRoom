@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const { refreshalltoken } = require('../utils/refreshalltoken');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const { sendOTP, verifyOTP, resetPassword } = require('../services/admin.services');
 
 const Auth = async (req, res) => { // admin sign-in
     const { email, password } = req.body;
@@ -240,3 +241,59 @@ module.exports = { Auth,
   deletehousekeeper,
   editpinhousekeeper
 };
+// otp/send
+const sendEmailOTP = async (req, res) => {
+  try {
+    const { email } = req.body;
+    console.log(`${req.method}, ${req.originalUrl}`);
+    const result = await sendOTP(email);
+
+    if (!result.success) {
+      return res.status(200).json({ message: `If the email exists in our system, an OTP has been sent.` });
+    } 
+    return res.status(200).json({ message: `If the email exists in our system, an OTP has been sent.` });
+  } 
+  catch (err) {
+    console.log(`${err.message}`);
+    return res.status(500).json({ message: err.message });
+  }
+}
+
+// otp/verify
+const verifyEmailOTP = async (req, res) => {
+  try {
+    const { email, otp_code } = req.body;
+    console.log(`${req.method} ${req.originalUrl}`);
+    const result = await verifyOTP(email, otp_code);
+
+    if (!result.success) {
+      console.log(result.message);
+      return res.status(200).json({ message: `Your OTP is invalid.` });
+    }
+    return res.status(200).json({ message: `Your OTP has been verified. `, reset_token: result.token});
+  }
+  catch (err) {
+    console.log(err.message);
+    return res.status(500).json({ message: err.message });
+  }
+}
+
+// otp/reset
+const resetEmailPassword = async (req, res) => {
+  try {
+    const { reset_token, new_password } = req.body;
+    console.log(`${req.method} ${req.originalUrl}`);
+    const result = await resetPassword(reset_token, new_password);
+
+    if(!result.success) {
+      console.log(result.message);
+      return res.status(200).json({ message: "Failed to change password."});
+    }
+    return res.status(200).json({ message: result.message });
+  }
+  catch (err) {
+    console.log(err.message);
+    return res.status(500).json({ message: err.message });
+  }
+}
+module.exports = { Auth, Createhousekeeper, createadmin, refreshadmintoken, signout, sendEmailOTP, verifyEmailOTP, resetEmailPassword };
