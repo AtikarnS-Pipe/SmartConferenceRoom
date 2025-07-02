@@ -231,16 +231,6 @@ const editpinhousekeeper = async (req, res) => {
   }
 }
 
-
-module.exports = { Auth,
-  Createhousekeeper,
-  createadmin, 
-  refreshadmintoken, 
-  signout, 
-  ChangeAdminPW,
-  deletehousekeeper,
-  editpinhousekeeper
-};
 // otp/send
 const sendEmailOTP = async (req, res) => {
   try {
@@ -296,4 +286,16 @@ const resetEmailPassword = async (req, res) => {
     return res.status(500).json({ message: err.message });
   }
 }
-module.exports = { Auth, Createhousekeeper, createadmin, refreshadmintoken, signout, sendEmailOTP, verifyEmailOTP, resetEmailPassword };
+
+module.exports = { Auth,
+  Createhousekeeper,
+  createadmin, 
+  refreshadmintoken, 
+  signout, 
+  ChangeAdminPW,
+  deletehousekeeper,
+  editpinhousekeeper,
+  sendEmailOTP,
+  verifyEmailOTP,
+  resetEmailPassword
+};
