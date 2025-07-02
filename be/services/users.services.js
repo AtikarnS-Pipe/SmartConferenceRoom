@@ -5,8 +5,8 @@ const { decryptToken } = require('../utils/encode');
 const getTodaydatetime = require('../utils/getTodaydatetime');
 
 async function getuserdatabyroom(res, RoomNumber) {
+    await tokenCache.isTokenExpired();
     try {
-        await tokenCache.isTokenExpired();
 
         const {startDateTime, endDateTime} = getTodaydatetime();
         
@@ -30,8 +30,8 @@ async function getuserdatabyroom(res, RoomNumber) {
         res.write(`data: ${JSON.stringify({ results })}\n\n`);
         
     } catch (error) {
-        console.log(error)
-        res.write(`event: error\ndata: ${JSON.stringify({ error: `Failed to fetch data (setinterval) with ${error}` })}\n\n`);
+        console.log(error.message)
+        res.write(`event: error\ndata: ${JSON.stringify({ error: `Failed to fetch data (setinterval) with ${error.message}` })}\n\n`);
         // res.end();
         // return;
     }

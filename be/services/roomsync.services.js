@@ -27,7 +27,8 @@ async function syncAllRooms() {
         // ดึงข้อมูลจาก Microsoft Graph API
         const results = await Promise.all(
             roomNumbers.map(async (room) => {
-                const graphResponse = await getGraphClient(decryptToken(tokenCache.getAccessToken()))
+                try{
+                    const graphResponse = await getGraphClient(decryptToken(tokenCache.getAccessToken()))
                     .api(`https://graph.microsoft.com/v1.0/users/${room}@tcc-technology.com/calendarView`)
                     .query({
                         startDateTime: startDateTime,
@@ -36,15 +37,19 @@ async function syncAllRooms() {
                         "$select": "id,organizer,start,end,locations"
                     })
                     .get();
+                    if (!graphResponse || !graphResponse.value) {
+                        throw new Error(`No value in graphResponse for room ${room}: ${JSON.stringify(graphResponse)}`);
+                    }
 
-                if (!graphResponse || !graphResponse.value) {
-                    throw new Error(`No value in graphResponse for room ${room}: ${JSON.stringify(graphResponse)}`);
+                    return {
+                        room,
+                        events: graphResponse.value
+                    };
+                } catch (error) {
+                    console.error(`Error fetching data for room ${room}:`, error.message);
+                    return; 
                 }
-
-                return {
-                    room,
-                    events: graphResponse.value
-                };
+                
             })
         );
 
