@@ -5,7 +5,10 @@ const { Auth,
     signout,
     ChangeAdminPW,
     deletehousekeeper,
-    editpinhousekeeper
+    editpinhousekeeper,
+    sendEmailOTP,
+    verifyEmailOTP,
+    resetEmailPassword,
  } = require('../controllers/account.controllers');
 const { authorize } = require('../middlewares/auth.middleware')
 const express = require("express");
