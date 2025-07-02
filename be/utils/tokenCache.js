@@ -41,18 +41,25 @@ module.exports = {
       // จริงๆ ต้องเอา unique ตัวเองหา ใน TOKEN DB ถ้าเจอดึงมา refresh, ไม่เจอ error
     }
     if(accessToken === null || refreshToken === null || expiryDate === null){ // server down
-      const Gettoken = await Token.findOne().sort({ _id: 1 }); // subscription ที่มีค่า index น้อยที่สุด
-      if (!Gettoken) {
-        console.error('No token found in DB')
-        return;
+      try{
+        const Gettoken = await Token.findOne().sort({ _id: 1 }); // subscription ที่มีค่า index น้อยที่สุด
+        if (!Gettoken) {
+          console.error('No token found in DB')
+          throw new Error("No token in DB or can not find token in DB")
+        }
+        // console.log('Display findOne():',Gettoken);
+        const newtoken = await refreshAccessToken(decryptToken(Gettoken.refreshToken))
+        this.setToken({ 
+          accessToken: encryptToken(newtoken.access_token),// opactoken
+          refreshToken: encryptToken(newtoken.refresh_token), // oprftoken
+          expiryDate: new Date(Date.now() + 60 * 60 * 1000)
+        });
+      } catch (err) {
+        console.error("tokenCache.js :", err);
+        return; 
       }
-      // console.log('Display findOne():',Gettoken);
-      const newtoken = await refreshAccessToken(decryptToken(Gettoken.refreshToken))
-      this.setToken({ accessToken: encryptToken(newtoken.access_token),// opactoken
-         refreshToken: encryptToken(newtoken.refresh_token), // oprftoken
-          expiryDate: new Date(Date.now() + 60 * 60 * 1000)});
+      
     }
-    return;
   },
 
   /**

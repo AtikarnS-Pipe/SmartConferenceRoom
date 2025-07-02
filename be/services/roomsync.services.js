@@ -55,7 +55,7 @@ async function syncAllRooms() {
                     if (!booking) { // ถ้ายังไม่มี ให้สร้างใหม่
                         console.log('Creating new key for room:', roomData.room, 'event id:', event.id);
                         const key = randomPin();
-                        const salt = await bcrypt.genSalt( parseInt(process.env.SALT_ROUNDS));
+                        const salt = await bcrypt.genSalt( parseInt(process.env.BCRYPT_SALT_ROUNDS));
                         const hashedPassword = await bcrypt.hash(key, salt);
                         booking = await bookingkey.create({
                             room: roomData.room,

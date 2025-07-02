@@ -1,6 +1,8 @@
 require('dotenv').config({ path: './config/.env'});
 const syncAllRooms = require('./services/roomsync.services');
+// เชื่อมต่อกับ MongoDB
 const {connectToDatabase} = require("./database/mongodb");
+
 const express = require("express");
 const Adminrouter = require("./routes/admin_ms.routes");
 const Userrouter = require("./routes/users.routes");

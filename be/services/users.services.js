@@ -31,9 +31,9 @@ async function getuserdatabyroom(res, RoomNumber) {
         
     } catch (error) {
         console.log(error)
-        res.write(`event: error\ndata: ${JSON.stringify({ error: "Failed to fetch data (setinterval)" })}\n\n`);
-        res.end();
-        return;
+        res.write(`event: error\ndata: ${JSON.stringify({ error: `Failed to fetch data (setinterval) with ${error}` })}\n\n`);
+        // res.end();
+        // return;
     }
 } 
 

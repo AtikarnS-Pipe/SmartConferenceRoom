@@ -49,7 +49,7 @@ async function GetScheduleData(actoken, Room, start, end){
     } catch (error) {
         console.log("error:", error);
         res.write(`event: error\ndata: ${JSON.stringify({ error: "Failed to fetch data(setinterval)" })}\n\n`);
-        res.end();
+        // res.end();
     }
 }
 

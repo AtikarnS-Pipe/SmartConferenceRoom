@@ -43,9 +43,11 @@ const Userschema = new mongoose.Schema({
     otp: {
         code: {
             type: String,
+            default: null,
         },
         expireAt: {
             type: Date,
+            default: null,
         },
         used: {
             type: Boolean,
@@ -55,11 +57,11 @@ const Userschema = new mongoose.Schema({
 }, { timestamps: true })
 
 // Hash password before saving
-Userschema.pre('save', async function(next) {
+Userschema.pre('create', async function(next) {
     if (!this.isModified('password')) return next(); 
     if (!this.password) return; 
     try {
-        const salt = await bcrypt.genSalt(10);
+        const salt = await bcrypt.genSalt(parseInt(process.envBCRYPT_SALT_ROUNDS));
         this.password = await bcrypt.hash(this.password, salt);
         next();
     } catch (err) {
