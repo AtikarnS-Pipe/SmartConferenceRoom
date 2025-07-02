@@ -45,4 +45,38 @@ async function deleteSchedule({ eventId }) {
     return true;
 }
 
+
+// //! find what unique it is
+// /**
+//  * 
+//  * @param {String} unique
+//  * @param {String} pin
+//  * @param {String} room_number
+//  * @returns 
+//  */
+// async function adminCompareKey({ unique, pin, room_number }) {
+//     try {
+//         const user = await User.findOne({
+//             // unique: unique,
+//         });
+
+//         if (!user) return { success: false, message: "User not found!"};
+
+//         /**
+//          * ! update database to log admin/housekeeper insert pin
+//          * await log.create({ userId: user._id, action: `access room ${room_number}`, role: user.role, timestamp: new Date() });
+//          * */
+
+//         console.log(`Comparing admin's pin with database`);
+//         const isMatch = await bcrypt.compare(pin, user.pin);
+
+//         if (!isMatch) return { success: false, message: "Password does not match!"};
+//         return { success: true, message: "Password match!" };
+//     } catch (err) {
+//         console.log(err.message);
+//         return { success: false, message: "Internal service error."}
+//     }
+// }
+// //! export the function
+
 module.exports = { compareKey, deleteSchedule };

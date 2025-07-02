@@ -45,13 +45,13 @@ const keyPins = async (req, res) => {
     try {
         const { eventId, pin } = req.body;
         if (!eventId || !pin) {
-            return res.status(400).json({ error: "Missing required fields!" });
+            return res.status(200).json({ error: "Missing required fields!" });
         }
 
         const isValid = await compareKey({ eventId, pin });
 
         if (!isValid) {
-            return res.status(404).json({ error: "Booking not found" });
+            return res.status(200).json({ error: "Booking not found" });
         }
 
         return res.status(200).json({ pinValid: isValid });
@@ -64,7 +64,7 @@ const keyExpired = async (req, res) => {
     try {
         const { eventId } = req.body;
         if ( !eventId ) {
-            return res.status(400).json({ error: "Missing required fields!" });
+            return res.status(200).json({ error: "Missing required fields!" });
         }
 
         // const token = req.cookies.user_token;
@@ -84,7 +84,7 @@ const keyExpired = async (req, res) => {
         const isCompleted = await deleteSchedule({ eventId });
         
         if (!isCompleted) {
-            return res.status(404).json({ error: "Booking not found" });
+            return res.status(200).json({ error: "Booking not found" });
         }
 
         return res.status(200).json({ message: `Event: ${ eventId } has been removed!`});
@@ -92,5 +92,26 @@ const keyExpired = async (req, res) => {
         return res.status(500).json({ error: "Internal Server Error "});
     }
 };
+
+// // admin pin insertion
+// const adminKeyPin = async (req, res) => {
+//     try {
+//         const { unique, pin, room_number } = req.body;
+//         if (! unique || !pin || !room_number) {
+//             return res.status(200).json({ message: "Missing required fields! "});
+//         }
+
+//         const result = await adminCompareKey(unique, pin, room_number);
+
+//         if (!result.success) {
+//             return res.status(200).json({ message: result.message });
+//         }
+
+//         return res.status(200).json({ message: result.message });
+//     } catch (err) {
+//         return res.status(500).json({ message: result.message });
+//     }
+// } 
+// ! export the function
 
 module.exports = { getuser, keyPins, keyExpired };
