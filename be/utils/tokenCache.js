@@ -36,11 +36,7 @@ module.exports = {
    * @returns {boolean}
    */
   isTokenExpired: async function() {
-    if(new Date() >= expiryDate){
-      this.clear()
-      // จริงๆ ต้องเอา unique ตัวเองหา ใน TOKEN DB ถ้าเจอดึงมา refresh, ไม่เจอ error
-    }
-    if(accessToken === null || refreshToken === null || expiryDate === null){ // server down
+    if(new Date() >= expiryDate || accessToken === null || refreshToken === null || expiryDate === null){ // server down
       try{
         const Gettoken = await Token.findOne().sort({ _id: 1 }); // subscription ที่มีค่า index น้อยที่สุด
         if (!Gettoken) {
@@ -54,8 +50,9 @@ module.exports = {
           refreshToken: encryptToken(newtoken.refresh_token), // oprftoken
           expiryDate: new Date(Date.now() + 60 * 60 * 1000)
         });
+        console.log("tokenCache.js Token refreshed. Expiry:", expiryDate);
       } catch (err) {
-        console.error("tokenCache.js :", err);
+        console.error("tokenCache.js refresh fail:", err);
         return; 
       }
       

@@ -38,12 +38,12 @@ const Auth = async (req, res) => { // admin sign-in
     }
 }
 
-// รับ oldpw, newpw จาก body //ไม่ส่ง oldpw มาละ
+// รับ newpw จาก body //ไม่ส่ง oldpw มาละ
 const ChangeAdminPW = async (req, res) => {
   try{
     const admin = req.user;
-    const {oldpw, newpw} = req.body;
-    if (!oldpw || !newpw) {
+    const {newpw} = req.body;
+    if (!newpw) {
       return res.status(400).json({ message: 'Passwords are required!' });
     }
     if (admin.role !== 'admin') {
@@ -52,11 +52,6 @@ const ChangeAdminPW = async (req, res) => {
     const existingUser = await User.findById(admin._id);
     if (!existingUser) {
       return res.status(404).json({ message: 'User not found' });
-    }
-    const isoldpw = await bcrypt.compare(oldpw, existingUser.password);
-    if (!isoldpw) {
-      console.log("Invalid credentials");
-      return res.status(400).json({ message: 'Old password is incorrect, please try again.' }); // fe check conition...
     }
 
     existingUser.password = await bcrypt.hash(newpw, parseInt(process.env.BCRYPT_SALT_ROUNDS));
@@ -287,7 +282,8 @@ const resetEmailPassword = async (req, res) => {
   }
 }
 
-module.exports = { Auth,
+module.exports = { 
+  Auth,
   Createhousekeeper,
   createadmin, 
   refreshadmintoken, 

@@ -8,8 +8,13 @@ const { Auth,
     editpinhousekeeper,
     sendEmailOTP,
     verifyEmailOTP,
+<<<<<<< HEAD
+    resetEmailPassword
+=======
     resetEmailPassword,
+>>>>>>> 6e723b6a06fd4fe25c3556d57ea8bc427493eaf4
  } = require('../controllers/account.controllers');
+
 const { authorize } = require('../middlewares/auth.middleware')
 const express = require("express");
 const AccountRouter = express.Router();
