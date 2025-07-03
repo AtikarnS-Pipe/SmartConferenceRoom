@@ -68,7 +68,7 @@ function Roomcard(props) {
           const roomPath = d.room;
           const today = new Date();
           const endDate = new Date();
-          endDate.setDate(today.getDate() + 1);
+          // endDate.setDate(today.getDate() + 1);
           const formatBuddhistDate = (date) => {
             const day = String(date.getDate()).padStart(2, '0');
             const month = String(date.getMonth() + 1).padStart(2, '0');

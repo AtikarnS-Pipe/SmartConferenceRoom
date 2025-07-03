@@ -98,6 +98,9 @@ function RoomSize() {
             </ul>
           )}
           </li>
+          <li>
+            <h1>Management</h1>
+          </li>
             </ul>
             <div className=' max-md:flex'>
                 <h2 className='md:text-2xl max-md:mr-5'>{timeString}</h2>

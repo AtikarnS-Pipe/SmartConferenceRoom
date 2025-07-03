@@ -3,7 +3,7 @@ import { Mail, ArrowLeft, Key, Shield } from 'lucide-react';
 import { useNavigate } from 'react-router-dom'; // เพิ่ม import
 import axios from 'axios';
 
-const ForgotPasswordFlow = () => { // ลบ { onBack } prop
+const ForgotPasswordFlow = () => { 
   const [step, setStep] = useState('email');
   const [email, setEmail] = useState('');
   const [otp, setOtp] = useState('');
@@ -22,6 +22,7 @@ const handleEmailSubmit = async (e) => {
 
   try {
     const res = await axios.post('/account/otp/send', { email });
+    console.log(res.data);
     // ไม่สนใจ res.data.success เพราะ backend แอบตอบเหมือนกันทุกกรณี
     setStep('otp');
   }  catch (err) {
@@ -42,6 +43,7 @@ const handleOtpSubmit = async (e) => {
       email,
       otp_code: otp
     });
+    console.log(res.data);
     if (res.data.reset_token) {
       setResetToken(res.data.reset_token);
       setStep('reset');
@@ -70,7 +72,7 @@ const handlePasswordReset = async (e) => {
 
   setIsLoading(true);
   try {
-    const res = await axios.post('http://localhost:4000/otp/reset', {
+    const res = await axios.post('/account/otp/reset', {
       reset_token: resetToken,
       new_password: newPassword
     });

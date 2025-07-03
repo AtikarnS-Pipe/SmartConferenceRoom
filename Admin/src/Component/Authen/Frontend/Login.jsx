@@ -26,8 +26,8 @@ function Verify({ setAuth }) {
 
     try {
       const res = await axios.post('/account/auth', formData);
-      localStorage.setItem('token', res.token);
-      console.log("Login successful:", res.token);
+      localStorage.setItem('token', res.data.token);
+      console.log("Login successful:", res.data.token);
       setAuth(true);
       setLoginSuccess(true);
 

@@ -10,13 +10,15 @@ import ForgotPasswordFlow from './Component/Authen/Frontend/ForgetPasswordFlow'
 import RoomSize from './Component/Roomsize'
 import Protect from './Component/Authen/Frontend/Protect'
 import LoginPage from './Component/Login'
+import Account from './Component/Manage/Account'
+import Housekeeper from './Component/Manage/Housekeeper'
 
 function App() {
   const [isAuthenticated, setAuth] = useState(!!localStorage.getItem('token'));
 
   return (
      <Router>
-    <Routes>
+      <Routes>
         <Route path='/' element={<Verify setAuth={setAuth} />} />
         <Route path='/login/ms' element={<Protect><LoginPage /></Protect>} />
         <Route path='/admin/api' element={
@@ -30,8 +32,9 @@ function App() {
         <Route path='/Available' element={<Protect><Available key={location.key}/></Protect>} />
         <Route path='/Unavailable' element={<Protect><Unavailable /></Protect>} />
         <Route path='/roomsize/:size' element={<Protect><RoomSize /></Protect>} />
-        {/* <Route path='/account/admin' element={<Protect><Account /></Protect>} /> */}
-        {/* <Route path='/account/housekeeper' element={<Protect><Housekeeper /></Protect>} /> */}
+        <Route path='/forgot-password' element={<ForgotPasswordFlow />} />
+        <Route path='/account/admin' element={<Protect><Account /></Protect>} />
+        <Route path='/account/housekeeper' element={<Protect><Housekeeper /></Protect>} />
     </Routes>
     </Router>
   )

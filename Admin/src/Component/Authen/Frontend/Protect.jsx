@@ -6,7 +6,7 @@ function Protect({ children }) {
 
     const token = localStorage.getItem('token');
 
-    if (token){
+    if (token && token.split('.').length === 3) {
         try{
             const decodedToken = jwtDecode(token);
             const currentTime = Date.now() / 1000; // Current time in seconds
@@ -19,7 +19,7 @@ function Protect({ children }) {
         } catch (error) {
             console.error("Invalid Token:", error);
         }
-    }
+    } 
 
     return <Navigate to= '/' />
 

@@ -16,6 +16,8 @@ export default defineConfig({
       '/account/otp/send': 'http://localhost:4000',
       '/account/otp/verify': 'http://localhost:4000',
       '/account/otp/reset': 'http://localhost:4000',
+      '/admin/schedule': 'http://localhost:4000',
+      '/account/auth': 'http://localhost:4000'
     }
   }
 })
