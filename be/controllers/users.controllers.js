@@ -1,5 +1,5 @@
 const { authProvider } = require("../AuthProvider");
-const { compareKey, deleteSchedule } = require('../services/pin.services');
+const { compareKey, deleteSchedule, adminCompareKey } = require('../services/pin.services');
 require('dotenv').config({ path: './config/.env'});
 const tokenCache = require("../utils/tokenCache");
 const { getuserdatabyroom } = require('../services/users.services')
@@ -93,25 +93,25 @@ const keyExpired = async (req, res) => {
     }
 };
 
-// // admin pin insertion
-// const adminKeyPin = async (req, res) => {
-//     try {
-//         const { unique, pin, room_number } = req.body;
-//         if (! unique || !pin || !room_number) {
-//             return res.status(200).json({ message: "Missing required fields! "});
-//         }
+// admin pin insertion
+const adminKeyPin = async (req, res) => {
+    try {
+        const { pin, room_number } = req.body;
+        if ( !pin || !room_number ) {
+            return res.status(200).json({ message: "Missing required fields! "});
+        }
 
-//         const result = await adminCompareKey(unique, pin, room_number);
+        const result = await adminCompareKey( pin, room_number );
 
-//         if (!result.success) {
-//             return res.status(200).json({ message: result.message });
-//         }
+        if (!result.success) {
+            return res.status(200).json({ message: result.message });
+        }
 
-//         return res.status(200).json({ message: result.message });
-//     } catch (err) {
-//         return res.status(500).json({ message: result.message });
-//     }
-// } 
-// ! export the function
+        return res.status(200).json({ message: result.message });
+    } catch (err) {
+        return res.status(500).json({ message: result.message });
+    }
+} 
 
-module.exports = { getuser, keyPins, keyExpired };
+
+module.exports = { getuser, keyPins, keyExpired, adminKeyPin };

@@ -46,37 +46,35 @@ async function deleteSchedule({ eventId }) {
 }
 
 
-// //! find what unique it is
-// /**
-//  * 
-//  * @param {String} unique
-//  * @param {String} pin
-//  * @param {String} room_number
-//  * @returns 
-//  */
-// async function adminCompareKey({ unique, pin, room_number }) {
-//     try {
-//         const user = await User.findOne({
-//             // unique: unique,
-//         });
+//! find what unique it is
+/**
+ * 
+ * @param {String} pin
+ * @param {String} room_number
+ * @returns 
+*/
+async function adminCompareKey({ pin, room_number }) {
+    try {
+        const user = await User.findOne({
+           pin: pin,
+        });
 
-//         if (!user) return { success: false, message: "User not found!"};
+        if (!user) return { success: false, message: "User not found!"};
 
-//         /**
-//          * ! update database to log admin/housekeeper insert pin
-//          * await log.create({ userId: user._id, action: `access room ${room_number}`, role: user.role, timestamp: new Date() });
-//          * */
+        /**
+         * ! update database to log admin/housekeeper insert pin
+         * await log.create({ userId: user._id, action: `access room ${room_number}`, role: user.role, timestamp: new Date() });
+         * */
 
-//         console.log(`Comparing admin's pin with database`);
-//         const isMatch = await bcrypt.compare(pin, user.pin);
+        console.log(`Comparing admin's pin with database`);
+        const isMatch = await bcrypt.compare(pin, user.pin);
 
-//         if (!isMatch) return { success: false, message: "Password does not match!"};
-//         return { success: true, message: "Password match!" };
-//     } catch (err) {
-//         console.log(err.message);
-//         return { success: false, message: "Internal service error."}
-//     }
-// }
-// //! export the function
+        if (!isMatch) return { success: false, message: "Password does not match!"};
+        return { success: true, message: "Password match!" };
+    } catch (err) {
+        console.log(err.message);
+        return { success: false, message: "Internal service error."}
+    }
+}
 
-module.exports = { compareKey, deleteSchedule };
+module.exports = { compareKey, deleteSchedule, adminCompareKey };
