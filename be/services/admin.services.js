@@ -11,8 +11,8 @@ const RESET_SECRET = process.env.JWT_RESET_SECRET || "jwt-reset-secret";
 
 async function GetScheduleData(actoken, Room, start, end){  
     try {
-        // start: 04072025
-        // end: 05072025
+        // start: 06072025
+        // end: 12072025
         // ถ้า 1 วันต้องเเก้ เเต่ถ้า 1 อาทิตย์ไม่ต้องเเก้
         console.log("GetScheduleData3333333333333:", Room, start, end);
         const tzOffset = 7 * 60; // Thailand UTC+7 (minutes)
@@ -41,6 +41,7 @@ async function GetScheduleData(actoken, Room, start, end){
                 startDateTime: startDateTime,
                 endDateTime: endDateTime,
                 "$orderby": "start/dateTime",
+                "$top": 100, // default = 10 ,Limit max = 100 events, if more than 100 events, you need to use pagination
                 "$select": "organizer,start,end,locations"
             })
             .get();
@@ -54,7 +55,6 @@ async function GetScheduleData(actoken, Room, start, end){
     } catch (error) {
         console.log("error:", error);
         res.write(`event: error\ndata: ${JSON.stringify({ error: "Failed to fetch data(setinterval)" })}\n\n`);
-        // res.end();
     }
 }
 
@@ -66,8 +66,8 @@ async function sendscheduledata(req, res){
         if(!Room || !startdate || !enddate){
             throw new Error("Missing parameters: Room, startdate, or enddate");
         }
-        await tokenCache.isTokenExpired();
-        const results = await GetScheduleData(decryptToken(tokenCache.getAccessToken()), Room, startdate, enddate);
+        const accesstoken = decryptToken(tokenCache.getAccessToken());
+        const results = await GetScheduleData(accesstoken, Room, startdate, enddate);
         if(!results){
             throw new Error("No results found!!");
         }
@@ -76,30 +76,39 @@ async function sendscheduledata(req, res){
     } catch (error) {
         console.error("Error in sendscheduledata:", error.message);
         res.write(`event: error\ndata: ${JSON.stringify({ error: "Failed to fetch data (sendscheduledata)" })}\n\n`);
+        res.end();
         return;
     }
 }
 
-// Logs token create
-async function addCacheandDB(tokenobject, adminId){
-    let existingUser;
-    tokenCache.setToken(tokenobject)
-    console.log("Token encrypted and cached. Expiry:", tokenobject.expiryDate);
 
-    // If ACCOUNT DB has unique same in TOKEN DB, Update that recode
-    existingUser = await Token.findOne({ account:adminId})
-    if(existingUser){
-        existingUser.refreshToken = tokenobject.refreshToken;
-        existingUser.accessToken = tokenobject.accessToken;
-        existingUser.expiryDate = tokenobject.expiryDate;
-        await existingUser.save();
-    } else{
-        // If not, Create token in DB. ตอนนี้ซ้ำยาว
-        existingUser = await Token.create(tokenobject)
+// ฟังก์ชันสำหรับดึงข้อมูล user profile
+async function getUserProfile(accessToken) {
+    try {
+        const profile = await getGraphClient(accessToken).api('https://graph.microsoft.com/v1.0/me').get();
+        console.log("getUserProfile profile:", profile.mail);
+        return profile;
+    } catch (error) {
+        console.error('Error fetching user profile:', error);
+        throw new Error('Failed to fetch user profile');
     }
-    console.log("Token saved to DB. ID:", existingUser._id);
+}
 
-    return existingUser; // logs token create and update ส่งไปให้ sse เพื่อทำให้ fe เเสดง logs
+// ฟังก์ชันสำหรับบันทึก token ลงฐานข้อมูล
+async function addCacheandDB(tokenObject) {
+    try {
+        // อัปเดต token ที่มีอยู่
+        tokenCache.setToken(tokenObject)
+        console.log(`✅ Token updated in Cache. Access Token: ${tokenObject.accessToken}`);
+
+        const newToken = await Token.create(tokenObject);
+        console.log(`✅ New token created in DB. ID: ${newToken._id}`);
+        return newToken;
+
+    } catch (error) {
+        console.error('Error saving token to DB:', error);
+        throw new Error('Failed to save token to database');
+    }
 }
 
 async function fetchAllRoom(res, accessToken) {
@@ -123,6 +132,7 @@ async function fetchAllRoom(res, accessToken) {
                         startDateTime: startDateTime,
                         endDateTime: endDateTime,
                         "$orderby": "start/dateTime",
+                        "$top": 100,
                         "$select": "id,organizer,start,end,locations"
                     })
                     .get();
@@ -143,6 +153,7 @@ async function fetchAllRoom(res, accessToken) {
     } catch (error) {
         console.error(error);
         res.write(`event: error\ndata: ${JSON.stringify({ error: "Failed to fetch data (fetchRoomEventsAndSend)" })}\n\n`);
+        res.end();
     }
 }
 
@@ -257,4 +268,6 @@ module.exports = {
     sendOTP,
     verifyOTP,
     resetPassword,
+    getUserProfile
+
 };

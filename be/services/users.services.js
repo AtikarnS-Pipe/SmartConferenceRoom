@@ -5,20 +5,19 @@ const { decryptToken } = require('../utils/encode');
 const getTodaydatetime = require('../utils/getTodaydatetime');
 
 async function getuserdatabyroom(res, RoomNumber) {
-    await tokenCache.isTokenExpired();
     try {
-
         const {startDateTime, endDateTime} = getTodaydatetime();
-        
-        if(!decryptToken(tokenCache.getAccessToken())){
+        const accesstoken = decryptToken(tokenCache.getAccessToken());
+        if(!accesstoken){
             throw new Error("No access token in Users")
         }
-        const graphResponse = await getGraphClient(decryptToken(tokenCache.getAccessToken()))
+        const graphResponse = await getGraphClient(accesstoken)
             .api(`https://graph.microsoft.com/v1.0/users/${RoomNumber}@tcc-technology.com/calendarView`)
             .query({
                 startDateTime: startDateTime,
                 endDateTime: endDateTime,
                 "$orderby": "start/dateTime",
+                "$top": 100,
                 "$select": "id,organizer,start,end,locations"
             })
             .get();

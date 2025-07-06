@@ -13,10 +13,7 @@ function randomPin() {
 
 // สร้างรหัสผ่านแบบสุ่ม 4 หลัก เเละเก็บค่าใน DB เเละมีการเช็คโดยดึง api มาเช็คตลอด
 async function syncAllRooms() {
-    try{
-        await tokenCache.isTokenExpired();
-        // console.log('check expired roomsync success!')
-
+    
         const roomNumbers = [
         1501, 1502, 1503, 1504, 1505,
         1506, 1514, 1515, 1519, 1520
@@ -25,15 +22,22 @@ async function syncAllRooms() {
         const {startDateTime, endDateTime} = getTodaydatetime();
         
         // ดึงข้อมูลจาก Microsoft Graph API
+        const rawtoken = tokenCache.getAccessToken();
+        if (!rawtoken) { // รอ loop ถัดไป token มาไม่ทัน
+            console.warn("🔁 Waiting for token to be available in cache...");
+            return; 
+        }
+        const accesstoken = decryptToken(tokenCache.getAccessToken());
         const results = await Promise.all(
             roomNumbers.map(async (room) => {
                 try{
-                    const graphResponse = await getGraphClient(decryptToken(tokenCache.getAccessToken()))
+                    const graphResponse = await getGraphClient(accesstoken)
                     .api(`https://graph.microsoft.com/v1.0/users/${room}@tcc-technology.com/calendarView`)
                     .query({
                         startDateTime: startDateTime,
                         endDateTime: endDateTime,
                         "$orderby": "start/dateTime",
+                        "$top": 100,
                         "$select": "id,organizer,start,end,locations"
                     })
                     .get();
@@ -49,10 +53,11 @@ async function syncAllRooms() {
                     console.error(`Error fetching data for room ${room}:`, error.message);
                     return; 
                 }
-                
             })
         );
+        console.log("Fetched data for room:", results);
 
+    try{
         for (const roomData of results) {
             if (roomData.events && roomData.events.length > 0) {
                 for (const event of roomData.events) {
@@ -80,7 +85,7 @@ async function syncAllRooms() {
             }
         }
     } catch (error) {
-        console.error("Error in syncAllRooms:", error.message);
+        console.error("Error forloop in syncAllRooms:", error.message);
         return;
     }
 }

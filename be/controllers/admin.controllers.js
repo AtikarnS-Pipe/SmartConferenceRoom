@@ -2,14 +2,17 @@ require('dotenv').config({ path: './config/.env'});
 const { getTokenByCode } = require("../AuthProvider");
 const tokenCache = require('../utils/tokenCache')
 const {encryptToken, decryptToken} = require('../utils/encode')
-const {addCacheandDB, sendscheduledata, fetchAllRoom} = require('../services/admin.services')
-const jwt = require('jsonwebtoken');
-const User = require('../models/User');
+const {
+    addCacheandDB, 
+    sendscheduledata, 
+    fetchAllRoom,
+    getUserProfile,
+    } = require('../services/admin.services')
+
 
 const getAllusers = async (req, res) => {
     const code = req.query.code;
-    let token = req.query.token;
-    let tokenResponse, intervalId;
+    let tokenResponse, intervalId, accessToken;
 
     res.set({
         'Content-Type': 'text/event-stream',
@@ -19,68 +22,93 @@ const getAllusers = async (req, res) => {
         'Access-Control-Allow-Origin': process.env.FRONTEND_ADMIN
     });
 
-    // check token has loged in by admin and get admin db
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const admin = await User.findById(decoded.userId);
-    if (!admin || admin.role !== 'admin') {
-        res.write(`event: error\ndata: ${JSON.stringify({ error: 'cant found admin!!' })}\n\n`);
-        res.end();
-        return;
-    }
-
-    // check code is loged in by microsoft
-    try {
-        if (code && code !== "null") {
-            // login ครั้งแรก
-            let encryptedACToken, encryptedRFToken, datatoken;
-            tokenResponse = await getTokenByCode(code);
-            try{
-                encryptedRFToken = encryptToken(tokenResponse.refresh_token);
-                encryptedACToken = encryptToken(tokenResponse.access_token);
-                datatoken = { 
-                    account: admin._id,
-                    accessToken: encryptedACToken, 
-                    refreshToken: encryptedRFToken, 
-                    expiryDate: new Date(Date.now() + 60 * 60 * 1000)
-                }
-                await addCacheandDB(datatoken, admin._id);
-            } catch(err){
-                throw new Error("error:", err.message) 
-            }
-        } else {
-            // GET token from cache or refresh it / if not found, get from DB
-            await tokenCache.isTokenExpired();
-        }
+    if (code && code !== "null") {
+        // Login ครั้งแรกด้วย Microsoft OAuth
+        console.log("Processing Microsoft OAuth code...");
         
-        fetchAllRoom(res, decryptToken(tokenCache.getAccessToken()));
-        intervalId = setInterval(async () => {
-            await tokenCache.isTokenExpired();
-            fetchAllRoom(res, decryptToken(tokenCache.getAccessToken()));
-        }, 15000);
+        try {
+            // ขอ token จาก Microsoft
+            tokenResponse = await getTokenByCode(code);
+            // ตรวจสอบว่าเป็น email ที่ถูกต้องหรือไม่
+            const userProfile = await getUserProfile(tokenResponse.access_token);
+            
+            
+            if (userProfile.mail !== 'meetingroom@tcc-technology.com') {
+                console.error(`💥 Unauthorized email: ${userProfile.mail}, Only meetingroom@tcc-technology.com is allowed. `);
+                res.write(`event: forceLogout\ndata: ${JSON.stringify({ 
+                error: `Unauthorized email: ${userProfile.mail}, Only meetingroom@tcc-technology.com is allowed.`})}\n\n`);
+                return;
+            }
 
-        req.on('close', () => {
+            console.log(`✅ Authorized user: ${userProfile.mail}`);
+
+            // เข้ารหัสและบันทึก token
+            const encryptedRefreshToken = encryptToken(tokenResponse.refresh_token);
+            const encryptedAccessToken = encryptToken(tokenResponse.access_token);
+            
+            const tokenData = {
+                accessToken: encryptedAccessToken,
+                refreshToken: encryptedRefreshToken,
+                expiryDate: new Date(Date.now() + (tokenResponse.expires_in * 1000))
+            };
+
+            // บันทึก token ลง DB
+            await addCacheandDB(tokenData);
+            accessToken = tokenResponse.access_token;
+        } catch (err) {
+            console.error("Error!!", err.message);
+            res.write(`event: error\ndata: ${JSON.stringify({ 
+                error: "Authentication failed", 
+                detail: err.message 
+            })}\n
+            'w\n`);
+            res.end();
+            return;
+        }
+    } else {
+        try {
+            // ไม่มี code
+            console.log("No code provided, fetching refresh token...");
+            
+            // เอา Access token ล่าสุดจาก cache 
+            const latestAccessToken = tokenCache.getAccessToken();
+            if (!latestAccessToken) {
+                console.error("No refresh token found in cache...");
+                throw new Error("No refresh token found in caches. Please login again.");
+            }
+
+            accessToken = decryptToken(latestAccessToken);
+            console.log("get accessToken from cache:", accessToken);
+        } catch (err) {
+            console.error("Error in getAllusers:", err.message);
+            res.write(`event: error\ndata: ${JSON.stringify({ error: "Admin controllers failed", detail: err.message })}\n\n`);
+            res.end();
+            return;
+        }
+    }   
+    // เริ่มดึงข้อมูล room และส่ง SSE
+    await fetchAllRoom(res, accessToken);
+    intervalId = setInterval(async () => {
+        await fetchAllRoom(res, accessToken);
+    }, 15000);
+
+    // จัดการเมื่อ connection ปิด
+    req.on('close', () => {
         clearInterval(intervalId);
         console.log(`SSE connection closed for admin`);
-        });
+    });
 
-        req.on('error', (err) => {
-            clearInterval(intervalId);
-            console.error('SSE request error:', err);
-        });
+    req.on('error', (err) => {
+        clearInterval(intervalId);
+        console.error('SSE request error:', err);
+    });
 
-        // จัดการเมื่อ response สิ้นสุด
-        res.on('finish', () => {
-            clearInterval(intervalId);
-            console.log(`Response finished for admin`);
-        });
+    res.on('finish', () => {
+        clearInterval(intervalId);
+        console.log(`Response finished for admin`);
+    });
+           
 
-
-    } catch (err) {
-        console.error("Error: Checking in admin.controllers")
-        res.write(`event: error\ndata: ${JSON.stringify({ error: "Failed, please check login, geting token and fetching data", detail: err.message })}\n\n`);
-        res.end();
-        return;
-    }
 };
 
 const Login = async (req, res) => {
@@ -89,7 +117,7 @@ const Login = async (req, res) => {
         response_type: "code",
         redirect_uri: `${process.env.REDIRECT_URI}`,
         response_mode: "query",
-        scope: `${process.env.SCOPE1} ${process.env.SCOPE2}`
+        scope: `${process.env.SCOPE1} ${process.env.SCOPE2} ${process.env.SCOPE3} ${process.env.SCOPE4}`,
     });
     res.redirect(`https://login.microsoftonline.com/${process.env.TENANT_ID}/oauth2/v2.0/authorize?${params.toString()}`);
 };
@@ -102,7 +130,8 @@ const getschedule = async (req, res) => {
         'Access-Control-Allow-Credentials': 'true',
         'Access-Control-Allow-Origin': process.env.FRONTEND_ADMIN
     });
-
+    
+    // res.flushHeaders();
     sendscheduledata(req, res)
     const intervalId = setInterval(async () => {
         sendscheduledata(req, res)
@@ -123,7 +152,7 @@ const getschedule = async (req, res) => {
     // จัดการเมื่อ response สิ้นสุด res.end()
     res.on('finish', () => {
         clearInterval(intervalId);
-        console.log(`Response finished for room ${Room}`);
+        console.log(`Response finished`);
     });
 }
 

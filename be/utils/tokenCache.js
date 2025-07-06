@@ -7,6 +7,66 @@ let accessToken = null;
 let refreshToken = null;
 let expiryDate = null; // Date object or ISO string
 
+let started = false; // กำหนด monitor เริ่มรันเเค่ครั้งเดียว
+
+/**
+   * Check if current token is expired
+   * If expired, refresh it and update the cache and DB
+*/
+async function monitorToken() {
+  if (started) return;
+  started = true;
+
+  console.log("🚀 Starting token monitor...");
+  while (true) {
+    if (!refreshToken || !expiryDate) {
+      const tokenData = await Token.findOne().sort({ createdAt: -1 });
+      if (!tokenData) console.log("No token found in DB");
+      refreshToken = tokenData ? tokenData.refreshToken : null;
+      expiryDate = tokenData ? new Date(tokenData.expiryDate) : null;
+      accessToken = tokenData ? tokenData.accessToken : null;
+      if (!refreshToken || !expiryDate) {
+        console.log("⏳ Monitoring is waiting for token in cache...");
+        await sleep(5000);
+        continue;
+      }
+    }
+
+    const now = new Date();
+    const buffer = 5 * 60 * 1000;
+
+    if (now >= new Date(expiryDate.getTime() - buffer)) {
+      try {
+        console.log("🔁 Refreshing token...");
+        const newToken = await refreshAccessToken(decryptToken(refreshToken));
+        const newAccessToken = encryptToken(newToken.access_token);
+        const newRefreshToken = newToken.refresh_token? encryptToken(newToken.refresh_token) : refreshToken;
+        const newExpiry = new Date(Date.now() + (newToken.expires_in || 3600) * 1000); //
+
+        accessToken = newAccessToken;
+        refreshToken = newRefreshToken;
+        expiryDate = newExpiry;
+
+        await Token.create({
+          accessToken,
+          refreshToken,
+          expiryDate: newExpiry
+        });
+
+        console.log("✅ Token refreshed and inserted into DB");
+      } catch (err) {
+        console.error("❌ Failed to refresh token:", err.message);
+      }
+    }
+
+    await sleep(20000);
+  }
+}
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms)); 
+}
+
 module.exports = {
   /**
    * Set token and expiry
@@ -31,33 +91,7 @@ module.exports = {
    */
   getRefreshToken: () => refreshToken,
 
-  /**
-   * Check if current access token is expired
-   * @returns {boolean}
-   */
-  isTokenExpired: async function() {
-    if(new Date() >= expiryDate || accessToken === null || refreshToken === null || expiryDate === null){ // server down
-      try{
-        const Gettoken = await Token.findOne().sort({ _id: 1 }); // subscription ที่มีค่า index น้อยที่สุด
-        if (!Gettoken) {
-          console.error('No token found in DB')
-          throw new Error("No token in DB or can not find token in DB")
-        }
-        // console.log('Display findOne():',Gettoken);
-        const newtoken = await refreshAccessToken(decryptToken(Gettoken.refreshToken))
-        this.setToken({ 
-          accessToken: encryptToken(newtoken.access_token),// opactoken
-          refreshToken: encryptToken(newtoken.refresh_token), // oprftoken
-          expiryDate: new Date(Date.now() + 60 * 60 * 1000)
-        });
-        console.log("tokenCache.js Token refreshed. Expiry:", expiryDate);
-      } catch (err) {
-        console.error("tokenCache.js refresh fail:", err);
-        return; 
-      }
-      
-    }
-  },
+  monitorToken,
 
   /**
    * Clear all token data
