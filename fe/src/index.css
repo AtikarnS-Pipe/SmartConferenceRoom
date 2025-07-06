@@ -98,7 +98,11 @@ body {
 }
 
 .light-indicator.available {
+<<<<<<< HEAD
   background-color: #16a34a;
+=======
+  background-color: #809D3C;
+>>>>>>> 81eb435e53fa6d458b0aab24f99fb219be1ee509
 }
 
 /* Status indicator */
@@ -126,7 +130,11 @@ body {
 }
 
 .status-indicator.available {
+<<<<<<< HEAD
   color: #16a34a;
+=======
+  color: #809D3C;
+>>>>>>> 81eb435e53fa6d458b0aab24f99fb219be1ee509
 }
 
 /* Box detail */
@@ -141,7 +149,10 @@ body {
   border-style: solid;
   display: flex;
   align-items: center;
+<<<<<<< HEAD
   border: #16a34a solid 2px;
+=======
+>>>>>>> 81eb435e53fa6d458b0aab24f99fb219be1ee509
 }
 
 @media (min-width: 640px) {
@@ -155,13 +166,21 @@ body {
 
 @media (min-width: 768px) {
   .box-detail {
+<<<<<<< HEAD
     padding: 100px;
+=======
+    padding: 50px;
+>>>>>>> 81eb435e53fa6d458b0aab24f99fb219be1ee509
     margin: 0;
   }
 }
 
 .box-detail.occupied {
+<<<<<<< HEAD
   border: #DF2121 solid 2px;
+=======
+  border-color: #DF2121;
+>>>>>>> 81eb435e53fa6d458b0aab24f99fb219be1ee509
   padding: 15px ;
   background-color: rgba(244, 244, 244, 0.9);
 }
@@ -179,7 +198,11 @@ body {
 }
 
 .box-detail.available {
+<<<<<<< HEAD
   border: #16a34a solid 2px;
+=======
+  border-color: #809D3C;
+>>>>>>> 81eb435e53fa6d458b0aab24f99fb219be1ee509
   padding: 100px;
   background-color: rgba(244, 244, 244, 0.9);
 }
@@ -192,7 +215,11 @@ body {
 
 @media (min-width: 768px) {
   .box-detail.available {
+<<<<<<< HEAD
     padding: 100px ;
+=======
+    padding: 125px ;
+>>>>>>> 81eb435e53fa6d458b0aab24f99fb219be1ee509
   }
 }
 
@@ -201,7 +228,11 @@ body {
   justify-content: center;
   align-items: center;
   height: 100%;
+<<<<<<< HEAD
   font-size: 25px;
+=======
+  font-size: 20px;
+>>>>>>> 81eb435e53fa6d458b0aab24f99fb219be1ee509
   color: #686868;
 }
 
@@ -210,12 +241,16 @@ body {
   width: 100%;
 }
 
+<<<<<<< HEAD
 
 .detail-content.available {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 16px;
+=======
+.detail-content.available {
+>>>>>>> 81eb435e53fa6d458b0aab24f99fb219be1ee509
   color: #686868;
   font-size: 20px;
   text-align: center;

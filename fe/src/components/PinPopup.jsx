@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {DoorClosedLocked} from 'lucide-react'
 import { DoorOpen } from 'lucide-react'
-
 const PinPopup = ({ onSubmit, error, waiting, title = 'Enter PIN Code', showIcon = true }) => {
   const [pin, setPin] = useState('');
   const [blink, setBlink] = useState(false);
