@@ -48,10 +48,12 @@ function Home() {
             </div>
           </div>
           
+          {/* detail */}
           <div className="main-section">
             <Boxdetail isOccupied={isOccupied} event={currentEvent} getTimeRemaining={getTimeRemaining} loading={loading} />
           </div>
           
+          {/* schedule */}
           <div className="schedule-section">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <h1 className="schedule-heading">Today's Schedule</h1>
@@ -62,7 +64,10 @@ function Home() {
             </div>
             {/* <p className = 'touchscreen'>#Touch‑Supported</p> */}
           </div>
-        </div>      </div>
+        </div>
+      </div>
+
+      {/* popup */}
       <PinPopupManager events={events} closeSignal={closeUserPin} />
       <StaffPinPopupManager showTestButton closeUserPinPopup={handleCloseUserPin} />
     </div>

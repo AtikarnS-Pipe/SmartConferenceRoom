@@ -23,13 +23,13 @@ export function useEvents(floor, room) {
         setLoading(false);
       } catch (err) {
         console.error("Error parsing SSE data:", err);
-        setLoading(true);
+        setLoading(true);//ต้องเป็น true
       }
     };
 
     eventSource.onerror = (e) => {
       console.error("SSE error:", e);
-      setLoading(true); // มี error ก็ยังถือว่ายังโหลดอยู่
+      setLoading(true); // มี error ก็ยังถือว่ายังโหลดอยู่ //ต้องเป็น true
     };
 
     return () => {

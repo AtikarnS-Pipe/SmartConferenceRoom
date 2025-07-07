@@ -1,58 +1,53 @@
 import React, { useState, useEffect } from 'react';
 import PinPopup from '../components/PinPopup';
 import { useTouchDetection } from '../hooks/useTouchDetection';
+import { useRoomData } from './useRoomData'; // hook แยกเพื่อดึงข้อมูลห้อง
+import axios from 'axios';
 
 const StaffPinPopupManager = ({ showTestButton, closeUserPinPopup }) => {
   const [visible, setVisible] = useState(false);
   const [waiting, setWaiting] = useState(false);
   const [error, setError] = useState('');
   const [pendingError, setPendingError] = useState('');
+  const { floor, room } = useRoomData(); 
+  const roomId = `${floor}${room}`; // สร้าง roomId จาก floor และ room
+  // console.log(roomId)
 
+  // Track triple touch toggle
   useTouchDetection({
     onTripleTouch: () => {
-      setVisible(true);
-      setError('');
-      if (typeof closeUserPinPopup === 'function') closeUserPinPopup();
+      setVisible((prev) => {
+        if (prev) {
+          // If already open, close staff popup and reopen user popup
+          if (typeof closeUserPinPopup === 'function') closeUserPinPopup(false); // false = open user popup
+          setError('');
+          return false;
+        } else {
+          // If closed, open staff popup and close user popup
+          if (typeof closeUserPinPopup === 'function') closeUserPinPopup(true); // true = close user popup
+          setError('');
+          return true;
+        }
+      });
     },
     holdDuration: 1000
   });
 
   const handlePinSubmit = async (pin) => {
-    setWaiting(true);
-    setError('');
-    // try {
-    //   const res = await fetch('http://localhost:4000/staff/unlock', {
-    //     method: 'POST',
-    //     headers: { 'Content-Type': 'application/json' },
-    //     body: JSON.stringify({ pin }),
-    //   });
-    //   const result = await res.json();
-    //   setWaiting(false);
+  setWaiting(true);
+  setError('');
+  setPendingError('');
 
-    //   if (result?.role === 'admin' || result?.role === 'staff') {
-    //     setPendingError(`Welcome ${result.role}`);
-    //     setTimeout(() => {
-    //       setVisible(false);
-    //       setError('');
-    //     }, 1500);
-    //   } else {
-    //     setPendingError('Incorrect PIN');
-    //   }
-    // } catch (e) {
-    //   setWaiting(false);
-    //   setPendingError('Network error');
-    
-    // MOCK: ตรวจสอบ pin แบบ mock
-    await new Promise(res => setTimeout(res, 800));
-    let result = {};
-    if (pin === '9999') {
-      result = { role: 'admin' };
-    } else if (pin === '8888') {
-      result = { role: 'staff' };
-    } else {
-      result = {};
-    }
+  try {
+    const res = await axios.post('http://localhost:4000/user/admin-key', {
+      pin,
+      room_number: roomId,
+    });
+
+    const result = res.data;
+    console.log('Pin submit result:', result);
     setWaiting(false);
+
     if (result?.role === 'admin' || result?.role === 'staff') {
       setPendingError(`Welcome ${result.role}${result.role === 'admin' ? ' 👑' : ''}`);
       setTimeout(() => {
@@ -60,9 +55,18 @@ const StaffPinPopupManager = ({ showTestButton, closeUserPinPopup }) => {
         setError('');
       }, 1500);
     } else {
-      setPendingError('Incorrect PIN');
+      setPendingError(result.message || 'Incorrect PIN');
     }
-  };
+  } catch (e) {
+    setWaiting(false);
+    if (e.response?.data?.message) {
+      setPendingError(e.response.data.message);
+    } else {
+      setPendingError('Network error');
+    }
+  }
+};
+    
 
   useEffect(() => {
     if (!waiting && pendingError) {
@@ -76,7 +80,7 @@ const StaffPinPopupManager = ({ showTestButton, closeUserPinPopup }) => {
       {showTestButton && (
         <button style={{position:'fixed',bottom:20,right:20,zIndex:99999,padding:'1rem',fontSize:'1.2rem'}} onClick={()=>{
           setVisible(true);
-          if (typeof closeUserPinPopup === 'function') closeUserPinPopup();
+          if (typeof closeUserPinPopup === 'function') closeUserPinPopup(true); // true = close user popup
         }}>
           TEST STAFF PIN
         </button>

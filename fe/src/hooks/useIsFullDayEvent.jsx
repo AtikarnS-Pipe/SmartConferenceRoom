@@ -5,6 +5,6 @@ export function useIsFullDayEvent() {
     const startDate = new Date(event.start.dateTime + 'Z');
     const endDate = new Date(event.end.dateTime + 'Z');
     const durationHours = (endDate - startDate) / (1000 * 60 * 60);
-    return durationHours >= 24;
+    return durationHours >= 24; //ถ้ามากกว่า 24 ชั่วโมงเป็น คืน true
   };
 } 

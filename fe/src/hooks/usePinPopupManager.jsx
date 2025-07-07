@@ -51,7 +51,7 @@ const PinPopupManager = ({ events, onPinSuccess, closeSignal }) => {
   // ฟังก์ชัน: ลบ event เมื่อ timeout (method DELETE)
   const deleteEventOnBackend = async ({ eventId }) => {
     try {
-      const res = await fetch('/user/key', { 
+      const res = await fetch('http://localhost:4000/user/key', { //มี path เเล้วเเต่ยังรอ admin ให้สิทธิ์
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ eventId }),

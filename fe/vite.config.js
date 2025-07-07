@@ -10,7 +10,7 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/user/sse': 'http://localhost:4000', // เปลี่ยนเป็น port ของ backend จริง
-      '/user/key': 'http://localhost:4000', 
+      '/user/key': 'http://localhost:4000',
     },
   },
 });

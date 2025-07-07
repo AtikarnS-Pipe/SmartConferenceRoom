@@ -24,7 +24,7 @@ export default function LightContainer({ isOccupied, floor, room }) {
 
     axios.post(`http://${device.ip}:8080/v2/hardware/light?access_token=${device.token}`, {
       name: 'frame',
-      brightness: '0',
+      brightness: '1',
       color: color
     })
       .then((res) => {

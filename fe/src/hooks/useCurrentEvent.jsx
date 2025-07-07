@@ -7,7 +7,7 @@ export function useCurrentEvent(events) {
   useEffect(() => {
     const checkCurrentEvent = () => {
       const now = new Date();
-      const utcString = now.toISOString();
+      const utcString = now.toISOString(); //เเปลงเป็น UTC string
 
       if (!events || !Array.isArray(events)) {
         console.log("Events data is not available yet or not an array");
@@ -22,6 +22,7 @@ export function useCurrentEvent(events) {
 
       setCurrentEvent(ongoing || null);
       setIsOccupied(!!ongoing);
+      // setIsOccupied(!!ongoing); 
     };
 
     checkCurrentEvent();

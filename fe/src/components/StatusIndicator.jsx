@@ -1,13 +1,12 @@
-import checkIcon from '../icons/check.svg'
-import crossIcon from '../icons/cross.svg'
+import { CircleCheckBig, CircleX } from 'lucide-react';
 
 export default function StatusIndicator({ isOccupied }) {
-  const icon = isOccupied ? crossIcon : checkIcon;
+  const Icon = isOccupied ? CircleX : CircleCheckBig; // ใช้ตัวแปร component ไม่ใช่ JSX ทันที
   const text = isOccupied ? 'Occupied' : 'Available';
 
   return (
     <div className={`status-indicator ${isOccupied ? 'occupied' : 'available'}`}>
-      <img style={{width: '50px', height: '50px'}} src={icon} alt={text} />
+      <Icon size={50} color={isOccupied ? '#ef4444' : '#16a34a'} /> {/* สีแดง/เขียว */}
       <h1>{text}</h1>
     </div>
   );
