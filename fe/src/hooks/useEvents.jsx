@@ -18,7 +18,6 @@ export function useEvents(floor, room) {
     eventSource.onmessage = (e) => {
       try {
         const data = JSON.parse(e.data);
-
         // ✅ ถ้าข้อมูลถูกต้องและมีผลลัพธ์
         setEvents(data.results);
         setLoading(false);
