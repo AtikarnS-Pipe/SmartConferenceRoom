@@ -39,11 +39,11 @@ const Auth = async (req, res) => { // admin sign-in
 }
 
 // รับ newpw จาก body //ไม่ส่ง oldpw มาละ
-const ChangeAdminPW = async (req, res) => {
+const ChangeAdminPin = async (req, res) => {
   try{
     const admin = req.user;
-    const {newpw} = req.body;
-    if (!newpw) {
+    const {newpin} = req.body;
+    if (!newpin) {
       return res.status(400).json({ message: 'Passwords are required!' });
     }
     if (admin.role !== 'admin') {
@@ -54,9 +54,13 @@ const ChangeAdminPW = async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    existingUser.password = await bcrypt.hash(newpw, parseInt(process.env.BCRYPT_SALT_ROUNDS));
+    // existingUser.pin = await bcrypt.hash(newpin, parseInt(process.env.BCRYPT_SALT_ROUNDS));
+    if(existingUser.pin === newpin) {
+      return res.status(400).json({ message: 'Password is duplicate!' });
+    }
+    existingUser.pin = newpin;
     await existingUser.save();
-    res.json({ success: true, NewPassword: existingUser.password, message: 'Admin Password changed successfully' });
+    res.json({ success: true, NewPin: existingUser.pin, message: `${existingUser.email} Pin changed successfully` });
   } catch (error) {
     console.error("Change password error:", error);
     res.status(500).json({ error: 'Internal server error'});
