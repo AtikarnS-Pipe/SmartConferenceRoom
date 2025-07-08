@@ -3,7 +3,7 @@ const { Auth,
     createadmin,
     refreshadmintoken,
     signout,
-    ChangeAdminPW,
+    ChangeAdminPin,
     deletehousekeeper,
     editpinhousekeeper,
     sendEmailOTP,
@@ -17,7 +17,7 @@ const AccountRouter = express.Router();
 
 AccountRouter.post('/createadmin', createadmin);
 AccountRouter.post('/auth', Auth);
-AccountRouter.post('/changeadminpw', authorize, ChangeAdminPW);
+AccountRouter.post('/changeadminpw', authorize, ChangeAdminPin);
 AccountRouter.post('/createhousekeeper', authorize, Createhousekeeper);
 AccountRouter.post('/edithousekeeper', authorize, editpinhousekeeper);
 AccountRouter.post('/deletehousekeeper', authorize, deletehousekeeper);

@@ -292,7 +292,7 @@ module.exports = {
   createadmin, 
   refreshadmintoken, 
   signout, 
-  ChangeAdminPW,
+  ChangeAdminPin,
   deletehousekeeper,
   editpinhousekeeper,
   sendEmailOTP,
