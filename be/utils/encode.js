@@ -16,7 +16,7 @@ function encryptToken(plainText) {
 }
 
 // Decrypt
-function decryptToken(encryptedBase64) {
+async function decryptToken(encryptedBase64) {
   const data = Buffer.from(encryptedBase64, 'base64');
   const iv = data.slice(0, IV_LENGTH);
   const tag = data.slice(IV_LENGTH, IV_LENGTH + 16);

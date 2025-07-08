@@ -1,7 +1,7 @@
 require('dotenv').config({ path: './config/.env'});
 const { getTokenByCode } = require("../AuthProvider");
 const tokenCache = require('../utils/tokenCache')
-const {encryptToken, decryptToken} = require('../utils/encode')
+const {encryptToken} = require('../utils/encode')
 const {
     addCacheandDB, 
     sendscheduledata, 
@@ -43,10 +43,9 @@ const getAllusers = async (req, res) => {
 
             // เข้ารหัสและบันทึก token
             const encryptedRefreshToken = encryptToken(tokenResponse.refresh_token);
-            const encryptedAccessToken = encryptToken(tokenResponse.access_token);
             
             const tokenData = {
-                accessToken: encryptedAccessToken,
+                accessToken: tokenResponse.access_token, //encryptedAccessToken,
                 refreshToken: encryptedRefreshToken,
                 expiryDate: new Date(Date.now() + (tokenResponse.expires_in * 1000))
             };
@@ -75,7 +74,7 @@ const getAllusers = async (req, res) => {
                 throw new Error("No refresh token found in caches. Please login again.");
             }
 
-            accessToken = decryptToken(latestAccessToken);
+            accessToken = latestAccessToken;
             console.log("get accessToken from cache:", accessToken);
         } catch (err) {
             console.error("Error in getAllusers:", err.message);

@@ -4,9 +4,8 @@ require('dotenv').config({ path: './config/.env'});
 const tokenCache = require("../utils/tokenCache");
 const { getuserdatabyroom } = require('../services/users.services');
 // crud microsoft
-const { GetIdRoomnumber } = require('../services/users.services');
+const { GetIdRoomnumber, GeteventId } = require('../services/users.services');
 const getGraphClient = require("../graph");
-const { decryptToken } = require('../utils/encode');
 
 const getuser = async (req, res) => {
     const floor = req.params.floors;
@@ -120,12 +119,13 @@ const adminKeyPin = async (req, res) => {
 // รับ Roomnumber เเละ eventId ของการประชุมที่ต้องการลบ
 const deleteroom = async (req, res) => {
     const { RoomNumber, email, startdatetime, enddatetime } = req.body;
-    const AccessToken = decryptToken(tokenCache.getAccessToken());
+    const AccessToken = tokenCache.getAccessToken();
     if (!AccessToken) {
         console.error("No refresh token found in cache...");
         throw new Error("No refresh token found in caches. Please login again.");
     }
     const calendarId = await GetIdRoomnumber(AccessToken, RoomNumber);
+    const eventId = await GeteventId(AccessToken, calendarId, email, startdatetime, enddatetime); //datetime UTC: 2024-06-09T00:00:00Z
 
     console.log("Delete event request:", { calendarId, eventId });
     try {
@@ -143,22 +143,22 @@ const deleteroom = async (req, res) => {
 }
 
 const createroom = async (req, res) => {
-    const { RoomNumber } = req.body;
-    const AccessToken = decryptToken(tokenCache.getAccessToken());
+    const { RoomNumber, startdatetime, enddatetime } = req.body; // datetime UTC: 2024-06-09T00:00:00Z
+    const AccessToken = tokenCache.getAccessToken();
     if (!AccessToken) {
         console.error("No refresh token found in cache...");
         throw new Error("No refresh token found in caches. Please login again.");
     }
-    const calendarId = await GetIdRoomnumber(AccessToken, "meetingroom");
+    const calendarId = await GetIdRoomnumber(AccessToken, RoomNumber);
 
     const newEvent = {
-        subject: "Shared Calendar Meeting",
+        subject: "Shared Calendar Meeting1",
         start: {
-            dateTime: "2025-07-07T16:00:00",
+            dateTime: startdatetime,
             timeZone: "UTC"
         },
         end: {
-            dateTime: "2025-07-07T16:30:00",
+            dateTime: enddatetime,
             timeZone: "UTC"
         },
         location: {
@@ -167,8 +167,8 @@ const createroom = async (req, res) => {
         attendees: [
             {
             emailAddress: {
-                address: `${RoomNumber}@tcc-technology.com`,
-                name: `DTG Meeting Room S : \${RoomNumber}`
+                address: `Nareupol.A@tcc-technology.com`,
+                name: `Nareupol.A`
             },
             type: "required"
             }

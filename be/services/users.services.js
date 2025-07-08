@@ -1,13 +1,12 @@
 require('dotenv').config({ path: './config/.env'});
 const getGraphClient = require("../graph");
 const tokenCache = require('../utils/tokenCache');
-const { decryptToken } = require('../utils/encode');
 const getTodaydatetime = require('../utils/getTodaydatetime');
 
 async function getuserdatabyroom(res, RoomNumber) {
     try {
         const {startDateTime, endDateTime} = getTodaydatetime();
-        const accesstoken = decryptToken(tokenCache.getAccessToken());
+        const accesstoken = tokenCache.getAccessToken();
         if(!accesstoken){
             throw new Error("No access token in Users")
         }
@@ -18,7 +17,8 @@ async function getuserdatabyroom(res, RoomNumber) {
                 endDateTime: endDateTime,
                 "$orderby": "start/dateTime",
                 "$top": 100,
-                "$select": "id,organizer,start,end,locations"
+                "$select": "id,subject,organizer,start,end,locations",
+                "filter": "isCancelled eq false" 
             })
             .get();
         if (!graphResponse || !graphResponse.value) {
@@ -42,28 +42,60 @@ async function GetIdRoomnumber(accessToken, RoomNumber) {
         const calendars = await getGraphClient(accessToken)
         .api('https://graph.microsoft.com/v1.0/me/calendars')
         .get();
+
+        console.log("RoomNumber received:", RoomNumber);
+        console.log("Available calendars:", calendars.value.map(cal => ({
+            name: cal.name,
+            id: cal.id,
+            owner: cal.owner?.address
+        })));
+
         const matchingCalendars = calendars.value.filter(cal =>
             cal.owner?.address?.includes(`${RoomNumber}@tcc-technology.com`)
         );
-        if (!matchingCalendars) {
-            throw new Error(`No calendar found for room ${RoomNumber}`);
+        if (matchingCalendars.length === 0) {
+            throw new Error(`No calendar found for room: ${RoomNumber}`);
         }
         
-        // matchingCalendars.forEach(cal => {
-        //     console.log("Calendar Name:", cal.name);
-        //     console.log("Owner:", cal.owner?.address);
-        //     console.log("Matching calendar ID:", cal.id);
-        //     calendarIds = cal.id;
-        // });
-        calendarIds = matchingCalendars.map(cal => cal.id);
-        console.log("matchingCalendars => ", calendarIds[0]);
-        return calendarIds[0];
+        calendarIds = matchingCalendars[0].id;
+        console.log("matchingCalendars => ", calendarIds);
+        return calendarIds;
     } catch (error) {
         console.error('Error fetching user ID:', error);
         throw new Error('Failed to fetch user ID');
     }
 }
 
+
+const GeteventId = async (accessToken, calendarId, email, startdatetime, enddatetime) => {
+    try{
+        const events = await getGraphClient(accessToken)
+        .api(`/me/calendars/${calendarId}/events`)
+        .query({
+                startDateTime: startdatetime,   // รูปแบบ "2025-07-08T00:00:00Z"
+                endDateTime: enddatetime,
+                $select: "id,organizer", 
+            })
+            .get();
+        console.log("events => ", events);
+        if (!events || !events.value || events.value.length === 0) {
+            throw new Error(`CalendarID, No events found for calendar ${calendarId} and email ${email}`);
+        }
+        console.log("email => ", email);
+        const filteredEvents = events.value.filter(event =>{
+            console.log("event.organizer => ", event.organizer?.emailAddress?.address)
+            return event.organizer?.emailAddress?.address === email
+        });
+        console.log("filteredEvents => ", filteredEvents);
+        if (filteredEvents.length === 0) {
+            throw new Error(`No events found for calendar ${calendarId} and email ${email}`);
+        }
+        return filteredEvents[0].id;
+    } catch(error){
+        console.error('Error fetching event ID:', error);
+        throw new Error('Failed to fetch GeteventID');
+    }
+}
 module.exports = {
-    getuserdatabyroom, GetIdRoomnumber
+    getuserdatabyroom, GetIdRoomnumber, GeteventId
 };

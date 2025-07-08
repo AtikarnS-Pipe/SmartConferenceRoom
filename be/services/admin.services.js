@@ -1,7 +1,6 @@
 const getGraphClient = require("../graph"); 
 const Token = require('../models/token');
 const tokenCache = require('../utils/tokenCache')
-const {decryptToken} = require('../utils/encode');
 const getTodaydatetime  = require('../utils/getTodaydatetime');
 const userModel = require('../models/User');
 const sendMailAsync = require('../services/sendmail.services')
@@ -42,7 +41,8 @@ async function GetScheduleData(actoken, Room, start, end){
                 endDateTime: endDateTime,
                 "$orderby": "start/dateTime",
                 "$top": 100, // default = 10 ,Limit max = 100 events, if more than 100 events, you need to use pagination
-                "$select": "organizer,start,end,locations"
+                "$select": "organizer,subject,start,end,locations",
+                "filter": "isCancelled eq false" 
             })
             .get();
         if (!graphResponse || !graphResponse.value) {
@@ -66,7 +66,7 @@ async function sendscheduledata(req, res){
         if(!Room || !startdate || !enddate){
             throw new Error("Missing parameters: Room, startdate, or enddate");
         }
-        const accesstoken = decryptToken(tokenCache.getAccessToken());
+        const accesstoken = tokenCache.getAccessToken();
         const results = await GetScheduleData(accesstoken, Room, startdate, enddate);
         if(!results){
             throw new Error("No results found!!");
@@ -133,7 +133,8 @@ async function fetchAllRoom(res, accessToken) {
                         endDateTime: endDateTime,
                         "$orderby": "start/dateTime",
                         "$top": 100,
-                        "$select": "id,organizer,start,end,locations"
+                        "$select": "id,organizer,start,end,locations",
+                        "filter": "isCancelled eq false" 
                     })
                     .get();
 
@@ -185,7 +186,7 @@ Thank you,
 Smart Conforence Display System
         `;
 
-        await sendMailAsync("Your One-Time Password (OTP)", body, user.email, decryptToken(tokenCache.getAccessToken()));
+        await sendMailAsync("Your One-Time Password (OTP)", body, user.email, tokenCache.getAccessToken());
         return { success: true, message: `Send OTP to ${user.email}` };
     } catch (err) {
         return { success: false, message: `${err.message}`};

@@ -22,7 +22,7 @@ async function monitorToken() {
     if (!refreshToken || !expiryDate) {
       const tokenData = await Token.findOne().sort({ createdAt: -1 });
       if (!tokenData) console.log("No token found in DB");
-      refreshToken = tokenData ? tokenData.refreshToken : null;
+      refreshToken = tokenData ? decryptToken(tokenData.refreshToken) : null;
       expiryDate = tokenData ? new Date(tokenData.expiryDate) : null;
       accessToken = tokenData ? tokenData.accessToken : null;
       if (!refreshToken || !expiryDate) {
@@ -38,8 +38,8 @@ async function monitorToken() {
     if (now >= new Date(expiryDate.getTime() - buffer)) {
       try {
         console.log("🔁 Refreshing token...");
-        const newToken = await refreshAccessToken(decryptToken(refreshToken));
-        const newAccessToken = encryptToken(newToken.access_token);
+        const newToken = await refreshAccessToken(refreshToken);
+        const newAccessToken = newToken.access_token;
         const newRefreshToken = newToken.refresh_token? encryptToken(newToken.refresh_token) : refreshToken;
         const newExpiry = new Date(Date.now() + (newToken.expires_in || 3600) * 1000); //
 

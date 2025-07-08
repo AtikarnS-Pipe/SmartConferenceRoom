@@ -4,7 +4,6 @@ const sendMailAsync = require("./sendmail.services")
 const bcrypt = require('bcryptjs');
 require('dotenv').config({ path: '../config/.env' });
 const tokenCache = require("../utils/tokenCache")
-const {decryptToken} = require('../utils/encode')
 const getTodaydatetime = require('../utils/getTodaydatetime');
 
 function randomPin() {
@@ -27,7 +26,7 @@ async function syncAllRooms() {
             console.warn("🔁 Waiting for token to be available in cache...");
             return; 
         }
-        const accesstoken = decryptToken(tokenCache.getAccessToken());
+        const accesstoken = await tokenCache.getAccessToken();
         const results = await Promise.all(
             roomNumbers.map(async (room) => {
                 try{
@@ -38,7 +37,8 @@ async function syncAllRooms() {
                         endDateTime: endDateTime,
                         "$orderby": "start/dateTime",
                         "$top": 100,
-                        "$select": "id,organizer,start,end,locations"
+                        "$select": "id,organizer,start,end,locations",
+                        "filter": "isCancelled eq false" 
                     })
                     .get();
                     if (!graphResponse || !graphResponse.value) {
@@ -79,7 +79,7 @@ async function syncAllRooms() {
                         const mailContent = `รหัสผ่านสำหรับ L: /${RoomStr.slice(0,2)}>${RoomStr.slice(2,4)} คือ ${key}`;
                         const mail = "Nareupol.A@tcc-technology.com" //event.organizer?.emailAddress?.address  //Atikarn.S
                         if(process.env.DEBUG_MODE) console.log('mail content:',mail);
-                        // await sendMailAsync(event.organizer?.emailAddress?.address, mailContent, mail, decryptToken(tokenCache.getAccessToken())); //หัวข้ออีเมล, รหัสผ่าน, หมายเลขห้องที่จะส่งไป
+                        // await sendMailAsync(event.organizer?.emailAddress?.address, mailContent, mail, tokenCache.getAccessToken()); //หัวข้ออีเมล, รหัสผ่าน, หมายเลขห้องที่จะส่งไป
                     }
                 }
             }
