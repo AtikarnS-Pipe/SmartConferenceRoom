@@ -9,7 +9,6 @@ const {
     getUserProfile,
     } = require('../services/admin.services')
 
-
 const getAllusers = async (req, res) => {
     const code = req.query.code;
     let tokenResponse, intervalId, accessToken;
@@ -25,7 +24,7 @@ const getAllusers = async (req, res) => {
     if (code && code !== "null") {
         // Login ครั้งแรกด้วย Microsoft OAuth
         console.log("Processing Microsoft OAuth code...");
-        
+
         try {
             // ขอ token จาก Microsoft
             tokenResponse = await getTokenByCode(code);
@@ -56,12 +55,11 @@ const getAllusers = async (req, res) => {
             await addCacheandDB(tokenData);
             accessToken = tokenResponse.access_token;
         } catch (err) {
-            console.error("Error!!", err.message);
+            console.error("Error!!", err);
             res.write(`event: error\ndata: ${JSON.stringify({ 
                 error: "Authentication failed", 
                 detail: err.message 
-            })}\n
-            'w\n`);
+            })}\n\n`);
             res.end();
             return;
         }
@@ -117,7 +115,8 @@ const Login = async (req, res) => {
         response_type: "code",
         redirect_uri: `${process.env.REDIRECT_URI}`,
         response_mode: "query",
-        scope: `${process.env.SCOPE1} ${process.env.SCOPE2} ${process.env.SCOPE3} ${process.env.SCOPE4}`,
+        scope: `${process.env.SCOPE1} ${process.env.SCOPE2} ${process.env.SCOPE3} ${process.env.SCOPE4} ${process.env.SCOPE5}`,
+        
     });
     res.redirect(`https://login.microsoftonline.com/${process.env.TENANT_ID}/oauth2/v2.0/authorize?${params.toString()}`);
 };
@@ -155,6 +154,7 @@ const getschedule = async (req, res) => {
         console.log(`Response finished`);
     });
 }
+
 
 
         

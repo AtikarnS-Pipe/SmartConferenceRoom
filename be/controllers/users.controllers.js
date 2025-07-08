@@ -2,7 +2,11 @@ const { authProvider } = require("../AuthProvider");
 const { compareKey, deleteSchedule, adminCompareKey } = require('../services/pin.services');
 require('dotenv').config({ path: './config/.env'});
 const tokenCache = require("../utils/tokenCache");
-const { getuserdatabyroom } = require('../services/users.services')
+const { getuserdatabyroom } = require('../services/users.services');
+// crud microsoft
+const { GetIdRoomnumber } = require('../services/users.services');
+const getGraphClient = require("../graph");
+const { decryptToken } = require('../utils/encode');
 
 const getuser = async (req, res) => {
     const floor = req.params.floors;
@@ -113,5 +117,85 @@ const adminKeyPin = async (req, res) => {
     }
 } 
 
+// รับ Roomnumber เเละ eventId ของการประชุมที่ต้องการลบ
+const deleteroom = async (req, res) => {
+    const { RoomNumber, email, startdatetime, enddatetime } = req.body;
+    const AccessToken = decryptToken(tokenCache.getAccessToken());
+    if (!AccessToken) {
+        console.error("No refresh token found in cache...");
+        throw new Error("No refresh token found in caches. Please login again.");
+    }
+    const calendarId = await GetIdRoomnumber(AccessToken, RoomNumber);
 
-module.exports = { getuser, keyPins, keyExpired, adminKeyPin };
+    console.log("Delete event request:", { calendarId, eventId });
+    try {
+        await getGraphClient(AccessToken)
+        .api(`/me/calendars/${calendarId}/events/${eventId}`)
+        .delete();
+
+        console.log("Delete event success");
+        res.status(200).json({ message: "Event deleted successfully" });
+
+    } catch (error) {
+        console.error("Error deleting event:", error);
+        res.status(500).json({ error: "Failed to delete event" });
+    }
+}
+
+const createroom = async (req, res) => {
+    const { RoomNumber } = req.body;
+    const AccessToken = decryptToken(tokenCache.getAccessToken());
+    if (!AccessToken) {
+        console.error("No refresh token found in cache...");
+        throw new Error("No refresh token found in caches. Please login again.");
+    }
+    const calendarId = await GetIdRoomnumber(AccessToken, "meetingroom");
+
+    const newEvent = {
+        subject: "Shared Calendar Meeting",
+        start: {
+            dateTime: "2025-07-07T16:00:00",
+            timeZone: "UTC"
+        },
+        end: {
+            dateTime: "2025-07-07T16:30:00",
+            timeZone: "UTC"
+        },
+        location: {
+            displayName: `${RoomNumber}@tcc-technology.com`
+        },
+        attendees: [
+            {
+            emailAddress: {
+                address: `${RoomNumber}@tcc-technology.com`,
+                name: `DTG Meeting Room S : \${RoomNumber}`
+            },
+            type: "required"
+            }
+        ],
+        organizer: {
+            emailAddress: {
+                name: "TCCtech Meetingroom",
+                address: "meetingroom@tcc-technology.com"
+            }
+        }
+    };
+    
+    try {
+        await getGraphClient(AccessToken)
+            .api(`/me/calendars/${calendarId}/events`)  // for calendar you have access to
+            .post(newEvent);
+
+        console.log("Create event success");
+        res.status(200).json({ message: "Event Create successfully" });
+
+    } catch (error) {
+    console.error("Error create event:", error);
+    res.status(500).json({ error: "Failed to create event" });
+    }
+}
+
+module.exports = { getuser
+    , keyPins, keyExpired, adminKeyPin
+    , deleteroom, createroom 
+};

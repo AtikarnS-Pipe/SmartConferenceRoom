@@ -8,7 +8,7 @@
   "dependencies": {
     "@azure/msal-node": "^3.5.3",
     "@microsoft/microsoft-graph-client": "^3.0.7",
-    "axios": "^1.9.0",
+    "axios": "^1.10.0",
     "bcryptjs": "^3.0.2",
     "cookie": "^1.0.2",
     "cookie-parser": "~1.4.4",

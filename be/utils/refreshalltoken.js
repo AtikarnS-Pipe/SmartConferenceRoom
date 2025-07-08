@@ -17,7 +17,6 @@ function refreshalltoken(req, res, userId) {
     //   refreshToken: newRefreshToken //เดี๋ยวมาลบ*********
     //   });
     console.log("sucessfully refresh token");
-
     return newAccessToken;
 }
 module.exports = { refreshalltoken }

@@ -36,6 +36,34 @@ async function getuserdatabyroom(res, RoomNumber) {
     }
 } 
 
+async function GetIdRoomnumber(accessToken, RoomNumber) {
+    try {
+        let calendarIds;
+        const calendars = await getGraphClient(accessToken)
+        .api('https://graph.microsoft.com/v1.0/me/calendars')
+        .get();
+        const matchingCalendars = calendars.value.filter(cal =>
+            cal.owner?.address?.includes(`${RoomNumber}@tcc-technology.com`)
+        );
+        if (!matchingCalendars) {
+            throw new Error(`No calendar found for room ${RoomNumber}`);
+        }
+        
+        // matchingCalendars.forEach(cal => {
+        //     console.log("Calendar Name:", cal.name);
+        //     console.log("Owner:", cal.owner?.address);
+        //     console.log("Matching calendar ID:", cal.id);
+        //     calendarIds = cal.id;
+        // });
+        calendarIds = matchingCalendars.map(cal => cal.id);
+        console.log("matchingCalendars => ", calendarIds[0]);
+        return calendarIds[0];
+    } catch (error) {
+        console.error('Error fetching user ID:', error);
+        throw new Error('Failed to fetch user ID');
+    }
+}
+
 module.exports = {
-    getuserdatabyroom
+    getuserdatabyroom, GetIdRoomnumber
 };

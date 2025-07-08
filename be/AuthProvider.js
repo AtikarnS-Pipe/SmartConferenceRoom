@@ -11,7 +11,7 @@ async function getTokenByCode(code) {
         grant_type: 'authorization_code',
         code,
         redirect_uri: process.env.REDIRECT_URI,
-        scope: `${process.env.SCOPE1} ${process.env.SCOPE2} ${process.env.SCOPE3} ${process.env.SCOPE4}`
+        scope: `${process.env.SCOPE1} ${process.env.SCOPE2} ${process.env.SCOPE3} ${process.env.SCOPE4} ${process.env.SCOPE5}`
     };
 
     const response = await axios.post(tokenEndpoint, qs.stringify(params), {
@@ -30,7 +30,7 @@ async function refreshAccessToken(refresh_token) {
     client_secret: process.env.CLIENT_SECRET,
     grant_type: 'refresh_token',
     refresh_token,
-    scope:  process.env.SCOPE1 + ' ' + process.env.SCOPE2 + ' ' + process.env.SCOPE3 + ' ' + process.env.SCOPE4,
+    scope:  process.env.SCOPE1 + ' ' + process.env.SCOPE2 + ' ' + process.env.SCOPE3 + ' ' + process.env.SCOPE4 + ' ' + process.env.SCOPE5,
   };
 
   try {
