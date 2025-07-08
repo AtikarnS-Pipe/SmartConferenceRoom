@@ -118,14 +118,14 @@ const adminKeyPin = async (req, res) => {
 
 // รับ Roomnumber เเละ eventId ของการประชุมที่ต้องการลบ
 const deleteroom = async (req, res) => {
-    const { RoomNumber, email, startdatetime, enddatetime } = req.body;
+    const { deleteRoomData } = req.body; // RoomNumber, email, startdatetime, enddatetime
     const AccessToken = tokenCache.getAccessToken();
     if (!AccessToken) {
         console.error("No refresh token found in cache...");
         throw new Error("No refresh token found in caches. Please login again.");
     }
-    const calendarId = await GetIdRoomnumber(AccessToken, RoomNumber);
-    const eventId = await GeteventId(AccessToken, calendarId, email, startdatetime, enddatetime); //datetime UTC: 2024-06-09T00:00:00Z
+    const calendarId = await GetIdRoomnumber(AccessToken, deleteRoomData.RoomNumber);
+    const eventId = await GeteventId(AccessToken, calendarId, deleteRoomData.email, deleteRoomData.startdatetime, deleteRoomData.enddatetime); //datetime UTC: 2024-06-09T00:00:00Z
 
     console.log("Delete event request:", { calendarId, eventId });
     try {
@@ -143,7 +143,7 @@ const deleteroom = async (req, res) => {
 }
 
 const createroom = async (req, res) => {
-    const { RoomNumber, startdatetime, enddatetime } = req.body; // datetime UTC: 2024-06-09T00:00:00Z
+    const { RoomNumber, startdatetime, enddatetime, subject } = req.body; // datetime UTC: 2024-06-09T00:00:00Z
     const AccessToken = tokenCache.getAccessToken();
     if (!AccessToken) {
         console.error("No refresh token found in cache...");
@@ -152,7 +152,7 @@ const createroom = async (req, res) => {
     const calendarId = await GetIdRoomnumber(AccessToken, RoomNumber);
 
     const newEvent = {
-        subject: "Shared Calendar Meeting1",
+        subject: subject || `Meeting in Room ${RoomNumber}`,
         start: {
             dateTime: startdatetime,
             timeZone: "UTC"
@@ -161,14 +161,14 @@ const createroom = async (req, res) => {
             dateTime: enddatetime,
             timeZone: "UTC"
         },
-        location: {
-            displayName: `${RoomNumber}@tcc-technology.com`
-        },
+        // location: {
+        //     displayName: `${RoomNumber}@tcc-technology.`
+        // },
         attendees: [
             {
             emailAddress: {
-                address: `Nareupol.A@tcc-technology.com`,
-                name: `Nareupol.A`
+                address: `${RoomNumber}@tcc-technology.com`,
+                name: `${RoomNumber} Meetingroom`
             },
             type: "required"
             }
@@ -195,7 +195,23 @@ const createroom = async (req, res) => {
     }
 }
 
+const endtask = async (req, res) => {
+    // try{
+    //     const { eventId } = req.body;
+    //     const AccessToken = tokenCache.getAccessToken();
+    //     const calendarID = await GetIdRoomnnumber()
+    //     await getGraphClient(AccessToken)
+    //     .api(`/me/calendars/${calendarId}/events/${eventId}`)
+    //     .update({
+
+    //     })
+    // } catch(error){
+    //     console.error("Error in endtask:", error);
+    //     res.status(500).json({ error: "Failed to end task" });
+    // }
+}  
+
 module.exports = { getuser
     , keyPins, keyExpired, adminKeyPin
-    , deleteroom, createroom 
+    , deleteroom, createroom ,endtask
 };
