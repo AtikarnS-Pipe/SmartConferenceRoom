@@ -10,6 +10,7 @@ import ForgotPasswordFlow from './Component/Authen/Frontend/ForgetPasswordFlow'
 import RoomSize from './Component/Roomsize'
 import Protect from './Component/Authen/Frontend/Protect'
 import LoginPage from './Component/Login'
+import ForgotPasswordFlow from './Component/Authen/Frontend/ForgetPasswordFlow'
 import Account from './Component/Manage/Account'
 import Housekeeper from './Component/Manage/Housekeeper'
 
@@ -32,7 +33,7 @@ function App() {
         <Route path='/Available' element={<Protect><Available key={location.key}/></Protect>} />
         <Route path='/Unavailable' element={<Protect><Unavailable /></Protect>} />
         <Route path='/roomsize/:size' element={<Protect><RoomSize /></Protect>} />
-        <Route path='/forgot-password' element={<ForgotPasswordFlow />} />
+        <Route path='/forgot-password' element={<Protect><ForgotPasswordFlow /></Protect>} />
         <Route path='/account/admin' element={<Protect><Account /></Protect>} />
         <Route path='/account/housekeeper' element={<Protect><Housekeeper /></Protect>} />
     </Routes>
