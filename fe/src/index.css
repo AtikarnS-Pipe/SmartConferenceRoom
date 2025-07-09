@@ -147,6 +147,71 @@ body {
   display: flex;
   align-items: center;
   border: #16a34a solid 2px;
+  position: relative;
+}
+.box-detail-action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  position: absolute;
+  right: 32px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+}
+
+@media (max-width: 767px) {
+  .box-detail-action-buttons {
+    position: static;
+    flex-direction: row;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 12px;
+    margin-top: 18px;
+    transform: none;
+  }
+}
+
+.end-button, .book-next-button {
+  min-width: 250px;
+  padding: 50px 0px;
+  border: none;
+  border-radius: 10px;
+  font-size: 25px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.35  );
+  transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
+  outline: none;
+  color: #fff;
+}
+
+.end-button {
+  background: linear-gradient(90deg, #df2121 0%, #ff5858 100%);
+}
+.end-button:hover, .end-button:focus {
+  background: linear-gradient(90deg, #b91c1c 0%, #ef4444 100%);
+  box-shadow: 0 6px 20px rgba(223,33,33,0.18);
+  transform: translateY(-2px) scale(1.03);
+}
+.end-button:active {
+  background: linear-gradient(90deg, #991b1b 0%, #dc2626 100%);
+  box-shadow: 0 2px 8px rgba(223,33,33,0.10);
+  transform: scale(0.98);
+}
+
+.book-next-button {
+  background: linear-gradient(90deg, #16a34a 0%, #22c55e 100%);
+}
+.book-next-button:hover, .book-next-button:focus {
+  background: linear-gradient(90deg, #15803d 0%, #16a34a 100%);
+  box-shadow: 0 6px 20px rgba(34,197,94,0.18);
+  transform: translateY(-2px) scale(1.03);
+}
+.book-next-button:active {
+  background: linear-gradient(90deg, #166534 0%, #22c55e 100%);
+  box-shadow: 0 2px 8px rgba(34,197,94,0.10);
+  transform: scale(0.98);
 }
 
 @media (min-width: 640px) {
@@ -763,7 +828,7 @@ body {
 .pin-button {
   background: linear-gradient(to right, #16a34a, #22c55e); /* เขียวไล่เฉด */
   color: white;
-  padding: 12px 24px;
+  padding: 18px 32px;
   border: none;
   border-radius: 8px;
   font-size: 1rem;
@@ -842,19 +907,26 @@ body {
   cursor: pointer;
 }
 
+.header-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
 .header-info .date-text {
-  font-size: 1.2rem; /* เดิม 1rem → 18px */
+  font-size: 1.2rem;
   opacity: 0.9;
 }
 
 .header-info .modal-title {
-  font-size: 2.125rem; /* เดิม 1.5rem → 32px */
+  font-size: 2.125rem;
   font-weight: bold;
   margin-top: 0.25rem;
 }
 
 .header-info .room-name {
-  font-size: 1rem; /* เดิม 0.875rem → 16px */
+  font-size: 1rem;
   margin-top: 0.25rem;
   color: #d1fae5;
 }
@@ -866,26 +938,30 @@ body {
 
 .form-group {
   margin-bottom: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch; /* ✅ กลุ่ม input ปกติ ชิดซ้ายทั้งหมด */
 }
 
+/* ✅ Center labels by default */
 .form-group label {
-  display: block;
-  font-size: 0.875rem; /* เดิม 0.75rem → 14px */
-  font-weight: 600;
-  color: #6b7280;
-  margin-bottom: 0.5rem;
-  text-transform: uppercase;
-}
-
-/* ✅ Special class for left-aligned labels */
-.form-group .label-left {
   display: block;
   font-size: 0.875rem;
   font-weight: 600;
   color: #6b7280;
   margin-bottom: 0.5rem;
   text-transform: uppercase;
-  text-align: left !important; /* ชิดซ้ายแน่นอน */
+  text-align: center;
+}
+
+/* ✅ Override: Special class for left-aligned labels */
+.form-group label.label-left {
+  text-align: left !important;
+}
+
+/* ✅ If form-group has label-left, align items left too */
+.form-group.label-left {
+  align-items: flex-start;
 }
 
 input[type="text"] {
@@ -894,8 +970,9 @@ input[type="text"] {
   border: 2px solid #e5e7eb;
   border-radius: 0.5rem;
   background: #f9fafb;
-  font-size: 1.125rem; /* เดิม 1rem → 18px */
+  font-size: 1.125rem;
   color: #1f2937;
+  text-align: left; /* ✅ ป้องกันข้อความ input ชิดกลาง */
 }
 
 .input-error {
@@ -905,7 +982,7 @@ input[type="text"] {
 
 .error-text {
   color: #ef4444;
-  font-size: 0.875rem; /* เดิม 0.75rem → 14px */
+  font-size: 0.875rem;
   margin-top: 0.25rem;
 }
 
@@ -948,6 +1025,8 @@ input[type="text"] {
   align-items: center;
   justify-content: center;
   gap: 1.5rem;
+  width: 100%;
+  margin: 0 auto;
 }
 
 .adjust-group button {
@@ -967,11 +1046,12 @@ input[type="text"] {
 }
 
 .display-time {
-  font-size: 2.5rem; /* เดิม 2rem → 40px */
+  font-size: 2.5rem;
   font-weight: 300;
   color: #374151;
   min-width: 100px;
   text-align: center;
+  margin: 0 8px;
 }
 
 .submit-btn-wrapper {
@@ -986,7 +1066,7 @@ input[type="text"] {
   border: none;
   border-radius: 0.5rem;
   font-weight: 500;
-  font-size: 1.125rem; /* เดิม 1rem → 18px */
+  font-size: 1.125rem;
   cursor: pointer;
   transition: 0.2s;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -1020,7 +1100,7 @@ input[type="text"] {
   border: none;
   color: #9ca3af;
   cursor: pointer;
-  font-size: 1rem; /* เดิม 0.875rem → 16px */
+  font-size: 1rem;
   transition: color 0.2s;
 }
 
@@ -1028,8 +1108,7 @@ input[type="text"] {
   color: #374151;
 }
 
-
-
+/* ✅ Detail Row Styles */
 .detail-row.flex-row-between {
   display: flex;
   justify-content: space-between;
@@ -1045,6 +1124,22 @@ input[type="text"] {
   flex-wrap: wrap;
   flex: 1;
 }
+.helper-text {
+  display: block;
+  font-size: 0.75rem;   /* 12px */
+  color: #6b7280;       /* สีเทาอ่อน อ่านง่าย */
+  margin-top: 0.25rem;  /* ระยะห่างด้านบน */
+  line-height: 1.2;     /* ไม่ให้ตัวหนังสือชิดกันเกินไป */
+}
+
+
+
+
+
+
+
+
+
 
 /* ✅ สไตล์ Time Remaining แบบ badge โดดเด่น - ยืดลงมาและไม่มีขอบเขียว */
 .detail-row-time-remaining.highlight {

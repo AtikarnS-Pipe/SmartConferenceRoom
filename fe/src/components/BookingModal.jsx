@@ -168,8 +168,22 @@ const BookingModal = ({ isOpen, onClose, onSubmit, roomName }) => {
               className={errors.subject ? 'input-error' : ''}
               placeholder="Enter meeting subject"
             />
+            <small className="helper-text">Optional — default will be used if blank.</small>
             {errors.subject && <p className="error-text">{errors.subject}</p>}
           </div>
+          <div className="form-group">
+            <label className="label-left">Booked By</label>
+            <input
+              type="text"
+              value={formData.bookedBy}
+              onChange={(e) => handleChange('bookedBy', e.target.value)}
+              className={errors.bookedBy ? 'input-error' : ''}
+              placeholder="Enter your name"
+            />
+            {errors.bookedBy && <p className="error-text">{errors.bookedBy}</p>}
+            <small className="helper-text">Optional — default will be used if blank.</small>
+          </div>
+          
 
           {/* <div className="timeline">
             {timelineData.map(({ hour, isBooked, isCurrentSlot }) => (
@@ -205,18 +219,6 @@ const BookingModal = ({ isOpen, onClose, onSubmit, roomName }) => {
             {errors.duration && <p className="error-text">{errors.duration}</p>}
           </div>
 
-          <div className="form-group">
-            <label className="label-left">Booked By</label>
-            <input
-              type="text"
-              value={formData.bookedBy}
-              onChange={(e) => handleChange('bookedBy', e.target.value)}
-              className={errors.bookedBy ? 'input-error' : ''}
-              placeholder="Enter your name"
-            />
-            {errors.bookedBy && <p className="error-text">{errors.bookedBy}</p>}
-          </div>
-
           <div className="submit-btn-wrapper">
             <button 
               onClick={handleSubmit} 
@@ -229,8 +231,8 @@ const BookingModal = ({ isOpen, onClose, onSubmit, roomName }) => {
           </div>
 
           <div className="footer-nav">
-            {/* <button onClick={onClose}><Home size={16} /> <span>Home</span></button> */}
-            {/* <button><span>All Meetings</span> <Calendar size={16} /></button> */}
+            <button onClick={onClose}><Home size={16} /> <span>Home</span></button>
+            <button onClick={onClose}><span>All Meetings</span> <Calendar size={16} /></button>
           </div>
         </div>
       </div>

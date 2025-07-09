@@ -2,40 +2,53 @@ import { useState, useEffect } from 'react';
 
 export function useEvents(floor, room) {
   const [events, setEvents] = useState([]);
-  console.log (events)
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // ถ้าไม่ได้รับ floor หรือ room ไม่ต้องโหลด
-    if (!floor || !room) {
-      setLoading(true);
+  console.log("Events updated:", events);
+}, [events]);
+
+
+  useEffect(() => {
+  if (!floor || !room) {
+    setLoading(true);
+    setEvents([]);
+    return;
+  }
+
+  const eventSource = new EventSource(`/user/sse/${floor}/${room}`);
+
+  const fallbackTimeout = setTimeout(() => {
+    console.warn("SSE fallback timeout: no data received.");
+    setEvents([]);
+    setLoading(false); // หรือให้เป็น Available state
+  }, 10000); // รอ 10 วิ ถ้าไม่มีข้อมูล
+
+  eventSource.onmessage = (e) => {
+    try {
+      const data = JSON.parse(e.data);
+      const safeResults = Array.isArray(data.results) ? data.results : [];
+      setEvents(safeResults);
+      setLoading(false);
+      clearTimeout(fallbackTimeout); // ถ้าได้ข้อมูล เคลียร์ timeout ทันที
+    } catch (err) {
+      console.error("Error parsing SSE data:", err);
       setEvents([]);
-      return;
+      setLoading(true);
     }
+  };
 
-    const eventSource = new EventSource(`/user/sse/${floor}/${room}`);
+  eventSource.onerror = (e) => {
+    console.error("SSE error:", e);
+    setEvents([]);
+    setLoading(true);
+  };
 
-    eventSource.onmessage = (e) => {
-      try {
-        const data = JSON.parse(e.data);
-        // ✅ ถ้าข้อมูลถูกต้องและมีผลลัพธ์
-        setEvents(data.results);
-        setLoading(false);
-      } catch (err) {
-        console.error("Error parsing SSE data:", err);
-        setLoading(true);//ต้องเป็น true
-      }
-    };
-
-    eventSource.onerror = (e) => {
-      console.error("SSE error:", e);
-      setLoading(true); // มี error ก็ยังถือว่ายังโหลดอยู่ //ต้องเป็น true
-    };
-
-    return () => {
-      eventSource.close();
-    };
-  }, [floor, room]);
+  return () => {
+    eventSource.close();
+    clearTimeout(fallbackTimeout); // cleanup ป้องกัน memory leak
+  };
+}, [floor, room]);
 
   return { events, loading };
 }
