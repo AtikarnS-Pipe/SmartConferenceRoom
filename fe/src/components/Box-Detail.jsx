@@ -40,6 +40,20 @@ export default function Boxdetail({ isOccupied, event, getTimeRemaining, loading
     return (
       <div className="box-detail occupied">
         <div className="detail-content occupied">
+          {/* ✅ Subject + Time Remaining */}
+          <div className="detail-row flex-row-between">
+            <div className="detail-row-left">
+              <span className="detail-label">
+                <img src={Organizer} alt="Organizer" />
+                Subject :
+              </span>
+              <span className="detail-value">
+                {event.subject}
+              </span>
+            </div>
+          </div>
+
+          {/* ✅ Organizer */}
           <div style={{ marginBottom: "10px" }} className="detail-row">
             <span className="detail-label">
               <img src={Organizer} alt="Organizer" />
@@ -49,6 +63,8 @@ export default function Boxdetail({ isOccupied, event, getTimeRemaining, loading
               {event.organizer.emailAddress.name}
             </span>
           </div>
+
+          {/* ✅ Time */}
           <div style={{ marginBottom: "10px" }} className="detail-row">
             <span className="detail-label">
               <img src={Time} alt="Time" />
@@ -71,20 +87,19 @@ export default function Boxdetail({ isOccupied, event, getTimeRemaining, loading
               }
             </span>
           </div>
-          <div className="detail-row">
-            <span className="detail-label">
-              <img style={{ width: '28px', height: '28px' }} src={TimeRemaining} alt="Time-Remaining" />
-              Time-Remaining :
-            </span>
-            <span className="detail-value">
-              {getTimeRemaining(event)}
-            </span>
-          </div>
         </div>
+        <div className="detail-row-time-remaining highlight">
+              <span className="detail-label highlight">
+                <img src={TimeRemaining} alt="Time Remaining" />
+                Time-Remaining :
+              </span>
+              <span className="detail-value highlight">
+                {getTimeRemaining(event)}
+              </span>
+            </div>
       </div>
     );
   }
-  // Available state with modal trigger
   return <BookingModalTrigger />;
 }
 

@@ -34,29 +34,33 @@ const StaffPinPopupManager = ({ showTestButton, closeUserPinPopup }) => {
   });
 
   const handlePinSubmit = async (pin) => {
+  // console.log(pin, roomId);
   setWaiting(true);
   setError('');
   setPendingError('');
 
   try {
-    const res = await axios.post('http://localhost:4000/user/admin-key', {
-      pin,
+    const res = await axios.post('/user/admin-key', {
+      pin: pin,
       room_number: roomId,
     });
 
     const result = res.data;
     console.log('Pin submit result:', result);
     setWaiting(false);
+    console.log('success',result.success)
 
-    if (result?.role === 'admin' || result?.role === 'staff') {
-      setPendingError(`Welcome ${result.role}${result.role === 'admin' ? ' 👑' : ''}`);
-      setTimeout(() => {
-        setVisible(false);
-        setError('');
-      }, 1500);
-    } else {
-      setPendingError(result.message || 'Incorrect PIN');
-    }
+   if (result.success) {
+    setPendingError(''); // เคลียร์ข้อความก่อน
+    setPendingError('Correct password');
+    setTimeout(() => {
+    setVisible(false); // ✅ ปิด popup หลัง 1200ms
+    setPendingError(''); // เคลียร์ข้อความหลังปิด
+    }, 1200);
+  } else {
+    setPendingError(result.message || 'Incorrect PIN');
+  }
+
   } catch (e) {
     setWaiting(false);
     if (e.response?.data?.message) {
@@ -67,13 +71,13 @@ const StaffPinPopupManager = ({ showTestButton, closeUserPinPopup }) => {
   }
 };
     
-
   useEffect(() => {
     if (!waiting && pendingError) {
       setError(pendingError);
       setPendingError('');
     }
   }, [waiting, pendingError]);
+
   return (
     <>
       {/* ปุ่มทดสอบสำหรับ staff pin */}

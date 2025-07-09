@@ -13,7 +13,7 @@ const PinPopup = ({ onSubmit, error, waiting, title = 'Enter PIN Code', showIcon
   }, [pin, waiting]);
 
   useEffect(() => {
-    if (typeof error === 'string' && error.toLowerCase().includes('incorrect')) {
+    if (typeof error === 'string' && error !== 'Correct password' && error.trim() !== '') {
       setBlink(true);
       const timer = setTimeout(() => setBlink(false), 500);
       return () => clearTimeout(timer);

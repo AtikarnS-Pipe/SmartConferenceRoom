@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { X, Plus, Minus, Home, Calendar } from 'lucide-react';
+import { useRoomData } from '../hooks/useRoomData';
+import axios from 'axios';
 
+//constant
 const BookingModal = ({ isOpen, onClose, onSubmit, roomName }) => {
   const [formData, setFormData] = useState({
     subject: '',
@@ -8,9 +11,10 @@ const BookingModal = ({ isOpen, onClose, onSubmit, roomName }) => {
     duration: 45,
     bookedBy: ''
   });
-
+  const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
 
+//fn ปัดเวลาให้เป็น 15 นาที
   const getCurrentTime = () => {
     const now = new Date();
     const year = now.getFullYear();
@@ -37,13 +41,56 @@ const BookingModal = ({ isOpen, onClose, onSubmit, roomName }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (validateForm()) {
-      onSubmit(formData);
-      setFormData({ subject: '', startTime: '', duration: 45, bookedBy: '' });
-      setErrors({});
-      onClose();
+      setLoading(true);
+      try {
+        // Extract room number from roomName if available, or use default
+        const extractedRoomNumber = roomName?.match(/\d+/)?.[0] || '150';
+        
+        // Calculate end time based on start time and duration
+        const startDate = new Date(formData.startTime);
+        const endDate = new Date(startDate);
+        endDate.setMinutes(endDate.getMinutes() + formData.duration);
+        
+        // Format as UTC ISO string for the backend
+        const startdatetime = startDate.toISOString();
+        const enddatetime = endDate.toISOString();
+        
+        // Create payload in the format expected by the backend
+        const payload = {
+          RoomNumber: extractedRoomNumber,
+          email: formData.bookedBy, // Using bookedBy as email
+          startdatetime: startdatetime,
+          enddatetime: enddatetime,
+          subject: formData.subject
+        };
+        
+        console.log("Submitting booking:", payload);
+        
+        // Call the backend API
+        const response = await axios.post('/user/ms/create', payload);
+        console.log("Booking successful:", response.data);
+        
+        // Call the onSubmit prop if provided
+        if (onSubmit) {
+          onSubmit(formData);
+        }
+        
+        // Reset form and close modal
+        setFormData({ subject: '', startTime: '', duration: 45, bookedBy: '' });
+        setErrors({});
+        onClose();
+        
+      } catch (error) {
+        console.error("Booking error:", error);
+        setErrors({
+          submit: error.response?.data?.error || "Failed to book the room. Please try again."
+        });
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -113,7 +160,7 @@ const BookingModal = ({ isOpen, onClose, onSubmit, roomName }) => {
 
         <div className="modal-body">
           <div className="form-group">
-            <label>Subject Name</label>
+            <label className="label-left">Subject Name</label>
             <input
               type="text"
               value={formData.subject}
@@ -159,7 +206,7 @@ const BookingModal = ({ isOpen, onClose, onSubmit, roomName }) => {
           </div>
 
           <div className="form-group">
-            <label>Booked By</label>
+            <label className="label-left">Booked By</label>
             <input
               type="text"
               value={formData.bookedBy}
@@ -171,7 +218,14 @@ const BookingModal = ({ isOpen, onClose, onSubmit, roomName }) => {
           </div>
 
           <div className="submit-btn-wrapper">
-            <button onClick={handleSubmit} className="submit-btn">Book Now</button>
+            <button 
+              onClick={handleSubmit} 
+              className="submit-btn"
+              disabled={loading}
+            >
+              {loading ? 'Booking...' : 'Book Now'}
+            </button>
+            {errors.submit && <p className="error-text">{errors.submit}</p>}
           </div>
 
           <div className="footer-nav">
