@@ -10,7 +10,6 @@ import ForgotPasswordFlow from './Component/Authen/Frontend/ForgetPasswordFlow'
 import RoomSize from './Component/Roomsize'
 import Protect from './Component/Authen/Frontend/Protect'
 import LoginPage from './Component/Login'
-import ForgotPasswordFlow from './Component/Authen/Frontend/ForgetPasswordFlow'
 import Account from './Component/Manage/Account'
 import Housekeeper from './Component/Manage/Housekeeper'
 
