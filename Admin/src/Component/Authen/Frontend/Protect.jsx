@@ -5,10 +5,12 @@ import { jwtDecode } from 'jwt-decode'
 function Protect({ children }) {
 
     const token = localStorage.getItem('token');
+    console.log("Token from localStorage:", token);
 
     if (token && token.split('.').length === 3) {
         try{
             const decodedToken = jwtDecode(token);
+            
             const currentTime = Date.now() / 1000; // Current time in seconds
 
             if (decodedToken.exp > currentTime) {
