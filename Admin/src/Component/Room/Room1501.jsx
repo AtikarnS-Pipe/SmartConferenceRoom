@@ -27,7 +27,6 @@ const parseDate = (str) => {
 const Room1501 = () => {
   const navigate = useNavigate();
   const { Room, startdate, enddate } = useParams();
-  const socketRef = useRef(); //
   const [view, setView] = useState('Day');
   const [selectedDate, setSelectedDate] = useState(dayjs().format('YYYY-MM-DD'));
   const [currentTime, setCurrentTime] = useState(new Date());
