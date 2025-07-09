@@ -1,9 +1,9 @@
 // accounts.controllers.js
 const bcrypt = require('bcryptjs');
-const { refreshalltoken } = require('../utils/refreshalltoken');
+const { refreshalltoken } = require('../../utils/refreshalltoken');
 const jwt = require('jsonwebtoken');
-const User = require('../models/User');
-const { sendOTP, verifyOTP, resetPassword } = require('../services/admin.services');
+const User = require('../../models/User');
+const { sendOTP, verifyOTP, resetPassword } = require('../../services/admin.services');
 
 const Auth = async (req, res) => { // admin sign-in
     const { email, password } = req.body;
