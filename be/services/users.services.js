@@ -67,13 +67,21 @@ async function GetIdRoomnumber(accessToken, RoomNumber) {
 }
 
 
-const GeteventId = async (accessToken, calendarId, email, startdatetime, enddatetime) => {
+const GeteventId = async (accessToken, calendarId, email, startdatetime, enddatetime) => { // ex. startdatetime:2025-07-10T11:00:00Z, enddatetime:2025-07-10T12:00:00Z
     try{
+        // console.log("startdatetime = ", startdatetime); // 2025-07-10T13:00:00Z
+        const startdate = new Date(startdatetime);
+        const enddate = new Date(enddatetime);
+        const newStartdate = new Date(startdate.getTime() + 1).toISOString();
+        const newEnddate = new Date(enddate.getTime() - 1).toISOString();
+        // console.log("New date add 1 seconds:", newStartdate);
+        // console.log("New date minus 1 seconds:", newEnddate);
+
         const events = await getGraphClient(accessToken)
-        .api(`/me/calendars/${calendarId}/events`)
+        .api(`/me/calendars/${calendarId}/calendarView`)
         .query({
-                startDateTime: startdatetime,   // รูปแบบ "2025-07-08T00:00:00Z"
-                endDateTime: enddatetime,
+                startDateTime: newStartdate, 
+                endDateTime: newEnddate,
                 $select: "id,organizer", 
             })
             .get();
@@ -81,12 +89,12 @@ const GeteventId = async (accessToken, calendarId, email, startdatetime, enddate
         if (!events || !events.value || events.value.length === 0) {
             throw new Error(`CalendarID, No events found for calendar ${calendarId} and email ${email}`);
         }
-        console.log("email => ", email);
+        console.log("organizer email  => ", email);
         const filteredEvents = events.value.filter(event =>{
-            console.log("event.organizer => ", event.organizer?.emailAddress?.address)
+            console.log("event.organizer(founded) => ", event.organizer?.emailAddress?.address)
             return event.organizer?.emailAddress?.address === email
         });
-        console.log("filteredEvents => ", filteredEvents);
+        console.log("filteredEvents(ready to use!!) => ", filteredEvents);
         if (filteredEvents.length === 0) {
             throw new Error(`No events found for calendar ${calendarId} and email ${email}`);
         }
@@ -96,6 +104,7 @@ const GeteventId = async (accessToken, calendarId, email, startdatetime, enddate
         throw new Error('Failed to fetch GeteventID');
     }
 }
+
 module.exports = {
     getuserdatabyroom, GetIdRoomnumber, GeteventId
 };

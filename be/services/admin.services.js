@@ -127,7 +127,7 @@ async function fetchAllRoom(res, accessToken) {
         const results = await Promise.all(
             roomNumbers.map(async (room) => {
                 const graphResponse = await getGraphClient(accessToken)
-                    .api(`https://graph.microsoft.com/v1.0/users/${room}@tcc-technology.com/calendarView`)
+                    .api(`https://graph.microsoft.com/v1.0/users/${room}@tcc-technology.com/calendarView?`)
                     .query({
                         startDateTime: startDateTime,
                         endDateTime: endDateTime,

@@ -149,7 +149,7 @@ const createroom = async (req, res) => {
         console.error("No refresh token found in cache...");
         throw new Error("No refresh token found in caches. Please login again.");
     }
-    const calendarId = await GetIdRoomnumber(AccessToken, RoomNumber);
+    // const calendarId = await GetIdRoomnumber(AccessToken, RoomNumber);
 
     const newEvent = {
         subject: subject || `Meeting in Room ${RoomNumber}`,
@@ -162,7 +162,7 @@ const createroom = async (req, res) => {
             timeZone: "UTC"
         },
         // location: {
-        //     displayName: `${RoomNumber}@tcc-technology.`
+        //     displayName: `${RoomNumber}@tcc-technology.com`
         // },
         attendees: [
             {
@@ -175,7 +175,7 @@ const createroom = async (req, res) => {
         ],
         organizer: {
             emailAddress: {
-                name: "TCCtech Meetingroom",
+                name: "TCCtech Meetingroom222",
                 address: "meetingroom@tcc-technology.com"
             }
         }
@@ -183,7 +183,7 @@ const createroom = async (req, res) => {
     
     try {
         await getGraphClient(AccessToken)
-            .api(`/me/calendars/${calendarId}/events`)  // for calendar you have access to
+            .api(`/me/events`)  // for calendar you have access to
             .post(newEvent);
 
         console.log("Create event success");
@@ -195,23 +195,41 @@ const createroom = async (req, res) => {
     }
 }
 
-const endtask = async (req, res) => {
-    // try{
-    //     const { eventId } = req.body;
-    //     const AccessToken = tokenCache.getAccessToken();
-    //     const calendarID = await GetIdRoomnnumber()
-    //     await getGraphClient(AccessToken)
-    //     .api(`/me/calendars/${calendarId}/events/${eventId}`)
-    //     .update({
+const endmeeting = async (req, res) => {
+    try{
+        const { endmeetingdata } = req.body; // endmeetingdata = {RoomNumber, email, startdatetime, enddatetime}
+        
+        const AccessToken = tokenCache.getAccessToken();
+        const calendarId = await GetIdRoomnumber(AccessToken, endmeetingdata.RoomNumber)
+        const eventId = await GeteventId(AccessToken, calendarId, endmeetingdata.email, endmeetingdata.startdatetime, endmeetingdata.enddatetime); // datetime UTC: 2024-06-09T00:00:00Z
+        if(!eventId){
+            console.error("No event found for the given details:", endmeetingdata);
+            return res.status(404).json({ error: "No event found for end meeting" });
+        }
+        
 
-    //     })
-    // } catch(error){
-    //     console.error("Error in endtask:", error);
-    //     res.status(500).json({ error: "Failed to end task" });
-    // }
+        await getGraphClient(AccessToken)
+        .api(`/me/calendars/${calendarId}/events/${eventId}`)
+        .update({
+            subject: `Meeting in Room ${endmeetingdata.RoomNumber} has enderdragon`,
+            start: {
+                dateTime: new Date(endmeetingdata.startdatetime).toISOString(),
+                timeZone: "UTC"
+            },
+            end: {
+                dateTime: new Date().toISOString(), // ใช้เวลาปัจจุบันเป็นเวลาสิ้นสุด ex.test == "2025-07-10T12:45:00Z"
+                timeZone: "UTC"
+            },
+        })
+        console.log("Update event success");
+        res.status(200).json({ message: "Update event successfully" });
+    } catch(error){
+        console.error("Error in endtask:", error);
+        res.status(500).json({ error: "Failed to end task" });
+    }
 }  
 
 module.exports = { getuser
     , keyPins, keyExpired, adminKeyPin
-    , deleteroom, createroom ,endtask
+    , deleteroom, createroom ,endmeeting
 };

@@ -38,19 +38,19 @@ async function monitorToken() {
     if (now >= new Date(expiryDate.getTime() - buffer)) {
       try {
         console.log("🔁 Refreshing token...");
+        // console.log("refresh tokenn:", refreshToken );
         const newToken = await refreshAccessToken(refreshToken);
-        const newAccessToken = newToken.access_token;
+        // console.log("New token received:", newToken);
         const newRefreshToken = newToken.refresh_token? encryptToken(newToken.refresh_token) : refreshToken;
-        const newExpiry = new Date(Date.now() + (newToken.expires_in || 3600) * 1000); //
 
-        accessToken = newAccessToken;
+        accessToken = newToken.access_token;
         refreshToken = newRefreshToken;
-        expiryDate = newExpiry;
+        expiryDate = new Date(Date.now() + (newToken.expires_in || 3600) * 1000);
 
         await Token.create({
           accessToken,
           refreshToken,
-          expiryDate: newExpiry
+          expiryDate
         });
 
         console.log("✅ Token refreshed and inserted into DB");

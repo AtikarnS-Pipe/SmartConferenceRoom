@@ -31,7 +31,7 @@ async function syncAllRooms() {
             roomNumbers.map(async (room) => {
                 try{
                     const graphResponse = await getGraphClient(accesstoken)
-                    .api(`https://graph.microsoft.com/v1.0/users/${room}@tcc-technology.com/calendarView`)
+                    .api(`https://graph.microsoft.com/v1.0/users/${room}@tcc-technology.com/calendarView?`)
                     .query({
                         startDateTime: startDateTime,
                         endDateTime: endDateTime,

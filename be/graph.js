@@ -12,7 +12,7 @@ const getGraphClient = (accessToken) => {
     const graphClient = Client.init({
         // Use the provided access token to authenticate requests
         authProvider: (done) => { 
-            done(null, accessToken); //null = ถ้าไม่มี error, accessToken = ให้ clinet ใส่ Authorization:Bearer accessToken ทุก request
+            done(null, accessToken); //null = ถ้าไม่มี error, accessToken = ให้ client ใส่ Authorization:Bearer accessToken ทุก request
         },
     });
     return graphClient;
