@@ -40,6 +40,15 @@ async function monitorToken() {
         console.log("🔁 Refreshing token...");
         // console.log("refresh tokenn:", refreshToken );
         const newToken = await refreshAccessToken(refreshToken);
+        if (!newToken || !newToken.access_token) {
+          console.error("logs status: refresh token failed in DB");
+          await Token.create({
+            accessToken,
+            refreshToken,
+            expiryDate,
+            token_status: 'refreshfailed'
+          });
+        }
         // console.log("New token received:", newToken);
         const newRefreshToken = newToken.refresh_token? encryptToken(newToken.refresh_token) : refreshToken;
 
@@ -50,7 +59,8 @@ async function monitorToken() {
         await Token.create({
           accessToken,
           refreshToken,
-          expiryDate
+          expiryDate,
+          token_status: 'refreshed'
         });
 
         console.log("✅ Token refreshed and inserted into DB");

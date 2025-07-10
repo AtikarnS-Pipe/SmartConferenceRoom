@@ -19,7 +19,7 @@ app.use(cors({
 app.use(express.json()); // เเปลง http body เป็น json
 app.use(cookieParser()); 
 
-monitorToken(); // เริ่ม monitor token
+monitorToken(); // เริ่ม monitor token loop
 
 app.use("/admin", Adminrouter);
 app.use("/user", Userrouter);
