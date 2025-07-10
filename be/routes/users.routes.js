@@ -4,8 +4,8 @@ const Userrouter = express.Router();
 
 Userrouter.get("/sse/:floors/:rooms", getuser);
 Userrouter.post("/key", keyPins);
-// Userrouter.delete("/key", keyExpired);
 Userrouter.post("/admin-key", adminKeyPin); 
+// Userrouter.delete("/key", keyExpired);
 Userrouter.patch("/endmeeting", endmeeting); 
 
 Userrouter.delete('/ms/delete', deleteroom );

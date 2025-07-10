@@ -1,6 +1,8 @@
 const bcrypt = require('bcryptjs')
 const bookingKey = require('../models/bookingkey');
-const getGraphClient = require("../graph");
+// const getGraphClient = require("../graph");
+const User = require('../models/User');
+const Logsmonitoring = require('../models/Logsmonitoring');
 
 /**
  * service for compare the pin, user inserted, with the pin of the room in database
@@ -65,6 +67,14 @@ async function adminCompareKey({ pin, room_number }) {
          * ! update database to log admin/housekeeper insert pin
          * await log.create({ userId: user._id, action: `access room ${room_number}`, role: user.role, timestamp: new Date() });
          * */
+        // logsmonitoring create
+        const logs = await Logsmonitoring.create({
+            user_Id: user._id, 
+            L_status: 'Access room', 
+            role: user.role, 
+            Details: `${user.name} access room ${room_number}`, 
+            L_createdAt: new Date(),
+        })
 
         // console.log(`Comparing admin's pin with database`);
         // const isMatch = await bcrypt.compare(pin, user.pin);

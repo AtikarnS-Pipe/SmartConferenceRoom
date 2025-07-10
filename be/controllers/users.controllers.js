@@ -107,7 +107,7 @@ const adminKeyPin = async (req, res) => {
         const result = await adminCompareKey( pin, room_number );
 
         if (!result.success) {
-            return res.status(200).json({ message: result.message });
+            return res.status(401).json({ message: result.message });
         }
 
         return res.status(200).json({ message: result.message });
