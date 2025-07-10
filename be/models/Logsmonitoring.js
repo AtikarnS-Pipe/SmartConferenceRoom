@@ -1,51 +1,41 @@
 const mongoose = require('mongoose');
 
-const logschema = new mongoose.Schema({
-    user_Id:{
+const logschema = new mongoose.Schema({ 
+    user_Id:{ // foremost
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         required: true,
         index: true,
     },
-    name: { // only housekeeper
+    // name: { // foremost, Unique nam!!
+    //     type: String,
+    //     unique: true, 
+    //     sparse: true // null ซ้ำกันได้
+    // },
+    L_status: { // foremost
         type: String,
-        unique: true, 
-        sparse: true,
+        enum: ['Admin Logged in', 'Admin Logged out', 'Housekeeper was created', 'Housekeeper was changed pin', 'Housekeeper was deleted' ], // เดะมาเเก้
+        required: true
     },
-    // role:{ // both
-    //     type: String,
-    //     required: true,
-    //     enum: ['admin', 'housekeeper'],
-    // },
-    // pin:{ // both , display in housekeeper table
-    //     type: String,
-    //     unique: true,
-    //     sparse: true,
-    // },
+    role:{ // foremost 
+        type: String,
+        required: true,
+        enum: ['admin', 'housekeeper'],
+    },
+    Details:{
+        type: String,
+        required: true,
+        default: 'No details provided'
+    },
+    L_createdAt:{
+        type: Date,
+        default: () => new Date(),
+        index: { expires: '5m'} // TTL index to auto delete logs
+    },
     // createdBy:{
     //     type: mongoose.Schema.Types.ObjectId,
-    //     ref: 'User', // Reference to the User model
+    //     ref: 'User',
     // },
-    // login_status:{ // only admin 
-    //     type: String,
-    //     default: 'no permission',
-    //     enum: ['online', 'offline', 'no permission' ],
-    //     required: true
-    // },
-    // otp: {
-    //     code: {
-    //         type: String,
-    //         default: null,
-    //     },
-    //     expireAt: {
-    //         type: Date,
-    //         default: null,
-    //     },
-    //     used: {
-    //         type: Boolean,
-    //         default: false,
-    //     }
-    // }
-}, { timestamps: true })
+})
 
 module.exports = mongoose.model('Logs', logschema, 'LogsMonitoring');

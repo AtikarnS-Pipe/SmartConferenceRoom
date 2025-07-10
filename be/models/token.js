@@ -7,8 +7,13 @@ const tokenSchema = new mongoose.Schema({
     token_status:{ 
         type: String,
         required: true,
-        enum: ['Admin logged in', 'refreshed', 'refreshfailed'],
+        enum: ['createtoken', 'refreshed', 'refreshfailed'],
     },
-}, { timestamps: true});
+    T_createdAt:{
+        type: Date,
+        default: () => new Date(),
+        index: { expires: '90d'} // TTL index to auto delete logs
+    }
+});
 
 module.exports = mongoose.model('Token', tokenSchema, 'Token');

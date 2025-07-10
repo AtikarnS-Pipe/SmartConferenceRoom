@@ -2,8 +2,10 @@
 const bcrypt = require('bcryptjs');
 const { refreshalltoken } = require('../../utils/refreshalltoken');
 const jwt = require('jsonwebtoken');
-const User = require('../../models/User');
 const { sendOTP, verifyOTP, resetPassword } = require('../../services/admin.services');
+//models
+const User = require('../../models/User');
+const Logsmonitoring = require('../../models/Logsmonitoring')
 
 const Auth = async (req, res) => { // admin sign-in
     const { email, password } = req.body;
@@ -30,7 +32,16 @@ const Auth = async (req, res) => { // admin sign-in
       await user.save();
       // รับ userId:user._id
       const token = refreshalltoken(req, res, user._id);
-      // console.log("get token successfully", token);
+
+      // logsmonitoring create
+    const logs = await Logsmonitoring.create({
+      user_Id: user._id, 
+      L_status: 'Admin Logged in', 
+      role: user.role, 
+      Details: `Admin name: ${user.name}`, 
+      L_createdAt: new Date(),
+    })
+
       res.json({token})
     } catch (error) {
       console.error("Authentication error:", error);
@@ -39,7 +50,7 @@ const Auth = async (req, res) => { // admin sign-in
 }
 
 // รับ newpw จาก body //ไม่ส่ง oldpw มาละ
-const ChangeAdminPin = async (req, res) => {
+const ChangeAdminPin = async (req, res) => { // ไม่น่าต้อง logs เปลี่ยน pin ตัวเอง
   try{
     const admin = req.user;
     const {newpin} = req.body;
@@ -80,6 +91,14 @@ const Createhousekeeper = async (req, res) => {
         createdBy: admin._id,
         login_status: 'no permission'  
     })
+    // logsmonitoring create
+    const logs = await Logsmonitoring.create({
+      user_Id: newHousekeeper._id, 
+      L_status: 'Housekeeper was created', 
+      role: newHousekeeper.role, 
+      Details: `Housekeeper name: ${newHousekeeper._id}`, 
+      L_createdAt: new Date(),
+    })
     res.status(201).json({
         success: true,
         message: 'Housekeeper created successfully',
@@ -116,13 +135,22 @@ const refreshadmintoken = async (req, res) => {
 
 const signout = async (req, res) => {
   const user = req.user; // จาก authorize middleware
-  if (user.role !== 'admin') {
+  const admin = User.findById(user._id);
+  if (admin.role !== 'admin') {
     if(process.env.DEBUG_MODE) console.log("Only admin can sign out");
     return res.status(403).json({ message: 'Only admin can sign out' });
   }
   // หาใน db ก่อนว่า user นี้มีอยู่จริงไหม
-  user.login_status = 'offline';
-  await user.save();
+  admin.login_status = 'offline';
+  await admin.save();
+  // logsmonitoring create
+  const logs = await Logsmonitoring.create({
+    user_Id: user._id, 
+    L_status: 'Admin Logged out', 
+    role: admin.role, 
+    Details: `Admin name: ${admin.name}`, 
+    L_createdAt: new Date(),
+  })
   res.clearCookie("refreshtoken", { path: '/account/refresh-token' }); // ลบ cookie refresh token
   res.json({ success: true, message: 'User signed out successfully' });
 }
@@ -143,6 +171,14 @@ const createadmin = async (req, res) => {
       role: 'admin',
       login_status: 'offline'
     });
+    // // logsmonitoring create
+    // const logs = await Logsmonitoring.create({
+    //   user_Id: newHousekeeper._id, 
+    //   L_status: 'Housekeeper was created', 
+    //   role: newHousekeeper.role, 
+    //   Details: `Housekeeper name: ${newHousekeeper._id}`, 
+    //   L_createdAt: new Date(),
+    // })
 
     // 4. สร้าง token, refreshtoken หลังสมัครเสร็จ  
     const token = jwt.sign({ userId: newUser._id }, process.env.JWT_SECRET, {
@@ -190,10 +226,18 @@ const deletehousekeeper = async (req, res) => {
     if(!isAdminpw){
       return res.status(400).json({ message: 'Invalid admin password!' });
     }
-    const ThisHousekeeper = await User.deleteOne({ name, role: 'housekeeper' });
+    const ThisHousekeeper = await User.findOneAndDelete({ name, role: 'housekeeper' });
     if (!ThisHousekeeper) {
       return res.status(404).json({ message: 'Housekeeper is not found in Documents' });
     }
+    // logsmonitoring create
+    const logs = await Logsmonitoring.create({
+      user_Id: ThisHousekeeper._id, 
+      L_status: 'Housekeeper was deleted', 
+      role: ThisHousekeeper.role, 
+      Details: `Housekeeper name: ${name}`, 
+      L_createdAt: new Date(),
+    })
     res.status(200).json({ success: true, message: `Housekeeper's name, ${name}, has been deleted successfully` });
   } catch (error) {
     console.error("Delete housekeeper error:", error);
@@ -216,10 +260,19 @@ const editpinhousekeeper = async (req, res) => {
     if(!adminDB){
       return res.status(400).json({ message: 'Cannot found admin' });
     }
-    const ThisHousekeeper = await User.updateOne(
+    const ThisHousekeeper = await User.findOneAndUpdate(
       { name, role: 'housekeeper' },
-      { $set: { pin: newpassword } }
+      { $set: { pin: newpassword } },
+      { new: true } // เพื่อคืนข้อมูลที่ update
     );
+    // logsmonitoring create
+    const logs = await Logsmonitoring.create({
+      user_Id: ThisHousekeeper._id, 
+      L_status: 'Housekeeper was changed pin', 
+      role: ThisHousekeeper.role, 
+      Details: `Housekeeper name: ${name}`, 
+      L_createdAt: new Date(),
+    })
     if (!ThisHousekeeper) {
       return res.status(404).json({ message: 'Housekeeper is not found in Documents' });
     }

@@ -48,7 +48,7 @@ const getAllusers = async (req, res) => {
                 accessToken: tokenResponse.access_token, //encryptedAccessToken,
                 refreshToken: encryptedRefreshToken,
                 expiryDate: new Date(Date.now() + (tokenResponse.expires_in * 1000)),
-                token_status: 'Admin logged in'
+                token_status: 'createtoken'
             };
 
             // บันทึก token ลง DB
