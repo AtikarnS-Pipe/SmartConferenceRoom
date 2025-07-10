@@ -1,4 +1,5 @@
 const User = require('../models/User')
+const Logsmonitoring = require('../models/Logsmonitoring');
 
 async function GetAdminListFromDB(res){
     try {
@@ -26,7 +27,20 @@ async function GetHousekeeperFromDB(res){
     }
 }
 
+async function LogsFromDB(res){
+    try {
+        const logs = await Logsmonitoring.find()
+        console.log("data:", logs)
+        res.write(`event: Logsmonnitoring\ndata: ${JSON.stringify(logs)}\n\n`);
+        return logs;
+    } catch (error) {
+        console.error("Error query Logs data from DB:", error);
+        throw new Error('Failed to Get Logs data');
+    }
+}
+
 module.exports = {
     GetAdminListFromDB,
     GetHousekeeperFromDB,
+    LogsFromDB
 }

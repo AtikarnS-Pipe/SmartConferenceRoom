@@ -10,7 +10,7 @@ const { Auth,
     resetEmailPassword,
  } = require('../controllers/accounts/account.controllers');
 const { refreshadmintoken } = require('../utils/refreshalltoken');
-const { AdminListSchedule, HousekeeperListSchedule } = require('../controllers/accounts/steamdata.controllers')
+const { AdminListSchedule, HousekeeperListSchedule, LogsListSchedule } = require('../controllers/accounts/steamdata.controllers')
 const { authorize } = require('../middlewares/auth.middleware')
 const express = require("express");
 const AccountRouter = express.Router();
@@ -30,6 +30,7 @@ AccountRouter.post('/otp/reset', resetEmailPassword);
 // Steaming API with SSE
 AccountRouter.get('/member', AdminListSchedule);
 AccountRouter.get('/housekeepers', HousekeeperListSchedule);
+AccountRouter.get('/logsmonitoring', LogsListSchedule);
 
 
 module.exports = AccountRouter;

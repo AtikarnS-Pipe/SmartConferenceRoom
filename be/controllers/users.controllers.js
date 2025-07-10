@@ -54,6 +54,7 @@ const keyPins = async (req, res) => {
         const isValid = await compareKey({ eventId, pin });
 
         if (!isValid) {
+            console.log(`Invalid pin for event: ${isValid}`);
             return res.status(200).json({ error: "Booking not found" });
         }
 
@@ -107,7 +108,7 @@ const adminKeyPin = async (req, res) => {
         const result = await adminCompareKey( pin, room_number );
 
         if (!result.success) {
-            return res.status(401).json({ message: result.message });
+            return res.status(200).json({ message: result.message });
         }
 
         return res.status(200).json({ message: result.message });
@@ -168,14 +169,14 @@ const createroom = async (req, res) => {
             {
             emailAddress: {
                 address: `${RoomNumber}@tcc-technology.com`,
-                name: `${RoomNumber} Meetingroom`
+                // name: `${RoomNumber} Meetingroom`
             },
             type: "required"
             }
         ],
         organizer: {
             emailAddress: {
-                name: "TCCtech Meetingroom222",
+                // name: "TCCtech Meetingroom222",
                 address: "meetingroom@tcc-technology.com"
             }
         }
