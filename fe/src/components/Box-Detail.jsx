@@ -25,8 +25,8 @@ export default function Boxdetail({ isOccupied, event, getTimeRemaining, loading
       const endmeetingdata = {
         RoomNumber: roomNumber,
         email: event.organizer.emailAddress.address,
-        startdatetime: event.start.dateTime,
-        enddatetime: event.end.dateTime
+        startdatetime: event.start.dateTime + 'Z',
+        enddatetime: event.end.dateTime + 'Z'
       };
       console.log('Sending endmeeting data:', endmeetingdata);
 
