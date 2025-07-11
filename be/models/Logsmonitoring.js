@@ -14,7 +14,7 @@ const logschema = new mongoose.Schema({
     // },
     L_status: { // foremost
         type: String,
-        enum: ['Admin Logged in', 'Admin Logged out', 'Housekeeper was created', 'Housekeeper was changed pin', 'Housekeeper was deleted' ], // เดะมาเเก้
+        enum: ['Admin Logged in', 'Admin Logged out', 'Housekeeper was created', 'Housekeeper was changed pin', 'Housekeeper was deleted','Access room' ], // เดะมาเเก้
         required: true
     },
     role:{ // foremost 
@@ -30,7 +30,7 @@ const logschema = new mongoose.Schema({
     L_createdAt:{
         type: Date,
         default: () => new Date(),
-        index: { expires: '5m'} // TTL index to auto delete logs
+        index: { expires: '90d'} // TTL index to auto delete logs
     },
     // createdBy:{
     //     type: mongoose.Schema.Types.ObjectId,

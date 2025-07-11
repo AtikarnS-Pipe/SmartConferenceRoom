@@ -42,7 +42,7 @@ async function GetScheduleData(actoken, Room, start, end){
                 "$orderby": "start/dateTime",
                 "$top": 100, // default = 10 ,Limit max = 100 events, if more than 100 events, you need to use pagination
                 "$select": "organizer,subject,start,end,locations",
-                "filter": "isCancelled eq false" 
+                "$filter": "isCancelled eq false" 
             })
             .get();
         if (!graphResponse || !graphResponse.value) {
@@ -134,7 +134,7 @@ async function fetchAllRoom(res, accessToken) {
                         "$orderby": "start/dateTime",
                         "$top": 100,
                         "$select": "id,organizer,start,end,locations",
-                        "filter": "isCancelled eq false" 
+                        "$filter": "isCancelled eq false" 
                     })
                     .get();
 

@@ -38,7 +38,7 @@ async function syncAllRooms() {
                         "$orderby": "start/dateTime",
                         "$top": 100,
                         "$select": "id,organizer,start,end,locations",
-                        "filter": "isCancelled eq false" 
+                        "$filter": "isCancelled eq false" 
                     })
                     .get();
                     if (!graphResponse || !graphResponse.value) {

@@ -4,7 +4,7 @@ require('dotenv').config({ path: './config/.env'});
 const tokenCache = require("../utils/tokenCache");
 const { getuserdatabyroom } = require('../services/users.services');
 // crud microsoft
-const { GetIdRoomnumber, GeteventId } = require('../services/users.services');
+const { GetIdRoomnumber, GeteventId, createMSEvent } = require('../services/users.services');
 const getGraphClient = require("../graph");
 
 const getuser = async (req, res) => {
@@ -100,7 +100,10 @@ const keyExpired = async (req, res) => {
 // admin pin insertion
 const adminKeyPin = async (req, res) => {
     try {
+        console.log(`${req.method} ${req.originalUrl}`);
+        // console.log("Request body:", req.body);
         const { pin, room_number } = req.body;
+        console.log("Pin:", pin, "Room Number:", room_number);
         if ( !pin || !room_number ) {
             return res.status(200).json({ message: "Missing required fields! "});
         }
@@ -108,14 +111,14 @@ const adminKeyPin = async (req, res) => {
         const result = await adminCompareKey( pin, room_number );
 
         if (!result.success) {
-            return res.status(200).json({ message: result.message });
+            return res.status(200).json({ success: result.success, message: result.message });
         }
 
-        return res.status(200).json({ message: result.message });
+        return res.status(200).json({ success: result.success, message: result.message });x
     } catch (err) {
         return res.status(500).json({ message: result.message });
     }
-} 
+}
 
 // รับ Roomnumber เเละ eventId ของการประชุมที่ต้องการลบ
 const deleteroom = async (req, res) => {
@@ -143,56 +146,29 @@ const deleteroom = async (req, res) => {
     }
 }
 
-const createroom = async (req, res) => {
-    const { RoomNumber, startdatetime, enddatetime, subject } = req.body; // datetime UTC: 2024-06-09T00:00:00Z
+const createroom = async (req, res) => { // createroomdata = {RoomNumber, startdatetime, enddatetime, subject}
+    const { createroomdata } = req.body; // datetime UTC: 2024-06-09T00:00:00Z 
+    if (!createroomdata || !createroomdata.RoomNumber || !createroomdata.startdatetime || !createroomdata.enddatetime) {
+        return res.status(400).json({ error: "Missing required fields" });
+    }
+
     const AccessToken = tokenCache.getAccessToken();
     if (!AccessToken) {
         console.error("No refresh token found in cache...");
         throw new Error("No refresh token found in caches. Please login again.");
     }
     // const calendarId = await GetIdRoomnumber(AccessToken, RoomNumber);
-
-    const newEvent = {
-        subject: subject || `Meeting in Room ${RoomNumber}`,
-        start: {
-            dateTime: startdatetime,
-            timeZone: "UTC"
-        },
-        end: {
-            dateTime: enddatetime,
-            timeZone: "UTC"
-        },
-        // location: {
-        //     displayName: `${RoomNumber}@tcc-technology.com`
-        // },
-        attendees: [
-            {
-            emailAddress: {
-                address: `${RoomNumber}@tcc-technology.com`,
-                // name: `${RoomNumber} Meetingroom`
-            },
-            type: "required"
-            }
-        ],
-        organizer: {
-            emailAddress: {
-                // name: "TCCtech Meetingroom222",
-                address: "meetingroom@tcc-technology.com"
-            }
-        }
-    };
-    
     try {
-        await getGraphClient(AccessToken)
-            .api(`/me/events`)  // for calendar you have access to
-            .post(newEvent);
-
+        const iscreated = await createMSEvent(AccessToken, createroomdata)
+        if (!iscreated) {
+            throw new Error("Failed to create event");
+        }
         console.log("Create event success");
-        res.status(200).json({ message: "Event Create successfully" });
+        res.status(200).json({ message: "Event Create successfully"});
 
     } catch (error) {
-    console.error("Error create event:", error);
-    res.status(500).json({ error: "Failed to create event" });
+        console.error("Error create event:", error);
+        res.status(500).json({ error: error.message || "Failed to create event" });
     }
 }
 
@@ -212,7 +188,7 @@ const endmeeting = async (req, res) => {
         await getGraphClient(AccessToken)
         .api(`/me/calendars/${calendarId}/events/${eventId}`)
         .update({
-            subject: `Meeting in Room ${endmeetingdata.RoomNumber} has enderdragon`,
+            subject: `Meeting in Room ${endmeetingdata.RoomNumber} has end`,
             start: {
                 dateTime: new Date(endmeetingdata.startdatetime).toISOString(),
                 timeZone: "UTC"

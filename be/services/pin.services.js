@@ -12,7 +12,7 @@ const Logsmonitoring = require('../models/Logsmonitoring');
  */
 async function compareKey({ eventId, pin }) {
     const booking = await bookingKey.findOne({ 
-        id: eventId
+        eventId: eventId
     });
     if (!booking) return false;
     console.log(`COMPARING => Pin: ${pin} with Event's key: ${booking.key}`);
@@ -55,12 +55,11 @@ async function deleteSchedule({ eventId }) {
  * @param {String} room_number
  * @returns 
 */
-async function adminCompareKey({ pin, room_number }) {
+async function adminCompareKey( pin, room_number ) {
     try {
         const user = await User.findOne({
            pin: pin,
         });
-
         if (!user) return { success: false, message: "User not found!"};
 
         /**
