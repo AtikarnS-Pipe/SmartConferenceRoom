@@ -2,10 +2,10 @@ require('dotenv').config({ path: './config/.env'});
 const getGraphClient = require("../graph");
 const tokenCache = require('../utils/tokenCache');
 const getTodaydatetime = require('../utils/getTodaydatetime');
- let roomobject = {
-            "1501": '', "1502": '', "1503": '', "1504": '',"1505": '',
-            "1506": '', "1514": '', "1515": '', "1519": '', "1520": '',
-        }
+// let roomobject = {
+//             "1501": '', "1502": '', "1503": '', "1504": '',"1505": '',
+//             "1506": '', "1514": '', "1515": '', "1519": '', "1520": '',
+//         }
 
 async function getuserdatabyroom(res, RoomNumber) {
     try {
@@ -17,9 +17,9 @@ async function getuserdatabyroom(res, RoomNumber) {
         if(!accesstoken){
             throw new Error("No access token in Users")
         }
-        if(roomobject[RoomNumber] === ''){
-            roomobject[RoomNumber] = await GetIdRoomnumber(accesstoken, RoomNumber);
-        }
+        // if(roomobject[RoomNumber] === ''){
+        //     roomobject[RoomNumber] = await GetIdRoomnumber(accesstoken, RoomNumber);
+        // }
         const graphResponse = await getGraphClient(accesstoken)
             .api(`https://graph.microsoft.com/v1.0/users/${RoomNumber}@tcc-technology.com/calendarView`)
             // .api(`https://graph.microsoft.com/v1.0/me/calendars/${roomobject[RoomNumber]}/calendarView`)
