@@ -7,6 +7,7 @@ import Boxdetail from '../components/Box-Detail'
 import Roomnumber from '../components/Room-number'
 import TimeSchedule from '../components/Time-Schedule'
 import ZoomControl from '../components/ZoomControl'
+import TimeWarningCard from '../components/TimeWarningCard'
 //hooks
 import { useCurrentEvent } from '../hooks/useCurrentEvent'; 
 import { useRoomData } from '../hooks/useRoomData'  
@@ -65,7 +66,18 @@ function Home() {
             {/* <p className = 'touchscreen'>#Touch‑Supported</p> */}
           </div>
         </div>
+      {/* Time Warning Card */}
+      <TimeWarningCard 
+        currentEvent={currentEvent} 
+        getTimeRemaining={getTimeRemaining} 
+      />
       </div>
+
+      {/* Time Warning Card */}
+      {/* <TimeWarningCard 
+        currentEvent={currentEvent} 
+        getTimeRemaining={getTimeRemaining} 
+      /> */}
 
       {/* popup */}
       {/* <PinPopupManager events={events} closeSignal={closeUserPin} /> */}

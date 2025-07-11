@@ -13,6 +13,8 @@ const BookingModal = ({ isOpen, onClose, onSubmit, roomName }) => {
   });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
+  const { floor, room } = useRoomData();
+  const roomId = `${floor}${room}`; // สร้าง roomId จาก floor และ room
 
 //fn ปัดเวลาให้เป็น 15 นาที
   const getCurrentTime = () => {
@@ -60,7 +62,7 @@ const BookingModal = ({ isOpen, onClose, onSubmit, roomName }) => {
         
         // Create payload in the format expected by the backend
         const payload = {
-          RoomNumber: extractedRoomNumber,
+          RoomNumber: roomId, // Use roomId from useRoomData
           email: formData.bookedBy, // Using bookedBy as email
           startdatetime: startdatetime,
           enddatetime: enddatetime,
@@ -230,10 +232,10 @@ const BookingModal = ({ isOpen, onClose, onSubmit, roomName }) => {
             {errors.submit && <p className="error-text">{errors.submit}</p>}
           </div>
 
-          <div className="footer-nav">
+          {/* <div className="footer-nav">
             <button onClick={onClose}><Home size={16} /> <span>Home</span></button>
             <button onClick={onClose}><span>All Meetings</span> <Calendar size={16} /></button>
-          </div>
+          </div> */}
         </div>
       </div>
     </div>

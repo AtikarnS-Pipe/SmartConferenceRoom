@@ -64,7 +64,7 @@ body {
   top: 0;
   left: 0;
   height: 100%;
-  z-index: 100;
+  z-index: 0;
   /* border-top-left-radius: 1.5rem;
   border-bottom-left-radius: 1.5rem; */
   overflow: hidden;
@@ -99,11 +99,6 @@ body {
 
 .light-indicator.available {
   background-color: #16a34a;
-}
-
-.light-indicator.modal-open {
-  opacity: 0.5;
-  filter: blur(2px);
 }
 
 /* Status indicator */
@@ -157,7 +152,6 @@ body {
   right: 32px;
   top: 50%;
   transform: translateY(-50%);
-  z-index: 2;
 }
 
 @media (max-width: 767px) {
@@ -199,20 +193,30 @@ body {
   box-shadow: 0 2px 8px rgba(223,33,33,0.10);
   transform: scale(0.98);
 }
+ .book-next-button {
+  background: linear-gradient(90deg, #ffffff 0%, #cee4fa 100%);
+  color: #1d4ed8; /* น้ำเงินเข้ม */
+  /* border: 1px solid #3b82f6; ขอบน้ำเงินสดใส */
+  border-radius: 6px;
+  transition: all 0.2s ease-in-out;
+}
 
-.book-next-button {
-  background: linear-gradient(90deg, #16a34a 0%, #22c55e 100%);
-}
-.book-next-button:hover, .book-next-button:focus {
-  background: linear-gradient(90deg, #15803d 0%, #16a34a 100%);
-  box-shadow: 0 6px 20px rgba(34,197,94,0.18);
+.book-next-button:hover,
+.book-next-button:focus {
+  background: linear-gradient(90deg, #eff6ff 0%, #dbeafe 100%);
+  color: #1e40af; /* น้ำเงินเข้มขึ้นตอน hover */
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.2); /* เงาน้ำเงินนวลๆ */
   transform: translateY(-2px) scale(1.03);
+  border-color: #2563eb; /* ขอบน้ำเงินเข้มขึ้น */
 }
+
 .book-next-button:active {
-  background: linear-gradient(90deg, #166534 0%, #22c55e 100%);
-  box-shadow: 0 2px 8px rgba(34,197,94,0.10);
+  background: linear-gradient(90deg, #dbeafe 0%, #bfdbfe 100%);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.12);
   transform: scale(0.98);
+  border-color: #2563eb;
 }
+
 
 @media (min-width: 640px) {
   .box-detail {
@@ -863,7 +867,6 @@ body {
 
 
 
-/* ✅ Modal Overlay */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -872,27 +875,25 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 999; /* ทับ light-container แน่นอน */
+  z-index: 2; 
   padding: 1rem;
 }
 
-/* ✅ Modal Container */
 .modal-container {
-  background: white;
+  background: #f3f4f6;
   border-radius: 1rem;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
   width: 100%;
-  max-width: 550px; /* ขยายจาก 480px */
+  max-width: 550px;
   max-height: 90vh;
   overflow-y: auto;
   transform: scale(1);
   transition: transform 0.3s ease-in-out;
 }
 
-/* ✅ Header */
 .modal-header {
-  background: linear-gradient(to right, #16a34a, #22c55e);
-  color: white;
+  background: rgb(46, 80, 116);
+  color: #e5e5e5;
   padding: 1.5rem;
   position: relative;
 }
@@ -925,12 +926,6 @@ body {
   margin-top: 0.25rem;
 }
 
-.header-info .room-name {
-  font-size: 1rem;
-  margin-top: 0.25rem;
-  color: #d1fae5;
-}
-
 /* ✅ Modal Body */
 .modal-body {
   padding: 1.5rem;
@@ -948,7 +943,7 @@ body {
   display: block;
   font-size: 0.875rem;
   font-weight: 600;
-  color: #6b7280;
+  color: #4b5563;
   margin-bottom: 0.5rem;
   text-transform: uppercase;
   text-align: center;
@@ -986,13 +981,12 @@ input[type="text"] {
   margin-top: 0.25rem;
 }
 
-/* ✅ Timeline */
 .timeline {
   display: flex;
   gap: 0.25rem;
   height: 1rem;
   margin-bottom: 0.5rem;
-  background-color: #f3f4f6;
+  background-color: #f9fafb;
   border-radius: 9999px;
   overflow: hidden;
 }
@@ -1004,11 +998,11 @@ input[type="text"] {
 }
 
 .timeline-block.booked-slot {
-  background-color: #86efac;
+  background-color: #d1d5db;
 }
 
 .timeline-block.current-slot {
-  background-color: #22c55e;
+  background-color: #9ca3af;
 }
 
 .timeline-labels {
@@ -1032,16 +1026,16 @@ input[type="text"] {
 .adjust-group button {
   width: 2.5rem;
   height: 2.5rem;
-  border: 2px solid #16a34a;
+  border: 2px solid #6b7280;
   border-radius: 50%;
-  color: #16a34a;
+  color: #6b7280;
   background: transparent;
   cursor: pointer;
   transition: 0.2s;
 }
 
 .adjust-group button:hover {
-  background: #16a34a;
+  background: #6b7280;
   color: white;
 }
 
@@ -1061,7 +1055,7 @@ input[type="text"] {
 .submit-btn {
   width: 100%;
   padding: 0.75rem;
-  background: linear-gradient(to right, #16a34a, #22c55e);
+  background: linear-gradient(to right, #9ca3af, #6b7280);
   color: white;
   border: none;
   border-radius: 0.5rem;
@@ -1073,7 +1067,7 @@ input[type="text"] {
 }
 
 .submit-btn:hover {
-  background: linear-gradient(to right, #15803d, #16a34a);
+  background: linear-gradient(to right, #6b7280, #4b5563);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
@@ -1141,87 +1135,175 @@ input[type="text"] {
 
 
 
-/* ✅ สไตล์ Time Remaining แบบ badge โดดเด่น - ยืดลงมาและไม่มีขอบเขียว */
-.detail-row-time-remaining.highlight {
+
+
+
+/* ✅ Time Warning Card Styles */
+.time-warning-overlay {
+  position: fixed;
+  top: 0;
+  left: 170px;
+  right: 0;
+  z-index: 0;
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  justify-content: center;
+  pointer-events: none;
+}
+
+.time-warning-card {
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+  border: 2px solid #f87171;
   border-radius: 16px;
-  padding: 16px 20px;
-  box-shadow: 0 8px 16px rgba(0,0,0,0.1);
-  min-width: 200px;
-  text-align: center;
-}
-
-.detail-row-time-remaining.highlight .detail-label.highlight {
-  background: none;
-  box-shadow: none;
-  font-size: 0.875rem;
-  color: #64748b;
-  margin-bottom: 0px;
-  margin-right: 0px;
+  box-shadow: 0 10px 25px rgba(248, 113, 113, 0.3);
+  padding: 20px 24px;
+  margin: 20px;
+  max-width: 400px;
+  width: 90%;
   display: flex;
   align-items: center;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  gap: 16px;
+  pointer-events: auto;
+  position: relative;
+  
+  /* Slide down animation */
+  animation: slideDown 0.5s ease-out forwards;
+  transform: translateY(-100%);
 }
 
-.detail-row-time-remaining.highlight .detail-value.highlight {
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: #1e293b;
-  background: linear-gradient(135deg, #16a34a 0%, #22c55e 100%);
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  margin-top: 4px;
+@keyframes slideDown {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
-.detail-row-time-remaining.highlight img {
-  width: 18px;
-  height: 18px;
-  margin-right: 6px;
-  opacity: 0.7;
+/* ✅ Slide up animation for when event ends */
+.time-warning-card.slide-up {
+  animation: slideUp 0.5s ease-in forwards;
 }
 
-@media (min-width: 640px) {
-  .detail-row-time-remaining.highlight {
-    padding: 20px 24px;
-    min-width: 220px;
+@keyframes slideUp {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+}
+
+.time-warning-icon {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+.time-warning-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.time-warning-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #7f1d1d;
+  margin: 0 0 4px 0;
+  line-height: 1.2;
+}
+
+.time-warning-subject {
+  font-size: 1rem;
+  color: #991b1b;
+  margin: 0 0 8px 0;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.time-warning-time {
+  font-size: 1.125rem;
+  color: #7f1d1d;
+  margin: 0;
+  font-weight: 500;
+}
+
+.time-warning-countdown {
+  font-weight: 700;
+  color: #dc2626;
+  font-size: 1rem;
+}
+
+.time-warning-close {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #991b1b;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.time-warning-close:hover {
+  background: rgba(185, 28, 28, 0.1);
+  color: #7f1d1d;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 480px) {
+  .time-warning-card {
+    margin: 10px;
+    padding: 16px 20px;
+    gap: 12px;
   }
   
-  .detail-row-time-remaining.highlight .detail-label.highlight {
+  .time-warning-icon {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .time-warning-title {
     font-size: 1rem;
   }
   
-  .detail-row-time-remaining.highlight .detail-value.highlight {
-    font-size: 1.75rem;
+  .time-warning-subject {
+    font-size: 0.8rem;
   }
   
-  .detail-row-time-remaining.highlight img {
-    width: 20px;
-    height: 20px;
-  }
-}
-
-@media (min-width: 768px) {
-  .detail-row-time-remaining.highlight {
-    padding: 50px 100px;
-    min-width: 250px;
+  .time-warning-time {
+    font-size: 0.8rem;
   }
   
-  .detail-row-time-remaining.highlight .detail-label.highlight {
-    font-size: 1.125rem;
-  }
-  
-  .detail-row-time-remaining.highlight .detail-value.highlight {
-    font-size: 2.25rem;
-  }
-  
-  .detail-row-time-remaining.highlight img {
-    width: 24px;
-    height: 24px;
+  .time-warning-countdown {
+    font-size: 0.9rem;
   }
 }

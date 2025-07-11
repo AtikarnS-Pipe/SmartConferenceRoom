@@ -378,6 +378,7 @@ export default function TimeSchedule({ currentTime, events = [], zoomLevel, setZ
             position: 'fixed',
             top: 0, left: 0, right: 0, bottom: 0,
             backgroundColor: 'rgba(0,0,0,0.4)',
+            backdropFilter: 'blur(3px)',
             zIndex: 999
           }}
           onClick={() => setSelectedEvent(null)}
