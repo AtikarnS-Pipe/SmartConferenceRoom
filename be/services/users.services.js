@@ -9,9 +9,9 @@ const getTodaydatetime = require('../utils/getTodaydatetime');
 
 async function getuserdatabyroom(res, RoomNumber) {
     try {
-        if(!(RoomNumber in roomobject)){
-            throw new Error(`Invalid room number: ${RoomNumber}`)
-        }
+        // if(!(RoomNumber in roomobject)){
+        //     throw new Error(`Invalid room number: ${RoomNumber}`)
+        // }
         const {startDateTime, endDateTime} = getTodaydatetime();
         const accesstoken = tokenCache.getAccessToken();
         if(!accesstoken){
@@ -155,7 +155,7 @@ const createMSEvent = async (AccessToken, createroomdata) => {
         if (!iscreate) {
             return false;
         }
-        return true;
+        return iscreate;
     } catch(error){
         console.error('Error creating MS event:', error.message);
         return false;

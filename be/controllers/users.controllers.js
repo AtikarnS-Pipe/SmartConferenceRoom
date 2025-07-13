@@ -7,6 +7,12 @@ const { getuserdatabyroom } = require('../services/users.services');
 const { GetIdRoomnumber, GeteventId, createMSEvent } = require('../services/users.services');
 const getGraphClient = require("../graph");
 
+// create ms room
+const bcrypt = require('bcryptjs')
+const bookingkey = require('../models/bookingkey')
+function randomPin() {
+  return Math.floor(1000 + Math.random() * 9000).toString(); // 0.000-0.999*9000ได้ 0-8999 + 1000 จะได้ Range 1000-9999 
+}
 const getuser = async (req, res) => {
     const floor = req.params.floors;
     const room = req.params.rooms;
@@ -163,8 +169,18 @@ const createroom = async (req, res) => { // createroomdata = {RoomNumber, startd
         if (!iscreated) {
             throw new Error("Failed to create event");
         }
-        console.log("Create event success");
-        res.status(200).json({ message: "Event Create successfully"});
+        const key = randomPin();
+        const salt = await bcrypt.genSalt( parseInt(process.env.BCRYPT_SALT_ROUNDS));
+        const hashedPassword = await bcrypt.hash(key, salt);
+        const booking = await bookingkey.create({
+            room: createroomdata.RoomNumber,
+            eventId: iscreated.id, // ดันเป็นคนละevenid กับ calendarView อีก เดี๋ยวมาเเก่้
+            key: hashedPassword,
+            startDateTime: new Date(iscreated.start?.dateTime + "Z"), // UTC time, so frontend need to convert before sending time(thailand - 7 hr)
+            endDateTime: new Date(iscreated.end?.dateTime + "Z")
+        })
+        console.log(`Booking ${createroomdata.RoomNumber} with Meetingroom key : `, key);
+        res.status(200).json({ message: "Event Create successfully", key});
 
     } catch (error) {
         console.error("Error create event:", error);

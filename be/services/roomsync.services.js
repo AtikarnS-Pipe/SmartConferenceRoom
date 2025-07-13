@@ -61,25 +61,27 @@ async function syncAllRooms() {
         for (const roomData of results) {
             if (roomData.events && roomData.events.length > 0) {
                 for (const event of roomData.events) {
-                    let booking = await bookingkey.findOne({ room: roomData.room, eventId: event.id });
-                    if (!booking) { // ถ้ายังไม่มี ให้สร้างใหม่
-                        console.log('Creating new key for room:', roomData.room, 'event id:', event.id);
-                        const key = randomPin();
-                        const salt = await bcrypt.genSalt( parseInt(process.env.BCRYPT_SALT_ROUNDS));
-                        const hashedPassword = await bcrypt.hash(key, salt);
-                        booking = await bookingkey.create({
-                            room: roomData.room,
-                            eventId: event.id,
-                            key: hashedPassword,
-                            startDateTime: new Date(event.start?.dateTime + "Z"),
-                            endDateTime: new Date(event.end?.dateTime + "Z")
-                        });
-                        console.log('mail send:', key);
-                        RoomStr = roomData.room.toString();
-                        const mailContent = `รหัสผ่านสำหรับ L: /${RoomStr.slice(0,2)}>${RoomStr.slice(2,4)} คือ ${key}`;
-                        const mail = "Nareupol.A@tcc-technology.com" //event.organizer?.emailAddress?.address  //Atikarn.S
-                        if(process.env.DEBUG_MODE) console.log('mail content:',mail);
-                        // await sendMailAsync(event.organizer?.emailAddress?.address, mailContent, mail, tokenCache.getAccessToken()); //หัวข้ออีเมล, รหัสผ่าน, หมายเลขห้องที่จะส่งไป
+                    if(event.organizer?.emailAddress?.address !== process.env.CENTERLIZED_MAIL) { // ถ้าไม่ใช่ผู้ดูแลระบบ
+                        let booking = await bookingkey.findOne({ room: roomData.room, eventId: event.id });
+                        if (!booking) { // ถ้ายังไม่มี ให้สร้างใหม่
+                            console.log('Creating new key for room:', roomData.room, 'event id:', event.id);
+                            const key = randomPin();
+                            const salt = await bcrypt.genSalt( parseInt(process.env.BCRYPT_SALT_ROUNDS));
+                            const hashedPassword = await bcrypt.hash(key, salt);
+                            booking = await bookingkey.create({
+                                room: roomData.room,
+                                eventId: event.id,
+                                key: hashedPassword,
+                                startDateTime: new Date(event.start?.dateTime + "Z"),
+                                endDateTime: new Date(event.end?.dateTime + "Z")
+                            });
+                            console.log('mail send:', key);
+                            RoomStr = roomData.room.toString();
+                            const mailContent = `รหัสผ่านสำหรับ L: /${RoomStr.slice(0,2)}>${RoomStr.slice(2,4)} คือ ${key}`;
+                            const mail = "Nareupol.A@tcc-technology.com" //event.organizer?.emailAddress?.address  //Atikarn.S
+                            if(process.env.DEBUG_MODE) console.log('mail content:',mail);
+                            // await sendMailAsync(event.organizer?.emailAddress?.address, mailContent, mail, tokenCache.getAccessToken()); //หัวข้ออีเมล, รหัสผ่าน, หมายเลขห้องที่จะส่งไป
+                        }
                     }
                 }
             }
