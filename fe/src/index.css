@@ -140,35 +140,49 @@ body {
   border-width: 2px;
   border-style: solid;
   display: flex;
-  align-items: center;
+  justify-content: space-between;
+  align-items: stretch;
   border: #16a34a solid 2px;
-  position: relative;
+  min-height: 200px;
+  gap: 20px;
 }
+
+.detail-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0; /* ป้องกันไม่ให้ content overflow */
+}
+
 .box-detail-action-buttons {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  position: absolute;
-  right: 32px;
-  top: 50%;
-  transform: translateY(-50%);
+  align-self: center;
+  flex-shrink: 0;
+  min-width: 250px;
 }
 
 @media (max-width: 767px) {
+  .box-detail {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 18px;
+  }
+  
   .box-detail-action-buttons {
-    position: static;
     flex-direction: row;
     justify-content: flex-end;
     align-items: center;
     gap: 12px;
-    margin-top: 18px;
-    transform: none;
+    min-width: auto;
   }
 }
 
 .end-button, .book-next-button {
   min-width: 250px;
-  padding: 50px 0px;
+  padding: 50px 20px;
   border: none;
   border-radius: 10px;
   font-size: 25px;
@@ -179,6 +193,26 @@ body {
   outline: none;
   color: #fff;
 }
+
+@media (max-width: 480px) {
+  .end-button, .book-next-button {
+    min-width: 120px;
+    padding: 18px 8px;
+    font-size: 15px;
+    border-radius: 7px;
+  }
+}
+
+@media (max-width: 768px) {
+  .end-button, .book-next-button {
+    min-width: 160px;
+    padding: 24px 12px;
+    font-size: 18px;
+    border-radius: 8px;
+  }
+}
+
+
 
 .end-button {
   background: linear-gradient(90deg, #df2121 0%, #ff5858 100%);
@@ -194,8 +228,8 @@ body {
   transform: scale(0.98);
 }
  .book-next-button {
-  background: linear-gradient(90deg, #ffffff 0%, #cee4fa 100%);
-  color: #1d4ed8; /* น้ำเงินเข้ม */
+  background: rgb(192, 192, 192);
+  color: #f9f9fa; /* น้ำเงินเข้ม */
   /* border: 1px solid #3b82f6; ขอบน้ำเงินสดใส */
   border-radius: 6px;
   transition: all 0.2s ease-in-out;
@@ -248,7 +282,7 @@ body {
 
 @media (min-width: 768px) {
   .box-detail.occupied {
-    padding: 30px 40px;
+    padding: 30px 25px;
   }
 }
 
@@ -282,6 +316,8 @@ body {
 .detail-content {
   text-align: left;
   width: 100%;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 
@@ -344,7 +380,7 @@ body {
 @media (min-width: 768px) {
   .detail-label {
     padding: 12px 20px;
-    margin-right: 20px;
+    margin-right: 0px;
     font-size: 35px;
   }
 }
@@ -376,6 +412,10 @@ body {
   border-radius: 8px;
   width: 100%;
   font-weight: 500;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  /* hyphens: auto; */
+  line-height: 1.4;
 }
 
 @media (min-width: 640px) {
@@ -390,7 +430,7 @@ body {
 @media (min-width: 768px) {
   .detail-value {
     font-size: 30px;
-    padding: 12px 18px;
+    padding: 12px 10px;
   }
 }
 
@@ -402,6 +442,9 @@ body {
   display: inline-block;
   font-weight: 500;
   color: black;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  line-height: 1.4;
 }
 
 @media (min-width: 640px) {
@@ -415,7 +458,7 @@ body {
 @media (min-width: 768px) {
   .time-value {
     font-size: 30px;
-    padding: 12px 18px;
+    padding: 12px 10px;
   }
 }
 
@@ -871,7 +914,7 @@ body {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(4px);
+  backdrop-filter: blur(10px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -941,7 +984,7 @@ body {
 /* ✅ Center labels by default */
 .form-group label {
   display: block;
-  font-size: 0.875rem;
+  font-size: 1.125rem;
   font-weight: 600;
   color: #4b5563;
   margin-bottom: 0.5rem;
@@ -968,6 +1011,14 @@ input[type="text"] {
   font-size: 1.125rem;
   color: #1f2937;
   text-align: left; /* ✅ ป้องกันข้อความ input ชิดกลาง */
+}
+
+input[type="text"]:disabled {
+  background-color: #f1f3f4;
+  color: #9ca3af;
+  border-color: #e5e7eb;
+  cursor: not-allowed;
+  opacity: 0.6;
 }
 
 .input-error {
@@ -1307,3 +1358,26 @@ input[type="text"] {
     font-size: 0.9rem;
   }
 }
+
+/* ✅ Label and Checkbox Row */
+.label-checkbox-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.label-checkbox-row label {
+  margin-bottom: 0 !important;
+  flex: 1;
+}
+
+.label-checkbox-row input[type="checkbox"] {
+  width: 20px !important;
+  height: 20px !important;
+  margin-left: 1rem;
+  padding: 0;
+  cursor: pointer;
+  transform: scale(1.2);
+}
+

@@ -30,7 +30,7 @@ export default function Boxdetail({ isOccupied, event, getTimeRemaining, loading
       };
       console.log('Sending endmeeting data:', endmeetingdata);
 
-      const response = await axios.patch('/user/endmeeting', { endmeetingdata });
+      const response = await axios.patch('/user/endmeeting', { endmeetingdata }); // แก้ไขชื่อ endpoint ลบ g ออก
       
       if (response.status === 200) {
         alert('สิ้นสุดการประชุมเรียบร้อยแล้ว');
@@ -117,18 +117,6 @@ export default function Boxdetail({ isOccupied, event, getTimeRemaining, loading
             </button>
             <button className="book-next-button" onClick={() => setShowModal(true)}>Book Next</button>
           </div>
-
-          {/* ถ้าจะใช้ Time Remaining เปิดได้ */}
-          
-          {/* <div className="detail-row-time-remaining highlight">
-            <span className="detail-label highlight">
-              <img src={TimeRemaining} alt="Time Remaining" />
-              Time-Remaining :
-            </span>
-            <span className="detail-value highlight">
-              {getTimeRemaining(event)}
-            </span>
-          </div> */}
         </div>
       ) : (
         <div className="box-detail available">
