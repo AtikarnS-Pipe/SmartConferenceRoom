@@ -4,8 +4,14 @@ const bookingKeySchema = new mongoose.Schema({
     room: Number,
     eventId: String,
     key: String,
+    pin: String,
     startDateTime: Date,
     endDateTime: Date,
+    count: {
+        type: Number,
+        default: 0, 
+        index: true // for faster queries
+    },
     B_createdAt:{
         type: Date,
         default: () => new Date(),

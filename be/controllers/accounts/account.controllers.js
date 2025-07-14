@@ -42,7 +42,7 @@ const Auth = async (req, res) => { // admin sign-in
       L_createdAt: new Date(),
     })
 
-      res.json({token})
+      res.json({token, name: user.name, pin: user.pin, role: user.role})
     } catch (error) {
       console.error("Authentication error:", error);
       res.status(500).json({ error: 'Internal server error' });
@@ -187,19 +187,23 @@ const createadmin = async (req, res) => {
 const deletehousekeeper = async (req, res) => {
   try{
     const admin = req.user;
-    if (admin.role !== 'admin') {
+    const { name } = req.body;
+    const adminDB = await User.findById(admin._id);
+    if(!adminDB){
+      return res.status(400).json({ message: 'token expired!' });
+    }
+    if (adminDB.role !== 'admin') {
       return res.status(403).json({ message: 'Only admin can delete housekeeper' });
     }
-    const { name, password } = req.body;
-    if (!name || !password) {
-      return res.status(400).json({ message: 'Name and Password are required' });
+    if (!name) {
+      return res.status(400).json({ message: 'Housekeeper ์s Name are required' });
     } 
-    const adminDB = await User.findById(admin._id);
-    const isAdminpw = await bcrypt.compare(password, adminDB.password)
-    if(!isAdminpw){
-      return res.status(400).json({ message: 'Invalid admin password!' });
-    }
-    const ThisHousekeeper = await User.findOneAndDelete({ name, role: 'housekeeper' });
+    // const isAdminpw = await bcrypt.compare(password, adminDB.password)
+    const ThisHousekeeper = await User.findOneAndUpdate(
+      { name, role: 'housekeeper'},
+      { role: 'Deactivate' }, // not use, log in db     
+      { new: true } 
+    );
     if (!ThisHousekeeper) {
       return res.status(404).json({ message: 'Housekeeper is not found in Documents' });
     }
@@ -207,7 +211,7 @@ const deletehousekeeper = async (req, res) => {
     const logs = await Logsmonitoring.create({
       user_Id: ThisHousekeeper._id, 
       L_status: 'Housekeeper was deleted', 
-      role: ThisHousekeeper.role, 
+      role: 'housekeeper', 
       Details: `Housekeeper name: ${name}`, 
       L_createdAt: new Date(),
     })

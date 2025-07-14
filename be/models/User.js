@@ -23,7 +23,7 @@ const Userschema = new mongoose.Schema({
     role:{ // both
         type: String,
         required: true,
-        enum: ['admin', 'housekeeper'],
+        enum: ['admin', 'housekeeper', 'Deactivate', 'SuperAdmin'],
     },
     pin:{ // both , display in housekeeper table
         type: String,

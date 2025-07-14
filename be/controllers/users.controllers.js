@@ -10,6 +10,9 @@ const getGraphClient = require("../graph");
 // create ms room
 const bcrypt = require('bcryptjs')
 const bookingkey = require('../models/bookingkey')
+// penalty alert email 
+const { sendMailAsync } = require('../services/sendmail.services');
+
 function randomPin() {
   return Math.floor(1000 + Math.random() * 9000).toString(); // 0.000-0.999*9000ได้ 0-8999 + 1000 จะได้ Range 1000-9999 
 }
@@ -128,7 +131,7 @@ const adminKeyPin = async (req, res) => {
 
 // รับ Roomnumber เเละ eventId ของการประชุมที่ต้องการลบ
 const deleteroom = async (req, res) => {
-    const { eventId } = req.body; // RoomNumber, email, startdatetime, enddatetime // RoomNumber, eventId
+    const { eventId, name } = req.body; // , eventId
     const AccessToken = tokenCache.getAccessToken();
     if (!AccessToken) {
         console.error("No refresh token found in cache...");
@@ -143,6 +146,14 @@ const deleteroom = async (req, res) => {
         .delete();
 
         console.log("Delete event success");
+        const countbacklist = await bookingkey.findOneAndUpdate(
+            {  },
+            { $inc: { count: +1 } }, // count by 1
+            { new: true } 
+        );
+        console.log("Booking key count updated:", countbacklist);
+        // send mail alert
+        sendMailAsync
         res.status(200).json({ message: "Event deleted successfully" });
 
     } catch (error) {
@@ -175,6 +186,7 @@ const createroom = async (req, res) => { // createroomdata = {RoomNumber, startd
             room: createroomdata.RoomNumber,
             eventId: iscreated.id, // ดันเป็นคนละevenid กับ calendarView อีก เดี๋ยวมาเเก่้
             key: hashedPassword,
+            pin: key, // save pin for user
             startDateTime: new Date(iscreated.start?.dateTime + "Z"), // UTC time, so frontend need to convert before sending time(thailand - 7 hr)
             endDateTime: new Date(iscreated.end?.dateTime + "Z")
         })

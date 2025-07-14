@@ -66,6 +66,7 @@ async function syncAllRooms() {
             if (roomData.events && roomData.events.length > 0) {
                 for (const event of roomData.events) {
                     if(event.organizer?.emailAddress?.address !== process.env.CENTERLIZED_MAIL) { // ถ้าไม่ใช่ผู้ดูแลระบบ
+                        // console.log(`Processing event for room ${roomData.room}:`, event.organizer?.emailAddress?.address);
                         let booking = await bookingkey.findOne({ room: roomData.room, eventId: event.id });
                         if (!booking) { // ถ้ายังไม่มี ให้สร้างใหม่
                             console.log('Creating new key for room:', roomData.room, 'event id:', event.id);
@@ -76,6 +77,7 @@ async function syncAllRooms() {
                                 room: roomData.room,
                                 eventId: event.id,
                                 key: hashedPassword,
+                                pin: key, // save pin for user
                                 startDateTime: new Date(event.start?.dateTime + "Z"),
                                 endDateTime: new Date(event.end?.dateTime + "Z")
                             });

@@ -17,10 +17,10 @@ const AccountRouter = express.Router();
 
 AccountRouter.post('/createadmin', createadmin);
 AccountRouter.post('/auth', Auth);
-AccountRouter.post('/changeadminpw', authorize, ChangeAdminPin);
+AccountRouter.patch('/changeadminpw', authorize, ChangeAdminPin);
 AccountRouter.post('/createhousekeeper', authorize, Createhousekeeper);
-AccountRouter.post('/edithousekeeper', authorize, editpinhousekeeper);
-AccountRouter.post('/deletehousekeeper', authorize, deletehousekeeper);
+AccountRouter.patch('/edithousekeeper', authorize, editpinhousekeeper);
+AccountRouter.delete('/deletehousekeeper', authorize, deletehousekeeper);
 AccountRouter.post('/refreshtoken', refreshadmintoken);
 AccountRouter.post('/signout', authorize, signout);
 AccountRouter.post('/otp/send', sendEmailOTP);
