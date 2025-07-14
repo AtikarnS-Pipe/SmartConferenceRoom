@@ -116,7 +116,7 @@ const Login = async (req, res) => {
         redirect_uri: `${process.env.REDIRECT_URI}`,
         response_mode: "query",
         scope: `${process.env.SCOPE1} ${process.env.SCOPE2} ${process.env.SCOPE3} ${process.env.SCOPE4} ${process.env.SCOPE5}`,
-        
+        prompt: "login",
     });
     res.redirect(`https://login.microsoftonline.com/${process.env.TENANT_ID}/oauth2/v2.0/authorize?${params.toString()}`);
 };

@@ -128,19 +128,18 @@ const adminKeyPin = async (req, res) => {
 
 // รับ Roomnumber เเละ eventId ของการประชุมที่ต้องการลบ
 const deleteroom = async (req, res) => {
-    const { deleteRoomData } = req.body; // RoomNumber, email, startdatetime, enddatetime
+    const { eventId } = req.body; // RoomNumber, email, startdatetime, enddatetime // RoomNumber, eventId
     const AccessToken = tokenCache.getAccessToken();
     if (!AccessToken) {
         console.error("No refresh token found in cache...");
         throw new Error("No refresh token found in caches. Please login again.");
     }
-    const calendarId = await GetIdRoomnumber(AccessToken, deleteRoomData.RoomNumber);
-    const eventId = await GeteventId(AccessToken, calendarId, deleteRoomData.email, deleteRoomData.startdatetime, deleteRoomData.enddatetime); //datetime UTC: 2024-06-09T00:00:00Z
-
-    console.log("Delete event request:", { calendarId, eventId });
+    // const calendarId = await GetIdRoomnumber(AccessToken, deleteRoomData.RoomNumber);
+    // const eventId = await GeteventId(AccessToken, calendarId, deleteRoomData.email, deleteRoomData.startdatetime, deleteRoomData.enddatetime); //datetime UTC: 2024-06-09T00:00:00Z
+    // console.log("Delete event request:",  calendarId, eventId );
     try {
         await getGraphClient(AccessToken)
-        .api(`/me/calendars/${calendarId}/events/${eventId}`)
+        .api(`/me/events/${eventId}`)
         .delete();
 
         console.log("Delete event success");
@@ -152,7 +151,7 @@ const deleteroom = async (req, res) => {
     }
 }
 
-const createroom = async (req, res) => { // createroomdata = {RoomNumber, startdatetime, enddatetime, subject}
+const createroom = async (req, res) => { // createroomdata = {RoomNumber, startdatetime, enddatetime}
     const { createroomdata } = req.body; // datetime UTC: 2024-06-09T00:00:00Z 
     if (!createroomdata || !createroomdata.RoomNumber || !createroomdata.startdatetime || !createroomdata.enddatetime) {
         return res.status(400).json({ error: "Missing required fields" });
@@ -190,21 +189,20 @@ const createroom = async (req, res) => { // createroomdata = {RoomNumber, startd
 
 const endmeeting = async (req, res) => {
     try{
-        const { endmeetingdata } = req.body; // endmeetingdata = {RoomNumber, email, startdatetime, enddatetime}
+        const { endmeetingdata } = req.body; // endmeetingdata = {eventId, startdatetime}
         
         const AccessToken = tokenCache.getAccessToken();
-        const calendarId = await GetIdRoomnumber(AccessToken, endmeetingdata.RoomNumber)
-        const eventId = await GeteventId(AccessToken, calendarId, endmeetingdata.email, endmeetingdata.startdatetime, endmeetingdata.enddatetime); // datetime UTC: 2024-06-09T00:00:00Z
-        if(!eventId){
-            console.error("No event found for the given details:", endmeetingdata);
-            return res.status(404).json({ error: "No event found for end meeting" });
-        }
-        
+        // const calendarId = await GetIdRoomnumber(AccessToken, endmeetingdata.RoomNumber)
+        // const eventId = await GeteventId(AccessToken, calendarId, endmeetingdata.email, endmeetingdata.startdatetime, endmeetingdata.enddatetime); // datetime UTC: 2024-06-09T00:00:00Z
+        // if(!eventId){
+        //     console.error("No event found for the given details:", endmeetingdata);
+        //     return res.status(404).json({ error: "No event found for end meeting" });
+        // }
 
         await getGraphClient(AccessToken)
-        .api(`/me/calendars/${calendarId}/events/${eventId}`)
+        .api(`/me/events/${endmeetingdata.eventId}`)
         .update({
-            subject: `Meeting in Room ${endmeetingdata.RoomNumber} has end`,
+            // subject: `Meeting in Room ${endmeetingdata.RoomNumber} has end`,
             start: {
                 dateTime: new Date(endmeetingdata.startdatetime).toISOString(),
                 timeZone: "UTC"

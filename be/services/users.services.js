@@ -2,27 +2,27 @@ require('dotenv').config({ path: './config/.env'});
 const getGraphClient = require("../graph");
 const tokenCache = require('../utils/tokenCache');
 const getTodaydatetime = require('../utils/getTodaydatetime');
-// let roomobject = {
-//             "1501": '', "1502": '', "1503": '', "1504": '',"1505": '',
-//             "1506": '', "1514": '', "1515": '', "1519": '', "1520": '',
-//         }
+let roomobject = {
+    "1501": '', "1502": '', "1503": '', "1504": '',"1505": '',
+    "1506": '', "1514": '', "1515": '', "1519": '', "1520": '',
+}
 
 async function getuserdatabyroom(res, RoomNumber) {
     try {
-        // if(!(RoomNumber in roomobject)){
-        //     throw new Error(`Invalid room number: ${RoomNumber}`)
-        // }
+        if(!(RoomNumber in roomobject)){
+            throw new Error(`Invalid room number: ${RoomNumber}`)
+        }
         const {startDateTime, endDateTime} = getTodaydatetime();
         const accesstoken = tokenCache.getAccessToken();
         if(!accesstoken){
             throw new Error("No access token in Users")
         }
-        // if(roomobject[RoomNumber] === ''){
-        //     roomobject[RoomNumber] = await GetIdRoomnumber(accesstoken, RoomNumber);
-        // }
+        if(roomobject[RoomNumber] === ''){
+            roomobject[RoomNumber] = await GetIdRoomnumber(accesstoken, RoomNumber);
+        }
         const graphResponse = await getGraphClient(accesstoken)
-            .api(`https://graph.microsoft.com/v1.0/users/${RoomNumber}@tcc-technology.com/calendarView`)
-            // .api(`https://graph.microsoft.com/v1.0/me/calendars/${roomobject[RoomNumber]}/calendarView`)
+            // .api(`https://graph.microsoft.com/v1.0/users/${RoomNumber}@tcc-technology.com/calendarView`)
+            .api(`https://graph.microsoft.com/v1.0/me/calendars/${roomobject[RoomNumber]}/calendarView?`)
             .query({
                 startDateTime: startDateTime,
                 endDateTime: endDateTime,
@@ -57,11 +57,11 @@ async function GetIdRoomnumber(accessToken, RoomNumber) {
         .get();
 
         console.log("RoomNumber received:", RoomNumber);
-        console.log("Available calendars:", calendars.value.map(cal => ({
-            name: cal.name,
-            id: cal.id,
-            owner: cal.owner?.address
-        })));
+        // console.log("Available calendars:", calendars.value.map(cal => ({
+        //     name: cal.name,
+        //     id: cal.id,
+        //     owner: cal.owner?.address
+        // })));
 
         const matchingCalendars = calendars.value.filter(cal =>
             cal.owner?.address?.includes(`${RoomNumber}@tcc-technology.com`)
@@ -121,7 +121,7 @@ const GeteventId = async (accessToken, calendarId, email, startdatetime, enddate
 const createMSEvent = async (AccessToken, createroomdata) => {
     try{
         const newEvent = {
-            subject: createroomdata.subject || `Meeting in Room ${createroomdata.RoomNumber}`,
+            subject: `Meeting in Room ${createroomdata.RoomNumber}`,
             start: {
                 dateTime: createroomdata.startdatetime,
                 timeZone: "UTC"
