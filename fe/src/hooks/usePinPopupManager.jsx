@@ -77,10 +77,7 @@ const PinPopupManager = ({ events, onPinSuccess, closeSignal }) => {
   //     const timeout = setTimeout(async () => {
   //       // เรียก DELETE ไป backend เมื่อครบ 15 นาที
   //       await deleteEventOnBackend({ //await รอให้deleteEventOnbackend ทำเสร็จก่อน
-  //         RoomNumber : roomId,
-  //         email: currentEvent.organizer.emailAddress.address,
-  //         startdatetime: currentEvent.start.dateTime,
-  //         enddatetime: currentEvent.end.dateTime,
+  //         eventId: currentEvent.id,
   //       });
   //       setPinVisible(false);
   //       setError('');

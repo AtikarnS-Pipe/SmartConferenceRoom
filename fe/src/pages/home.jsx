@@ -14,7 +14,7 @@ import { useRoomData } from '../hooks/useRoomData'
 import { getTimeRemaining } from '../hooks/useTimeRemaining'
 import { useCurrentTime } from '../hooks/useCurrentTime';
 import { useEvents } from '../hooks/useEvents';
-
+import PinPopupManager from '../hooks/usePinPopupManager'
 import StaffPinPopupManager from '../hooks/useStaffPinPopupManager'
 
 function Home() {
@@ -80,7 +80,7 @@ function Home() {
       /> */}
 
       {/* popup */}
-      {/* <PinPopupManager events={events} closeSignal={closeUserPin} /> */}
+      <PinPopupManager events={events} closeSignal={closeUserPin} />
       <StaffPinPopupManager showTestButton closeUserPinPopup={handleCloseUserPin} />
     </div>
   )

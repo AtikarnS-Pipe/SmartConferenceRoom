@@ -11,8 +11,8 @@ export default function Boxdetail({ isOccupied, event, getTimeRemaining, loading
   const isFullDayEvent = useIsFullDayEvent();
   const [showModal, setShowModal] = useState(false);
   const [isEnding, setIsEnding] = useState(false);
-  const { floor, room } = useRoomData();
-  const roomNumber = `${floor}${room}`;
+  // const { floor, room } = useRoomData();
+  // const roomNumber = `${floor}${room}`;
 
   const handleEndMeeting = async () => {
     if (!event || !event.organizer || !event.start || !event.end) {
@@ -23,10 +23,8 @@ export default function Boxdetail({ isOccupied, event, getTimeRemaining, loading
     setIsEnding(true);
     try {
       const endmeetingdata = {
-        RoomNumber: roomNumber,
-        email: event.organizer.emailAddress.address,
+        eventId : event.id,
         startdatetime: event.start.dateTime + 'Z',
-        enddatetime: event.end.dateTime + 'Z'
       };
       console.log('Sending endmeeting data:', endmeetingdata);
 
