@@ -11,6 +11,7 @@ const Logsmonitoring = require('../models/Logsmonitoring');
  * @returns {boolean}
  */
 async function compareKey({ eventId, pin }) {
+    console.log(`Comparing pin for event: ${eventId} with pin: ${pin}`);
     const booking = await bookingKey.findOne({ 
         eventId: eventId
     });
@@ -61,7 +62,7 @@ async function adminCompareKey( pin, room_number ) {
            pin: pin,
         });
         if (!user) return { success: false, message: "User not found!"};
-
+        if (user.role === 'Deactivate') return { success: false, message: "User is Deactivated"};
         /**
          * ! update database to log admin/housekeeper insert pin
          * await log.create({ userId: user._id, action: `access room ${room_number}`, role: user.role, timestamp: new Date() });

@@ -149,8 +149,12 @@ const createMSEvent = async (AccessToken, createroomdata) => {
                 }
             }
         };
+        const roomnum = createroomdata.RoomNumber;
+        if(roomobject[roomnum] === ''){
+            roomobject[roomnum] = await GetIdRoomnumber(AccessToken, roomnum);
+        }
         const iscreate = await getGraphClient(AccessToken)
-        .api(`/me/events`)  // for calendar you have access to
+        .api(`/me/calendars/${roomobject[roomnum]}/events`)  // for calendar you have access to
         .post(newEvent);
         if (!iscreate) {
             return false;

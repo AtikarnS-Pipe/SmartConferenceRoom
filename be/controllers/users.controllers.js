@@ -175,7 +175,7 @@ const createroom = async (req, res) => { // createroomdata = {RoomNumber, startd
     }
     // const calendarId = await GetIdRoomnumber(AccessToken, RoomNumber);
     try {
-        const iscreated = await createMSEvent(AccessToken, createroomdata)
+        const iscreated = await createMSEvent(AccessToken, createroomdata);
         if (!iscreated) {
             throw new Error("Failed to create event");
         }
@@ -184,7 +184,7 @@ const createroom = async (req, res) => { // createroomdata = {RoomNumber, startd
         const hashedPassword = await bcrypt.hash(key, salt);
         const booking = await bookingkey.create({
             room: createroomdata.RoomNumber,
-            eventId: iscreated.id, // ดันเป็นคนละevenid กับ calendarView อีก เดี๋ยวมาเเก่้
+            eventId: iscreated.id,
             key: hashedPassword,
             pin: key, // save pin for user
             startDateTime: new Date(iscreated.start?.dateTime + "Z"), // UTC time, so frontend need to convert before sending time(thailand - 7 hr)
