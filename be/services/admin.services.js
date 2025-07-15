@@ -7,11 +7,7 @@ const sendMailAsync = require('../services/sendmail.services')
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const RESET_SECRET = process.env.JWT_RESET_SECRET || "jwt-reset-secret";
-const { GetIdRoomnumber } = require('./users.services');
-let roomobject = {
-    "1501": '', "1502": '', "1503": '', "1504": '',"1505": '',
-    "1506": '', "1514": '', "1515": '', "1519": '', "1520": '',
-}
+const { roomobject } = require('../utils/tokenCache');
 
 async function GetScheduleData(actoken, Room, start, end){  
     try {
@@ -39,9 +35,6 @@ async function GetScheduleData(actoken, Room, start, end){
         if(!actoken){
             throw new Error("No access token in schedule Page.")
         }
-        if(roomobject[Room] === ''){
-            roomobject[Room] = await GetIdRoomnumber(actoken, Room);
-        }  
         const graphResponse = await getGraphClient(actoken)
             .api(`https://graph.microsoft.com/v1.0/me/calendars/${roomobject[Room]}/calendarView?`)
             .query({
@@ -61,8 +54,7 @@ async function GetScheduleData(actoken, Room, start, end){
         return results;
         
     } catch (error) {
-        console.log("error:", error);
-        res.write(`event: error\ndata: ${JSON.stringify({ error: "Failed to fetch data(setinterval)" })}\n\n`);
+        console.error("error:", error);
     }
 }
 
@@ -125,20 +117,17 @@ async function fetchAllRoom(res, accessToken) {
         if (!accessToken) {
             throw new Error("No accessToken");
         }
-        
         const results = await Promise.all(
             Object.keys(roomobject).map(async (room) => {
-                if(roomobject[room] === ''){
-                    roomobject[room] = await GetIdRoomnumber(accessToken, room);
-                } 
                 const graphResponse = await getGraphClient(accessToken)
-                    .api(`https://graph.microsoft.com/v1.0/me/calendars/${roomobject[room]}/calendarView?`)
+                    // .api(`https://graph.microsoft.com/v1.0/me/calendars/${roomobject[room]}/calendarView?`)
+                    .api(`https://graph.microsoft.com/v1.0/users/${room}@tcc-technology.com/calendarView`) // use this if don't want to use id for something, it faster than using id
                     .query({
                         startDateTime: startDateTime,
                         endDateTime: endDateTime,
                         "$orderby": "start/dateTime",
                         "$top": 100,
-                        "$select": "id,organizer,start,end,locations",
+                        "$select": "id,organizer,start,end,location",
                         "$filter": "isCancelled eq false" 
                     })
                     .get();

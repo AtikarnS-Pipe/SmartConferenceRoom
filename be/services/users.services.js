@@ -2,10 +2,7 @@ require('dotenv').config({ path: './config/.env'});
 const getGraphClient = require("../graph");
 const tokenCache = require('../utils/tokenCache');
 const getTodaydatetime = require('../utils/getTodaydatetime');
-let roomobject = {
-    "1501": '', "1502": '', "1503": '', "1504": '',"1505": '',
-    "1506": '', "1514": '', "1515": '', "1519": '', "1520": '',
-}
+const { roomobject } = require('../utils/tokenCache');
 
 async function getuserdatabyroom(res, RoomNumber) {
     try {
@@ -16,9 +13,6 @@ async function getuserdatabyroom(res, RoomNumber) {
         const accesstoken = tokenCache.getAccessToken();
         if(!accesstoken){
             throw new Error("No access token in Users")
-        }
-        if(roomobject[RoomNumber] === ''){
-            roomobject[RoomNumber] = await GetIdRoomnumber(accesstoken, RoomNumber);
         }
         const graphResponse = await getGraphClient(accesstoken)
             // .api(`https://graph.microsoft.com/v1.0/users/${RoomNumber}@tcc-technology.com/calendarView`)
@@ -49,35 +43,7 @@ async function getuserdatabyroom(res, RoomNumber) {
     }
 } 
 
-async function GetIdRoomnumber(accessToken, RoomNumber) {
-    try {
-        let calendarIds;
-        const calendars = await getGraphClient(accessToken)
-        .api('https://graph.microsoft.com/v1.0/me/calendars')
-        .get();
 
-        console.log("RoomNumber received:", RoomNumber);
-        // console.log("Available calendars:", calendars.value.map(cal => ({
-        //     name: cal.name,
-        //     id: cal.id,
-        //     owner: cal.owner?.address
-        // })));
-
-        const matchingCalendars = calendars.value.filter(cal =>
-            cal.owner?.address?.includes(`${RoomNumber}@tcc-technology.com`)
-        );
-        if (matchingCalendars.length === 0) {
-            throw new Error(`No calendar found for room: ${RoomNumber}`);
-        }
-        
-        calendarIds = matchingCalendars[0].id;
-        console.log("matchingCalendars => ", calendarIds);
-        return calendarIds;
-    } catch (error) {
-        console.error('Error fetching user ID:', error);
-        throw new Error('Failed to fetch user ID');
-    }
-}
 
 
 const GeteventId = async (accessToken, calendarId, email, startdatetime, enddatetime) => { // ex. startdatetime:2025-07-10T11:00:00Z, enddatetime:2025-07-10T12:00:00Z
@@ -150,9 +116,6 @@ const createMSEvent = async (AccessToken, createroomdata) => {
             }
         };
         const roomnum = createroomdata.RoomNumber;
-        if(roomobject[roomnum] === ''){
-            roomobject[roomnum] = await GetIdRoomnumber(AccessToken, roomnum);
-        }
         const iscreate = await getGraphClient(AccessToken)
         .api(`/me/calendars/${roomobject[roomnum]}/events`)  // for calendar you have access to
         .post(newEvent);
@@ -167,5 +130,5 @@ const createMSEvent = async (AccessToken, createroomdata) => {
 }
 
 module.exports = {
-    getuserdatabyroom, GetIdRoomnumber, GeteventId, createMSEvent
+    getuserdatabyroom, GeteventId, createMSEvent
 };

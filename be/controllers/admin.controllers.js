@@ -66,7 +66,7 @@ const getAllusers = async (req, res) => {
     } else {
         try {
             // ไม่มี code
-            console.log("No code provided, fetching refresh token...");
+            console.log("No code provided, fetching token...");
             
             // เอา Access token ล่าสุดจาก cache 
             const latestAccessToken = tokenCache.getAccessToken();
@@ -76,7 +76,7 @@ const getAllusers = async (req, res) => {
             }
 
             accessToken = latestAccessToken;
-            console.log("get accessToken from cache:", accessToken);
+            // console.log("get accessToken from cache:", accessToken);
         } catch (err) {
             console.error("Error in getAllusers:", err.message);
             res.write(`event: error\ndata: ${JSON.stringify({ error: "Admin controllers failed", detail: err.message })}\n\n`);
@@ -116,7 +116,7 @@ const Login = async (req, res) => {
         redirect_uri: `${process.env.REDIRECT_URI}`,
         response_mode: "query",
         scope: `${process.env.SCOPE1} ${process.env.SCOPE2} ${process.env.SCOPE3} ${process.env.SCOPE4} ${process.env.SCOPE5}`,
-        prompt: "login",
+        prompt: "select_account",
     });
     res.redirect(`https://login.microsoftonline.com/${process.env.TENANT_ID}/oauth2/v2.0/authorize?${params.toString()}`);
 };

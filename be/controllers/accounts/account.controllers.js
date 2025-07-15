@@ -316,6 +316,28 @@ const resetEmailPassword = async (req, res) => {
   }
 }
 
+const profile = async (req, res) => {
+  try {
+    const user = req.user;
+    if (!user) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+    const userProfile = await User.findById(user.id);
+    if (!userProfile || user.role !== 'admin') {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    return res.status(200).json({
+      name: userProfile.name,
+      email: userProfile.email,
+      role: userProfile.role,
+    })
+  }catch (error) {
+    console.error("Profile error:", error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
 module.exports = { 
   Auth,
   Createhousekeeper,
@@ -326,5 +348,6 @@ module.exports = {
   editpinhousekeeper,
   sendEmailOTP,
   verifyEmailOTP,
-  resetEmailPassword
+  resetEmailPassword,
+  profile
 };

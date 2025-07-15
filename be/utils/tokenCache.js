@@ -2,16 +2,25 @@
 const {refreshAccessToken} = require('../AuthProvider')
 const {encryptToken, decryptToken} = require('../utils/encode')
 const Token = require('../models/token')
+const getGraphClient = require('../graph');
 
 let accessToken = null;
 let refreshToken = null;
 let expiryDate = null; // Date object or ISO string
+let roomobject = {
+    "1501": '', "1502": '', "1503": '', "1504": '',"1505": '',
+    "1506": '', "1514": '', "1515": '', "1519": '', "1520": '',
+}
 
 let started = false; // กำหนด monitor เริ่มรันเเค่ครั้งเดียว
 
 /**
    * Check if current token is expired
    * If expired, refresh it and update the cache and DB
+   * 
+   ** Check if roomobject is empty
+   * If empty, GET them IDs and update the roomobject
+   * @param {string} token - Access token to authenticate with Microsoft Graph API
 */
 async function monitorToken() {
   if (started) return;
@@ -68,8 +77,8 @@ async function monitorToken() {
         console.error("❌ Failed to refresh token:", err.message);
       }
     }
-
-    await sleep(20000);
+    await monitorCalendarId(accessToken); // Call to monitor calendar IDs
+    await sleep(60*1000);
   }
 }
 
@@ -77,6 +86,47 @@ function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms)); 
 }
 
+async function monitorCalendarId(token) {
+  console.log("🆔 Starting id monitor...");
+  const isroomissing = Object.values(roomobject).some(val => !val) // if any roomobject key is empty
+  try{
+    if(isroomissing){ //อยากให้เช็คถ้า value ด้านในว่างเปล่า หรือ server down ไรงี้ให้ ดึงมาใหม่ที ทำยังไงครับ
+      console.log("Preloading calendar IDs api...");
+      const calendars = await GetIdRoomnumber(token, roomobject); // update roomobject value with calendar IDs
+    } else{ 
+      console.log("😘 Calendar IDs already preloaded, skipping...");
+    }
+    
+  } catch (err) {
+    console.error("❌ Failed to get calendar ID :", err.message);
+  }
+}
+
+async function GetIdRoomnumber(token, roomobject) {
+  try {
+    const calendars = await getGraphClient(token)
+    .api('https://graph.microsoft.com/v1.0/me/calendars')
+    .get();
+    console.log("Preloading calendar IDs foreach...");
+    calendars.value.forEach(cal => {
+        const roomMatch = Object.keys(roomobject).find(room => 
+            cal.owner?.address?.includes(`${room}@tcc-technology.com`)
+        );
+        if (roomMatch) {
+            roomobject[roomMatch] = cal.id;
+        }
+    });
+    // console.log("Available calendars:", calendars.value.map(cal => ({
+    //     name: cal.name,
+    //     id: cal.id,
+    //     owner: cal.owner?.address
+    // })));
+    return calendars;
+  } catch (error) {
+    console.error('Error Get calendar id by roomnumber :', error);
+    throw new Error('Failed to fetch ID');
+  }
+}
 module.exports = {
   /**
    * Set token and expiry
@@ -110,5 +160,7 @@ module.exports = {
     accessToken = null;
     refreshToken = null;
     expiryDate = null;
-  }
+  },
+
+  roomobject
 };

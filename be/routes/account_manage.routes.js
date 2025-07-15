@@ -8,6 +8,7 @@ const { Auth,
     sendEmailOTP,
     verifyEmailOTP,
     resetEmailPassword,
+    profile
  } = require('../controllers/accounts/account.controllers');
 const { refreshadmintoken } = require('../utils/refreshalltoken');
 const { AdminListSchedule, HousekeeperListSchedule, LogsListSchedule } = require('../controllers/accounts/steamdata.controllers')
@@ -15,6 +16,7 @@ const { authorize } = require('../middlewares/auth.middleware')
 const express = require("express");
 const AccountRouter = express.Router();
 
+AccountRouter.get('/me', authorize, profile);
 AccountRouter.post('/createadmin', createadmin);
 AccountRouter.post('/auth', Auth);
 AccountRouter.patch('/changeadminpw', authorize, ChangeAdminPin);

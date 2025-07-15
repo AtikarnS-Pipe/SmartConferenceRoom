@@ -4,7 +4,7 @@ require('dotenv').config({ path: './config/.env'});
 const tokenCache = require("../utils/tokenCache");
 const { getuserdatabyroom } = require('../services/users.services');
 // crud microsoft
-const { GetIdRoomnumber, GeteventId, createMSEvent } = require('../services/users.services');
+const {  GeteventId, createMSEvent } = require('../services/users.services');
 const getGraphClient = require("../graph");
 
 // create ms room
@@ -137,9 +137,6 @@ const deleteroom = async (req, res) => {
         console.error("No refresh token found in cache...");
         throw new Error("No refresh token found in caches. Please login again.");
     }
-    // const calendarId = await GetIdRoomnumber(AccessToken, deleteRoomData.RoomNumber);
-    // const eventId = await GeteventId(AccessToken, calendarId, deleteRoomData.email, deleteRoomData.startdatetime, deleteRoomData.enddatetime); //datetime UTC: 2024-06-09T00:00:00Z
-    // console.log("Delete event request:",  calendarId, eventId );
     try {
         await getGraphClient(AccessToken)
         .api(`/me/events/${eventId}`)
@@ -173,7 +170,6 @@ const createroom = async (req, res) => { // createroomdata = {RoomNumber, startd
         console.error("No refresh token found in cache...");
         throw new Error("No refresh token found in caches. Please login again.");
     }
-    // const calendarId = await GetIdRoomnumber(AccessToken, RoomNumber);
     try {
         const iscreated = await createMSEvent(AccessToken, createroomdata);
         if (!iscreated) {

@@ -5,12 +5,7 @@ const bcrypt = require('bcryptjs');
 require('dotenv').config({ path: '../config/.env' });
 const tokenCache = require("../utils/tokenCache")
 const getTodaydatetime = require('../utils/getTodaydatetime');
-const { GetIdRoomnumber } = require('./users.services');
-
-let roomobject = {
-    "1501": '', "1502": '', "1503": '', "1504": '',"1505": '',
-    "1506": '', "1514": '', "1515": '', "1519": '', "1520": '',
-}
+const { roomobject } = require('../utils/tokenCache')
 
 function randomPin() {
   return Math.floor(1000 + Math.random() * 9000).toString(); // 0.000-0.999*9000ได้ 0-8999 + 1000 จะได้ Range 1000-9999 
@@ -31,9 +26,6 @@ async function syncAllRooms() {
     const results = await Promise.all(
         Object.keys(roomobject).map(async (room) => {
             try{
-                if(roomobject[room] === ''){
-                    roomobject[room] = await GetIdRoomnumber(accesstoken, room);
-                }  
                 const graphResponse = await getGraphClient(accesstoken)
                 .api(`https://graph.microsoft.com/v1.0/me/calendars/${roomobject[room]}/calendarView?`)
                 .query({
@@ -59,7 +51,7 @@ async function syncAllRooms() {
             }
         })
     );
-    console.log("Fetched data for room:", results);
+    console.log("Fetched data for roomsync:", results);
 
     try{
         for (const roomData of results) {
