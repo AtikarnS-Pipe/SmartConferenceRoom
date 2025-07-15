@@ -3,6 +3,7 @@ const { compareKey, deleteSchedule, adminCompareKey } = require('../services/pin
 require('dotenv').config({ path: './config/.env'});
 const tokenCache = require("../utils/tokenCache");
 const { getuserdatabyroom } = require('../services/users.services');
+const { roomobject } = require('../utils/tokenCache');
 // crud microsoft
 const {  GeteventId, createMSEvent } = require('../services/users.services');
 const getGraphClient = require("../graph");
@@ -164,7 +165,7 @@ const createroom = async (req, res) => { // createroomdata = {RoomNumber, startd
     if (!createroomdata || !createroomdata.RoomNumber || !createroomdata.startdatetime || !createroomdata.enddatetime) {
         return res.status(400).json({ error: "Missing required fields" });
     }
-
+    const { RoomNumber, startdatetime, enddatetime } = createroomdata;
     const AccessToken = tokenCache.getAccessToken();
     if (!AccessToken) {
         console.error("No refresh token found in cache...");
@@ -175,12 +176,23 @@ const createroom = async (req, res) => { // createroomdata = {RoomNumber, startd
         if (!iscreated) {
             throw new Error("Failed to create event");
         }
+
+        const eventId = await waitUntil(async () => {
+            return await GeteventId(
+                AccessToken,
+                roomobject[RoomNumber],
+                process.env.CENTERLIZED_MAIL,
+                startdatetime,
+                enddatetime
+            );
+        }, 10000, 1000); // 10 รอบ รอบละ 1 s
+
         const key = randomPin();
         const salt = await bcrypt.genSalt( parseInt(process.env.BCRYPT_SALT_ROUNDS));
         const hashedPassword = await bcrypt.hash(key, salt);
         const booking = await bookingkey.create({
-            room: createroomdata.RoomNumber,
-            eventId: iscreated.id,
+            room: RoomNumber,
+            eventId: eventId,
             key: hashedPassword,
             pin: key, // save pin for user
             startDateTime: new Date(iscreated.start?.dateTime + "Z"), // UTC time, so frontend need to convert before sending time(thailand - 7 hr)
@@ -227,6 +239,23 @@ const endmeeting = async (req, res) => {
         res.status(500).json({ error: "Failed to end task" });
     }
 }  
+
+async function waitUntil(conditionFn, timeout = 10000, interval = 1000) {
+    const start = Date.now();
+    return new Promise(async (resolve, reject) => {
+        const check = async () => {
+            try {
+                const result = await conditionFn();
+                if (result) return resolve(result); // resolve ส่งค่าให้กับ promise 
+                if (Date.now() - start >= timeout) return reject(new Error("Timeout waiting for condition"));
+                setTimeout(check, interval);
+            } catch (err) {
+                reject(err);
+            }
+        };
+        check();
+    });
+}
 
 module.exports = { getuser
     , keyPins, keyExpired, adminKeyPin

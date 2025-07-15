@@ -64,20 +64,17 @@ const GeteventId = async (accessToken, calendarId, email, startdatetime, enddate
                 $select: "id,organizer", 
             })
             .get();
-        console.log("events => ", events);
-        if (!events || !events.value || events.value.length === 0) {
-            throw new Error(`CalendarID, No events found for calendar ${calendarId} and email ${email}`);
-        }
+
+        if (!events?.value?.length) return null;
+        
         console.log("organizer email  => ", email);
         const filteredEvents = events.value.filter(event =>{
             console.log("event.organizer(founded) => ", event.organizer?.emailAddress?.address)
             return event.organizer?.emailAddress?.address === email
         });
         console.log("filteredEvents(ready to use!!) => ", filteredEvents);
-        if (filteredEvents.length === 0) {
-            throw new Error(`No events found for calendar ${calendarId} and email ${email}`);
-        }
-        return filteredEvents[0].id;
+        
+        return filteredEvents.length ? filteredEvents[0].id : null;
     } catch(error){
         console.error('Error fetching event ID:', error);
         throw new Error('Failed to fetch GeteventID');
@@ -117,7 +114,7 @@ const createMSEvent = async (AccessToken, createroomdata) => {
         };
         const roomnum = createroomdata.RoomNumber;
         const iscreate = await getGraphClient(AccessToken)
-        .api(`/me/calendars/${roomobject[roomnum]}/events`)  // for calendar you have access to
+        .api(`/me/events`)  // for calendar you have access to
         .post(newEvent);
         if (!iscreate) {
             return false;
