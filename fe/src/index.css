@@ -366,6 +366,7 @@ body {
   font-size: 1rem;
   color: #333;
   border: 1px solid #e5e5e5;
+  gap: 5px;
 }
 
 @media (min-width: 640px) {

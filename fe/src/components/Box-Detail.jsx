@@ -1,18 +1,13 @@
-import Organizer from '../icons/Organizer.svg';
-import Time from '../icons/Time.svg';
-import TimeRemaining from '../icons/Time-remaining.svg';
+import { User, Clock, Hourglass,NotepadText} from 'lucide-react';
 import { useIsFullDayEvent } from '../hooks/useIsFullDayEvent.jsx';
-import { useRoomData } from '../hooks/useRoomData';
-import React, { useState } from 'react';
 import BookingModal from './BookingModal';
+import React, { useState } from 'react';
 import axios from 'axios';
 
-export default function Boxdetail({ isOccupied, event, getTimeRemaining, loading }) {
+export default function Boxdetail({ isOccupied, event, getTimeRemaining, loading, events }) {
   const isFullDayEvent = useIsFullDayEvent();
   const [showModal, setShowModal] = useState(false);
   const [isEnding, setIsEnding] = useState(false);
-  // const { floor, room } = useRoomData();
-  // const roomNumber = `${floor}${room}`;
 
   const handleEndMeeting = async () => {
     if (!event || !event.organizer || !event.start || !event.end) {
@@ -28,16 +23,13 @@ export default function Boxdetail({ isOccupied, event, getTimeRemaining, loading
       };
       console.log('Sending endmeeting data:', endmeetingdata);
 
-      const response = await axios.patch('/user/endmeeting', { endmeetingdata }); // แก้ไขชื่อ endpoint ลบ g ออก
+      const response = await axios.patch('/user/endmeeting', { endmeetingdata });
       
       if (response.status === 200) {
         alert('สิ้นสุดการประชุมเรียบร้อยแล้ว');
-        // อาจจะต้อง refresh หรือ update state
       }
     } catch (error) {
       console.error('Error ending meeting:', error);
-      console.error('Error response:', error.response?.data);
-      console.error('Error status:', error.response?.status);
       alert(`เกิดข้อผิดพลาดในการสิ้นสุดการประชุม: ${error.response?.data?.error || error.message}`);
     } finally {
       setIsEnding(false);
@@ -61,11 +53,10 @@ export default function Boxdetail({ isOccupied, event, getTimeRemaining, loading
             <div className="detail-row flex-row-between">
               <div className="detail-row-left">
                 <span className="detail-label">
-                  <img src={Organizer} alt="Organizer" />
-                  Subject :
+                  <NotepadText size={30} /> Subject :
                 </span>
                 <span className="detail-value">
-                  {event.subject}
+                  {/* {event.subject} */}
                 </span>
               </div>
             </div>
@@ -73,8 +64,7 @@ export default function Boxdetail({ isOccupied, event, getTimeRemaining, loading
             {/* ✅ Organizer */}
             <div style={{ marginBottom: "10px" }} className="detail-row">
               <span className="detail-label">
-                <img src={Organizer} alt="Organizer" />
-                Organizer :
+                <User size={30} /> Organizer :
               </span>
               <span className="detail-value">
                 {event.organizer.emailAddress.name}
@@ -84,8 +74,7 @@ export default function Boxdetail({ isOccupied, event, getTimeRemaining, loading
             {/* ✅ Time */}
             <div style={{ marginBottom: "10px" }} className="detail-row">
               <span className="detail-label">
-                <img src={Time} alt="Time" />
-                Time :
+                <Clock size={30} /> Time :
               </span>
               <span className="time-value">
                 {isFullDayEvent(event)
@@ -113,7 +102,7 @@ export default function Boxdetail({ isOccupied, event, getTimeRemaining, loading
             >
               {isEnding ? 'Ending...' : 'End'}
             </button>
-            <button className="book-next-button" onClick={() => setShowModal(true)}>Book Next</button>
+            <button className="book-next-button" onClick={() => setShowModal(true)}>Book Next Slot</button>
           </div>
         </div>
       ) : (
@@ -127,13 +116,13 @@ export default function Boxdetail({ isOccupied, event, getTimeRemaining, loading
         </div>
       )}
 
-      {/* ✅ ใช้ BookingModal ร่วมกัน */}
       {showModal && (
         <BookingModal
           isOpen={showModal}
           onClose={() => setShowModal(false)}
           roomName={''}
           onSubmit={() => { }}
+          event
         />
       )}
     </>

@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react'; 
 import { useIsFullDayEvent } from '../hooks/useIsFullDayEvent.jsx';
-import { Timer } from 'lucide-react';
+import { Timer,Clock, User } from 'lucide-react';
 
 export default function TimeSchedule({ currentTime, events = [], zoomLevel, setZoomLevel  }) {
   const [selectedEvent, setSelectedEvent] = useState(null);
@@ -372,91 +372,122 @@ export default function TimeSchedule({ currentTime, events = [], zoomLevel, setZ
 
       {/* Popup overlay */}
       {selectedEvent && (
-      <>
-        <div
-          style={{
-            position: 'fixed',
-            top: 0, left: 0, right: 0, bottom: 0,
-            backgroundColor: 'rgba(0,0,0,0.4)',
-            backdropFilter: 'blur(3px)',
-            zIndex: 999
-          }}
+  <>
+    {/* Overlay */}
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        backdropFilter: 'blur(6px)',
+        zIndex: 999,
+      }}
+      onClick={() => setSelectedEvent(null)}
+    />
+
+    {/* Popup */}
+    <div
+      style={{
+        position: 'fixed',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        background: '#fff',
+        padding: '32px',
+        borderRadius: '20px',
+        boxShadow: '0 25px 50px rgba(0,0,0,0.2)',
+        width: '90%',
+        maxWidth: '600px',
+        maxHeight: '90vh',
+        overflowY: 'auto',
+        zIndex: 1000,
+        fontFamily: 'Segoe UI, sans-serif',
+      }}
+      onClick={(e) => e.stopPropagation()}
+    >
+      {/* Close Icon */}
+      <button
+        onClick={() => setSelectedEvent(null)}
+        style={{
+          position: 'absolute',
+          top: '16px',
+          right: '16px',
+          background: 'transparent',
+          border: 'none',
+          cursor: 'pointer',
+          padding: '4px',
+        }}
+        aria-label="Close"
+      >
+      </button>
+
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '20px', gap: '12px',marginLeft: '12px' }}>
+        <User size={32} color="#2563EB" />
+        <h2 style={{ margin: 0, fontSize: '24px', fontWeight: 600, color: '#1F2937' }}>
+          {selectedEvent?.organizer?.emailAddress?.name || 'No Name'}
+        </h2>
+      </div>
+
+      {/* Time Range */}
+      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px', gap: '10px', color: '#374151', fontSize: '20px',marginLeft: '12px' }}>
+        <Clock size={30} />
+        <span>
+          <strong>Start - End:</strong>{' '}
+          {isFullDayEvent(selectedEvent)
+            ? 'Full day'
+            : `${toAMPM_UTCplus7(selectedEvent?.start?.dateTime)} - ${toAMPM_UTCplus7(selectedEvent?.end?.dateTime)}`}
+        </span>
+      </div>
+
+      {/* Time Remaining */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          marginBottom: '24px',
+          gap: '10px',
+          color: '#DC2626',
+          fontSize: '20px',
+          fontWeight: 500,
+          background: '#FEF2F2',
+          padding: '10px 14px',
+          borderRadius: '8px',
+        }}
+      >
+        <Timer size={25} />
+        <span>
+          <strong>Time Remaining:</strong> {getTimeRemaining(selectedEvent)}
+        </span>
+      </div>
+
+      {/* Divider */}
+      <hr style={{ border: 'none', borderTop: '1px solid #E5E7EB', margin: '20px 0' }} />
+
+      {/* Footer Actions */}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+        <button
           onClick={() => setSelectedEvent(null)}
-        />
-
-        <div
           style={{
-            position: 'fixed',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            background: '#fff',
-            padding: '40px', 
-            borderRadius: '18px', 
-            boxShadow: '0 12px 32px rgba(0,0,0,0.25)', 
-            maxWidth: '700px', 
-            maxHeight: '95vh', 
-            overflowY: 'auto',
-            zIndex: 1000,
-            fontFamily: 'Segoe UI, sans-serif',
-            fontSize: '1.15rem', 
-          }}
-        >
-          <h2 style={{ marginBottom: '8px', fontSize: '30px', fontWeight: '600', color: '#2E5074' }}>
-            {selectedEvent?.organizer?.emailAddress?.name || 'No Name'}
-          </h2>
-
-          <div style={{ fontSize: '20px', color: '#374151', marginBottom: '6px' }}>
-            <strong>Start - End:</strong> {isFullDayEvent(selectedEvent) ? 'Full day' : `${toAMPM_UTCplus7(selectedEvent?.start?.dateTime)} - ${toAMPM_UTCplus7(selectedEvent?.end?.dateTime)}`}
-          </div>
-
-          <div style={{
-            fontSize: '20px',
-            color: '#EF4444',
+            background: '#DC2626',
+            color: '#fff',
+            border: 'none',
+            padding: '15px 25px',
+            borderRadius: '8px',
+            fontSize: '14px',
             fontWeight: '500',
-            marginBottom: '12px',
-            display : 'flex',
-            alignItems: 'center',
-            gap : 'px'
-          }}>
-            <Timer/> 
-            <strong>Time Remaining:</strong> {getTimeRemaining(selectedEvent)}
-          </div>
-
-          <div
-            style={{
-              borderTop: '1px solid #E5E7EB',
-              paddingTop: '12px',
-              fontSize: '14px',
-              color: '#374151',
-              lineHeight: '1.5',
-            }}
-          />
-
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '20px' }}>
-            <button
-              onClick={() => setSelectedEvent(null)}
-              style={{
-                background: '#EF4444',
-                color: '#fff',
-                border: 'none',
-                padding: '8px 16px',
-                borderRadius: '6px',
-                fontSize: '14px',
-                fontWeight: '500',
-                cursor: 'pointer',
-                transition: 'background 0.2s ease'
-              }}
-              onMouseOver={(e) => e.target.style.background = '#dc2626'}
-              onMouseOut={(e) => e.target.style.background = '#EF4444'}
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      </>
-    )}
-
+            cursor: 'pointer',
+            transition: 'background 0.2s ease',
+          }}
+          onMouseOver={(e) => e.target.style.background = '#B91C1C'}
+          onMouseOut={(e) => e.target.style.background = '#DC2626'}
+        >
+          Close
+        </button>
+      </div>
     </div>
+  </>
+)}
+</div>
   );
 }

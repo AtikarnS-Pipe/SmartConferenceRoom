@@ -51,7 +51,7 @@ function Home() {
           
           {/* detail */}
           <div className="main-section">
-            <Boxdetail isOccupied={isOccupied} event={currentEvent} getTimeRemaining={getTimeRemaining} loading={loading} />
+            <Boxdetail isOccupied={isOccupied} event={currentEvent} getTimeRemaining={getTimeRemaining} loading={loading} events={events} />
           </div>
           
           {/* schedule */}
@@ -73,14 +73,8 @@ function Home() {
       />
       </div>
 
-      {/* Time Warning Card */}
-      {/* <TimeWarningCard 
-        currentEvent={currentEvent} 
-        getTimeRemaining={getTimeRemaining} 
-      /> */}
-
       {/* popup */}
-      <PinPopupManager events={events} closeSignal={closeUserPin} />
+      {/* <PinPopupManager events={events} closeSignal={closeUserPin} /> */}
       <StaffPinPopupManager showTestButton closeUserPinPopup={handleCloseUserPin} />
     </div>
   )
