@@ -9,7 +9,8 @@ import {
   Search,
   Plus,
   Trash2,
-  Home
+  Home,
+  LayoutDashboard
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -27,19 +28,54 @@ function Housekeeper() {
   const [statusPopup, setStatusPopup] = useState(null);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [housekeeper, setHousekeeper] = useState([]);
   const [open, setOpen] = useState(false);
+  const [confirmName, setConfirmName] = useState('');
+  const [adminPassword, setAdminPassword] = useState('');
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const dropdownRef = useRef(null);
-  const [allMembers, setAllMembers] = useState([
-    { id: 1, name: 'Seen TCC', email: 'seen@tcc.com', role: 'Admin', status: 'Online', lastLogin: 'Jun 25, 12:33 PM' },
-    { id: 2, name: 'Pipe TCC', email: 'pipe@tcc.com', role: 'Admin', status: 'Online', lastLogin: 'Jun 25, 12:33 PM' },
-    { id: 3, name: 'Inkk', email: 'inkk@tcc.com', role: 'Admin', status: 'Offline', lastLogin: 'Jun 25, 12:33 PM' },
-    { id: 4, name: 'Chitsanuchat yang', email: 'yang@tcc.com', role: 'Housekeeper', status: 'Online', lastLogin: 'Jun 25, 12:33 PM' },
-    { id: 5, name: 'John', email: 'john@tcc.com', role: 'Housekeeper', status: 'Offline', lastLogin: 'Jun 25, 12:33 PM' },
-
-  ]);
   const [showModal, setShowModal] = useState(false);
   const [newMember, setNewMember] = useState({ name: '', pin: '', role: 'Housekeeper' });
   const navigate = useNavigate();
+  useEffect(() => {
+    const eventSource = new EventSource('/account/housekeepers', {
+      withCredentials: true,
+    });
+
+    console.log("SSE connection established for housekeepers", eventSource);
+
+    const handleHousekeeperList = (event) => {
+      try {
+        console.log('SSE raw event.data:', event.data);
+        const data = JSON.parse(event.data);
+        console.log('SSE parsed housekeeper data:', data);
+
+        if (Array.isArray(data)) {
+          setHousekeeper(data);  // ใช้ได้ตรงนี้เลย
+        } else {
+          console.error('Housekeeper data is not an array:', data);
+        }
+        
+      } catch (error) {
+        console.error('Error parsing SSE data:', error);
+      }
+    };
+
+    // ✅ ชื่อ event ต้องตรงเป๊ะ (เคารพ case-sensitive)
+    eventSource.addEventListener('HousekeeperList', handleHousekeeperList);
+
+    eventSource.onerror = (error) => {
+      console.error('SSE connection error:', error);
+      eventSource.close();
+    };
+
+    return () => {
+      eventSource.removeEventListener('HousekeeperList', handleHousekeeperList);
+      eventSource.close();
+    };
+  }, []);
+
+
     useEffect(() => {
     function handleClickOutside(event) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -51,38 +87,34 @@ function Housekeeper() {
   }, []);
 
 
-  const housekeepers = allMembers.filter(member => member.role === 'Housekeeper');
-  const filteredMembers = housekeepers.filter(member =>
-    member.name.toLowerCase().includes(searchTerm.toLowerCase()) 
+  // filter สำหรับค้นหา housekeeper
+  const filteredMembers = housekeeper.filter(member =>
+    member.name && member.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleConfirmPin = () => {
-  if (newPin !== confirmPin) {
-    alert('PINs do not match');
-    return;
+
+const handleSelectAll = () => {
+  if (selectedMembers.length === filteredMembers.length) {
+    setSelectedMembers([]); // uncheck all
+  } else {
+    setSelectedMembers(filteredMembers.map(h => ({ id: h._id, name: h.name }))); // select all
   }
-
-  // TODO: ส่ง newPin ไป backend ด้วย axios
-
-  // alert('PIN changed successfully');
-  setShowPinModal(false);
-  setNewPin('');
-  setConfirmPin('');
 };
 
-  const handleSelectAll = () => {
-    if (selectedMembers.length === filteredMembers.length) {
-      setSelectedMembers([]);
+const handleSelectHousekeeper = (housekeeper) => {
+  setSelectedMembers(prev => {
+    const exists = prev.find(h => h.id === housekeeper._id);
+    if (exists) {
+      // ถ้ามีอยู่แล้ว ให้เอาออก
+      return prev.filter(h => h.id !== housekeeper._id);
     } else {
-      setSelectedMembers(filteredMembers.map(member => member.id));
+      // ถ้ายังไม่มี ให้เพิ่มเข้าไป
+      return [...prev, { id: housekeeper._id, name: housekeeper.name }];
     }
-  };
+  });
+};
 
-  const handleMemberSelect = (id) => {
-    setSelectedMembers(prev =>
-      prev.includes(id) ? prev.filter(mid => mid !== id) : [...prev, id]
-    );
-  };
+
  const handleChangePin = async () => {
   // if (newPin !== confirmPin) {
   //   setStatusPopup('error');
@@ -105,21 +137,20 @@ function Housekeeper() {
     if (res.status === 200) {
       setStatusPopup('success');
       setTimeout(() => {
-        setPinChanged(res.data.newPinPlaintext);
         setStatusPopup(null);
         setShowPinModal(false);
         setNewPin('');
         setConfirmPin('');
         setPinTargetName('');
-      }, 3000);
+      }, 2000);
     } else {
       setStatusPopup('error');
       setTimeout(() => setStatusPopup(null), 3000);
     }
   } catch (error) {
     console.error(error);
-    setStatusPopup('error');
-    setTimeout(() => setStatusPopup(null), 3000);
+    // setStatusPopup('error');
+    // setTimeout(() => setStatusPopup(null), 3000);
   }
 };
 
@@ -151,7 +182,7 @@ function Housekeeper() {
         // สมมุติ backend ส่ง object housekeeper กลับมา
         const createdMember = response.data;
 
-        setAllMembers((prev) => [
+        setHousekeeper((prev) => [
           ...prev,
           {
             id: prev.length + 1, // หรือใช้ createdMember.id ถ้า backend สร้าง id
@@ -190,16 +221,43 @@ function Housekeeper() {
   }
 };
 
-  const handleDeleteMembers = () => {
-    const confirmDelete = window.confirm("Are you sure you want to delete selected members?");
-    if (!confirmDelete) return;
-    setAllMembers(prev => prev.filter(member => !selectedMembers.includes(member.id)));
-    setSelectedMembers([]);
-  };
+const handleDeleteHousekeepers = async () => {
+  if (selectedMembers.length === 0) {
+    alert('Please select at least one housekeeper.');
+    return;
+  }
 
-  const totalUsers = allMembers.length;
-  const adminCount = allMembers.filter(m => m.role === 'Admin').length;
-  const housekeeperCount = housekeepers.length;
+  const confirmDelete = window.confirm("Are you sure you want to delete selected housekeepers?");
+  if (!confirmDelete) return;
+
+  try {
+    const token = localStorage.getItem("token");
+    for (const member of selectedMembers) {
+      await axios.delete(`/account/deletehousekeeper`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        data: {
+          name: member.name,
+        },
+        withCredentials: true,
+      });
+    }
+
+    setHousekeeper(prev => prev.filter(h => !selectedMembers.some(m => m.id === h._id)));
+    setSelectedMembers([]);
+    alert('Selected housekeepers have been deleted.');
+  } catch (error) {
+    console.error('Delete failed:', error);
+    alert('Failed to delete some or all housekeepers.');
+  }
+};
+
+
+  // คำนวณจำนวน
+  const totalUsers = housekeeper.length;
+  const adminCount = housekeeper.filter(m => m.role && m.role.toLowerCase() === 'admin').length;
+  const housekeeperCount = housekeeper.filter(m => m.role && m.role.toLowerCase() === 'housekeeper').length;
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col md:flex-row font-display">
@@ -358,7 +416,7 @@ function Housekeeper() {
           </div>
         )}
       {/* Sidebar */}
-      <div className="w-full md:w-64 bg-slate-800 text-white flex flex-row md:flex-col">
+      <div className="w-full md:w-64 bg-slate-800 text-white flex flex-row md:flex-col sticky top-0 h-screen">
         <div className="p-4 md:p-6 border-b border-slate-700 w-full">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
@@ -369,21 +427,25 @@ function Housekeeper() {
         </div>
         <div className="flex-1 p-2 md:p-4">
           <div className="space-y-2">
-            <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left">
+            <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left hover:bg-slate-700  cursor-pointer"  onClick={()=>navigate('/admin/api')}>
               <Home className="w-4 h-4" />
-              <span className="text-sm cursor-pointer" onClick={()=>navigate('/admin/api')}>Home</span>
+              <span className="text-sm">Home</span>
             </button>
           </div>
           <div className="mt-4 md:mt-6">
             <p className="text-xs text-slate-400 uppercase tracking-wider mb-3 px-3">Role Filter</p>
             <div className="space-y-1">
-              <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-700 text-left" onClick={() => navigate('/account/admin')}>
+              <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-700 text-left  cursor-pointer" onClick={() => navigate('/account/admin')}>
                 <Shield className="w-4 h-4 text-white" />
-                <span className="text-sm text-white" onClick={()=>navigate('/account/admin')}>Admin</span>
+                <span className="text-sm text-white">Admin</span>
               </button>
               <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg bg-white text-blue-600 text-left">
                 <UserCheck className="w-4 h-4" />
                 <span className="text-sm">Housekeeper</span>
+              </button>
+              <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-700 text-left cursor-pointer" onClick={()=>navigate('/account/dashboard')}>
+                <LayoutDashboard className="w-4 h-4 text-white" />
+                <span className="text-sm text-white">Dashboard</span>
               </button>
             </div>
           </div>
@@ -532,8 +594,8 @@ function Housekeeper() {
                     Add Member
                   </button>
                   <button
-                    onClick={handleDeleteMembers}
                     disabled={selectedMembers.length === 0}
+                    onClick={handleDeleteHousekeepers}
                     className={`flex items-center gap-2 px-4 py-2 rounded-lg ${
                       selectedMembers.length > 0 ? 'bg-red-600 text-white hover:bg-red-700' : 'bg-gray-100 text-gray-400'
                     }`}
@@ -545,55 +607,57 @@ function Housekeeper() {
               </div>
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[350px] sm:min-w-[500px]">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left">
-                      <input
-                        type="checkbox"
-                        checked={selectedMembers.length === filteredMembers.length && filteredMembers.length > 0}
-                        onChange={handleSelectAll}
-                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                      />
-                    </th>
-                    {['Member', 'Role', 'Action'].map((title) => (
-                      <th key={title} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{title}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredMembers.map(member => (
-                    <tr key={member.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4">
-                        <input
-                          type="checkbox"
-                          checked={selectedMembers.includes(member.id)}
-                          onChange={() => handleMemberSelect(member.id)}
-                          className="rounded border-gray-300 text-blue-600"
-                        />
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm font-medium text-gray-900">{member.name}</div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                          {member.role}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <button className='border border-gray-300 text-white bg-black hover:text-gray-200 px-3 py-1 rounded-lg flex items-center gap-2'>
-                          <span  
-                          onClick={() => {
-                            setShowPinModal(true)
-                          }}>Pin</span>
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+        <div className="overflow-x-auto">
+      <table className="w-full min-w-[450px] sm:min-w-[500px] md:min-w-[600px]">
+        <thead className="bg-gray-50">
+          <tr>
+            <th className="px-6 py-3 text-left">
+              <input
+                type="checkbox"
+                checked={selectedMembers.length === filteredMembers.length && filteredMembers.length > 0}
+                onChange={handleSelectAll}
+                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+            </th>
+            {['Member', 'Role', 'Action'].map((title) => (
+              <th key={title} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{title}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody className="bg-white divide-y divide-gray-200">
+          {filteredMembers.map((h) => (
+            <tr key={h._id} className="hover:bg-gray-50">
+              <td className="px-6 py-4">
+                <input
+                  type="checkbox"
+                  checked={selectedMembers.some(m => m.id === h._id)}
+                  onChange={() => handleSelectHousekeeper(h)}
+                />
+              </td>
+              <td className="px-6 py-4">
+                <div className="text-sm font-medium text-gray-900">{h.name}</div>
+              </td>
+              <td className="px-6 py-4">
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                  {h.role}
+                </span>
+              </td>
+              <td className="px-6 py-4">
+                <button
+                  onClick={() => {
+                    setPinTargetName(h.name);
+                    setShowPinModal(true);
+                  }}
+                  className="px-3 py-1 bg-blue-500 text-white text-xs font-medium rounded hover:bg-blue-600 transition"
+                >
+                  Change PIN
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
 
             {filteredMembers.length === 0 && (
               <div className="text-center py-12">
@@ -671,3 +735,4 @@ function Housekeeper() {
 }
 
 export default Housekeeper;
+

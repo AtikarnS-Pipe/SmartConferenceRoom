@@ -3,6 +3,7 @@ import dayjs from 'dayjs';
 import isBetween from 'dayjs/plugin/isBetween';
 import { ChevronLeft, ChevronRight, Home, Calendar, Clock, User, X, MapPin } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
+import io from 'socket.io-client';
 
 dayjs.extend(isBetween);
 
@@ -25,7 +26,7 @@ const parseDate = (str) => {
 const Room1501 = () => {
   const navigate = useNavigate();
   const { Room, startdate, enddate } = useParams();
-  const socketRef = useRef(); //
+  const socketRef = useRef();
   const [view, setView] = useState('Day');
   const [selectedDate, setSelectedDate] = useState(dayjs().format('YYYY-MM-DD'));
   const [currentTime, setCurrentTime] = useState(new Date());

@@ -12,6 +12,7 @@ import Protect from './Component/Authen/Frontend/Protect'
 import LoginPage from './Component/Login'
 import Account from './Component/Manage/Account'
 import Housekeeper from './Component/Manage/Housekeeper'
+import Log from './Component/Manage/Log'
 
 function App() {
   const [isAuthenticated, setAuth] = useState(!!localStorage.getItem('token'));
@@ -35,6 +36,7 @@ function App() {
         <Route path='/forgot-password' element={<Protect><ForgotPasswordFlow /></Protect>} />
         <Route path='/account/admin' element={<Protect><Account /></Protect>} />
         <Route path='/account/housekeeper' element={<Protect><Housekeeper /></Protect>} />
+        <Route path='/account/dashboard' element={<Protect><Log /></Protect>} />
     </Routes>
     </Router>
   )
