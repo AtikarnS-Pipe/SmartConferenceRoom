@@ -2,7 +2,7 @@ const { authProvider } = require("../AuthProvider");
 const { compareKey, deleteSchedule, adminCompareKey } = require('../services/pin.services');
 require('dotenv').config({ path: './config/.env'});
 const tokenCache = require("../utils/tokenCache");
-const { getuserdatabyroom } = require('../services/users.services');
+const { getuserdatabyroom, waitUntil } = require('../services/users.services');
 const { roomobject } = require('../utils/tokenCache');
 // crud microsoft
 const {  GeteventId, createMSEvent } = require('../services/users.services');
@@ -239,23 +239,6 @@ const endmeeting = async (req, res) => {
         res.status(500).json({ error: "Failed to end task" });
     }
 }  
-
-async function waitUntil(conditionFn, timeout = 10000, interval = 1000) {
-    const start = Date.now();
-    return new Promise(async (resolve, reject) => {
-        const check = async () => {
-            try {
-                const result = await conditionFn();
-                if (result) return resolve(result); // resolve ส่งค่าให้กับ promise 
-                if (Date.now() - start >= timeout) return reject(new Error("Timeout waiting for condition"));
-                setTimeout(check, interval);
-            } catch (err) {
-                reject(err);
-            }
-        };
-        check();
-    });
-}
 
 module.exports = { getuser
     , keyPins, keyExpired, adminKeyPin

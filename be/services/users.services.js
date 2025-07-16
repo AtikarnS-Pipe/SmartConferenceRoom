@@ -125,6 +125,23 @@ const createMSEvent = async (AccessToken, createroomdata) => {
     }
 }
 
+async function waitUntil(conditionFn, timeout = 10000, interval = 1000) {
+    const start = Date.now();
+    return new Promise(async (resolve, reject) => {
+        const check = async () => {
+            try {
+                const result = await conditionFn();
+                if (result) return resolve(result); // resolve ส่งค่าให้กับ promise 
+                if (Date.now() - start >= timeout) return reject(new Error("Timeout waiting for condition"));
+                setTimeout(check, interval);
+            } catch (err) {
+                reject(err);
+            }
+        };
+        check();
+    });
+}
+
 module.exports = {
-    getuserdatabyroom, GeteventId, createMSEvent
+    getuserdatabyroom, GeteventId, createMSEvent, waitUntil
 };
