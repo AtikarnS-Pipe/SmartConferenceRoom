@@ -17,7 +17,7 @@ const express = require("express");
 const AccountRouter = express.Router();
 
 AccountRouter.get('/me', authorize, profile);
-AccountRouter.post('/createadmin', createadmin);
+AccountRouter.post('/createadmin', authorize, createadmin);
 AccountRouter.post('/auth', Auth);
 AccountRouter.patch('/changeadminpw', authorize, ChangeAdminPin);
 AccountRouter.post('/createhousekeeper', authorize, Createhousekeeper);

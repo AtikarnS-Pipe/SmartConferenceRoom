@@ -20,7 +20,7 @@ const logschema = new mongoose.Schema({
     role:{ // foremost 
         type: String,
         required: true,
-        enum: ['admin', 'housekeeper'],
+        enum: ['Admin', 'Housekeeper', 'Superadmin'],
     },
     Details:{
         type: String,

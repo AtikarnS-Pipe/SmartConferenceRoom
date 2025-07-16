@@ -3,7 +3,7 @@ const Logsmonitoring = require('../models/Logsmonitoring');
 
 async function GetAdminListFromDB(res){
     try {
-        const Admin = await User.find({role: "admin"})
+        const Admin = await User.find({role: "Admin"})
         .select('email name role login_status updatedAt');
         // console.log("data:", Admin)
         res.write(`event: adminList\ndata: ${JSON.stringify(Admin)}\n\n`);
@@ -16,7 +16,7 @@ async function GetAdminListFromDB(res){
 
 async function GetHousekeeperFromDB(res){
     try {
-        const Housekeeper = await User.find({role: "housekeeper"})
+        const Housekeeper = await User.find({role: "Housekeeper"})
         .select('name role');
         // console.log("data:", Housekeeper)
         res.write(`event: HousekeeperList\ndata: ${JSON.stringify(Housekeeper)}\n\n`);

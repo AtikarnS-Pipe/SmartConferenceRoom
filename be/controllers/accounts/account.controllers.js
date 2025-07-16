@@ -11,7 +11,7 @@ const Auth = async (req, res) => { // admin sign-in
     const { email, password } = req.body;
     console.log("ready to auth", email, password);
     try{
-      const user = await User.findOne({ email, role: 'Admin' });
+      const user = await User.findOne({ email, role: { $in: ['Admin', 'Superadmin'] } });
       if(!user){
         console.log("[Login] User not found:", email);
         return res.status(404).json({error: "User not found"});
@@ -48,7 +48,7 @@ const ChangeAdminPin = async (req, res) => { // ไม่น่าต้อง l
   try{
     const admin = req.user;
     const {newpin} = req.body;
-    if (admin.role !== 'admin') return res.status(403).json({ message: 'Only admin can change password' });
+    if (admin.role !== 'Admin' && admin.role !== 'Superadmin') return res.status(403).json({ message: 'Only admin can change password' });
     if (!newpin) return res.status(400).json({ message: 'Passwords are required!' });
 
     const checkpin = await User.findOne({ 
@@ -73,7 +73,7 @@ const ChangeAdminPin = async (req, res) => { // ไม่น่าต้อง l
 
 const Createhousekeeper = async (req, res) => { 
     const admin = req.user; // จาก authorize middleware
-    if (admin.role !== 'admin') {
+    if (admin.role !== 'Admin' && admin.role !== 'Superadmin') {
         return res.status(403).json({ message: 'Only admin can create housekeeper, Please login to get this access' });
     }
     const { name, pin } = req.body;
@@ -117,7 +117,7 @@ const Createhousekeeper = async (req, res) => {
 
 const signout = async (req, res) => {
   const user = req.user; // จาก authorize middleware
-  if (user.role !== 'admin') {
+  if (user.role !== 'Admin' && user.role !== 'Superadmin') {
     if(process.env.DEBUG_MODE) console.log("Only admin can sign out");
     return res.status(403).json({ message: 'Only admin can sign out' });
   }
@@ -138,7 +138,7 @@ const signout = async (req, res) => {
 const createadmin = async (req, res) => {
   const SuperAdmin = req.user;
   const { email, password, name, pin } = req.body;
-  if (SuperAdmin.role !== 'SuperAdmin') return res.status(403).json({ message: 'Only SuperAdmin can create admin' });
+  if (SuperAdmin.role !== 'Superadmin') return res.status(403).json({ message: 'Only SuperAdmin can create admin' });
   try {
     const existingAdmin = await User.findOne({
       role: { $ne: 'Deactivated' },
@@ -156,26 +156,25 @@ const createadmin = async (req, res) => {
       duplicatefield.length > 1 ? message = `These ${duplicatefield.join('and')} are exists, Please use a different one.`  : message;
       return res.status(400).json({ message });
     }
-    const newUser = await User.create({
+    const newAdmin = await User.create({
       email,
       password, // เข้ารหัส password
       role: 'Admin',
       login_status: 'offline'
     });
-    // // logsmonitoring create
-    // const logs = await Logsmonitoring.create({
-    //   user_Id: newHousekeeper._id, 
-    //   L_status: 'Housekeeper was created', 
-    //   role: newHousekeeper.role, 
-    //   Details: `Housekeeper name: ${newHousekeeper._id}`, 
-    //   L_createdAt: new Date(),
-    // })
-
-    // 4. สร้าง token, refreshtoken หลังสมัครเสร็จ  
-    const token = jwt.sign({ userId: newUser._id }, process.env.JWT_SECRET, {
+    // logsmonitoring create
+    const logs = await Logsmonitoring.create({
+      user_Id: newAdmin._id, 
+      L_status: 'Admin was created', 
+      role: newAdmin.role, 
+      Details: `Admin id: ${newAdmin._id}`, 
+      L_createdAt: new Date(),
+    })
+  
+    const token = jwt.sign({ userId: newAdmin._id }, process.env.JWT_SECRET, {
       expiresIn: process.env.JWT_EXPIRES_IN,
     });
-    const refreshtoken = jwt.sign({ userId: newUser._id }, process.env.JWT_SECRET, {
+    const refreshtoken = jwt.sign({ userId: newAdmin._id }, process.env.JWT_SECRET, {
       expiresIn: process.env.JWT_REFRESH_EXPIRES_IN,
     });
 
@@ -188,7 +187,7 @@ const createadmin = async (req, res) => {
 
     res.status(201).json({
       success: true,
-      message: 'User registered successfully',
+      message: 'Create Admin successfully',
       data: {
         token,
         refreshtoken, //เดี๋ยวมาลบ*********
@@ -206,7 +205,7 @@ const deletehousekeeper = async (req, res) => {
   try{
     const admin = req.user;
     const { name } = req.body;
-    if (admin.role !== 'admin') return res.status(403).json({ message: 'Only admin can delete housekeeper' });
+    if (admin.role !== 'Admin' && admin.role !== 'Superadmin') return res.status(403).json({ message: 'Only admin can delete housekeeper' });
     if (!name) return res.status(400).json({ message: 'Housekeeper ์s Name are required' });
     // const isAdminpw = await bcrypt.compare(password, adminDB.password)
     const ThisHousekeeper = await User.findOneAndUpdate(
@@ -236,17 +235,25 @@ const editpinhousekeeper = async (req, res) => {
   try{
     const admin = req.user;
     const { name, newpin } = req.body;
-    if (admin.role !== 'admin') return res.status(403).json({ message: 'Only admin can edit pin housekeeper.' });
+    if (admin.role !== 'Admin' && admin.role !== 'Superadmin') return res.status(403).json({ message: 'Only admin can edit pin housekeeper.' });
     if (!name || !newpin) return res.status(400).json({ message: 'Name and Password are required' });
     
-    const ThisHousekeeper = await User.findOneAndUpdate(
-      { name, role: 'Housekeeper' },
-      { $set: { pin: newpin } },
-      { new: true } // เพื่อคืนข้อมูลที่ update
-    );
-    if (!ThisHousekeeper) {
-      return res.status(404).json({ message: 'Housekeeper is not found in Documents' });
-    }
+    // Find housekeeper and any user with same PIN in one query
+    const [ThisHousekeeper, conflictUser] = await Promise.all([
+      User.findOne({ name, role: 'Housekeeper' }),
+      User.findOne({
+        role: { $ne: 'Deactivated' },
+        pin: newpin,
+        name: { $ne: name } // exclude this housekeeper name
+      }),
+    ]);
+
+    if (!ThisHousekeeper) return res.status(404).json({ message: 'Housekeeper not found.' });
+    if (ThisHousekeeper.pin.toString() === newpin.toString()) return res.status(400).json({ message: 'This PIN is already used by this housekeeper. Please choose a different PIN.' });
+    if (conflictUser) return res.status(400).json({ message: 'This PIN is already used by another user. Please choose a different one.' });
+
+    ThisHousekeeper.pin = newpin;
+    await ThisHousekeeper.save();
 
     // logsmonitoring create
     const logs = await Logsmonitoring.create({
@@ -256,7 +263,7 @@ const editpinhousekeeper = async (req, res) => {
       Details: `Housekeeper name: ${name}`, 
       L_createdAt: new Date(),
     })
-    res.status(200).json({ success: true, message: `Housekeeper's name, ${name}, has been updated pins with ${newpassword} successfully` });
+    res.status(200).json({ success: true, message: `Housekeeper's name, ${name}, has been updated pins with ${newpin} successfully` });
   } catch (error) {
     console.error("Delete housekeeper error:", error);
     res.status(500).json({ error: 'Internal server error' });
@@ -322,7 +329,7 @@ const resetEmailPassword = async (req, res) => {
 const profile = async (req, res) => {
   try {
     const user = req.user;
-    if (user.role !== 'admin') {
+    if (user.role !== 'Admin' && user.role !== 'Superadmin') {
       return res.status(404).json({ message: 'User not found' });
     }
 
