@@ -55,14 +55,16 @@ function Account() {
 
     const handleAdminList = (event) => {
       try {
+        console.log('Raw SSE event data:', event.data); 
         const data = JSON.parse(event.data);
+          console.log("Selected Members:", data);
         setMembers(data);
       } catch (error) {
         console.error('Error parsing SSE data:', error);
       }
     };
 
-    eventSource.addEventListener('adminList', handleAdminList);
+    eventSource.addEventListener('AdminList', handleAdminList);
 
     eventSource.onerror = (error) => {
       console.error('SSE connection error:', error);
@@ -75,12 +77,8 @@ function Account() {
     };
   }, []);
 
-  useEffect(() => {
-    const nameFromStorage = localStorage.getItem('userName');
-    if (nameFromStorage) {
-      setCurrentUserName(nameFromStorage);
-    }
-  }, []);
+  console.log("Members data fetched:", members);
+
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -102,7 +100,7 @@ function Account() {
     try {
       const token = localStorage.getItem('token');
 
-      const res = await axios.post(
+      const res = await axios.patch(
         '/account/changeadminpw',
         { newpin: newPassword },
         {
@@ -131,23 +129,32 @@ function Account() {
     }
   };
 
-  const handleSignout = async () => {
-    try {
-      const res = await axios.post('/account/signout', {}, {
+const handleSignout = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    const res = await axios.post(
+      '/account/signout',
+      {},  // ไม่มี body ในการ signout (เว้นเปล่า)
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
         withCredentials: true,
-      });
-
-      if (res.data.success) {
-        alert('Signed out successfully.');
-        window.location.href = '/';
-      } else {
-        alert('Signout failed: ' + (res.data.message || 'Unknown error'));
       }
-    } catch (error) {
-      console.error('Signout error:', error);
-      alert('Failed to sign out.');
+    );
+
+    if (res.data.success) {
+      alert('Signed out successfully.');
+      window.location.href = '/';
+    } else {
+      alert('Signout failed: ' + (res.data.message || 'Unknown error'));
     }
-  };
+  } catch (error) {
+    console.error('Signout error:', error);
+    alert('Failed to sign out.');
+  }
+};
+
 
   const handleSelectAll = () => {
     if (selectedMembers.length === filteredMembers.length) {
@@ -199,7 +206,6 @@ function Account() {
     setDarkMode(!darkMode);
   };
 
-  console.log("Selected Members:", members);
   const totalUsers = members.length;
   const adminCount = members.filter((m) => m.role && m.role.toLowerCase() === 'admin').length;
   const housekeeperCount = members.filter((m) => m.role && m.role.toLowerCase() === 'housekeeper').length;

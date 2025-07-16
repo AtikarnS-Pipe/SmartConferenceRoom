@@ -124,9 +124,9 @@ const handleSelectHousekeeper = (housekeeper) => {
 
   try {
     const token = localStorage.getItem('token');
-    const res = await axios.post(
+    const res = await axios.patch(
       '/account/edithousekeeper',
-      { newpassword: newPin, name: pinTargetName }, // สมมติว่าใช้ name สำหรับระบุตัวผู้ใช้
+      { newpin: newPin, name: pinTargetName }, // สมมติว่าใช้ name สำหรับระบุตัวผู้ใช้
       {
         headers: {
           Authorization: `Bearer ${token}`,
