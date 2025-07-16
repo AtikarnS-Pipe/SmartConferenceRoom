@@ -112,7 +112,6 @@ const createMSEvent = async (AccessToken, createroomdata) => {
                 }
             }
         };
-        const roomnum = createroomdata.RoomNumber;
         const iscreate = await getGraphClient(AccessToken)
         .api(`/me/events`)  // for calendar you have access to
         .post(newEvent);

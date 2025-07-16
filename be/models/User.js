@@ -5,30 +5,30 @@ const Userschema = new mongoose.Schema({
     email:{ // only admin
         type: String,
         required: false,
-        unique: true,
-        sparse: true,
+        // unique: true,
+        // sparse: true,
     },
     password: { // only admin
         type: String,
         required: false,
-        unique: true,
-        sparse: true,
+        // unique: true,
+        // sparse: true,
     },
     // profile
     name: { // only housekeeper
         type: String,
-        unique: true, 
-        sparse: true,
+        // unique: true, 
+        // sparse: true,
     },
     role:{ // both
         type: String,
         required: true,
-        enum: ['admin', 'housekeeper', 'Deactivate', 'SuperAdmin'],
+        enum: ['Admin', 'Housekeeper', 'Deactivate', 'SuperAdmin'],
     },
     pin:{ // both , display in housekeeper table
         type: String,
-        unique: true,
-        sparse: true,
+        // unique: true,
+        // sparse: true,
     },
     createdBy:{
         type: mongoose.Schema.Types.ObjectId,

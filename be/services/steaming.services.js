@@ -5,7 +5,7 @@ async function GetAdminListFromDB(res){
     try {
         const Admin = await User.find({role: "admin"})
         .select('email name role login_status updatedAt');
-        console.log("data:", Admin)
+        // console.log("data:", Admin)
         res.write(`event: adminList\ndata: ${JSON.stringify(Admin)}\n\n`);
         return Admin;
     } catch (error) {
@@ -18,7 +18,7 @@ async function GetHousekeeperFromDB(res){
     try {
         const Housekeeper = await User.find({role: "housekeeper"})
         .select('name role');
-        console.log("data:", Housekeeper)
+        // console.log("data:", Housekeeper)
         res.write(`event: HousekeeperList\ndata: ${JSON.stringify(Housekeeper)}\n\n`);
         return Housekeeper;
     } catch (error) {
@@ -30,7 +30,7 @@ async function GetHousekeeperFromDB(res){
 async function LogsFromDB(res){
     try {
         const logs = await Logsmonitoring.find()
-        console.log("data:", logs)
+        // console.log("data:", logs)
         res.write(`event: Logsmonnitoring\ndata: ${JSON.stringify(logs)}\n\n`);
         return logs;
     } catch (error) {

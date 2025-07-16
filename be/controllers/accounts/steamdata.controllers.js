@@ -61,7 +61,7 @@ const HousekeeperListSchedule = async (req, res) => {
         // จัดการเมื่อ connection ปิด
         req.on('close', () => {
             clearInterval(intervalId);
-            console.log(`SSE connection closed by Steaming Admin List`);
+            console.log(`SSE connection closed by Steaming Housekeeper List`);
         });
 
         req.on('error', (err) => {
@@ -71,7 +71,7 @@ const HousekeeperListSchedule = async (req, res) => {
 
         res.on('finish', () => {
             clearInterval(intervalId);
-            console.log(`Response finished for admin`);
+            console.log(`Response finished for housekeeper`);
         });
         
     } catch(error){
@@ -113,7 +113,7 @@ const LogsListSchedule = async (req, res) => {
 
         res.on('finish', () => {
             clearInterval(intervalId);
-            console.log(`Response finished for admin`);
+            console.log(`Response finished for logs page`);
         });
         
     } catch(error){
