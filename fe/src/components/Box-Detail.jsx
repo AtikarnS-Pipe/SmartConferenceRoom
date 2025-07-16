@@ -4,7 +4,7 @@ import BookingModal from './BookingModal';
 import React, { useState } from 'react';
 import axios from 'axios';
 
-export default function Boxdetail({ isOccupied, event, getTimeRemaining, loading, events }) {
+export default function Boxdetail({ isOccupied, event, getTimeRemaining, loading, onSetBookingInProgress}) {
   const isFullDayEvent = useIsFullDayEvent();
   const [showModal, setShowModal] = useState(false);
   const [isEnding, setIsEnding] = useState(false);
@@ -56,7 +56,7 @@ export default function Boxdetail({ isOccupied, event, getTimeRemaining, loading
                   <NotepadText size={30} /> Subject :
                 </span>
                 <span className="detail-value">
-                  {/* {event.subject} */}
+                  {event.subject}
                 </span>
               </div>
             </div>
@@ -102,14 +102,28 @@ export default function Boxdetail({ isOccupied, event, getTimeRemaining, loading
             >
               {isEnding ? 'Ending...' : 'End'}
             </button>
-            <button className="book-next-button" onClick={() => setShowModal(true)}>Book Next Slot</button>
+            <button
+              className="book-next-button"
+              onClick={() => {
+                onSetBookingInProgress?.(true);
+                setShowModal(true);
+              }}
+            >
+              Book Next Slot
+            </button>
           </div>
         </div>
       ) : (
         <div className="box-detail available">
           <div className="detail-content available">
             <div>( The room is currently available )</div>
-            <button className="pin-button" onClick={() => setShowModal(true)}>
+            <button
+              className="pin-button"
+              onClick={() => {
+                onSetBookingInProgress?.(true);
+                setShowModal(true);
+              }}
+            >
               <span className="pin-text">Book Now</span>
             </button>
           </div>
@@ -119,8 +133,10 @@ export default function Boxdetail({ isOccupied, event, getTimeRemaining, loading
       {showModal && (
         <BookingModal
           isOpen={showModal}
-          onClose={() => setShowModal(false)}
-          roomName={''}
+          onClose={() => {
+            setShowModal(false);
+            onSetBookingInProgress?.(false);
+          }}
           onSubmit={() => { }}
           event
         />

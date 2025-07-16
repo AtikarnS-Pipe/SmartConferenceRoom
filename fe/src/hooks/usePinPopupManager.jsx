@@ -3,7 +3,7 @@ import PinPopup from '../components/PinPopup'; // ไฟล์นี้คือ
 import { useCurrentEvent } from './useCurrentEvent'; // hook แยก
 import { useRoomData } from './useRoomData';
 
-const PinPopupManager = ({ events, onPinSuccess, closeSignal }) => {
+const PinPopupManager = ({ events, onPinSuccess, closeSignal, bookingInProgress }) => {
   const { currentEvent, isOccupied } = useCurrentEvent(events);
   const [pinVisible, setPinVisible] = useState(false);
   const [pinVerified, setPinVerified] = useState(false);
@@ -54,7 +54,7 @@ const PinPopupManager = ({ events, onPinSuccess, closeSignal }) => {
   // ฟังก์ชัน: ลบ event เมื่อ timeout (method DELETE)
   const deleteEventOnBackend = async ({ RoomNumber, email, startdatetime, enddatetime }) => {
     try {
-      const res = await fetch('user/ms/delete', { 
+      const res = await fetch('user/ms/deleteee', { 
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ RoomNumber, email, startdatetime, enddatetime }),
@@ -66,39 +66,39 @@ const PinPopupManager = ({ events, onPinSuccess, closeSignal }) => {
   };
 
   // 15-min timeout พร้อมกับเรียก fn deleteEventOnBackend
-  // useEffect(() => {
-  //   if (currentEvent && pinVisible && !pinVerified) {
-  //     // คำนวณเวลาที่เหลือจนถึง 15 นาทีหลัง event เริ่ม
-  //     const start = new Date(currentEvent.start.dateTime + 'Z');
-  //     const now = new Date();
-  //     const msSinceStart = now - start;
-  //     const msToTimeout = Math.max(0, 0.5 * 60 * 1000 - msSinceStart);
-  //     if (pinTimeout) clearTimeout(pinTimeout);
-  //     const timeout = setTimeout(async () => {
-  //       // เรียก DELETE ไป backend เมื่อครบ 15 นาที
-  //       await deleteEventOnBackend({ //await รอให้deleteEventOnbackend ทำเสร็จก่อน
-  //         eventId: currentEvent.id,
-  //       });
-  //       setPinVisible(false);
-  //       setError('');
-  //     }, msToTimeout);
-  //     setPinTimeout(timeout);
-  //     return () => clearTimeout(timeout);
-  //   } else if (!pinVisible && pinTimeout) {
-  //     clearTimeout(pinTimeout);
-  //   }
-  // }, [currentEvent, pinVisible, pinVerified]);
+  useEffect(() => {
+    if (currentEvent && pinVisible && !pinVerified) {
+      // คำนวณเวลาที่เหลือจนถึง 15 นาทีหลัง event เริ่ม
+      const start = new Date(currentEvent.start.dateTime + 'Z');
+      const now = new Date();
+      const msSinceStart = now - start;
+      const msToTimeout = Math.max(0, 15 * 60 * 1000 - msSinceStart);
+      if (pinTimeout) clearTimeout(pinTimeout);
+      const timeout = setTimeout(async () => {
+        // เรียก DELETE ไป backend เมื่อครบ 15 นาที
+        await deleteEventOnBackend({ //await รอให้deleteEventOnbackend ทำเสร็จก่อน
+          eventId: currentEvent.id,
+        });
+        setPinVisible(false);
+        setError('');
+      }, msToTimeout);
+      setPinTimeout(timeout);
+      return () => clearTimeout(timeout);
+    } else if (!pinVisible && pinTimeout) {
+      clearTimeout(pinTimeout);
+    }
+  }, [currentEvent, pinVisible, pinVerified]);
 
   //เปิดปิด pinpopup
-  useEffect(() => {
-    if (isOccupied && !pinVerified) {
+useEffect(() => {
+  if (isOccupied && !pinVerified && !bookingInProgress) {
       setPinVisible(true);
     } else if (!isOccupied) {
       setPinVisible(false);
       setPinVerified(false); // reset เมื่อตารางหมด
       setError('');
     }
-  }, [isOccupied, pinVerified]);
+  },[isOccupied, pinVerified, bookingInProgress]);
 
   // เปิดหน้า pin ค้างไว้เพื่อเทส
   // useEffect(() => {

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import {DoorClosedLocked} from 'lucide-react'
-import { DoorOpen } from 'lucide-react'
-const PinPopup = ({ onSubmit, error, waiting, title = 'Enter PIN Code', showIcon = true }) => {
+import {DoorClosedLocked,DoorOpen,ShieldUser} from 'lucide-react'
+
+const PinPopup = ({ onSubmit, error, waiting, title = 'Enter PIN Code', showIcon = true, showStaffIcon = false }) => {
   const [pin, setPin] = useState('');
   const [blink, setBlink] = useState(false);
 
@@ -86,7 +86,8 @@ const PinPopup = ({ onSubmit, error, waiting, title = 'Enter PIN Code', showIcon
           gap: '0.5rem'
         }}>
           {title}
-          {showIcon && (error === 'Correct password' ? <DoorOpen size={30} color="#000000" /> : <DoorClosedLocked size={28} color="#000000" />)}
+          {showStaffIcon && <ShieldUser size={30} color="#000000" />}
+          {showIcon && (error === 'Correct password' ? <DoorOpen size={30} color="#000000" /> : <DoorClosedLocked size={30} color="#000000" />)}
         </h2>
 
         {renderDots()}

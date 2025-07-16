@@ -18,13 +18,13 @@ import PinPopupManager from '../hooks/usePinPopupManager'
 import StaffPinPopupManager from '../hooks/useStaffPinPopupManager'
 
 function Home() {
-  // const token = useSocket();
   const { floor, room, capacity } = useRoomData();
   const { events, loading } = useEvents( floor, room);
   const {currentEvent,isOccupied } = useCurrentEvent(events);
   const currentTime = useCurrentTime()
   const [zoomLevel, setZoomLevel] = useState(1);
   const [closeUserPin, setCloseUserPin] = useState(false);
+  const [bookingInProgress, setBookingInProgress] = useState(false);
 
   const handleCloseUserPin = () => {
     setCloseUserPin(true);
@@ -51,7 +51,7 @@ function Home() {
           
           {/* detail */}
           <div className="main-section">
-            <Boxdetail isOccupied={isOccupied} event={currentEvent} getTimeRemaining={getTimeRemaining} loading={loading} events={events} />
+            <Boxdetail isOccupied={isOccupied} event={currentEvent} getTimeRemaining={getTimeRemaining} loading={loading} onSetBookingInProgress={setBookingInProgress}/>
           </div>
           
           {/* schedule */}
@@ -74,7 +74,7 @@ function Home() {
       </div>
 
       {/* popup */}
-      {/* <PinPopupManager events={events} closeSignal={closeUserPin} /> */}
+      {/* <PinPopupManager events={events} closeSignal={closeUserPin} bookingInProgress={bookingInProgress} /> */}
       <StaffPinPopupManager showTestButton closeUserPinPopup={handleCloseUserPin} />
     </div>
   )

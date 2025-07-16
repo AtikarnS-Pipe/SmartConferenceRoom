@@ -4,11 +4,12 @@ import { useRoomData } from '../hooks/useRoomData';
 import axios from 'axios';
 
 //constant
-const BookingModal = ({ isOpen, onClose, onSubmit, roomName }) => {
+const COUNTDOWN_TIME = 30; //เวลาปิดอัตโนมัติ 30 วินาที
+const BookingModal = ({ isOpen, onClose, onSubmit,}) => {
   const [formData, setFormData] = useState({
     subject: '',
     startTime: '',
-    duration: 45,
+    duration: 15,
     bookedBy: ''
   });
   const [loading, setLoading] = useState(false);
@@ -17,8 +18,63 @@ const BookingModal = ({ isOpen, onClose, onSubmit, roomName }) => {
   const [bookedByEnabled, setBookedByEnabled] = useState(false);
   const [showPinModal, setShowPinModal] = useState(false);
   const [bookingPin, setBookingPin] = useState('');
+  const [countdown, setCountdown] = useState(COUNTDOWN_TIME);
   const { floor, room } = useRoomData();
   const roomId = `${floor}${room}`; // สร้าง roomId จาก floor และ room
+
+  // Reset countdown when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setCountdown(COUNTDOWN_TIME);
+    }
+  }, [isOpen]);
+
+  // Auto-close timer with countdown
+  useEffect(() => {
+    let countdownInterval;
+    
+    console.log('Timer useEffect:', { isOpen, showPinModal, countdown });
+    
+    if (isOpen && !showPinModal) {
+      console.log('Starting/continuing countdown timer');
+      
+      // สร้าง interval สำหรับ countdown
+      countdownInterval = setInterval(() => {
+        setCountdown((prev) => {
+          console.log('Countdown:', prev - 1);
+          const newCount = prev - 1;
+          return newCount;
+        });
+      }, 1000);
+
+    } else {
+      console.log('Timer not started:', { isOpen, showPinModal });
+      // หยุด countdown เมื่อมี PIN modal
+      setCountdown(0);
+    }
+
+    // Cleanup timer เมื่อ modal ปิดหรือ component unmount
+    return () => {
+      if (countdownInterval) {
+        console.log('Clearing countdown interval');
+        clearInterval(countdownInterval);
+      }
+    };
+  }, [isOpen, showPinModal, countdown]); // เพิ่ม countdown เป็น dependency เพื่อรีสตาร์ทเมื่อรีเซ็ต
+
+  // แยก useEffect สำหรับตรวจสอบ countdown และปิด modal
+  useEffect(() => {
+    if (countdown === 0 && isOpen && !showPinModal) {
+      console.log('Countdown reached 0, closing modal');
+      onClose();
+    }
+  }, [countdown, isOpen, showPinModal, onClose]);
+
+  // fn เมื่อ users กดปุ่มใดๆ ใน modalจะรีเซ็ต countdown
+  const handleUserInteraction = () => {
+    console.log('User interaction detected - restarting countdown');
+    setCountdown(COUNTDOWN_TIME); // รีเซ็ต countdown กลับไปที่ 30 วินาที
+  };
 
 //fn ปัดเวลาให้เป็น 15 นาที
   const getCurrentTime = () => {
@@ -39,6 +95,7 @@ const BookingModal = ({ isOpen, onClose, onSubmit, roomName }) => {
 
   useEffect(() => {
     if (isOpen && !formData.startTime) {
+      // Set startTime without triggering handleUserInteraction
       setFormData(prev => ({ ...prev, startTime: getCurrentTime() }));
     }
   }, [isOpen]);
@@ -54,68 +111,69 @@ const BookingModal = ({ isOpen, onClose, onSubmit, roomName }) => {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (validateForm()) {
-      setLoading(true);
-      try {
-        // Extract room number from roomName if available, or use default
-        const extractedRoomNumber = roomName?.match(/\d+/)?.[0] || '150';
-        
-        // Calculate end time based on start time and duration
-        const startDate = new Date(formData.startTime);
-        const endDate = new Date(startDate);
+  e.preventDefault();
+  if (validateForm()) {
+    setLoading(true);
+    try {
+      let startDate, endDate;
+
+      if (formData.duration === 660) {
+        // กรณี All day → start เป็น 00:00:00 ของวันนั้น, end เป็น 00:00:00 ของวันถัดไป
+        const baseDate = new Date(formData.startTime);
+        startDate = new Date(baseDate);
+        startDate.setHours(0, 0, 0, 0);
+
+        endDate = new Date(startDate);
+        endDate.setDate(endDate.getDate() + 1);
+      } else {
+        // Logic เดิม
+        startDate = new Date(formData.startTime);
+        endDate = new Date(startDate);
         endDate.setMinutes(endDate.getMinutes() + formData.duration);
-        
-        // Format as UTC ISO string for the backend
-        const startdatetime = startDate.toISOString();
-        const enddatetime = endDate.toISOString();
-        
-        // Create payload in the format expected by the backend
-        const payload = {
-          RoomNumber: roomId, // Use roomId from useRoomData
-          email: formData.bookedBy, // Using bookedBy as email
-          startdatetime: startdatetime,
-          enddatetime: enddatetime,
-        };
-        
-        console.log("Submitting booking:", payload);
-        
-        // Call the backend API
-        const response = await axios.post('/user/ms/create', { createroomdata: payload });
-        console.log("Booking successful:", response.data);
-        const Pin = response.data.key;
-        console.log("Booking PIN:", Pin);
-        
-        // แสดง PIN modal
-        setBookingPin(Pin);
-        setShowPinModal(true);
-        
-        // Call the onSubmit prop if provided
-        if (onSubmit) {
-          onSubmit(formData);
-        }
-        
-        // Reset form (แต่ยังไม่ปิด modal)
-        setFormData({ subject: '', startTime: '', duration: 45, bookedBy: '' });
-        setErrors({});
-        
-      } catch (error) {
-        console.error("Booking error:", error);
-        setErrors({
-          submit: error.response?.data?.error || "Failed to book the room. Please try again."
-        });
-      } finally {
-        setLoading(false);
       }
+
+      // Format เป็น ISO string
+      const startdatetime = startDate.toISOString();
+      const enddatetime = endDate.toISOString();
+
+      const payload = {
+        RoomNumber: roomId,
+        subject: formData.subject,
+        email: formData.bookedBy,
+        startdatetime,
+        enddatetime,
+      };
+
+      console.log("Submitting booking:", payload);
+      const response = await axios.post('/user/ms/create', { createroomdata: payload });
+      const Pin = response.data.key;
+
+      setBookingPin(Pin);
+      setShowPinModal(true);
+      if (onSubmit) onSubmit(formData);
+
+      setFormData({ subject: '', startTime: '', duration: 15, bookedBy: '' });
+      setErrors({});
+    } catch (error) {
+      console.error("Booking error:", error);
+      setErrors({
+        submit: error.response?.data?.error || "Failed to book the room. Please try again."
+      });
+    } finally {
+      setLoading(false);
     }
-  };
+  }
+};
+
 
   const handleChange = (field, value) => {
+    handleUserInteraction(); // หยุด timer เมื่อผู้ใช้เปลี่ยนค่า
     setFormData(prev => ({ ...prev, [field]: value }));
     if (errors[field]) setErrors(prev => ({ ...prev, [field]: undefined }));
   };
 
   const adjustTime = (increment) => {
+    handleUserInteraction(); // หยุด timer เมื่อผู้ใช้ปรับเวลา
     if (!formData.startTime) return;
     
     try {
@@ -141,9 +199,29 @@ const BookingModal = ({ isOpen, onClose, onSubmit, roomName }) => {
   };
 
   const adjustDuration = (increment) => {
+    handleUserInteraction(); // หยุด timer เมื่อผู้ใช้ปรับระยะเวลา
     const change = increment ? 15 : -15;
     const newDuration = Math.max(15, formData.duration + change);
     handleChange('duration', newDuration);
+  };
+
+  // Calculate end time based on start time and duration
+  const getEndTime = () => {
+    if (!formData.startTime) return '00:00';
+    try {
+      const startDate = new Date(formData.startTime);
+      const endDate = new Date(startDate);
+      endDate.setMinutes(endDate.getMinutes() + formData.duration);
+      return formatDisplayTime(endDate.toISOString());
+    } catch (error) {
+      return '00:00';
+    }
+  };
+
+  // Set quick duration presets
+  const setQuickDuration = (minutes) => {
+    handleUserInteraction(); // หยุด timer เมื่อผู้ใช้เลือก quick duration
+    handleChange('duration', minutes);
   };
 
   const formatDisplayTime = (timeString) => {
@@ -174,7 +252,7 @@ const BookingModal = ({ isOpen, onClose, onSubmit, roomName }) => {
     const currentHour = formData.startTime ? new Date(formData.startTime).getHours() : 14;
     const duration = formData.duration;
     return hours.map(hour => {
-      const isBooked = hour >= currentHour && hour < currentHour + (duration / 60);
+      const isBooked = hour >= currentHour && hour <= currentHour + (duration / 60);
       const isCurrentSlot = hour === currentHour;
       return { hour, isBooked, isCurrentSlot };
     });
@@ -249,32 +327,40 @@ const BookingModal = ({ isOpen, onClose, onSubmit, roomName }) => {
               </button>
               <div className="header-info">
                 <div className="date-text">{getCurrentDate()}</div>
-                <div className="modal-title">New Booking</div>
-                <div className="room-name">{roomName}</div>
+                <div className="modal-title">
+                  New Booking{countdown > 0 ? ` (${countdown}s)` : ''}
+                </div>
               </div>
             </div>
 
             <div className="modal-body">
               {/* --- Subject Name --- */}
-              {/* <div className="form-group">
+              <div className="form-group">
                 <div className="label-checkbox-row">
                   <label className="label-left">Subject Name</label>
                   <input 
                     type="checkbox" 
                     checked={subjectEnabled}
-                    onChange={(e) => setSubjectEnabled(e.target.checked)}
+                    onChange={(e) => {
+                      handleUserInteraction(); // หยุด timer เมื่อผู้ใช้เปิด/ปิด checkbox
+                      setSubjectEnabled(e.target.checked);
+                    }}
                   />
                 </div>
                 <input
                   type="text"
                   value={formData.subject}
-                  onChange={(e) => handleChange('subject', e.target.value)}
+                  onChange={(e) => {
+                    handleUserInteraction(); // หยุด timer เมื่อผู้ใช้พิมพ์
+                    handleChange('subject', e.target.value);
+                  }}
+                  onFocus={handleUserInteraction} // หยุด timer เมื่อผู้ใช้คลิกที่ input
                   className={errors.subject ? 'input-error' : ''}
                   placeholder="Enter meeting subject"
                   disabled={!subjectEnabled}
                 />
                 {errors.subject && <p className="error-text">{errors.subject}</p>}
-              </div> */}
+              </div>
 
               {/* --- Booked By --- */}
               {/* <div className="form-group">
@@ -323,18 +409,62 @@ const BookingModal = ({ isOpen, onClose, onSubmit, roomName }) => {
               </div>
 
               <div className="form-group">
-                <label>Duration</label>
+                <label>End Time</label>
                 <div className="adjust-group">
                   <button onClick={() => adjustDuration(false)}><Minus size={16} /></button>
-                  <div className="display-time">{formatDurationDisplay(formData.duration)}</div>
+                  <div className="display-time">{getEndTime()}</div>
                   <button onClick={() => adjustDuration(true)}><Plus size={16} /></button>
                 </div>
                 {errors.duration && <p className="error-text">{errors.duration}</p>}
+                
+                {/* Quick Duration Menu */}
+                <div className="quick-duration-menu">
+                  <div className="quick-duration-container">
+                    <button 
+                      type="button"
+                      onClick={() => setQuickDuration(30)}
+                      className={`quick-duration-btn ${formData.duration === 30 ? 'active' : ''}`}
+                    >
+                      30min
+                    </button>
+                    <button 
+                      type="button"
+                      onClick={() => setQuickDuration(60)}
+                      className={`quick-duration-btn ${formData.duration === 60 ? 'active' : ''}`}
+                    >
+                      1hr
+                    </button>
+                    <button 
+                      type="button"
+                      onClick={() => setQuickDuration(120)}
+                      className={`quick-duration-btn ${formData.duration === 120 ? 'active' : ''}`}
+                    >
+                      2hr
+                    </button>
+                    <button 
+                      type="button"
+                      onClick={() => setQuickDuration(660)}
+                      className={`quick-duration-btn ${formData.duration === 660 ? 'active' : ''}`}
+                    >
+                      All day
+                    </button>
+                    {/* <button 
+                      type="button"
+                      onClick={() => setQuickDuration(180)}
+                      className={`quick-duration-btn ${formData.duration === 180 ? 'active' : ''}`}
+                    >
+                      3hr
+                    </button> */}
+                  </div>
+                </div>
               </div>
 
               <div className="submit-btn-wrapper">
                 <button 
-                  onClick={handleSubmit} 
+                  onClick={(e) => {
+                    handleUserInteraction(); // หยุด timer เมื่อผู้ใช้คลิก Book Now
+                    handleSubmit(e);
+                  }} 
                   className="submit-btn"
                   disabled={loading}
                 >
