@@ -5,7 +5,7 @@ const jwt = require('jsonwebtoken');
 const { sendOTP, verifyOTP, resetPassword } = require('../../services/admin.services');
 //models
 const User = require('../../models/User');
-const Logsmonitoring = require('../../models/Logsmonitoring')
+const { AddLogmonitoring } = require('../../utils/AddLogmonitoring');
 
 const Auth = async (req, res) => { // admin sign-in
     const { email, password } = req.body;
@@ -27,14 +27,15 @@ const Auth = async (req, res) => { // admin sign-in
       // รับ userId:user._id
       const token = refreshalltoken(req, res, user._id);
 
-      // logsmonitoring create
-      const logs = await Logsmonitoring.create({
-      user_Id: user._id, 
-      L_status: 'Admin Logged in', 
-      role: user.role, 
-      Details: `Admin name: ${user.name}`, 
-      L_createdAt: new Date(),
-    })
+      // logsmonitoring function
+      const datalogs = {  
+        user_Id: user._id, 
+        L_status: 'Admin Logged in', 
+        role: user.role, 
+        Details: `Admin name: ${user.name}`, 
+        L_createdAt: new Date(),
+      };
+      const log = await AddLogmonitoring(datalogs);
 
       res.json({token, name: user.name, pin: user.pin, role: user.role})
     } catch (error) {
@@ -100,14 +101,15 @@ const Createhousekeeper = async (req, res) => {
         createdBy: admin._id,
         login_status: 'no permission'  
     })
-    // logsmonitoring create
-    const logs = await Logsmonitoring.create({
+    // logsmonitoring function
+    const datalogs = {  
       user_Id: newHousekeeper._id, 
       L_status: 'Housekeeper was created', 
       role: newHousekeeper.role, 
       Details: `Housekeeper name: ${newHousekeeper._id}`, 
       L_createdAt: new Date(),
-    })
+    };
+    const log = await AddLogmonitoring(datalogs);
     res.status(201).json({
         success: true,
         message: 'Housekeeper created successfully',
@@ -123,14 +125,15 @@ const signout = async (req, res) => {
   }
   user.login_status = 'offline';
   await user.save();
-  // logsmonitoring create
-  const logs = await Logsmonitoring.create({
+  // logsmonitoring function
+  const datalogs = {  
     user_Id: user._id, 
     L_status: 'Admin Logged out', 
     role: user.role, 
     Details: `Admin name: ${user.name}`, 
     L_createdAt: new Date(),
-  })
+  };
+  const log = await AddLogmonitoring(datalogs);
   res.clearCookie("refreshtoken", { path: '/account/refresh-token' }); // ลบ cookie refresh token
   res.json({ success: true, message: 'User signed out successfully' });
 }
@@ -150,14 +153,16 @@ const deletehousekeeper = async (req, res) => {
     );
     if (!ThisHousekeeper) return res.status(404).json({ message: 'Housekeeper is not found in Documents' });
 
-    // logsmonitoring create
-    const logs = await Logsmonitoring.create({
+    // logsmonitoring function
+    const datalogs = {  
       user_Id: ThisHousekeeper._id, 
       L_status: 'Housekeeper was deleted', 
       role: 'Housekeeper', 
       Details: `Housekeeper name: ${name}`, 
       L_createdAt: new Date(),
-    })
+    };
+    const log = await AddLogmonitoring(datalogs);
+    
     res.status(200).json({ success: true, message: `Housekeeper's name ${name}, has been deleted successfully` });
   } catch (error) {
     console.error("Delete housekeeper error:", error);
@@ -190,14 +195,16 @@ const editpinhousekeeper = async (req, res) => {
     ThisHousekeeper.pin = newpin;
     await ThisHousekeeper.save();
 
-    // logsmonitoring create
-    const logs = await Logsmonitoring.create({
+    // logsmonitoring function
+    const datalogs = {  
       user_Id: ThisHousekeeper._id, 
       L_status: 'Housekeeper was changed pin', 
       role: ThisHousekeeper.role, 
       Details: `Housekeeper name: ${name}`, 
       L_createdAt: new Date(),
-    })
+    };
+    const log = await AddLogmonitoring(datalogs);
+    
     res.status(200).json({ success: true, message: `Housekeeper's name, ${name}, has been updated pins with ${newpin} successfully` });
   } catch (error) {
     console.error("Delete housekeeper error:", error);

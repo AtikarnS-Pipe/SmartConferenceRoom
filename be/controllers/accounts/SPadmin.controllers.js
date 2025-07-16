@@ -1,5 +1,5 @@
 const User = require('../../models/User');
-const Logsmonitoring = require('../../models/Logsmonitoring');
+const {AddLogmonitoring} = require('../../utils/AddLogmonitoring');
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
@@ -30,14 +30,16 @@ const createadmin = async (req, res) => {
       role: 'Admin',
       login_status: 'offline'
     });
-    // logsmonitoring create
-    const logs = await Logsmonitoring.create({
+
+    // logsmonitoring function
+    const datalogs = {  
       user_Id: newAdmin._id, 
       L_status: 'Admin was created', 
       role: newAdmin.role, 
       Details: `Admin id: ${newAdmin._id}`, 
       L_createdAt: new Date(),
-    })
+    };
+    const log = await AddLogmonitoring(datalogs);
   
     const token = jwt.sign({ userId: newAdmin._id }, process.env.JWT_SECRET, {
       expiresIn: process.env.JWT_EXPIRES_IN,
@@ -81,14 +83,15 @@ const deleteadmin = async (req, res) => {
         );
         if (!ThisAdmin) return res.status(404).json({ message: 'Admin is not found in Documents' });
 
-        // logsmonitoring create
-        const logs = await Logsmonitoring.create({
-            user_Id: ThisAdmin._id, 
-            L_status: 'Admin was deleted', 
-            role: 'Admin', 
-            Details: `Admin name: ${name}`, 
-            L_createdAt: new Date(),
-        })
+        // logsmonitoring function
+        const datalogs = {  
+          user_Id: ThisAdmin._id, 
+          L_status: 'Admin was deleted', 
+          role: 'Admin', 
+          Details: `Admin name: ${name}`, 
+          L_createdAt: new Date(),
+        };
+        const log = await AddLogmonitoring(datalogs);
         res.status(200).json({ success: true, message: `Admin's name ${name}, has been deleted successfully` });
     } catch (error) {
         console.error("Delete Admin error:", error);

@@ -2,7 +2,7 @@ const bcrypt = require('bcryptjs')
 const bookingKey = require('../models/bookingkey');
 // const getGraphClient = require("../graph");
 const User = require('../models/User');
-const { Logsmonitoring } = require('../utils/AddLogmonitoring');
+const { AddLogmonitoring } = require('../utils/AddLogmonitoring');
 const { sendMailAsync } = require('../services/sendmail.services');
 
 /**
@@ -59,7 +59,7 @@ async function adminCompareKey( pin, room_number ) {
             Details: `${user.name} access room ${room_number}`, 
             L_createdAt: new Date(),
         };
-        const log = await Logsmonitoring(datalogs);
+        const log = await AddLogmonitoring(datalogs);
 
         return { success: true, message: "Password match!" };
     } catch (err) {
