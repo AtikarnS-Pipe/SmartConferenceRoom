@@ -7,11 +7,7 @@ const logschema = new mongoose.Schema({
         required: true,
         index: true,
     },
-    // name: { // foremost, Unique nam!!
-    //     type: String,
-    //     unique: true, 
-    //     sparse: true // null ซ้ำกันได้
-    // },
+
     L_status: { // foremost
         type: String,
         enum: ['Admin Logged in', 'Admin Logged out', 'Housekeeper was created', 'Housekeeper was changed pin', 'Housekeeper was deleted','Access room' ], // เดะมาเเก้

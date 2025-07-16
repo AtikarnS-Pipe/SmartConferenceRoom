@@ -68,6 +68,7 @@ async function syncAllRooms() {
                             booking = await bookingkey.create({
                                 room: roomData.room,
                                 eventId: event.id,
+                                organizerMail: event.organizer?.emailAddress?.address,
                                 key: hashedPassword,
                                 pin: key, // save pin for user
                                 startDateTime: new Date(event.start?.dateTime + "Z"),
@@ -76,7 +77,7 @@ async function syncAllRooms() {
                             console.log('mail send:', key);
                             RoomStr = roomData.room.toString();
                             const mailContent = `รหัสผ่านสำหรับ L: /${RoomStr.slice(0,2)}>${RoomStr.slice(2,4)} คือ ${key}`;
-                            const mail = "Nareupol.A@tcc-technology.com" //event.organizer?.emailAddress?.address  //Atikarn.S
+                            const mail = "Nareupol.A@tcc-technology.com" //event.organizer?.emailAddress?.address *********************************
                             if(process.env.DEBUG_MODE) console.log('mail content:',mailContent);
                             // await sendMailAsync(event.organizer?.emailAddress?.address, mailContent, mail, tokenCache.getAccessToken()); //หัวข้ออีเมล, รหัสผ่าน, หมายเลขห้องที่จะส่งไป
                         }

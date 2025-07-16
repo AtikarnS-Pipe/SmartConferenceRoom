@@ -3,11 +3,16 @@ const mongoose = require('mongoose');
 const bookingKeySchema = new mongoose.Schema({
     room: Number,
     eventId: String,
+    organizerMail: String,
     key: String,
     pin: String,
     startDateTime: Date,
     endDateTime: Date,
-    count: {
+    isPinVerified:{
+        type: Boolean,
+        default: false,
+    },
+    pinMissCount: {
         type: Number,
         default: 0, 
         index: true // for faster queries

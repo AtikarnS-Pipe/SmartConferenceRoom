@@ -1,9 +1,9 @@
-const { Client } = require('@microsoft/microsoft-graph-client');
+const getGraphClient = require('../utils/graph');
 require('isomorphic-fetch');
 
 async function sendMailAsync(subject, body, recipient, accessToken) { // เเก้ผู้รับเมลให้ตาม api
     try{
-    const client = getClient(accessToken);
+    const client = getGraphClient(accessToken);
     const message = {
         message: {
         subject,
@@ -17,14 +17,6 @@ async function sendMailAsync(subject, body, recipient, accessToken) { // เเ�
         console.error('Send mail failed:', error);
         throw error;
     }
-}
-
-function getClient(accessToken) {
-  return Client.init({
-    authProvider: (done) => {
-      done(null, accessToken);
-    }
-  });
 }
 
 module.exports = sendMailAsync

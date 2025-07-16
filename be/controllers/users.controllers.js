@@ -1,5 +1,5 @@
 const { authProvider } = require("../utils/AuthProvider");
-const { compareKey, deleteSchedule, adminCompareKey } = require('../services/pin.services');
+const { compareKey, adminCompareKey } = require('../services/pin.services');
 require('dotenv').config({ path: './config/.env'});
 const tokenCache = require("../utils/tokenCache");
 const { getuserdatabyroom, waitUntil } = require('../services/users.services');
@@ -12,7 +12,7 @@ const getGraphClient = require("../utils/graph");
 const bcrypt = require('bcryptjs')
 const bookingkey = require('../models/bookingkey')
 // penalty alert email 
-const { sendMailAsync } = require('../services/sendmail.services');
+const sendMailAsync = require('../services/sendmail.services');
 
 function randomPin() {
   return Math.floor(1000 + Math.random() * 9000).toString(); // 0.000-0.999*9000ได้ 0-8999 + 1000 จะได้ Range 1000-9999 
@@ -74,39 +74,6 @@ const keyPins = async (req, res) => {
     }
 };
 
-const keyExpired = async (req, res) => {
-    try {
-        const { eventId } = req.body;
-        if ( !eventId ) {
-            return res.status(200).json({ error: "Missing required fields!" });
-        }
-
-        // const token = req.cookies.user_token;
-        //  if (!token) {
-        //     throw new Error("No accessToken");
-        // }
-        // const payload = jwt.verify(token, JWT_SECRET);
-        // const account = await authProvider.getAccountById(payload.homeAccountId);
-        // if (!account) {
-        //     throw new Error("Session expired, please ask admin to login again");
-        // }
-        // let tokenResponse = await authProvider.acquireTokenSilent(
-        //     account,
-        //     [process.env.SCOPE]
-        // );
-
-        const isCompleted = await deleteSchedule({ eventId });
-        
-        if (!isCompleted) {
-            return res.status(200).json({ error: "Booking not found" });
-        }
-
-        return res.status(200).json({ message: `Event: ${ eventId } has been removed!`});
-    } catch (error) {
-        return res.status(500).json({ error: "Internal Server Error "});
-    }
-};
-
 // admin pin insertion
 const adminKeyPin = async (req, res) => {
     try {
@@ -132,7 +99,7 @@ const adminKeyPin = async (req, res) => {
 
 // รับ Roomnumber เเละ eventId ของการประชุมที่ต้องการลบ
 const deleteroom = async (req, res) => {
-    const { eventId, name } = req.body; // , eventId
+    const { eventId } = req.body; // , eventId
     const AccessToken = tokenCache.getAccessToken();
     if (!AccessToken) {
         console.error("No refresh token found in cache...");
@@ -145,15 +112,25 @@ const deleteroom = async (req, res) => {
 
         console.log("Delete event success");
         const countbacklist = await bookingkey.findOneAndUpdate(
-            {  },
-            { $inc: { count: +1 } }, // count by 1
+            { eventId }, // หา booking key ที่ตรงกับ eventId
+            { $inc: { pinMissCount: +1 }, isPinVerified: false }, // count by 1
             { new: true } 
         );
+        if (!countbacklist) return res.status(404).json({ error: "Booking key not found for the given eventId" });
         console.log("Booking key count updated:", countbacklist);
         // send mail alert
-        sendMailAsync
+        if (countbacklist.pinMissCount >= 5){
+            const mailData = {
+                subject: `Warning: การจองห้องเเล้วมาไม่มาใช้งานตามที่กำหนด`,
+                body: `คุณใช้งานระบบ Smart Conference Display System ได้ทำการจองห้องประชุม เเละไม่ได้มาใช้งานตามที่กำหนดเกิน 5 ครั้ง กรุณาติดต่อผู้ดูเเลระบบหากมีข้อสงสัย \n\nThack you\nSmart Conforence Display System`,
+                recipient: process.env.CENTERLIZED_MAIL, // คนรับใคร เดี๋ยวค่อยเเก้ไข // countbacklist.organizerMail *********************************************
+                accessToken: tokenCache.getAccessToken(),
+            };
+            await sendMailAsync(mailData.subject, mailData.body, mailData.recipient, mailData.accessToken);
+            console.log(`Pin verified and email sent for event: ${eventId}`);
+            console.log(`📧 Email alert sent to ${mailData.recipient}`);
+        }
         res.status(200).json({ message: "Event deleted successfully" });
-
     } catch (error) {
         console.error("Error deleting event:", error);
         res.status(500).json({ error: "Failed to delete event" });
@@ -169,7 +146,7 @@ const createroom = async (req, res) => { // createroomdata = {RoomNumber, startd
     const AccessToken = tokenCache.getAccessToken();
     if (!AccessToken) {
         console.error("No refresh token found in cache...");
-        throw new Error("No refresh token found in caches. Please login again.");
+        return res.status(401).json({ error: "Access token expired. Please login again." });
     }
     try {
         const iscreated = await createMSEvent(AccessToken, createroomdata);
@@ -190,7 +167,7 @@ const createroom = async (req, res) => { // createroomdata = {RoomNumber, startd
         const key = randomPin();
         const salt = await bcrypt.genSalt( parseInt(process.env.BCRYPT_SALT_ROUNDS));
         const hashedPassword = await bcrypt.hash(key, salt);
-        const booking = await bookingkey.create({
+        const booking = await bookingkey.create({ // ใส่เมลไม่ได้ เพราะเขาไปจองหน้าห้องประชุม
             room: RoomNumber,
             eventId: eventId,
             key: hashedPassword,
@@ -241,6 +218,6 @@ const endmeeting = async (req, res) => {
 }  
 
 module.exports = { getuser
-    , keyPins, keyExpired, adminKeyPin
+    , keyPins, adminKeyPin
     , deleteroom, createroom ,endmeeting
 };

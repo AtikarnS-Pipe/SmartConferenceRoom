@@ -2,7 +2,8 @@ const bcrypt = require('bcryptjs')
 const bookingKey = require('../models/bookingkey');
 // const getGraphClient = require("../graph");
 const User = require('../models/User');
-const Logsmonitoring = require('../models/Logsmonitoring');
+const { Logsmonitoring } = require('../utils/AddLogmonitoring');
+const { sendMailAsync } = require('../services/sendmail.services');
 
 /**
  * service for compare the pin, user inserted, with the pin of the room in database
@@ -17,37 +18,19 @@ async function compareKey({ eventId, pin }) {
     });
     if (!booking) return false;
     console.log(`COMPARING => Pin: ${pin} with Event's key: ${booking.key}`);
-    return await bcrypt.compare(pin, booking.key);
+    const ismatch =  await bcrypt.compare(pin, booking.key);
+    if (ismatch) {
+        console.log(`Pin matched for event: ${eventId}`);
+        const successlog = await bookingKey.findOneAndUpdate(
+            { eventId },
+            { isPinVerified: true }, 
+            { new: true },
+        )
+        if (!successlog) return res.status(404).json({ error: "Booking key not found for the given eventId" });
+    }
+
+    return ismatch;
 }
-
-/**
- * service for delete event record by using eventId
- * @param {string} eventId
- * @returns {boolean}
- */
-async function deleteSchedule({ eventId }) {
-    const booking = await bookingKey.findOneAndDelete({ 
-        id: eventId
-    });
-
-    if (!booking) return false;
-    /**
-     * GraphApi fecth on DELETE method
-     */
-    // try {
-    //     const graphClient = getGraphClient(tokenResponse);
-    //     await graphClient
-    //         .api(`/users/${booking.room}/events/${eventId}`)
-    //         .delete();
-    //     console.log(`Event: ${eventId} has been deleted!`);
-    // } catch(err) {
-    //     console.log(`Failed to delete event from Graph API`, err.message);
-    // }
-    
-    console.log(`DELETE => Event: ${booking.id} has been removed!`);
-    return true;
-}
-
 
 //! find what unique it is
 /**
@@ -67,19 +50,17 @@ async function adminCompareKey( pin, room_number ) {
          * ! update database to log admin/housekeeper insert pin
          * await log.create({ userId: user._id, action: `access room ${room_number}`, role: user.role, timestamp: new Date() });
          * */
-        // logsmonitoring create
-        const logs = await Logsmonitoring.create({
+        
+        // logsmonitoring function
+        const datalogs = {  
             user_Id: user._id, 
             L_status: 'Access room', 
             role: user.role, 
             Details: `${user.name} access room ${room_number}`, 
             L_createdAt: new Date(),
-        })
+        };
+        const log = await Logsmonitoring(datalogs);
 
-        // console.log(`Comparing admin's pin with database`);
-        // const isMatch = await bcrypt.compare(pin, user.pin);
-
-        // if (!isMatch) return { success: false, message: "Password does not match!"};
         return { success: true, message: "Password match!" };
     } catch (err) {
         console.log(err.message);
@@ -87,4 +68,4 @@ async function adminCompareKey( pin, room_number ) {
     }
 }
 
-module.exports = { compareKey, deleteSchedule, adminCompareKey };
+module.exports = { compareKey, adminCompareKey };
