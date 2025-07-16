@@ -1,6 +1,5 @@
 const { Auth,
     Createhousekeeper,
-    createadmin,
     signout,
     ChangeAdminPin,
     deletehousekeeper,
@@ -16,8 +15,8 @@ const { authorize } = require('../middlewares/auth.middleware')
 const express = require("express");
 const AccountRouter = express.Router();
 
-AccountRouter.get('/me', authorize, profile);
 AccountRouter.post('/createadmin', authorize, createadmin);
+AccountRouter.get('/me', authorize, profile);
 AccountRouter.post('/auth', Auth);
 AccountRouter.patch('/changeadminpw', authorize, ChangeAdminPin);
 AccountRouter.post('/createhousekeeper', authorize, Createhousekeeper);

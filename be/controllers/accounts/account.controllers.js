@@ -135,78 +135,13 @@ const signout = async (req, res) => {
   res.json({ success: true, message: 'User signed out successfully' });
 }
 
-const createadmin = async (req, res) => {
-  const SuperAdmin = req.user;
-  const { email, password, name, pin } = req.body;
-  if (SuperAdmin.role !== 'Superadmin') return res.status(403).json({ message: 'Only SuperAdmin can create admin' });
-  try {
-    const existingAdmin = await User.findOne({
-      role: { $ne: 'Deactivated' },
-      $or: [
-        {email}, {pin}, {name}
-      ] 
-    });
-    if (existingAdmin) {
-      const duplicatefield = [];
-      let message = 'No duplicate';
-      if (existingAdmin.pin === pin) duplicatefield.push('pin');
-      if (existingAdmin.name === name) duplicatefield.push('name'); 
-      if (existingAdmin.email === email) duplicatefield.push('email');
-      duplicatefield.length === 1 ? message = `This ${duplicatefield[0]} is exists, Please use a different one.` : message;
-      duplicatefield.length > 1 ? message = `These ${duplicatefield.join('and')} are exists, Please use a different one.`  : message;
-      return res.status(400).json({ message });
-    }
-    const newAdmin = await User.create({
-      email,
-      password, // เข้ารหัส password
-      role: 'Admin',
-      login_status: 'offline'
-    });
-    // logsmonitoring create
-    const logs = await Logsmonitoring.create({
-      user_Id: newAdmin._id, 
-      L_status: 'Admin was created', 
-      role: newAdmin.role, 
-      Details: `Admin id: ${newAdmin._id}`, 
-      L_createdAt: new Date(),
-    })
-  
-    const token = jwt.sign({ userId: newAdmin._id }, process.env.JWT_SECRET, {
-      expiresIn: process.env.JWT_EXPIRES_IN,
-    });
-    const refreshtoken = jwt.sign({ userId: newAdmin._id }, process.env.JWT_SECRET, {
-      expiresIn: process.env.JWT_REFRESH_EXPIRES_IN,
-    });
-
-    res.cookie("refreshtoken", refreshtoken, { // จนกว่าจะปิด browser cookie จึงจะหมดอายุ
-      httpOnly: true,
-      secure: false,  // เปลี่ยนเป็น true ถ้าใช้ HTTPS
-      sameSite: 'lax', // ป้องกัน CSRF
-      path: '/account/refresh-token', // จำกัด route ที่ใช้ cookie ได้
-    });
-
-    res.status(201).json({
-      success: true,
-      message: 'Create Admin successfully',
-      data: {
-        token,
-        refreshtoken, //เดี๋ยวมาลบ*********
-        user: newUser,
-      },
-    });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
-
-
 //ส่ง name เเม่บ้าน, password ของ admin ที่ลบมาเพื่อลบข้อมูล
 const deletehousekeeper = async (req, res) => {
   try{
     const admin = req.user;
     const { name } = req.body;
     if (admin.role !== 'Admin' && admin.role !== 'Superadmin') return res.status(403).json({ message: 'Only admin can delete housekeeper' });
-    if (!name) return res.status(400).json({ message: 'Housekeeper ์s Name are required' });
+    if (!name) return res.status(400).json({ message: `Housekeeper's Name are required` });
     // const isAdminpw = await bcrypt.compare(password, adminDB.password)
     const ThisHousekeeper = await User.findOneAndUpdate(
       { name, role: 'Housekeeper'},
@@ -347,7 +282,6 @@ const profile = async (req, res) => {
 module.exports = { 
   Auth,
   Createhousekeeper,
-  createadmin, 
   signout, 
   ChangeAdminPin,
   deletehousekeeper,
