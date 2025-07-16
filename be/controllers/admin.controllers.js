@@ -1,5 +1,5 @@
 require('dotenv').config({ path: './config/.env'});
-const { getTokenByCode } = require("../AuthProvider");
+const { getTokenByCode } = require("../utils/AuthProvider");
 const tokenCache = require('../utils/tokenCache')
 const {encryptToken} = require('../utils/encode')
 const {

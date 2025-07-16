@@ -1,4 +1,4 @@
-const getGraphClient = require("../graph");
+const getGraphClient = require("../utils/graph");
 const bookingkey = require('../models/bookingkey');
 const sendMailAsync = require("./sendmail.services")
 const bcrypt = require('bcryptjs');

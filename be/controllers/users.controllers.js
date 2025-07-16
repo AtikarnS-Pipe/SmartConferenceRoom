@@ -1,4 +1,4 @@
-const { authProvider } = require("../AuthProvider");
+const { authProvider } = require("../utils/AuthProvider");
 const { compareKey, deleteSchedule, adminCompareKey } = require('../services/pin.services');
 require('dotenv').config({ path: './config/.env'});
 const tokenCache = require("../utils/tokenCache");
@@ -6,7 +6,7 @@ const { getuserdatabyroom, waitUntil } = require('../services/users.services');
 const { roomobject } = require('../utils/tokenCache');
 // crud microsoft
 const {  GeteventId, createMSEvent } = require('../services/users.services');
-const getGraphClient = require("../graph");
+const getGraphClient = require("../utils/graph");
 
 // create ms room
 const bcrypt = require('bcryptjs')

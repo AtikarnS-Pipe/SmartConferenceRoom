@@ -6,7 +6,7 @@ const { monitorToken } = require('./utils/tokenCache');
 const express = require("express");
 
 // Import routes
-const SuperAdminRouter = requie('./routes/superadmin_manage.routes')
+const SuperAdminRouter = require('./routes/superadmin_manage.routes')
 const Adminrouter = require("./routes/admin_ms.routes");
 const Userrouter = require("./routes/users.routes");
 const Accountrouter = require("./routes/account_manage.routes");

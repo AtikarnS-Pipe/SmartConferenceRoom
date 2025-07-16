@@ -3,9 +3,9 @@ const { createadmin, deleteadmin } = require('../controllers/accounts/SPadmin.co
 
 const { authorize } = require('../middlewares/auth.middleware')
 const express = require("express");
-const SuperAdminRouter = express.router();
+const SuperAdminRouter = express.Router();
 
 SuperAdminRouter.post('/createadmin', authorize, createadmin);
-SuperAdminRouter.post('/deleteadmin', authorize, deleteadmin);
+SuperAdminRouter.delete('/deleteadmin', authorize, deleteadmin);
 
 module.exports = SuperAdminRouter;

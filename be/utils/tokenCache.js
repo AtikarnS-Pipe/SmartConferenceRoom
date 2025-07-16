@@ -1,8 +1,8 @@
 // tokenCache.js
-const {refreshAccessToken} = require('../AuthProvider')
+const {refreshAccessToken} = require('./AuthProvider')
 const {encryptToken, decryptToken} = require('../utils/encode')
 const Token = require('../models/token')
-const getGraphClient = require('../graph');
+const getGraphClient = require('./graph');
 
 let accessToken = null;
 let refreshToken = null;

@@ -1,5 +1,5 @@
 require('dotenv').config({ path: './config/.env'});
-const getGraphClient = require("../graph");
+const getGraphClient = require("../utils/graph");
 const tokenCache = require('../utils/tokenCache');
 const getTodaydatetime = require('../utils/getTodaydatetime');
 const { roomobject } = require('../utils/tokenCache');

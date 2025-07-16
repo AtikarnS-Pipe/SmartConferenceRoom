@@ -1,4 +1,4 @@
-const getGraphClient = require("../graph"); 
+const getGraphClient = require("../utils/graph"); 
 const Token = require('../models/token');
 const tokenCache = require('../utils/tokenCache')
 const getTodaydatetime  = require('../utils/getTodaydatetime');
