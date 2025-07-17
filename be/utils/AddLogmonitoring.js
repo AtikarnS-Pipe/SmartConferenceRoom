@@ -3,7 +3,7 @@ const Logsmonitoring = require('../models/Logsmonitoring');
 // logsmonitoring create
 async function AddLogmonitoring( LogsObject ){
     await Logsmonitoring.create({
-        user_Id: LogsObject._id, 
+        user_Id: LogsObject.user_Id, 
         L_status: LogsObject.L_status, 
         role: LogsObject.role, 
         Details: LogsObject.Details, 
