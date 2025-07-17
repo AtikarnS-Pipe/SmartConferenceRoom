@@ -51,7 +51,7 @@ async function syncAllRooms() {
             }
         })
     );
-    console.log("Fetched data for roomsync:", results);
+    // console.log("Fetched data for roomsync:", results);
 
     try{
         for (const roomData of results) {

@@ -175,7 +175,7 @@ const createroom = async (req, res) => { // createroomdata = {RoomNumber, startd
                 startdatetime,
                 enddatetime
             );
-        }, 10000, 1000); // 10 รอบ รอบละ 1 s
+        }, 20000, 1000); // 20 รอบ รอบละ 1 s
 
         const key = randomPin();
         const salt = await bcrypt.genSalt( parseInt(process.env.BCRYPT_SALT_ROUNDS));
@@ -231,8 +231,7 @@ const endmeeting = async (req, res) => {
 }  
 
 const closedoor = async (req, res) => {
-    // const { roomNumber } = req.body;
-    const room_number = '01'; 
+    const { room_number } = req.body;
     if (!room_number) return res.status(400).json({ error: "RoomNumber is Missing" }); 
     const room = room_number.slice(2,4);
 

@@ -24,11 +24,16 @@ const createadmin = async (req, res) => {
       duplicatefield.length > 1 ? message = `These ${duplicatefield.join('and')} are exists, Please use a different one.`  : message;
       return res.status(400).json({ message });
     }
+
+    const salt = await bcrypt.genSalt(parseInt(process.env.BCRYPT_SALT_ROUNDS));
+    const hashpassword = await bcrypt.hash(password, salt);
     const newAdmin = await User.create({
       email,
-      password, // เข้ารหัส password
+      password: hashpassword, // เข้ารหัส password
       role: 'Admin',
-      login_status: 'offline'
+      login_status: 'offline',
+      name,
+      pin
     });
 
     // logsmonitoring function

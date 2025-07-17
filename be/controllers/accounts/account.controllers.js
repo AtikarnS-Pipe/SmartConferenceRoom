@@ -12,6 +12,7 @@ const Auth = async (req, res) => { // admin sign-in
     console.log("ready to auth", email, password);
     try{
       const user = await User.findOne({ email, role: { $in: ['Admin', 'Superadmin'] } });
+      console.log("user :", user);
       if(!user){
         console.log("[Login] User not found:", email);
         return res.status(404).json({error: "User not found"});

@@ -30,7 +30,7 @@ async function getuserdatabyroom(res, RoomNumber) {
             throw new Error(`No value in graphResponse for room ${RoomNumber}: ${JSON.stringify(graphResponse)}`);
         }
         const results = graphResponse.value
-        if(process.env.DEBUG_MODE) console.log("usersdate => ",results)
+        // if(process.env.DEBUG_MODE) console.log("usersdate => ",results)
         res.write(`data: ${JSON.stringify({ results })}\n\n`);
         
     } catch (error) {
