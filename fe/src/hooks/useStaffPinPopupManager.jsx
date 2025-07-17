@@ -79,6 +79,8 @@ const StaffPinPopupManager = ({ showTestButton, closeUserPinPopup }) => {
   }, [waiting, pendingError]);
 
 
+
+
   return (
     <>
       {/* ปุ่มทดสอบสำหรับ staff pin */}
@@ -98,6 +100,7 @@ const StaffPinPopupManager = ({ showTestButton, closeUserPinPopup }) => {
           title="Enter Staff PIN"
           showIcon={false}
           showStaffIcon={true}
+          onClose={() => setVisible(false)}
         />
       )}
     </>

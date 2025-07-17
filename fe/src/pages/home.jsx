@@ -14,6 +14,7 @@ import { useRoomData } from '../hooks/useRoomData'
 import { getTimeRemaining } from '../hooks/useTimeRemaining'
 import { useCurrentTime } from '../hooks/useCurrentTime';
 import { useEvents } from '../hooks/useEvents';
+import { useCloseDoor } from '../hooks/useCloseDoor';
 import PinPopupManager from '../hooks/usePinPopupManager'
 import StaffPinPopupManager from '../hooks/useStaffPinPopupManager'
 
@@ -22,6 +23,8 @@ function Home() {
   const { events, loading } = useEvents( floor, room);
   const {currentEvent,isOccupied } = useCurrentEvent(events);
   const currentTime = useCurrentTime()
+  useCloseDoor(events);
+  
   const [zoomLevel, setZoomLevel] = useState(1);
   const [closeUserPin, setCloseUserPin] = useState(false);
   const [bookingInProgress, setBookingInProgress] = useState(false);

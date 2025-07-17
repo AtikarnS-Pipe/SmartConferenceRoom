@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import {DoorClosedLocked,DoorOpen,ShieldUser} from 'lucide-react'
 
-const PinPopup = ({ onSubmit, error, waiting, title = 'Enter PIN Code', showIcon = true, showStaffIcon = false }) => {
+const PinPopup = ({ onSubmit, error, waiting, title = 'Enter PIN Code', showIcon = true, showStaffIcon = false, onClose }) => {
   const [pin, setPin] = useState('');
   const [blink, setBlink] = useState(false);
+  const [countdown, setCountdown] = useState(30);
 
   useEffect(() => {
     if (pin.length === 4 && !waiting) {
@@ -11,6 +12,31 @@ const PinPopup = ({ onSubmit, error, waiting, title = 'Enter PIN Code', showIcon
       setPin('');
     }
   }, [pin, waiting]);
+
+// Reset countdown when component mounts
+  useEffect(() => {
+    setCountdown(30);
+  }, []);
+
+  // Auto-close timer with countdown
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          if (onClose) onClose();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  // Reset countdown on user interaction
+  const resetCountdown = () => {
+    setCountdown(30);
+  };
 
   useEffect(() => {
     if (typeof error === 'string' && error !== 'Correct password' && error.trim() !== '') {
@@ -21,14 +47,17 @@ const PinPopup = ({ onSubmit, error, waiting, title = 'Enter PIN Code', showIcon
   }, [error]);
 
   const handlePress = (num) => {
+    resetCountdown();
     if (pin.length < 4) setPin(pin + num);
   };
 
   const handleBackspace = () => {
+    resetCountdown();
     setPin(pin.slice(0, -1));
   };
 
   const handleClear = () => {
+    resetCountdown();
     setPin('');
   };
 
@@ -85,7 +114,7 @@ const PinPopup = ({ onSubmit, error, waiting, title = 'Enter PIN Code', showIcon
           justifyContent: 'center',
           gap: '0.5rem'
         }}>
-          {title}
+          {title} {countdown > 0 && `(${countdown}s)`}
           {showStaffIcon && <ShieldUser size={30} color="#000000" />}
           {showIcon && (error === 'Correct password' ? <DoorOpen size={30} color="#000000" /> : <DoorClosedLocked size={30} color="#000000" />)}
         </h2>

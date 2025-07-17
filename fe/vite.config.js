@@ -15,6 +15,7 @@ export default defineConfig({
       '/user/ms/delete': 'http://localhost:4000', // สำหรับลบ event
       '/user/ms/create': 'http://localhost:4000', // สำหรับสร้าง event
       '/user/endmeeting': 'http://localhost:4000', // สำหรับสิ้นสุดการประชุม
+      '/user/close-door': 'http://localhost:4000', // สำหรับปิดประตู
     },
   },
 });
