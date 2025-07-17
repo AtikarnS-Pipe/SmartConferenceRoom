@@ -27,7 +27,7 @@ export function useCloseDoor(events) {
 
   const notifyCloseDoor = async (roomId) => {
     try {
-      const res = await fetch('/user/close-door', {
+      const res = await fetch('/user/closedoor', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ room_number: roomId }),
