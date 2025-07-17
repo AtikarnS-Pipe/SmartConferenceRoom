@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {DoorClosedLocked,DoorOpen,ShieldUser} from 'lucide-react'
 
-const PinPopup = ({ onSubmit, error, waiting, title = 'Enter PIN Code', showIcon = true, showStaffIcon = false, onClose }) => {
+const PinPopup = ({ onSubmit, error, waiting, title = 'Enter PIN Code', showIcon = true, showStaffIcon = false, onClose, disableCountdown = false }) => {
   const [pin, setPin] = useState('');
   const [blink, setBlink] = useState(false);
   const [countdown, setCountdown] = useState(30);
@@ -15,11 +15,15 @@ const PinPopup = ({ onSubmit, error, waiting, title = 'Enter PIN Code', showIcon
 
 // Reset countdown when component mounts
   useEffect(() => {
-    setCountdown(30);
-  }, []);
+    if (!disableCountdown) {
+      setCountdown(30);
+    }
+  }, [disableCountdown]);
 
-  // Auto-close timer with countdown
+  // Auto-close timer with countdown (only if countdown is enabled)
   useEffect(() => {
+    if (disableCountdown) return;
+    
     const timer = setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) {
@@ -31,11 +35,13 @@ const PinPopup = ({ onSubmit, error, waiting, title = 'Enter PIN Code', showIcon
     }, 1000);
 
     return () => clearInterval(timer);
-  }, []);
+  }, [disableCountdown, onClose]);
 
-  // Reset countdown on user interaction
+  // Reset countdown on user interaction (only if countdown is enabled)
   const resetCountdown = () => {
-    setCountdown(30);
+    if (!disableCountdown) {
+      setCountdown(30);
+    }
   };
 
   useEffect(() => {
@@ -114,7 +120,7 @@ const PinPopup = ({ onSubmit, error, waiting, title = 'Enter PIN Code', showIcon
           justifyContent: 'center',
           gap: '0.5rem'
         }}>
-          {title} {countdown > 0 && `(${countdown}s)`}
+          {title} {!disableCountdown && countdown > 0 && `(${countdown}s)`}
           {showStaffIcon && <ShieldUser size={30} color="#000000" />}
           {showIcon && (error === 'Correct password' ? <DoorOpen size={30} color="#000000" /> : <DoorClosedLocked size={30} color="#000000" />)}
         </h2>

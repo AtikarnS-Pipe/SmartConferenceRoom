@@ -123,7 +123,7 @@ useEffect(() => {
       room_number: roomId,
     });
     setWaiting(false);
-    console.log(result.pinValid);
+    console.log("pinValid",result.pinValid);
     // เก็บ pending error ไว้ก่อน
     if (result.pinValid) {
       setPinVerified(true);
@@ -154,6 +154,7 @@ useEffect(() => {
           error={error} 
           waiting={waiting} 
           onClose={() => setPinVisible(false)}
+          disableCountdown={true}
         />
       )}
     </>

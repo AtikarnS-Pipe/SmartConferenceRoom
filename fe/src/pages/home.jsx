@@ -77,7 +77,7 @@ function Home() {
       </div>
 
       {/* popup */}
-      {/* <PinPopupManager events={events} closeSignal={closeUserPin} bookingInProgress={bookingInProgress} /> */}
+      <PinPopupManager events={events} closeSignal={closeUserPin} bookingInProgress={bookingInProgress} />
       <StaffPinPopupManager showTestButton closeUserPinPopup={handleCloseUserPin} />
     </div>
   )
