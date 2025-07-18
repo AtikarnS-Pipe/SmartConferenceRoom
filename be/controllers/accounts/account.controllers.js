@@ -167,7 +167,7 @@ const deletehousekeeper = async (req, res) => {
     res.status(200).json({ success: true, message: `Housekeeper's name ${name}, has been deleted successfully` });
   } catch (error) {
     console.error("Delete housekeeper error:", error);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ success: false, error: 'Internal server error' });
   }
 }
 

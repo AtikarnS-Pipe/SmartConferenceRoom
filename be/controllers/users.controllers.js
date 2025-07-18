@@ -69,12 +69,12 @@ const keyPins = async (req, res) => {
             console.log(`Invalid pin for event: ${isValid}`);
             return res.status(200).json({ error: "Booking not found" });
         }
-        const isOpen = await sendMQTTMessage(`floor15/access-control/${room}`, 'open'); 
-        console.log(`MQTT message sent: ${isOpen}`);
-        if (!isOpen.success) {
-            console.error(`Failed to send MQTT message: ${isOpen.error}`);
-            return res.status(500).json({ error: "Failed to send MQTT message" });
-        }
+        // const isOpen = await sendMQTTMessage(`floor15/access-control/${room}`, 'open'); 
+        // console.log(`MQTT message sent: ${isOpen}`);
+        // if (!isOpen.success) {
+        //     console.error(`Failed to send MQTT message: ${isOpen.error}`);
+        //     return res.status(500).json({ error: "Failed to send MQTT message" });
+        // }
         return res.status(200).json({ pinValid: isValid });
     } catch (error) {
         return res.status(500).json({ error: "Internal Server Error" });
@@ -97,12 +97,12 @@ const adminKeyPin = async (req, res) => {
         if (!result.success) {
             return res.status(200).json({ success: result.success, message: result.message });
         }
-        const isOpen = await sendMQTTMessage(`floor15/access-control/${room}`, 'open'); 
-        console.log(`MQTT message sent: ${isOpen}`);
-        if (!isOpen.success) {
-            console.error(`Failed to send MQTT message: ${isOpen.error}`);
-            return res.status(500).json({ error: "Failed to send MQTT message" });
-        }
+        // const isOpen = await sendMQTTMessage(`floor15/access-control/${room}`, 'open'); 
+        // console.log(`MQTT message sent: ${isOpen}`);
+        // if (!isOpen.success) {
+        //     console.error(`Failed to send MQTT message: ${isOpen.error}`);
+        //     return res.status(500).json({ error: "Failed to send MQTT message" });
+        // }
 
         return res.status(200).json({ success: result.success, message: result.message });x
     } catch (err) {
@@ -155,6 +155,7 @@ const createroom = async (req, res) => { // createroomdata = {RoomNumber, startd
     if (!createroomdata || !createroomdata.RoomNumber || !createroomdata.startdatetime || !createroomdata.enddatetime) {
         return res.status(400).json({ error: "Missing required fields" });
     }
+    console.log("Create room data:", createroomdata);
     const { RoomNumber, startdatetime, enddatetime } = createroomdata;
     const AccessToken = tokenCache.getAccessToken();
     if (!AccessToken) {
@@ -166,34 +167,27 @@ const createroom = async (req, res) => { // createroomdata = {RoomNumber, startd
         if (!iscreated) {
             throw new Error("Failed to create event");
         }
-
-        const eventId = await waitUntil(async () => {
-            return await GeteventId(
-                AccessToken,
-                roomobject[RoomNumber],
-                process.env.CENTERLIZED_MAIL,
-                startdatetime,
-                enddatetime
-            );
-        }, 20000, 1000); // 20 รอบ รอบละ 1 s
-
-        const key = randomPin();
-        const salt = await bcrypt.genSalt( parseInt(process.env.BCRYPT_SALT_ROUNDS));
-        const hashedPassword = await bcrypt.hash(key, salt);
-        const booking = await bookingkey.create({ // ใส่เมลไม่ได้ เพราะเขาไปจองหน้าห้องประชุม
-            room: RoomNumber,
-            eventId: eventId,
-            key: hashedPassword,
-            pin: key, // save pin for user
-            startDateTime: new Date(iscreated.start?.dateTime + "Z"), // UTC time, so frontend need to convert before sending time(thailand - 7 hr)
-            endDateTime: new Date(iscreated.end?.dateTime + "Z")
-        })
-        console.log(`Booking ${createroomdata.RoomNumber} with Meetingroom key : `, key);
-        res.status(200).json({ message: "Event Create successfully", key});
+        console.log(`Booking ${createroomdata.RoomNumber} with Meetingroom`);
+        res.status(200).json({ success: true });
 
     } catch (error) {
         console.error("Error create event:", error);
         res.status(500).json({ error: error.message || "Failed to create event" });
+    }
+}
+
+const searchpinByeventId = async (req, res) => {
+    const { eventId, room_number } = req.body;
+    if (!eventId) return res.status(400).json({ error: "Event ID is required" });
+
+    try {
+        const booking = await bookingkey.findOne({ eventId, room: room_number });
+        if (!booking) return res.status(404).json({ error: "Not found" });
+        
+        res.status(200).json({ success: true, pin: booking.pin});
+    } catch (error) {
+        console.error("Error searching pin by event ID:", error);
+        res.status(500).json({ success: false, error: "Failed to search pin by event ID" });
     }
 }
 
@@ -236,9 +230,9 @@ const closedoor = async (req, res) => {
     const room = room_number.slice(2,4);
 
     try{
-        const isClosed = await sendMQTTMessage(`floor15/access-control/${room}`, 'close');
-        console.log(`MQTT message sent: ${isClosed}`);
-        if(!isClosed.success) throw new Error(isClosed.error);
+        // const isClosed = await sendMQTTMessage(`floor15/access-control/${room}`, 'close');
+        // console.log(`MQTT message sent: ${isClosed}`);
+        // if(!isClosed.success) throw new Error(isClosed.error);
         return res.status(200).json({ success: true, message: `Door for room ${room_number} closed successfully` });
     } catch (error){
         console.error(`Error closing door for room ${room_number}:`, error)
@@ -246,7 +240,9 @@ const closedoor = async (req, res) => {
     }
 }
 
-module.exports = { getuser
-    , keyPins, adminKeyPin, closedoor
+module.exports = { 
+    getuser
+    , keyPins, searchpinByeventId
+    , adminKeyPin, closedoor
     , deleteroom, createroom ,endmeeting
 };

@@ -15,8 +15,8 @@ async function getuserdatabyroom(res, RoomNumber) {
             throw new Error("No access token in Users")
         }
         const graphResponse = await getGraphClient(accesstoken)
-            // .api(`https://graph.microsoft.com/v1.0/users/${RoomNumber}@tcc-technology.com/calendarView`)
-            .api(`https://graph.microsoft.com/v1.0/me/calendars/${roomobject[RoomNumber]}/calendarView?`)
+            .api(`https://graph.microsoft.com/v1.0/users/${RoomNumber}@tcc-technology.com/calendarView`)
+            // .api(`https://graph.microsoft.com/v1.0/me/calendars/${roomobject[RoomNumber]}/calendarView?`)
             .query({
                 startDateTime: startDateTime,
                 endDateTime: endDateTime,
@@ -46,7 +46,7 @@ async function getuserdatabyroom(res, RoomNumber) {
 
 
 
-const GeteventId = async (accessToken, calendarId, email, startdatetime, enddatetime) => { // ex. startdatetime:2025-07-10T11:00:00Z, enddatetime:2025-07-10T12:00:00Z
+const GeteventId = async (accessToken, roomnumber, email, startdatetime, enddatetime) => { // ex. startdatetime:2025-07-10T11:00:00Z, enddatetime:2025-07-10T12:00:00Z
     try{
         // console.log("startdatetime = ", startdatetime); // 2025-07-10T13:00:00Z
         const startdate = new Date(startdatetime);
@@ -57,13 +57,13 @@ const GeteventId = async (accessToken, calendarId, email, startdatetime, enddate
         // console.log("New date minus 1 seconds:", newEnddate);
 
         const events = await getGraphClient(accessToken)
-        .api(`/me/calendars/${calendarId}/calendarView`)
+        .api(`/user/${roomnumber}@tcc-technology.com/calendarView?`)
         .query({
-                startDateTime: newStartdate, 
-                endDateTime: newEnddate,
-                $select: "id,organizer", 
-            })
-            .get();
+            startDateTime: newStartdate, 
+            endDateTime: newEnddate,
+            $select: "id,organizer", 
+        })
+        .get();
 
         if (!events?.value?.length) return null;
         
