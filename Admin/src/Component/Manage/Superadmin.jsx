@@ -24,7 +24,7 @@ import { DarkModeContext } from '../Context/DarkModeContext';
 function Superadmin() {
   const [searchTerm, setSearchTerm] = useState('');
   const [members, setMembers] = useState([]);
-  const [newmember, setNewMember] = useState({
+  const [newMember, setNewMember] = useState({
         email: '',
         password: '',
         name: '',
@@ -34,6 +34,7 @@ function Superadmin() {
   const [selectedMembers, setSelectedMembers] = useState([]);
   const [newPassword, setNewPassword] = useState('');
   const [show, setShow] = useState(false);
+  const [showAdminStatus, setShowAdminStatus] = useState(false);
   const [error, setError] = useState(null);
   const [pinChanged, setPinChanged] = useState(null);
   const [adminstatus, setAdminStatus] = useState(null);
@@ -174,7 +175,9 @@ const handleSignout = async () => {
   }
 };
 const handleAddAdmin = async () => {
-  if (!newmember.name || !newmember.pin) {
+  console.log('Sending data:', newMember);
+
+  if (!newMember.name || !newMember.pin || !newMember.email || !newMember.password) {
     alert("Please fill in all fields.");
     return;
   }
@@ -183,50 +186,46 @@ const handleAddAdmin = async () => {
     const token = localStorage.getItem("token");
 
     const response = await axios.post(
-      "/superadmin/createadmin", // เปลี่ยน endpoint ตาม backend ที่รองรับ
+      "/superadmin/createadmin",
       {
-        email: newmember.email,
-        password: newmember.password,
-        name: newmember.name,
-        pin: newmember.pin,
+        email: newMember.email,
+        password: newMember.password,
+        name: newMember.name,
+        pin: newMember.pin
       },
       {
         headers: {
-          Authorization: `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
         },
         withCredentials: true
       }
     );
 
-    const createdAdmin = response.data;
+    console.log('Response:', response.data);
 
-    setAdminList((prev) => [
-      ...prev,
-      {
-        id: createdAdmin._id || prev.length + 1,  // ถ้า backend ส่ง id มาก็ใช้
-        name: createdAdmin.name,
-        role: createdAdmin.role,
-        status: "Offline",
-        lastLogin: "N/A"
-      }
-    ]);
- setAdminStatus('success');
-  setTimeout(() => {
-    setAdminStatus(null);
-  }, 3000);
+    setAdminStatus('success');  // ✅ แสดง popup success
 
-  setShowModal(false);
-  setNewMember({ name: "", pin: "", email: "", password: "" });
+    setTimeout(() => {
+      setShowAdminStatus(false);  // ✅ ปิด popup หลัง 2 วินาที (เช่น)
+    }, 2000);
 
-} catch (error) {
-  setAdminStatus('error');
-  setTimeout(() => {
-    setAdminStatus(null);
-  }, 3000);}
+    // ล้างฟอร์มหรือปิด modal ถ้าต้องการ
+    setNewMember({ name: "", pin: "", email: "", password: "" });
 
-  console.error("Error creating admin:", error);
-  alert("Failed to create admin. Please try again.");
-}
+  } catch (error) {
+    console.error("Backend error:", error.response?.data || error.message);
+
+    setAdminStatus('error');      // ✅ แสดง popup error
+
+    setTimeout(() => {
+      setShowAdminStatus(false);  // ✅ ปิด popup หลัง 2 วินาที
+    }, 2000);
+
+    alert("Failed to create admin. Please check form data or contact developer.");
+  }
+};
+
 const handleDeleteAdmins = async () => {
   if (selectedMembers.length === 0) {
     alert('Please select at least one admin.');
@@ -428,8 +427,8 @@ const handleDeleteAdmins = async () => {
               <label className={`block text-sm mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>Email</label>
               <input
                 type="email"
-                value={newmember.email}
-                onChange={(e) => setNewMember({...newmember, email: e.target.value})}
+                value={newMember.email}
+                onChange={(e) => setNewMember({...newMember, email: e.target.value})}
                 className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring focus:ring-blue-200 ${
                   darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'
                 }`}
@@ -442,8 +441,8 @@ const handleDeleteAdmins = async () => {
               <div className="relative">
                 <input
                   type={showAddAdminPassword ? "text" : "password"}
-                  value={newmember.password}
-                  onChange={(e) => setNewMember({ ...newmember, password: e.target.value })}
+                  value={newMember.password}
+                  onChange={(e) => setNewMember({ ...newMember, password: e.target.value })}
                   className={`w-full px-3 py-2 pr-10 border rounded-md shadow-sm focus:ring focus:ring-blue-200 ${
                     darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'
                   }`}
@@ -463,8 +462,8 @@ const handleDeleteAdmins = async () => {
               <label className={`block text-sm mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>Name</label>
               <input
                 type="text"
-                value={newmember.name}
-                onChange={(e) => setNewMember({ ...newmember, name: e.target.value })}
+                value={newMember.name}
+                onChange={(e) => setNewMember({ ...newMember, name: e.target.value })}
                 className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring focus:ring-blue-200 ${
                   darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'
                 }`}
@@ -476,8 +475,8 @@ const handleDeleteAdmins = async () => {
               <label className={`block text-sm mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>PIN</label>
               <input
                 type="text"
-                value={newmember.pin}
-                onChange={(e) => setNewMember({ ...newmember, pin: e.target.value })}
+                value={newMember.pin}
+                onChange={(e) => setNewMember({ ...newMember, pin: e.target.value })}
                 className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring focus:ring-blue-200 ${
                   darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'
                 }`}
