@@ -3,11 +3,14 @@ import { useIsFullDayEvent } from '../hooks/useIsFullDayEvent.jsx';
 import BookingModal from './BookingModal';
 import React, { useState } from 'react';
 import axios from 'axios';
+import { useRoomData } from '../hooks/useRoomData';
 
 export default function Boxdetail({ isOccupied, event, getTimeRemaining, loading, onSetBookingInProgress}) {
   const isFullDayEvent = useIsFullDayEvent();
   const [showModal, setShowModal] = useState(false);
   const [isEnding, setIsEnding] = useState(false);
+  const { floor, room } = useRoomData(); 
+  const roomId = `${floor}${room}`;
 
   const handleEndMeeting = async () => {
     if (!event || !event.organizer || !event.start || !event.end) {
@@ -20,6 +23,7 @@ export default function Boxdetail({ isOccupied, event, getTimeRemaining, loading
       const endmeetingdata = {
         eventId : event.id,
         startdatetime: event.start.dateTime + 'Z',
+        room_number: roomId,
       };
       console.log('Sending endmeeting data:', endmeetingdata);
 
