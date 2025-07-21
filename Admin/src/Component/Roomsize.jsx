@@ -99,7 +99,7 @@ function RoomSize() {
           )}
           </li>
           <li>
-            <h1 className='cursor-pointer' onClick={()=>navigate('/account/housekeeper')}>Management</h1>
+            <h1 className='cursor-pointer' onClick={()=>navigate('/account/admin')}>Management</h1>
           </li>
             </ul>
             <div className=' max-md:flex'>

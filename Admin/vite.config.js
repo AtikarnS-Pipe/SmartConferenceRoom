@@ -32,6 +32,7 @@ export default defineConfig({
       '/account/getname': 'http://localhost:4000',
       '/account/logsmonitoring': 'http://localhost:4000',
       '/account/me': 'http://localhost:4000',
+      '/superadmin/createadmin': 'http://localhost:4000',
     }
   }
 })

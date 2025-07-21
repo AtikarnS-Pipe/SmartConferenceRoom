@@ -2,10 +2,12 @@ import { useState ,useEffect} from 'react'
 import Roomcard from './Roomcard';
 import Roomdata from './Roomdata';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import axios from 'axios';
 
 function RoomPage() {
     const [currentTime, setCurrentTime] = useState(new Date());
     const [loading, setLoading] = useState(true);
+    const [profile, setProfile] = useState(null);
     const location = useLocation();
     const navigate = useNavigate(); 
     const [openMenu1, setOpenMenu1] = useState(false); 
@@ -45,6 +47,37 @@ function RoomPage() {
       };
     }, []);
   
+      useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    axios.get('/account/me', {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+      .then(res => {
+        setProfile(res.data);
+        console.log("Profile data fetched:", res.data);
+      })
+      .catch(err => console.error(err));
+  }, []);
+
+  useEffect(() => {
+    if (profile) {
+      console.log("Profile state updated:", profile);
+    }
+  }, [profile]);
+
+  const handleNavigateByRole = () => {
+  const role = profile?.role; // ดึง role จาก localStorage
+    console.log("Navigating based on role:", role);
+  if (role === 'Superadmin') {
+    navigate('/account/superadmin');
+  } else if (role === 'Admin') {
+    navigate('/account/admin');
+  } else {
+    navigate('/'); // สำรองเผื่อ role อื่นหรือไม่มี role
+  }
+};
     useEffect(() => {
         const timer = setInterval(() => {
           setCurrentTime(new Date());
@@ -138,8 +171,13 @@ function RoomPage() {
           )}
           </li>
           <li>
-            <h1 className='cursor-pointer' onClick={()=>navigate('/account/housekeeper')}>Management</h1>
-          </li>
+                    <h1
+                      className='cursor-pointer'
+                      onClick={handleNavigateByRole}
+                    >
+                      Management
+                    </h1>
+                  </li>
             </ul>
             <div className=' max-md:flex'>
                 <h2 className='md:text-2xl max-md:mr-5'>{timeString}</h2>

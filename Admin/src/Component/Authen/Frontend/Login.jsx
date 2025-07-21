@@ -5,12 +5,33 @@ import { Mail, Lock, Eye, EyeOff, LogIn, CheckCircle, XCircle } from 'lucide-rea
 
 function Verify({ setAuth }) {
   const [formData, setFormData] = useState({ email: '', password: '' });
+  const [profile, setProfile] = useState('');
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [loginSuccess, setLoginSuccess] = useState(false);
   const [showErrorToast, setShowErrorToast] = useState(false);
   const navigate = useNavigate();
+
+          useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    axios.get('/account/me', {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+      .then(res => {
+        setProfile(res.data);
+        console.log("Profile data fetched:", res.data);
+      })
+      .catch(err => console.error(err));
+  }, []);
+
+  useEffect(() => {
+    if (profile) {
+      console.log("Profile state updated:", profile);
+    }
+  }, [profile]);
 
   const handleInputChange = (e) => {
     setFormData({
@@ -27,6 +48,7 @@ function Verify({ setAuth }) {
     try {
       const res = await axios.post('/account/auth', formData);
       localStorage.setItem('token', res.data.token);
+      localStorage.setItem('role', res.data.role); // เก็บ role ใน localStorage
       console.log("Login successful:", res.data.token);
       setAuth(true);
       setLoginSuccess(true);
@@ -46,6 +68,7 @@ function Verify({ setAuth }) {
   const handleForgotPassword = () => {
     navigate('/forgot-password');
   };
+
 
   return (
     <div className="min-h-screen flex flex-col">

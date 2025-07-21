@@ -19,8 +19,9 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { DarkModeContext } from '../Context/DarkModeContext';
 
-function Account() {
+function Admin() {
   const [searchTerm, setSearchTerm] = useState('');
   const [members, setMembers] = useState([]);
   const [currentUserName, setCurrentUserName] = useState('');
@@ -35,7 +36,7 @@ function Account() {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [open, setOpen] = useState(false);
-  const [darkMode, setDarkMode] = useState(false);
+  const { darkMode, toggleDarkMode } = useContext(DarkModeContext);
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
 
@@ -64,7 +65,7 @@ function Account() {
       }
     };
 
-    eventSource.addEventListener('AdminList', handleAdminList);
+    eventSource.addEventListener('adminList', handleAdminList);
 
     eventSource.onerror = (error) => {
       console.error('SSE connection error:', error);
@@ -190,6 +191,7 @@ const handleSignout = async () => {
     }
   }, [profile]);
 
+
   const formatDate = (isoString) => {
     const date = new Date(isoString);
     return date.toLocaleString('en-GB', {
@@ -200,10 +202,6 @@ const handleSignout = async () => {
       minute: '2-digit',
       hour12: false,
     }).replace(',', '');
-  };
-
-  const toggleDarkMode = () => {
-    setDarkMode(!darkMode);
   };
 
   const totalUsers = members.length;
@@ -326,6 +324,7 @@ const handleSignout = async () => {
                 <UserCheck className="w-4 h-4 text-white" />
                 <span className="text-sm text-white">Housekeeper</span>
               </button>
+              <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-slate-400'} uppercase tracking-wider mb-3 px-3 mt-5`}>MONITORING</p>
               <button className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-300 hover:${darkMode ? 'bg-gray-700' : 'bg-slate-700'} text-left cursor-pointer`} onClick={() => navigate('/account/dashboard')}>
                 <LayoutDashboard className="w-4 h-4 text-white" />
                 <span className="text-sm text-white">Dashboard</span>
@@ -344,7 +343,12 @@ const handleSignout = async () => {
               <h1 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>Account Management</h1>
               <p className={`${darkMode ? 'text-gray-400' : 'text-gray-600'} mt-1`}>Manage users and permission</p>
             </div>
+
             <div className="flex items-center gap-3">
+              <div className='flex px-4 py-1.5 gap-2 rounded-lg bg-blue-600 text-white'>
+                    <Shield  className="w-4 h-6" />
+                   <h1>{profile?.role}</h1>
+                </div>
               {/* Dark Mode Toggle */}
               <button
                 onClick={toggleDarkMode}
@@ -372,8 +376,10 @@ const handleSignout = async () => {
               <div className={`flex items-center gap-2 px-4 py-1.5 rounded-lg w-fit ${
                 darkMode ? 'bg-gray-700' : 'bg-gray-200'
               }`}>
-                <div className="text-lg tracking-widest">
-                  {show ? pinChanged : '●'.repeat(newPassword.length)}
+                <div className={`text-lg tracking-widest ${
+                  darkMode ? 'text-white' : 'text-gray-700'
+                }`}>
+                  {show ? profile?.pin || '0000' : '●'.repeat(profile?.pin?.length || 4)}
                 </div>
                 <button
                   type="button"
@@ -410,7 +416,7 @@ const handleSignout = async () => {
                     <path d="M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662" />
                   </svg>
                   <span className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-700'}`} >{profile?.name || 'Guest'}</span>
-                  <ChevronDown className={`w-4 h-4 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`} />
+                  <ChevronDown className={`w-4 h-4 ${darkMode ? 'text-white' : 'text-gray-500'}`} />
                 </div>
 
                 <div
@@ -592,4 +598,4 @@ const handleSignout = async () => {
   );
 }
 
-export default Account;
+export default Admin;

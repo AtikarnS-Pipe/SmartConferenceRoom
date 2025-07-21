@@ -1,7 +1,7 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useContext } from 'react';
 import {
   Activity,
-  AlertTriangle,
+  Crown,
   XCircle,
   Info,
   Search,
@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { DarkModeContext } from '../Context/DarkModeContext';
 
 function Log() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -35,7 +36,7 @@ function Log() {
   const [logs, setLogs] = useState([]);
   const [newPassword, setNewPassword] = useState('');
   const [show, setShow] = useState(false);
-  const [pinChanged, setPinChanged] = useState(null);
+  const [profile, setProfile] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [statusPopup, setStatusPopup] = useState(null);
@@ -43,7 +44,7 @@ function Log() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [open, setOpen] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState('connecting');
-  const [darkMode, setDarkMode] = useState(false);
+  const { darkMode, toggleDarkMode } = useContext(DarkModeContext);
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
 
@@ -209,10 +210,49 @@ function Log() {
       alert('Failed to sign out.');
     }
   };
+    useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
 
-  const toggleDarkMode = () => {
-    setDarkMode(!darkMode);
+    axios.get('/account/me', {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+      .then(res => {
+        setProfile(res.data);
+        console.log("Profile data fetched:", res.data);
+      })
+      .catch(err => console.error(err));
+  }, []);
+
+  useEffect(() => {
+    if (profile) {
+      console.log("Profile state updated:", profile);
+    }
+  }, [profile]);
+    const handleNavigateByRole = () => {
+  const role = profile?.role; // ดึง role จาก localStorage
+    console.log("Navigating based on role:", role);
+  if (role === 'Superadmin') {
+    navigate('/account/superadmin');
+  } else if (role === 'Admin') {
+    navigate('/account/admin');
+  } else {
+    navigate('/'); // สำรองเผื่อ role อื่นหรือไม่มี role
+  }
+};
+  const icon = () => {
+    const role = profile?.role; // ดึง role จาก localStorage
+    if (role === 'Superadmin') {
+      return <Crown className="w-4 h-6" />;
+    }
+    else if (role === 'Admin') {
+      return <Shield className="w-4 h-6" />;
+    }
   };
+  const getRoleColor = (role) => {
+  if (role === 'Superadmin') return 'bg-yellow-600';
+  if (role === 'Admin') return 'bg-blue-600';
+};
 
   return (
     <div className={`min-h-screen ${darkMode ? 'bg-gray-900' : 'bg-gray-50'} flex flex-col md:flex-row font-display transition-colors duration-300`}>
@@ -320,9 +360,9 @@ function Log() {
             </button>
           </div>
           <div className="mt-4 md:mt-6">
-            <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-slate-400'} uppercase tracking-wider mb-3 px-3`}>Navigation</p>
+            <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-slate-400'} uppercase tracking-wider mb-3 px-3`}>ROLE FILTER</p>
             <div className="space-y-1">
-              <button className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-300 hover:${darkMode ? 'bg-gray-700' : 'bg-slate-700'} text-left cursor-pointer`} onClick={() => navigate('/account/admin')}>
+              <button className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-300 hover:${darkMode ? 'bg-gray-700' : 'bg-slate-700'} text-left cursor-pointer`} onClick={handleNavigateByRole}>
                 <Shield className="w-4 h-4 text-white" />
                 <span className="text-sm text-white">Admin</span>
               </button>
@@ -330,6 +370,7 @@ function Log() {
                 <UserCheck className="w-4 h-4 text-white" />
                 <span className="text-sm text-white">Housekeeper</span>
               </button>
+              <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-slate-400'} uppercase tracking-wider mb-3 px-3 mt-5`}>MONITORING</p>
               <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg bg-white text-blue-600 text-left">
                 <LayoutDashboard className="w-4 h-4" />
                 <span className="text-sm">Dashboard</span>
@@ -359,6 +400,10 @@ function Log() {
               </div>
             </div>
             <div className="flex items-center gap-3">
+              <div className={`flex px-4 py-1.5 gap-2 rounded-lg text-white ${getRoleColor(profile?.role)}`}>
+                  {icon()}
+                  <h1>{profile?.role}</h1>
+              </div>
               {/* Dark Mode Toggle */}
               <button
                 onClick={toggleDarkMode}
@@ -387,7 +432,7 @@ function Log() {
                 darkMode ? 'bg-gray-700' : 'bg-gray-200'
               }`}>
                 <div className="text-lg tracking-widest">
-                  {show ? pinChanged : '●'.repeat(newPassword.length)}
+                 {show ? profile?.pin || '0000' : '●'.repeat(profile?.pin?.length || 4)}
                 </div>
                 <button
                   type="button"
