@@ -24,18 +24,26 @@ import { DarkModeContext } from '../Context/DarkModeContext';
 function Superadmin() {
   const [searchTerm, setSearchTerm] = useState('');
   const [members, setMembers] = useState([]);
-  const [currentUserName, setCurrentUserName] = useState('');
+  const [newmember, setNewMember] = useState({
+        email: '',
+        password: '',
+        name: '',
+        pin: ''
+      });
   const [profile, setProfile] = useState(null);
   const [selectedMembers, setSelectedMembers] = useState([]);
   const [newPassword, setNewPassword] = useState('');
   const [show, setShow] = useState(false);
+  const [error, setError] = useState(null);
   const [pinChanged, setPinChanged] = useState(null);
+  const [adminstatus, setAdminStatus] = useState(null);
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [statusPopup, setStatusPopup] = useState(null);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [open, setOpen] = useState(false);
+  const [selectedAdmins, setSelectedAdmins] = useState([]);
   
   // New states for Add Admin functionality
   const [showAddAdminModal, setShowAddAdminModal] = useState(false);
@@ -165,6 +173,97 @@ const handleSignout = async () => {
     alert('Failed to sign out.');
   }
 };
+const handleAddAdmin = async () => {
+  if (!newmember.name || !newmember.pin) {
+    alert("Please fill in all fields.");
+    return;
+  }
+
+  try {
+    const token = localStorage.getItem("token");
+
+    const response = await axios.post(
+      "/superadmin/createadmin", // เปลี่ยน endpoint ตาม backend ที่รองรับ
+      {
+        email: newmember.email,
+        password: newmember.password,
+        name: newmember.name,
+        pin: newmember.pin,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`
+        },
+        withCredentials: true
+      }
+    );
+
+    const createdAdmin = response.data;
+
+    setAdminList((prev) => [
+      ...prev,
+      {
+        id: createdAdmin._id || prev.length + 1,  // ถ้า backend ส่ง id มาก็ใช้
+        name: createdAdmin.name,
+        role: createdAdmin.role,
+        status: "Offline",
+        lastLogin: "N/A"
+      }
+    ]);
+ setAdminStatus('success');
+  setTimeout(() => {
+    setAdminStatus(null);
+  }, 3000);
+
+  setShowModal(false);
+  setNewMember({ name: "", pin: "", email: "", password: "" });
+
+} catch (error) {
+  setAdminStatus('error');
+  setTimeout(() => {
+    setAdminStatus(null);
+  }, 3000);}
+
+  console.error("Error creating admin:", error);
+  alert("Failed to create admin. Please try again.");
+}
+const handleDeleteAdmins = async () => {
+  if (selectedMembers.length === 0) {
+    alert('Please select at least one admin.');
+    return;
+  }
+
+  const confirmDelete = window.confirm("Are you sure you want to delete selected admins?");
+  if (!confirmDelete) return;
+
+  try {
+    const token = localStorage.getItem("token");
+    // Find selected member objects by their _id
+    const selectedMemberObjects = members.filter(m => selectedMembers.includes(m._id));
+    for (const member of selectedMemberObjects) {
+      await axios.delete(`/superadmin/deleteadmin`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        data: {
+          name: member.name, // or use member._id if backend expects id
+        },
+        withCredentials: true,
+      });
+    }
+
+    // Remove deleted members from the list
+    setMembers(prev => prev.filter(m => !selectedMembers.includes(m._id)));
+    setSelectedMembers([]);
+    alert('Selected admins have been deleted.');
+
+  } catch (error) {
+    console.error('Delete failed:', error);
+    alert('Failed to delete some or all admins.');
+  }
+};
+
+
 
   const handleSelectAll = () => {
     if (selectedMembers.length === filteredMembers.length) {
@@ -216,20 +315,20 @@ const handleSignout = async () => {
     }
   };
 
-  const handleAddAdminSubmit = () => {
-    // Add validation and submit logic here
-    console.log('Adding admin:', addAdminForm);
-    // Reset form and close modal
-    setAddAdminForm({ email: '', password: '', name: '', pin: '' });
-    setShowAddAdminModal(false);
-  };
+  // const handleAddAdminSubmit = () => {
+  //   // Add validation and submit logic here
+  //   console.log('Adding admin:', addAdminForm);
+  //   // Reset form and close modal
+  //   setAddAdminForm({ email: '', password: '', name: '', pin: '' });
+  //   setShowAddAdminModal(false);
+  // };
 
-  const handleAddAdminFormChange = (field, value) => {
-    setAddAdminForm(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
+  // const handleAddAdminFormChange = (field, value) => {
+  //   setAddAdminForm(prev => ({
+  //     ...prev,
+  //     [field]: value
+  //   }));
+  // };
 
   const formatDate = (isoString) => {
     const date = new Date(isoString);
@@ -329,8 +428,8 @@ const handleSignout = async () => {
               <label className={`block text-sm mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>Email</label>
               <input
                 type="email"
-                value={addAdminForm.email}
-                onChange={(e) => handleAddAdminFormChange('email', e.target.value)}
+                value={newmember.email}
+                onChange={(e) => setNewMember({...newmember, email: e.target.value})}
                 className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring focus:ring-blue-200 ${
                   darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'
                 }`}
@@ -343,8 +442,8 @@ const handleSignout = async () => {
               <div className="relative">
                 <input
                   type={showAddAdminPassword ? "text" : "password"}
-                  value={addAdminForm.password}
-                  onChange={(e) => handleAddAdminFormChange('password', e.target.value)}
+                  value={newmember.password}
+                  onChange={(e) => setNewMember({ ...newmember, password: e.target.value })}
                   className={`w-full px-3 py-2 pr-10 border rounded-md shadow-sm focus:ring focus:ring-blue-200 ${
                     darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'
                   }`}
@@ -364,8 +463,8 @@ const handleSignout = async () => {
               <label className={`block text-sm mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>Name</label>
               <input
                 type="text"
-                value={addAdminForm.name}
-                onChange={(e) => handleAddAdminFormChange('name', e.target.value)}
+                value={newmember.name}
+                onChange={(e) => setNewMember({ ...newmember, name: e.target.value })}
                 className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring focus:ring-blue-200 ${
                   darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'
                 }`}
@@ -377,8 +476,8 @@ const handleSignout = async () => {
               <label className={`block text-sm mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>PIN</label>
               <input
                 type="text"
-                value={addAdminForm.pin}
-                onChange={(e) => handleAddAdminFormChange('pin', e.target.value)}
+                value={newmember.pin}
+                onChange={(e) => setNewMember({ ...newmember, pin: e.target.value })}
                 className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring focus:ring-blue-200 ${
                   darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'
                 }`}
@@ -401,7 +500,7 @@ const handleSignout = async () => {
                 Cancel
               </button>
               <button
-                onClick={handleAddAdminSubmit}
+                onClick={handleAddAdmin}
                 className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center gap-2"
               >
                 <Plus className="w-4 h-4" />
@@ -424,6 +523,21 @@ const handleSignout = async () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
           <div className="bg-red-100 border border-red-400 text-red-700 px-6 py-4 rounded-xl shadow-lg text-lg">
             ❌ Failed to update password!
+          </div>
+        </div>
+      )}
+      {adminstatus === 'success' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <div className="bg-green-100 border border-green-400 text-green-700 px-6 py-4 rounded-xl shadow-lg text-lg">
+            ✅ Admin created successfully!
+          </div>
+        </div>
+      )}
+
+      {adminstatus === 'error' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <div className="bg-red-100 border border-red-400 text-red-700 px-6 py-4 rounded-xl shadow-lg text-lg">
+            ❌ Failed to create admin!
           </div>
         </div>
       )}
@@ -659,7 +773,7 @@ const handleSignout = async () => {
                     <span className="text-sm">Add Admin</span>
                   </button>
                   <button
-                    onClick={handleDeleteAdminClick}
+                    onClick={handleDeleteAdmins}
                     className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
                       selectedMembers.length > 0
                         ? 'bg-red-600 text-white hover:bg-red-700'
