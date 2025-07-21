@@ -384,7 +384,7 @@ const handleSignout = async () => {
                 <button
                   type="button"
                   onClick={() => setShow(!show)}
-                  className="focus:outline-none"
+                  className={`focus:outline-none ${darkMode ? 'text-white' : 'text-gray-500'}`}
                   title={show ? "Hide PIN" : "Show PIN"}
                 >
                   {show ? <EyeOff size={20} /> : <Eye size={20} />}

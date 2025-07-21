@@ -32,7 +32,6 @@ function Log() {
   const [selectedLevel, setSelectedLevel] = useState('all');
   const [selectedSource, setSelectedSource] = useState('all');
   const [autoRefresh, setAutoRefresh] = useState(false);
-  const [currentUserName, setCurrentUserName] = useState('AtikarnS');
   const [logs, setLogs] = useState([]);
   const [newPassword, setNewPassword] = useState('');
   const [show, setShow] = useState(false);
@@ -468,7 +467,7 @@ function Log() {
                     <circle cx="12" cy="10" r="3" />
                     <path d="M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662" />
                   </svg>
-                  <span className="text-sm font-medium">{currentUserName}</span>
+                  <span className="text-sm font-medium">{profile?.name || 'quest'}</span>
                   <ChevronDown className={`w-4 h-4 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`} />
                 </div>
 
