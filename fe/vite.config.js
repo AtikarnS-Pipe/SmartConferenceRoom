@@ -16,6 +16,7 @@ export default defineConfig({
       '/user/ms/create': 'http://localhost:4000', // สำหรับสร้าง event
       '/user/endmeeting': 'http://localhost:4000', // สำหรับสิ้นสุดการประชุม
       '/user/closedoor': 'http://localhost:4000', // สำหรับปิดประตู
+      '/user/search-pin': 'http://localhost:4000', // สำหรับค้นหา PIN
     },
   },
 });

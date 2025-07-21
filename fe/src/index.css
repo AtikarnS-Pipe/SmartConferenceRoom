@@ -929,8 +929,8 @@ body {
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
   width: 100%;
   max-width: 550px;
-  max-height: 90vh;
-  overflow-y: auto;
+  max-height: 100vh;
+  /* overflow-y: auto; */
   transform: scale(1);
   transition: transform 0.3s ease-in-out;
 }
@@ -940,6 +940,7 @@ body {
   color: #e5e5e5;
   padding: 1.5rem;
   position: relative;
+  border-radius: 1rem 1rem 0 0;
 }
 
 .close-button {
@@ -1047,14 +1048,25 @@ input[type="text"]:disabled {
   flex: 1;
   background-color: #e5e7eb;
   transition: all 0.3s;
+  position: relative;
+  overflow: hidden;
 }
 
 .timeline-block.booked-slot {
-  background-color: #bebebf;
+  background-color: #3B82F6;
 }
 
 .timeline-block.current-slot {
-  background-color: #5b6d8c;
+  background-color: #1D4ED8;
+}
+
+.timeline-block.existing-event {
+  background-color: #DC2626 !important;
+}
+
+.timeline-block.existing-event.current-slot {
+  background-color: #B91C1C !important;
+  /* border: 2px solid #7F1D1D; */
 }
 
 .timeline-labels {
@@ -1416,4 +1428,6 @@ input[type="text"]:disabled {
   cursor: pointer;
   transform: scale(1.2);
 }
+
+
 

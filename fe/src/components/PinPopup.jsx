@@ -35,7 +35,7 @@ const PinPopup = ({ onSubmit, error, waiting, title = 'Enter PIN Code', showIcon
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [disableCountdown, onClose]);
+  }, []);
 
   // Reset countdown on user interaction (only if countdown is enabled)
   const resetCountdown = () => {
