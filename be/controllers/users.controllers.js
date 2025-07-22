@@ -194,22 +194,35 @@ const searchpinByeventId = async (req, res) => {
 const endmeeting = async (req, res) => {
     try{
         const { endmeetingdata } = req.body; // endmeetingdata = {eventId, startdatetime, isAllDay}
-        
+
         const AccessToken = tokenCache.getAccessToken();
         let startDateTime;
         if (endmeetingdata.isAllDay) {
-            const now = new Date();
-            // สร้างวันที่ใหม่ของวันนี้ตอน 00:00 ตามเขตเวลา -7
-            const midnightLocal = new Date(now.getFullYear(), now.getMonth(), now.getDate()); // 00:00 ตาม local
-            // ปรับ -7 ชั่วโมง (เปลี่ยนเป็น UTC)
-            startDateTime = new Date(midnightLocal.getTime() + 8 * 60 * 60 * 1000).toISOString(); // = 17:00 วันก่อนหน้า UTC
+    // Parse วันที่จาก startdatetime มาเป็นปี/เดือน/วัน
+    const date = new Date(endmeetingdata.startdatetime);
+    const year  = date.getUTCFullYear();
+    const month = date.getUTCMonth();      // zero‑based
+    const day   = date.getUTCDate();
+
+    // สร้าง timestamp ของ 00:00 UTC
+    const utcMidnight = Date.UTC(year, month, day);
+    // บวก 1 ชั่วโมง (1 * 60 * 60 * 1000 ms)
+    const oneHourMs = 1 * 60 * 60 * 1000;
+    const dt = new Date(utcMidnight + oneHourMs);
+
+    // toISOString() จะคืนแบบ "...Z" เราเลย .replace เพื่อได้ ".0000000"
+        startDateTime = dt
+            .toISOString()           // e.g. "2025-07-21T18:00:00.000Z"
+            .replace(/.000Z$/, ".0000000");
         } else {
-            startDateTime = new Date(endmeetingdata.startdatetime).toISOString();
+        startDateTime = new Date(endmeetingdata.startdatetime)
+            .toISOString()
+            .replace(/.000Z$/, ".0000000");
         }
         await getGraphClient(AccessToken)
         .api(`/me/events/${endmeetingdata.eventId}`)
         .update({
-            // subject: `Meeting in Room ${endmeetingdata.RoomNumber} has end`,
+            // subject: Meeting in Room ${endmeetingdata.RoomNumber} has end,
             isAllDay: false,
             start: {
                 dateTime: startDateTime,
@@ -226,7 +239,7 @@ const endmeeting = async (req, res) => {
         console.error("Error in endtask:", error);
         res.status(500).json({ error: "Failed to end task" });
     }
-}  
+} 
 
 const closedoor = async (req, res) => {
     const { room_number } = req.body;
