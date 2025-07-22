@@ -358,16 +358,17 @@ const handleDeleteAdmins = async () => {
   return (
     <div className={`min-h-screen ${darkMode ? 'bg-gray-900' : 'bg-gray-50'} flex flex-col md:flex-row font-display transition-colors duration-300`}>
       {showPasswordModal && (
-        <div className="fixed inset-0 z-50 bg-black bg-opacity-40 flex items-center justify-center">
+        <div className="fixed inset-0 z-50 backdrop-blur-sm bg-gray-300/30 flex items-center justify-center">
           <div className={`${darkMode ? 'bg-gray-800 text-white' : 'bg-white'} p-6 rounded-xl shadow-lg w-96`}>
-            <h2 className={`text-lg font-semibold mb-4 ${darkMode ? 'text-white' : 'text-gray-800'}`}>Change Password</h2>
+            <h2 className={`text-lg font-semibold mb-4 ${darkMode ? 'text-white' : 'text-gray-800'}`}>Change My Pin</h2>
 
             <div className="mb-4">
-              <label className={`block text-sm mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>New Password</label>
+              <label className={`block text-sm mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>New PIN</label>
               <div className="relative">
                 <input
                   type={showNewPassword ? "text" : "password"}
                   value={newPassword}
+                  maxLength="4"
                   onChange={(e) => setNewPassword(e.target.value)}
                   className={`w-full px-3 py-2 pr-10 border rounded-md shadow-sm focus:ring focus:ring-blue-200 ${
                     darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'
@@ -384,11 +385,12 @@ const handleDeleteAdmins = async () => {
             </div>
 
             <div className="mb-6">
-              <label className={`block text-sm mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>Confirm New Password</label>
+              <label className={`block text-sm mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>Confirm New PIN</label>
               <div className="relative">
                 <input
                   type={showConfirmPassword ? "text" : "password"}
                   value={confirmPassword}
+                  maxLength="4"
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   className={`w-full px-3 py-2 pr-10 border rounded-md shadow-sm focus:ring focus:ring-blue-200 ${
                     darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'
@@ -420,7 +422,7 @@ const handleDeleteAdmins = async () => {
                 }}
                 className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
               >
-                Update Password
+                Update PIN
               </button>
             </div>
           </div>
@@ -527,17 +529,17 @@ const handleDeleteAdmins = async () => {
       )}
 
       {statusPopup === 'success' && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+        <div className="fixed inset-0 z-50 backdrop-blur-sm bg-white/20 flex items-center justify-center shadow-xl/30">
           <div className="bg-green-100 border border-green-400 text-green-700 px-6 py-4 rounded-xl shadow-lg text-lg">
-            ✅ Password updated successfully!
+            ✅ PIN updated successfully!
           </div>
         </div>
       )}
 
       {statusPopup === 'error' && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+        <div className="fixed inset-0 z-50 backdrop-blur-sm bg-white/20 flex items-center justify-center shadow-xl/30">
           <div className="bg-red-100 border border-red-400 text-red-700 px-6 py-4 rounded-xl shadow-lg text-lg">
-            ❌ Failed to update password!
+            ❌ Failed to update PIN!
           </div>
         </div>
       )}
@@ -836,14 +838,14 @@ const handleDeleteAdmins = async () => {
                         <div className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>{m.email}</div>
                       </td>
                       <td className="px-6 py-4">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                           {m.role}
                         </span>
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
-                          <div className={`w-2 h-2 rounded-full ${m.login_status === 'online' ? 'bg-green-400' : 'bg-red-400'}`} />
-                          <span className={`text-sm ${m.login_status === 'online' ? 'text-green-600' : 'text-red-600'}`}>
+                          <div className={`w-2 h-2 rounded-full ${m.login_status === 'online' ? 'bg-green-500' : 'bg-red-500'}`} />
+                          <span className={`text-sm ${m.login_status === 'online' ? 'text-green-500' : 'text-red-500'}`}>
                             {m.login_status}
                           </span>
                         </div>

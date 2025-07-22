@@ -26,6 +26,7 @@ function Housekeeper() {
   const [newPassword, setNewPassword] = useState('');
   const [newPin, setNewPin] = useState('');
   const [confirmPin, setConfirmPin] = useState('');
+  const [adminstatus, setAdminStatus] = useState(null);
   const [pinTargetName, setPinTargetName] = useState('');
   const [show, setShow] = useState(false);
   const [showPinModal, setShowPinModal] = useState(false);
@@ -160,54 +161,63 @@ const handleSelectHousekeeper = (housekeeper) => {
   }
 };
 
-    const handleAddMember = async () => {
-      if (!newMember.name || !newMember.pin) {
-        alert("Please fill in all fields.");
-        return;
-      }
+const handleAddMember = async () => {
+  if (!newMember.name?.trim() || !newMember.pin?.trim()) {
+    alert("Please fill in all fields.");
+    return;
+  }
 
-      try {
-        const token = localStorage.getItem("token"); // หรือจาก Context
-        const response = await axios.post(
-          "/account/createhousekeeper",
-          {
-            name: newMember.name,
-            pin: newMember.pin,
-            role: newMember.role
-          },
-          
+  try {
+    const token = localStorage.getItem("token");
+
+    const response = await axios.post(
+      "/account/createhousekeeper",
+      {
+        name: newMember.name.trim(),
+        pin: newMember.pin.trim(),
+      },
       {
         headers: {
           Authorization: `Bearer ${token}`
-        }
-        // ถ้า backend ใช้ cookie auth ด้วย ให้เพิ่ม:
-        , withCredentials: true
+        },
+        withCredentials: true
       }
-        );
+    );
 
-        // สมมุติ backend ส่ง object housekeeper กลับมา
-        const createdMember = response.data;
+    const createdMember = response.data;
 
-        setHousekeeper((prev) => [
-          ...prev,
-          {
-            id: prev.length + 1, // หรือใช้ createdMember.id ถ้า backend สร้าง id
-            name: createdMember.name,
-            // email: `${createdMember.name.toLowerCase().replace(/\s+/g, "")}@tcc.com`,
-            role: createdMember.role,
-            status: "Offline",
-            lastLogin: "N/A"
-          }
-        ]);
-
-        setShowModal(false);
-        setNewMember({ name: "", pin: "", role: "Housekeeper" });
-
-      } catch (error) {
-        console.error("Error creating housekeeper:", error);
-        alert("Failed to create housekeeper. Please try again.");
+    setHousekeeper((prev) => [
+      ...prev,
+      {
+        id: createdMember._id || prev.length + 1,   // ใช้ _id ถ้า backend ส่งกลับ
+        name: createdMember.name,
+        role: createdMember.role || "Housekeeper",  // fallback role เผื่อ backend ไม่ส่งกลับ
+        status: "Offline",
+        lastLogin: "N/A"
       }
-    };
+    ]);
+
+    setAdminStatus('success');
+
+    setTimeout(() => {
+      setAdminStatus(null);
+      setShowModal(false);
+      setNewMember({ name: "", pin: "", role: "Housekeeper" });
+    }, 3000);
+
+  } catch (error) {
+    console.error("Error creating housekeeper:", error.response?.data || error.message);
+
+    setAdminStatus('error');
+
+    setTimeout(() => {
+      setAdminStatus(null);
+      setShowModal(false);
+      setNewMember({ name: "", pin: "", role: "Housekeeper" });
+    }, 3000);
+  }
+};
+
 
     const refreshToken = async () => {
     try {
@@ -449,16 +459,32 @@ const handleDeleteHousekeepers = async () => {
         </div>
       )}
       {statusPopup === 'success' && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+        <div className="fixed inset-0 z-50 backdrop-blur-sm bg-white/20 flex items-center justify-center shadow-xl/30">
           <div className="bg-green-100 border border-green-400 text-green-700 px-6 py-4 rounded-xl shadow-lg text-lg">
-            ✅ Password updated successfully!
+            ✅ PIN updated successfully!
           </div>
         </div>
       )}
+
       {statusPopup === 'error' && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+        <div className="fixed inset-0 z-50 backdrop-blur-sm bg-white/20 flex items-center justify-center shadow-xl/30">
           <div className="bg-red-100 border border-red-400 text-red-700 px-6 py-4 rounded-xl shadow-lg text-lg">
-            ❌ Failed to update password!
+            ❌ Failed to update PIN!
+          </div>
+        </div>
+      )}
+      {adminstatus === 'success' && (
+        <div className="fixed inset-0 z-50 backdrop-blur-sm bg-white/20 flex items-center justify-center shadow-xl/30">
+          <div className="bg-green-100 border border-green-400 text-green-700 px-6 py-4 rounded-xl shadow-lg text-lg">
+            ✅ Admin created successfully!
+          </div>
+        </div>
+      )}
+
+      {adminstatus === 'error' && (
+        <div className="fixed inset-0 z-50 backdrop-blur-sm bg-white/20 flex items-center justify-center shadow-xl/30">
+          <div className="bg-red-100 border border-red-400 text-red-700 px-6 py-4 rounded-xl shadow-lg text-lg">
+            ❌ Failed to create admin!
           </div>
         </div>
       )}
