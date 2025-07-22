@@ -29,9 +29,9 @@ async function GetHousekeeperFromDB(res){
 
 async function LogsFromDB(res){
     try {
-        const logs = await Logsmonitoring.find()
+        const logs = await Logsmonitoring.find({ $or: [{ role: "Admin" }, { role: "Housekeeper" }] })
         // console.log("data:", logs)
-        res.write(`event: Logsmonnitoring\ndata: ${JSON.stringify(logs)}\n\n`);
+        res.write(`event: Logsmonitoring\ndata: ${JSON.stringify(logs)}\n\n`);
         return logs;
     } catch (error) {
         console.error("Error query Logs data from DB:", error);

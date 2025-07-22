@@ -143,12 +143,12 @@ const signout = async (req, res) => {
 const deletehousekeeper = async (req, res) => {
   try{
     const admin = req.user;
-    const { name } = req.body;
+    const { id } = req.body;
     if (admin.role !== 'Admin' && admin.role !== 'Superadmin') return res.status(403).json({ message: 'Only admin can delete housekeeper' });
-    if (!name) return res.status(400).json({ message: `Housekeeper's Name are required` });
+    if (!id) return res.status(400).json({ message: `Housekeeper ID is required` });
     // const isAdminpw = await bcrypt.compare(password, adminDB.password)
     const ThisHousekeeper = await User.findOneAndUpdate(
-      { name, role: 'Housekeeper'},
+      { _id: id, role: 'Housekeeper'},
       { role: 'Deactivate' }, // not use, log in db     
       { new: true } 
     );
@@ -159,12 +159,12 @@ const deletehousekeeper = async (req, res) => {
       user_Id: ThisHousekeeper._id, 
       L_status: 'Housekeeper was deleted', 
       role: 'Housekeeper', 
-      Details: `Housekeeper name: ${name}`, 
+      Details: `Housekeeper name: ${ThisHousekeeper.name}`, 
       L_createdAt: new Date(),
     };
     const log = await AddLogmonitoring(datalogs);
-    
-    res.status(200).json({ success: true, message: `Housekeeper's name ${name}, has been deleted successfully` });
+
+    res.status(200).json({ success: true, message: `Housekeeper's name ${ThisHousekeeper.name}, has been deleted successfully` });
   } catch (error) {
     console.error("Delete housekeeper error:", error);
     res.status(500).json({ success: false, error: 'Internal server error' });
@@ -175,17 +175,17 @@ const deletehousekeeper = async (req, res) => {
 const editpinhousekeeper = async (req, res) => {
   try{
     const admin = req.user;
-    const { name, newpin } = req.body;
+    const { id, newpin } = req.body;
     if (admin.role !== 'Admin' && admin.role !== 'Superadmin') return res.status(403).json({ message: 'Only admin can edit pin housekeeper.' });
-    if (!name || !newpin) return res.status(400).json({ message: 'Name and Password are required' });
-    
+    if (!id || !newpin) return res.status(400).json({ message: 'ID and Pin are required' });
+
     // Find housekeeper and any user with same PIN in one query
     const [ThisHousekeeper, conflictUser] = await Promise.all([
-      User.findOne({ name, role: 'Housekeeper' }),
+      User.findOne({ _id: id, role: 'Housekeeper' }),
       User.findOne({
         role: { $ne: 'Deactivated' },
         pin: newpin,
-        name: { $ne: name } // exclude this housekeeper name
+        _id: { $ne: id } // exclude this housekeeper id
       }),
     ]);
 
@@ -201,12 +201,12 @@ const editpinhousekeeper = async (req, res) => {
       user_Id: ThisHousekeeper._id, 
       L_status: 'Housekeeper was changed pin', 
       role: ThisHousekeeper.role, 
-      Details: `Housekeeper name: ${name}`, 
+      Details: `Housekeeper name: ${ThisHousekeeper.name}`, 
       L_createdAt: new Date(),
     };
     const log = await AddLogmonitoring(datalogs);
-    
-    res.status(200).json({ success: true, message: `Housekeeper's name, ${name}, has been updated pins with ${newpin} successfully` });
+
+    res.status(200).json({ success: true, message: `Housekeeper's name, ${ThisHousekeeper.name}, has been updated pins with ${newpin} successfully` });
   } catch (error) {
     console.error("Delete housekeeper error:", error);
     res.status(500).json({ error: 'Internal server error' });
@@ -280,6 +280,7 @@ const profile = async (req, res) => {
       name: user.name,
       email: user.email,
       role: user.role,
+      pin: user.pin
     })
   }catch (error) {
     console.error("Profile error:", error);

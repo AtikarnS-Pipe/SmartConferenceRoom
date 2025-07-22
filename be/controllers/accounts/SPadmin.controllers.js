@@ -1,6 +1,7 @@
 const User = require('../../models/User');
 const {AddLogmonitoring} = require('../../utils/AddLogmonitoring');
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
 require('dotenv').config();
 
 const createadmin = async (req, res) => {
@@ -57,7 +58,7 @@ const createadmin = async (req, res) => {
       httpOnly: true,
       secure: false,  // เปลี่ยนเป็น true ถ้าใช้ HTTPS
       sameSite: 'lax', // ป้องกัน CSRF
-      path: '/account/refresh-token', // จำกัด route ที่ใช้ cookie ได้
+      path: '/account/refreshtoken', // จำกัด route ที่ใช้ cookie ได้
     });
 
     res.status(201).json({
@@ -66,43 +67,61 @@ const createadmin = async (req, res) => {
       data: {
         token,
         refreshtoken, //เดี๋ยวมาลบ*********
-        user: newUser,
+        user: newAdmin,
       },
     });
+    console.log(`Create Admin successfully: ${newAdmin._id}`);
   } catch (error) {
+    console.error("Create Admin error:", error);
     res.status(500).json({ error: error.message });
   }
 };
 
 const deleteadmin = async (req, res) => {
-    try {
-        const SuperAdmin = req.user;
-        const { name } = req.body;
-        if (SuperAdmin.role !== 'Superadmin') return res.status(403).json({ message: 'Only SuperAdmin can delete admin' });
-        if (!name) return res.status(400).json({ message: `Admin's Name are required` });
-        // const isAdminpw = await bcrypt.compare(password, adminDB.password)
-        const ThisAdmin = await User.findOneAndUpdate(
-            { name, role: 'Admin'},
-            { role: 'Deactivate' }, // not use, log in db     
-            { new: true } 
-        );
-        if (!ThisAdmin) return res.status(404).json({ message: 'Admin is not found in Documents' });
+  try {
+    const SuperAdmin = req.user;
+    const { id } = req.body;
+    console.log("Delete Admin request body:", req.body);
 
-        // logsmonitoring function
-        const datalogs = {  
-          user_Id: ThisAdmin._id, 
-          L_status: 'Admin was deleted', 
-          role: 'Admin', 
-          Details: `Admin name: ${name}`, 
-          L_createdAt: new Date(),
-        };
-        const log = await AddLogmonitoring(datalogs);
-        res.status(200).json({ success: true, message: `Admin's name ${name}, has been deleted successfully` });
-    } catch (error) {
-        console.error("Delete Admin error:", error);
-        res.status(500).json({ error: 'Internal server error' });
+    if (SuperAdmin.role !== 'Superadmin') {
+      return res.status(403).json({ message: 'Only SuperAdmin can delete admin' });
     }
-}
+
+    if (!id) {
+      return res.status(400).json({ message: "Admin's ID is required" });
+    }
+
+    const ThisAdmin = await User.findOneAndUpdate(
+      { _id: id, role: 'Admin' },
+      { role: 'Deactivate' }, // not use, log in db
+      { new: true }
+    );
+
+    if (!ThisAdmin) {
+      return res.status(404).json({ message: 'Admin is not found in Documents' });
+    }
+
+    // logsmonitoring function
+    const datalogs = {
+      user_Id: ThisAdmin._id,
+      L_status: 'Admin was deleted',
+      role: 'Admin',
+      Details: `Admin ID: ${ThisAdmin._id}`,
+      L_createdAt: new Date(),
+    };
+
+    const log = await AddLogmonitoring(datalogs);
+
+    res.status(200).json({
+      success: true,
+      message: `Admin's ID ${id} has been deleted successfully`,
+    });
+  } catch (error) {
+    console.error("Delete Admin error:", error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
 
 module.exports = {
     createadmin, deleteadmin

@@ -10,7 +10,7 @@ const logschema = new mongoose.Schema({
 
     L_status: { // foremost
         type: String,
-        enum: ['Admin Logged in', 'Admin Logged out', 'Housekeeper was created', 'Housekeeper was changed pin', 'Housekeeper was deleted','Access room' ], // เดะมาเเก้
+        enum: ['Admin Logged in', 'Admin Logged out', 'Housekeeper was created', 'Housekeeper was changed pin', 'Housekeeper was deleted','Access room', `Admin was created`, `Admin was deleted`], // เดะมาเเก้
         required: true
     },
     role:{ // foremost 

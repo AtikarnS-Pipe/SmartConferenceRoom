@@ -55,7 +55,7 @@ async function syncAllRooms() {
 
     try{
         for (const roomData of results) {
-            if (roomData.events && roomData.events.length > 0) {
+            if (roomData && roomData.events && roomData.events.length > 0) {
                 for (const event of roomData.events) {
                     // if(event.organizer?.emailAddress?.address !== process.env.CENTERLIZED_MAIL) { // ถ้าไม่ใช่ผู้ดูแลระบบ
                         // console.log(`Processing event for room ${roomData.room}:`, event.organizer?.emailAddress?.address);

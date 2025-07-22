@@ -57,6 +57,8 @@ async function monitorToken() {
             expiryDate,
             token_status: 'refreshfailed'
           });
+          await sleep(10*1000); // wait 10s before retrying
+          continue;
         }
         // console.log("New token received:", newToken);
         const newRefreshToken = newToken.refresh_token? encryptToken(newToken.refresh_token) : refreshToken;
@@ -75,6 +77,8 @@ async function monitorToken() {
         console.log("✅ Token refreshed and inserted into DB");
       } catch (err) {
         console.error("❌ Failed to refresh token:", err.message);
+        await sleep(10*1000); // wait 10s before retrying
+        continue;
       }
     }
     await monitorCalendarId(accessToken); // Call to monitor calendar IDs
@@ -94,7 +98,7 @@ async function monitorCalendarId(token) {
       console.log("Preloading calendar IDs api...");
       const calendars = await GetIdRoomnumber(token, roomobject); // update roomobject value with calendar IDs
     } else{ 
-      console.log("😘 Calendar IDs already preloaded, skipping...");
+      console.log("😘 Calendar IDs alrePreloading calendar IDs foreach...ady preloaded, skipping...");
     }
     
   } catch (err) {

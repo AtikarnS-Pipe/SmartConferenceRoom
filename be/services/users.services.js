@@ -43,9 +43,6 @@ async function getuserdatabyroom(res, RoomNumber) {
     }
 } 
 
-
-
-
 const GeteventId = async (accessToken, roomnumber, email, startdatetime, enddatetime) => { // ex. startdatetime:2025-07-10T11:00:00Z, enddatetime:2025-07-10T12:00:00Z
     try{
         // console.log("startdatetime = ", startdatetime); // 2025-07-10T13:00:00Z

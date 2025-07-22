@@ -181,10 +181,10 @@ const searchpinByeventId = async (req, res) => {
     if (!eventId) return res.status(400).json({ error: "Event ID is required" });
 
     try {
-        const booking = await bookingkey.findOne({ eventId, room: room_number });
-        if (!booking) return res.status(404).json({ error: "Not found" });
-        
-        res.status(200).json({ success: true, pin: booking.pin});
+        const booking = await waitUntil(() => bookingkey.findOne({ eventId, room: room_number }), 15000, 1000);
+        // const booking = await bookingkey.findOne({ eventId, room: room_number });
+        if (!booking) return res.status(404).json({ error: "Not found eventId" });
+        res.status(200).json({ success: true, pin: booking.pin });
     } catch (error) {
         console.error("Error searching pin by event ID:", error);
         res.status(500).json({ success: false, error: "Failed to search pin by event ID" });
