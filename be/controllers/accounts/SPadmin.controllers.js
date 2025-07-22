@@ -42,7 +42,7 @@ const createadmin = async (req, res) => {
       user_Id: newAdmin._id, 
       L_status: 'Admin was created', 
       role: newAdmin.role, 
-      Details: `Admin id: ${newAdmin._id}`, 
+      Details: `Admin name: ${newAdmin.name}`, 
       L_createdAt: new Date(),
     };
     const log = await AddLogmonitoring(datalogs);
@@ -106,7 +106,7 @@ const deleteadmin = async (req, res) => {
       user_Id: ThisAdmin._id,
       L_status: 'Admin was deleted',
       role: 'Admin',
-      Details: `Admin ID: ${ThisAdmin._id}`,
+      Details: `Admin name: ${ThisAdmin.name}`,
       L_createdAt: new Date(),
     };
 

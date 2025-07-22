@@ -193,22 +193,26 @@ const searchpinByeventId = async (req, res) => {
 
 const endmeeting = async (req, res) => {
     try{
-        const { endmeetingdata } = req.body; // endmeetingdata = {eventId, startdatetime}
+        const { endmeetingdata } = req.body; // endmeetingdata = {eventId, startdatetime, isAllDay}
         
         const AccessToken = tokenCache.getAccessToken();
-        // const calendarId = await GetIdRoomnumber(AccessToken, endmeetingdata.RoomNumber)
-        // const eventId = await GeteventId(AccessToken, calendarId, endmeetingdata.email, endmeetingdata.startdatetime, endmeetingdata.enddatetime); // datetime UTC: 2024-06-09T00:00:00Z
-        // if(!eventId){
-        //     console.error("No event found for the given details:", endmeetingdata);
-        //     return res.status(404).json({ error: "No event found for end meeting" });
-        // }
-
+        let startDateTime;
+        if (endmeetingdata.isAllDay) {
+            const now = new Date();
+            // สร้างวันที่ใหม่ของวันนี้ตอน 00:00 ตามเขตเวลา -7
+            const midnightLocal = new Date(now.getFullYear(), now.getMonth(), now.getDate()); // 00:00 ตาม local
+            // ปรับ -7 ชั่วโมง (เปลี่ยนเป็น UTC)
+            startDateTime = new Date(midnightLocal.getTime() + 8 * 60 * 60 * 1000).toISOString(); // = 17:00 วันก่อนหน้า UTC
+        } else {
+            startDateTime = new Date(endmeetingdata.startdatetime).toISOString();
+        }
         await getGraphClient(AccessToken)
         .api(`/me/events/${endmeetingdata.eventId}`)
         .update({
             // subject: `Meeting in Room ${endmeetingdata.RoomNumber} has end`,
+            isAllDay: false,
             start: {
-                dateTime: new Date(endmeetingdata.startdatetime).toISOString(),
+                dateTime: startDateTime,
                 timeZone: "UTC"
             },
             end: {

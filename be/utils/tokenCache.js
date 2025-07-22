@@ -61,7 +61,7 @@ async function monitorToken() {
           continue;
         }
         // console.log("New token received:", newToken);
-        const newRefreshToken = newToken.refresh_token? encryptToken(newToken.refresh_token) : refreshToken;
+        const newRefreshToken = newToken.refresh_token? encryptToken(newToken.refresh_token) : null;
 
         accessToken = newToken.access_token;
         refreshToken = newRefreshToken;

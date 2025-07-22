@@ -107,7 +107,7 @@ const Createhousekeeper = async (req, res) => {
       user_Id: newHousekeeper._id, 
       L_status: 'Housekeeper was created', 
       role: newHousekeeper.role, 
-      Details: `Housekeeper name: ${newHousekeeper._id}`, 
+      Details: `Housekeeper name: ${newHousekeeper.name}`, 
       L_createdAt: new Date(),
     };
     const log = await AddLogmonitoring(datalogs);
@@ -135,7 +135,7 @@ const signout = async (req, res) => {
     L_createdAt: new Date(),
   };
   const log = await AddLogmonitoring(datalogs);
-  res.clearCookie("refreshtoken", { path: '/account/refresh-token' }); // ลบ cookie refresh token
+  res.clearCookie("refreshtoken", { path: '/account/refreshtoken' }); // ลบ cookie refresh token
   res.json({ success: true, message: 'User signed out successfully' });
 }
 

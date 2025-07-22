@@ -22,7 +22,7 @@ async function getuserdatabyroom(res, RoomNumber) {
                 endDateTime: endDateTime,
                 "$orderby": "start/dateTime",
                 "$top": 100,
-                "$select": "id,subject,organizer,start,end,locations",
+                "$select": "id,subject,organizer,start,end,locations,isAllDay",
                 "$filter": "isCancelled eq false" 
             })
             .get();
