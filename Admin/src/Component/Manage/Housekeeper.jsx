@@ -17,6 +17,7 @@ import {
   Moon
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-hot-toast';
 import axios from 'axios';
 import { DarkModeContext } from '../Context/DarkModeContext'; // Adjust the import path as necessary
 
@@ -26,10 +27,11 @@ function Housekeeper() {
   const [newPassword, setNewPassword] = useState('');
   const [newPin, setNewPin] = useState('');
   const [confirmPin, setConfirmPin] = useState('');
-  const [adminstatus, setAdminStatus] = useState(null);
+  const [adminStatus, setAdminStatus] = useState(null);
   const [pinTargetName, setPinTargetName] = useState('');
   const [show, setShow] = useState(false);
   const [showPinModal, setShowPinModal] = useState(false);
+  const [showPin, setShowPin] = useState(false);
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [statusPopup, setStatusPopup] = useState(null);
@@ -49,22 +51,22 @@ function Housekeeper() {
       withCredentials: true,
     });
 
-    console.log("SSE connection established for housekeepers", eventSource);
+    // console.log("SSE connection established for housekeepers", eventSource);
 
     const handleHousekeeperList = (event) => {
       try {
-        console.log('SSE raw event.data:', event.data);
+        // console.log('SSE raw event.data:', event.data);
         const data = JSON.parse(event.data);
-        console.log('SSE parsed housekeeper data:', data);
+        // console.log('SSE parsed housekeeper data:', data);
 
         if (Array.isArray(data)) {
           setHousekeeper(data);  // ใช้ได้ตรงนี้เลย
         } else {
-          console.error('Housekeeper data is not an array:', data);
+          // console.error('Housekeeper data is not an array:', data);
         }
         
       } catch (error) {
-        console.error('Error parsing SSE data:', error);
+        // console.error('Error parsing SSE data:', error);
       }
     };
 
@@ -198,7 +200,6 @@ const handleAddMember = async () => {
     ]);
 
     setAdminStatus('success');
-
     setTimeout(() => {
       setAdminStatus(null);
       setShowModal(false);
@@ -219,23 +220,42 @@ const handleAddMember = async () => {
 };
 
 
-    const refreshToken = async () => {
+  const refreshToken = async () => {
     try {
-      const refreshRes = await axios.post("/account/refreshtoken", {}, { withCredentials: true });
+      const refreshRes = await axios.post("/account/refreshtoken", {}, {
+        withCredentials: true,
+        timeout: 10000
+      });
+
+      const newToken = refreshRes?.data?.accessToken;
       console.log("Refresh response:", refreshRes);
-      const newToken = refreshRes.data.accessToken;
+
       if (!newToken) {
         console.error("No accessToken returned in refresh response.");
-        return;
+        return null;
       }
 
       localStorage.setItem("token", newToken);
-      console.log("Access token refreshed successfully.");
-  } catch (err) {
-    console.error("Token refresh error:", err);
-    // navigate('/');
-  }
-};
+      console.log("Access token refreshed successfully.", newToken);
+      return newToken;
+
+    } catch (err) {
+      console.error("Token refresh error:", {
+      message: err.message,
+      code: err.code,
+      status: err.response?.status,
+      full: err
+    });
+
+      if (err.response?.status === 401) {
+        console.warn("Refresh token expired. Redirecting to login.");
+        // navigate('/');  // ปลดคอมเมนต์ถ้าต้องการบังคับ logout
+      }
+
+      return null;
+    }
+  };
+
 
 
 const handleDeleteHousekeepers = async () => {
@@ -255,7 +275,7 @@ const handleDeleteHousekeepers = async () => {
           Authorization: `Bearer ${token}`,
         },
         data: {
-          name: member.name,
+          id: member.id,
         },
         withCredentials: true,
       });
@@ -339,7 +359,7 @@ const handleDeleteHousekeepers = async () => {
               <label className={`block text-sm mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>New PIN</label>
               <input
                 type="password"
-                maxLength={6}
+                maxLength="4"
                 inputMode="numeric"
                 className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring focus:ring-blue-200 ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'}`}
                 value={newPin}
@@ -473,7 +493,7 @@ const handleDeleteHousekeepers = async () => {
           </div>
         </div>
       )}
-      {adminstatus === 'success' && (
+      {adminStatus === 'success' && (
         <div className="fixed inset-0 z-50 backdrop-blur-sm bg-white/20 flex items-center justify-center shadow-xl/30">
           <div className="bg-green-100 border border-green-400 text-green-700 px-6 py-4 rounded-xl shadow-lg text-lg">
             ✅ Admin created successfully!
@@ -481,7 +501,7 @@ const handleDeleteHousekeepers = async () => {
         </div>
       )}
 
-      {adminstatus === 'error' && (
+      {adminStatus === 'error' && (
         <div className="fixed inset-0 z-50 backdrop-blur-sm bg-white/20 flex items-center justify-center shadow-xl/30">
           <div className="bg-red-100 border border-red-400 text-red-700 px-6 py-4 rounded-xl shadow-lg text-lg">
             ❌ Failed to create admin!
@@ -704,7 +724,7 @@ const handleDeleteHousekeepers = async () => {
                     className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
                   >
                     <Plus className="w-4 h-4" />
-                    Add Member
+                    Add Housekeeper
                   </button>
                   <button
                     disabled={selectedMembers.length === 0}
@@ -789,9 +809,9 @@ const handleDeleteHousekeepers = async () => {
       </div>
       {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center px-2">
+        <div className="fixed inset-0 z-50 backdrop-blur-sm bg-gray-300/30 flex items-center justify-center">
           <div className={`${darkMode ? 'bg-gray-800 text-white' : 'bg-white'} rounded-xl shadow-lg w-full max-w-md p-4 md:p-6`}>
-            <h2 className={`text-xl font-semibold mb-4 ${darkMode ? 'text-white' : ''}`}>Add Member</h2>
+            <h2 className={`text-xl font-semibold mb-4 ${darkMode ? 'text-white' : ''}`}>Add Housekeeper</h2>
             <div className="space-y-4">
               <div>
                 <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Name</label>
@@ -805,22 +825,33 @@ const handleDeleteHousekeepers = async () => {
               <div>
                 <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Pin</label>
                 <input
-                  type="password"
+                  type={showPin ? "text" : "password"}
+                  maxLength="4"
                   value={newMember.pin}
-                  onChange={(e) => setNewMember({ ...newMember, pin: e.target.value })}
+                  onChange={(e) => setNewMember({
+                    ...newMember,
+                    pin: e.target.value.replace(/\D/g, '')  // กรองไม่ให้มีตัวอักษรที่ไม่ใช่ตัวเลข
+                  })}
                   className={`mt-1 block w-full p-2 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'}`}
                 />
+                      <button
+                        type="button"
+                        onClick={() => setShowPin(!showPin)}
+                        className="absolute top-[358px] right-[515px]"  // ปรับตำแหน่งให้ปุ่มอยู่ขอบ input
+                      >
+                        {showPin ? <EyeOff className="w-5 h-5 text-gray-400" /> : <Eye className="w-5 h-5 text-gray-400" />}
+                      </button>
               </div>
-              <div>
+              {/* <div>
                 <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Role</label>
-                <select
+                <div
                   value={newMember.role}
                   onChange={(e) => setNewMember({ ...newMember, role: e.target.value })}
                   className={`mt-1 block w-full p-2 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'}`}
                 >
                   <option value="Housekeeper">Housekeeper</option>
-                </select>
-              </div>
+                </div>
+              </div> */}
             </div>
             <div className="mt-6 flex justify-end gap-3">
               <button

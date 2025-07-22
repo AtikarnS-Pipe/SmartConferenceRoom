@@ -17,7 +17,6 @@ export default defineConfig({
       '/account/otp/verify': 'http://localhost:4000',
       '/account/otp/reset': 'http://localhost:4000',
       '/admin/schedule': 'http://localhost:4000',
-      '/account/auth': 'http://localhost:4000',
       '/account/refreshtoken': 'http://localhost:4000',
       '/account/createhousekeeper': 'http://localhost:4000',
       '/account/changeadminpw': 'http://localhost:4000',

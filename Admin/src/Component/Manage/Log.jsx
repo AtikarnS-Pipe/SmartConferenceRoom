@@ -52,7 +52,7 @@ function Log() {
   useEffect(() => {
     const eventSource = new EventSource('/account/logsmonitoring', { withCredentials: true });
 
-    eventSource.addEventListener('Logsmonnitoring', (event) => {
+    eventSource.addEventListener('Logsmonitoring', (event) => {
       console.log('Received Logsmonnitoring event:', event.data);
 
       try {
