@@ -17,8 +17,9 @@ async function compareKey({ eventId, pin }) {
         eventId: eventId
     });
     if (!booking) return false;
-    console.log(`COMPARING => Pin: ${pin} with Event's key: ${booking.key}`);
-    const ismatch =  await bcrypt.compare(pin, booking.key);
+    console.log(`COMPARING => Pin: ${pin} with Event's key: ${booking.pin}`);
+    // const ismatch =  await bcrypt.compare(pin, booking.key);
+    const ismatch = pin === booking.pin;
     if (ismatch) {
         console.log(`Pin matched for event: ${eventId}`);
         const successlog = await bookingKey.findOneAndUpdate(
@@ -26,7 +27,7 @@ async function compareKey({ eventId, pin }) {
             { isPinVerified: true }, 
             { new: true },
         )
-        if (!successlog) return res.status(404).json({ error: "Booking key not found for the given eventId" });
+        if (!successlog) throw new Error("Booking key not found for the given eventId");
     }
 
     return ismatch;

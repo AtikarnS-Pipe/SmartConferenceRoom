@@ -1,7 +1,6 @@
 const getGraphClient = require("../utils/graph");
 const bookingkey = require('../models/bookingkey');
 const sendMailAsync = require("./sendmail.services")
-const bcrypt = require('bcryptjs');
 require('dotenv').config({ path: '../config/.env' });
 const tokenCache = require("../utils/tokenCache")
 const getTodaydatetime = require('../utils/getTodaydatetime');
@@ -27,7 +26,8 @@ async function syncAllRooms() {
         Object.keys(roomobject).map(async (room) => {
             try{
                 const graphResponse = await getGraphClient(accesstoken)
-                .api(`https://graph.microsoft.com/v1.0/users/${room}@tcc-technology.com/calendarView?`)
+                // .api(`https://graph.microsoft.com/v1.0/users/${room}@tcc-technology.com/calendarView?`)
+                .api(`https://graph.microsoft.com/v1.0/me/calendars/${roomobject[room]}/calendarView?`)
                 .query({
                     startDateTime: startDateTime,
                     endDateTime: endDateTime,
@@ -63,13 +63,10 @@ async function syncAllRooms() {
                         if (!booking) { // ถ้ายังไม่มี ให้สร้างใหม่
                             console.log('Creating new key for room:', roomData.room, 'event id:', event.id);
                             const key = randomPin();
-                            const salt = await bcrypt.genSalt( parseInt(process.env.BCRYPT_SALT_ROUNDS));
-                            const hashedPassword = await bcrypt.hash(key, salt);
                             booking = await bookingkey.create({
                                 room: roomData.room,
                                 eventId: event.id,
                                 organizerMail: event.organizer?.emailAddress?.address,
-                                key: hashedPassword,
                                 pin: key, // save pin for user
                                 startDateTime: new Date(event.start?.dateTime + "Z"),
                                 endDateTime: new Date(event.end?.dateTime + "Z")

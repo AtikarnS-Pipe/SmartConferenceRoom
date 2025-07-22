@@ -4,7 +4,6 @@ const bookingKeySchema = new mongoose.Schema({
     room: Number,
     eventId: String,
     organizerMail: String,
-    key: String,
     pin: String,
     startDateTime: Date,
     endDateTime: Date,

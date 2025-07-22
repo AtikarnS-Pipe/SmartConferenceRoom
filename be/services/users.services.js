@@ -15,8 +15,8 @@ async function getuserdatabyroom(res, RoomNumber) {
             throw new Error("No access token in Users")
         }
         const graphResponse = await getGraphClient(accesstoken)
-            .api(`https://graph.microsoft.com/v1.0/users/${RoomNumber}@tcc-technology.com/calendarView`)
-            // .api(`https://graph.microsoft.com/v1.0/me/calendars/${roomobject[RoomNumber]}/calendarView?`)
+            // .api(`https://graph.microsoft.com/v1.0/users/${RoomNumber}@tcc-technology.com/calendarView`)
+            .api(`https://graph.microsoft.com/v1.0/me/calendars/${roomobject[RoomNumber]}/calendarView?`)
             .query({
                 startDateTime: startDateTime,
                 endDateTime: endDateTime,
