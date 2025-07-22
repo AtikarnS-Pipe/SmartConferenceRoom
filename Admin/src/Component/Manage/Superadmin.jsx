@@ -419,7 +419,7 @@ const handleDeleteAdmins = async () => {
 
       {/* Add Admin Modal */}
       {showAddAdminModal && (
-        <div className="fixed inset-0 z-50 bg-black bg-opacity-40 flex items-center justify-center">
+       <div className="fixed inset-0 z-50 backdrop-blur-sm bg-white/20 flex items-center justify-center shadow-xl/30">
           <div className={`${darkMode ? 'bg-gray-800 text-white' : 'bg-white'} p-6 rounded-xl shadow-lg w-96 max-h-[90vh] overflow-y-auto`}>
             <h2 className={`text-lg font-semibold mb-4 ${darkMode ? 'text-white' : 'text-gray-800'}`}>Add New Admin</h2>
 
@@ -471,19 +471,26 @@ const handleDeleteAdmins = async () => {
               />
             </div>
 
-            <div className="mb-6">
-              <label className={`block text-sm mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>PIN</label>
-              <input
-                type="text"
-                value={newMember.pin}
-                onChange={(e) => setNewMember({ ...newMember, pin: e.target.value })}
-                className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring focus:ring-blue-200 ${
-                  darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'
-                }`}
-                placeholder="Enter PIN"
-                maxLength="6"
-              />
-            </div>
+            <div className="mb-6 relative">  {/* เพิ่ม relative */}
+                <label className={`block text-sm mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>PIN</label>
+                <input
+                  type={showAddAdminPassword ? "text" : "password"}
+                  value={newMember.pin}
+                  onChange={(e) => setNewMember({ ...newMember, pin: e.target.value })}
+                  className={`w-full px-3 py-2 pr-10 border rounded-md shadow-sm focus:ring focus:ring-blue-200 ${
+                    darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'
+                  }`}
+                  placeholder="Enter PIN"
+                  maxLength="4"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowAddAdminPassword(!showAddAdminPassword)}
+                  className={`absolute right-3 top-11 transform -translate-y-1/2 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}
+                >
+                  {showAddAdminPassword ? <Eye className="h-5 w-5" /> : <EyeOff className="h-5 w-5" />}
+                </button>
+              </div>
 
             <div className="flex justify-end gap-2">
               <button
@@ -502,8 +509,7 @@ const handleDeleteAdmins = async () => {
                 onClick={handleAddAdmin}
                 className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center gap-2"
               >
-                <Plus className="w-4 h-4" />
-                Add Admin
+                Confirm
               </button>
             </div>
           </div>
