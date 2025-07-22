@@ -1088,8 +1088,8 @@ input[type="text"]:disabled {
 }
 
 .adjust-group button {
-  width: 2.5rem;
-  height: 2.5rem;
+  width: 3rem;
+  height: 3rem;
   border: 2px solid #6b7280;
   border-radius: 50%;
   color: #6b7280;
@@ -1428,6 +1428,3 @@ input[type="text"]:disabled {
   cursor: pointer;
   transform: scale(1.2);
 }
-
-
-

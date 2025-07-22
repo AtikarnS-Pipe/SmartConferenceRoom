@@ -23,6 +23,7 @@ const BookingModal = ({ isOpen, onClose, onSubmit, onPinModalClose }) => {
   const [targetStart, setTargetStart] = useState(null);
   const [targetEnd, setTargetEnd] = useState(null);
   const [countdown, setCountdown] = useState(COUNTDOWN_TIME);
+  const [isModalInitialized, setIsModalInitialized] = useState(false);
   const { floor, room } = useRoomData();
   const { events } = useEvents(floor, room);
   const roomId = `${floor}${room}`; // สร้าง roomId จาก floor และ room
@@ -31,6 +32,9 @@ const BookingModal = ({ isOpen, onClose, onSubmit, onPinModalClose }) => {
   useEffect(() => {
     if (isOpen) {
       setCountdown(COUNTDOWN_TIME);
+      setIsModalInitialized(true);
+    } else {
+      setIsModalInitialized(false);
     }
   }, [isOpen]);
 
@@ -61,7 +65,7 @@ const BookingModal = ({ isOpen, onClose, onSubmit, onPinModalClose }) => {
     // Cleanup timer เมื่อ modal ปิดหรือ component unmount
     return () => {
       if (countdownInterval) {
-        console.log('Clearing countdown interval');
+        // console.log('Clearing countdown interval');
         clearInterval(countdownInterval);
       }
     };
@@ -69,11 +73,11 @@ const BookingModal = ({ isOpen, onClose, onSubmit, onPinModalClose }) => {
 
   // แยก useEffect สำหรับตรวจสอบ countdown และปิด modal
   useEffect(() => {
-    if (countdown === 0 && isOpen && !showPinModal) {
+    if (countdown === 0 && isOpen && !showPinModal && !loading && !waitingEvent) {
       console.log('Countdown reached 0, closing modal');
       onClose();
     }
-  }, [countdown, isOpen, showPinModal, onClose]);
+  }, [countdown, isOpen, showPinModal, onClose, loading, waitingEvent]);
 
   // fn เมื่อ users กดปุ่มใดๆ ใน modalจะรีเซ็ต countdown
   const handleUserInteraction = () => {
@@ -88,46 +92,70 @@ const BookingModal = ({ isOpen, onClose, onSubmit, onPinModalClose }) => {
     const roundedMinutes = Math.ceil(totalMinutes / 15) * 15;
     
     // Handle overflow (24:00 → next day 00:00)
-    let hours = Math.floor(roundedMinutes / 60) % 24;
+    let hours = Math.floor(roundedMinutes / 60) % 24; 
     const minutes = roundedMinutes % 60;
     
     // Enforce business hours: 8:00 - 19:00
-    if (hours < 8) {
+    if (hours < 8) { 
       hours = 8;
     } else if (hours >= 19) {
       hours = 8; // Reset to next day 8:00 if after 19:00
     }
     
     const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const month = String(now.getMonth() + 1).padStart(2, '0'); 
     const day = String(now.getDate()).padStart(2, '0');
     
     return `${year}-${month}-${day}T${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
   };
 
-  useEffect(() => {
-    if (isOpen && !formData.startTime) {
-      // Set startTime without triggering handleUserInteraction
-      setFormData(prev => ({ ...prev, startTime: getCurrentTime() }));
-    }
-  }, [isOpen]);
-
   // ฟังก์ชันหาเวลาว่างถัดไป (รองรับทั้งไปข้างหน้าและย้อนหลัง)
-  const findNextAvailableTime = (startTime, duration, direction = 'forward') => {
-    if (!startTime || !events || events.length === 0) return startTime;
+  const findNextAvailableTime = (startTime, duration, direction = 'forward') => { 
+    console.log('🔍 findNextAvailableTime called:', { startTime, duration, direction, eventsCount: events?.length });
+    
+    if (!startTime) {
+      console.log('❌ No startTime provided');
+      return '';
+    }
 
     const proposedStart = new Date(startTime);
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
     
     // เริ่มตรวจสอบจากเวลาที่กำหนด
     let checkTime = new Date(proposedStart);
     
-    // กำหนดขอบเขตการค้นหา
+    // set time boundaries for today
     const startOfDay = new Date(today);
-    startOfDay.setHours(8, 0, 0, 0); // เริ่มที่ 8:00
+    startOfDay.setHours(8, 0, 0, 0); // เริ่มที่ 8:00 ของวันนี้
     const endOfDay = new Date(today);
-    endOfDay.setHours(19, 0, 0, 0); // จบที่ 19:00
+    endOfDay.setHours(19, 0, 0, 0); // จบที่ 19:00 ของวันนี้
+    
+    console.log('📅 Time boundaries:', { 
+      startOfDay: startOfDay.toLocaleTimeString(), 
+      endOfDay: endOfDay.toLocaleTimeString(), 
+      checkTime: checkTime.toLocaleTimeString() 
+    });
+    
+    // If no events, check if current time is within business hours
+    if (!events || events.length === 0) {
+      console.log('📋 No events to check against');
+      if (checkTime >= startOfDay && checkTime < endOfDay) {
+        const checkEnd = new Date(checkTime);
+        checkEnd.setMinutes(checkEnd.getMinutes() + duration);
+        if (checkEnd <= endOfDay) {
+          console.log('✅ Current time is valid with no events');
+          return startTime;
+        }
+      }
+      // If current time is outside business hours, find next valid time
+      if (checkTime < startOfDay) {
+        console.log('⏰ Before business hours, moving to 8:00 AM');
+        checkTime = new Date(startOfDay);
+      } else if (checkTime >= endOfDay) {
+        console.log('⏰ After business hours, moving to 8:00 AM next day');
+        checkTime = new Date(startOfDay);
+      }
+    }
     
     // กำหนดทิศทางการค้นหา
     const increment = direction === 'forward' ? 15 : -15;
@@ -136,27 +164,49 @@ const BookingModal = ({ isOpen, onClose, onSubmit, onPinModalClose }) => {
       (time, bound) => time < bound : 
       (time, bound) => time >= bound;
     
-    let maxIterations = 50; // ป้องกัน infinite loop
+    let maxIterations = 44; // 11 hours * 4 (15-min slots per hour)
     let iterations = 0;
+    
+    console.log(`🔄 Starting search loop (${direction}), max iterations: ${maxIterations}`);
     
     while (comparison(checkTime, boundary) && iterations < maxIterations) {
       iterations++;
+      console.log(`🔄 Iteration ${iterations}: checking ${checkTime.toLocaleTimeString()}`);
       
       // ตรวจสอบว่าเวลานี้ว่างไหม
       const checkEnd = new Date(checkTime);
       checkEnd.setMinutes(checkEnd.getMinutes() + duration);
       
       // ตรวจสอบว่าไม่เกินขอบเขตเวลาทำการ
-      if (direction === 'forward' && checkEnd > endOfDay) break;
-      if (direction === 'backward' && checkTime < startOfDay) break;
+      if (direction === 'forward' && checkEnd > endOfDay) {
+        console.log('🚫 Would exceed end of day, stopping search');
+        break;
+      }
+      if (direction === 'backward' && checkTime < startOfDay) {
+        console.log('🚫 Would go before start of day, stopping search');
+        break;
+      }
       
-      const hasConflict = events.some(event => {
-        const eventStart = new Date(event.start.dateTime + 'Z');
-        const eventEnd = new Date(event.end.dateTime + 'Z');
-        return checkTime < eventEnd && checkEnd > eventStart;
-      });
+      // ตรวจสอบการทับซ้อนกับ events ที่มีอยู่
+      let hasConflict = false;
+      
+      if (events && events.length > 0) {
+        hasConflict = events.some(event => {
+          const eventStart = new Date(event.start.dateTime + 'Z');
+          const eventEnd = new Date(event.end.dateTime + 'Z');
+          
+          // ตรวจสอบการทับซ้อน
+          const conflicts = checkTime < eventEnd && checkEnd > eventStart;
+          
+          if (conflicts) {
+            console.log(`⚡ Conflict with event: ${eventStart.toLocaleTimeString()} - ${eventEnd.toLocaleTimeString()}`);
+          }
+          return conflicts;
+        });
+      }
       
       if (!hasConflict) {
+        console.log(`✅ Found available time: ${checkTime.toLocaleTimeString()}`);
         // เจอเวลาว่างแล้ว
         const year = checkTime.getFullYear();
         const month = String(checkTime.getMonth() + 1).padStart(2, '0');
@@ -164,24 +214,86 @@ const BookingModal = ({ isOpen, onClose, onSubmit, onPinModalClose }) => {
         const hours = String(checkTime.getHours()).padStart(2, '0');
         const mins = String(checkTime.getMinutes()).padStart(2, '0');
         
-        return `${year}-${month}-${day}T${hours}:${mins}`;
+        const result = `${year}-${month}-${day}T${hours}:${mins}`;
+        console.log(`🎯 Returning: ${result}`);
+        return result;
       }
       
+      console.log('❌ Time slot occupied, moving to next slot');
       // เลื่อนไปตามทิศทางที่กำหนด
       checkTime.setMinutes(checkTime.getMinutes() + increment);
     }
+    
+    console.log('No available time found in forward direction, trying backward...');
     
     // ถ้าหาไม่เจอ และเป็นการค้นหาข้างหน้า ให้ลองค้นหาย้อนหลัง
     if (direction === 'forward') {
       const backwardResult = findNextAvailableTime(startTime, duration, 'backward');
       if (backwardResult !== startTime) {
+        console.log('Found available time in backward direction:', backwardResult);
         return backwardResult;
       }
     }
     
+    console.log('No available time found, returning original time:', startTime);
     // ถ้าหาไม่เจอ ให้คืนค่าเดิม
     return startTime;
   };
+
+  // Initialize startTime when modal opens
+  useEffect(() => {
+    console.log('useEffect triggered:', { isOpen, isModalInitialized, eventsLength: events?.length });
+    
+    // Only initialize when modal first opens, not on subsequent events updates
+    if (isOpen && !isModalInitialized) {
+      console.log('🚀 Modal opened for first time, finding next available time...');
+      console.log('📅 Events available:', events?.length || 0);
+      
+      const currentTime = getCurrentTime();
+      console.log('⏰ Current time:', currentTime);
+      
+      // Always try to find next available time, even if no events
+      console.log('🔍 Searching for available time...');
+      const availableTime = findNextAvailableTime(currentTime, 15, 'forward');
+      console.log('✅ Available time result:', availableTime);
+      
+      if (availableTime && availableTime !== currentTime) {
+        console.log('🎯 Setting available time:', availableTime);
+        setFormData(prev => ({ ...prev, startTime: availableTime }));
+      } else {
+        console.log('⚠️ No better time found, using current time:', currentTime);
+        setFormData(prev => ({ ...prev, startTime: currentTime }));
+      }
+    } else if (!isOpen) {
+      // Reset when modal closes
+      console.log('🔄 Modal closed, resetting startTime');
+      setFormData(prev => ({ ...prev, startTime: '' }));
+    }
+  }, [isOpen, isModalInitialized]);
+
+  // Handle events updates after modal is initialized
+  useEffect(() => {
+    if (isOpen && isModalInitialized && events && events.length > 0 && formData.startTime) {
+      console.log('📋 Events updated, checking if current time needs adjustment...');
+      console.log('🔍 Current startTime:', formData.startTime);
+      console.log('🎯 Events count:', events.length);
+      
+      // Check if current time has conflict
+      const hasConflict = checkTimeConflict(formData.startTime, formData.duration);
+      console.log('⚡ Has conflict:', hasConflict);
+      
+      if (hasConflict) {
+        console.log('🚨 Current time has conflict, finding better time...');
+        const availableTime = findNextAvailableTime(formData.startTime, formData.duration, 'forward');
+        console.log('🎯 New available time:', availableTime);
+        
+        if (availableTime !== formData.startTime) {
+          console.log('✅ Updating to conflict-free time:', availableTime);
+          setFormData(prev => ({ ...prev, startTime: availableTime }));
+        }
+      }
+    }
+  }, [events, isModalInitialized]);
 
   // ฟังก์ชันตรวจสอบการทับซ้อนของเวลา
   const checkTimeConflict = (startTime, duration) => {
@@ -264,9 +376,9 @@ const BookingModal = ({ isOpen, onClose, onSubmit, onPinModalClose }) => {
         return eventStart < hourEnd && eventEnd > hourStart;
       });
 
-      // คำนวณ percentage ที่มี existing events
-      let existingEventPercentage = 0;
-      let existingEventStartPercent = 0;
+      // เก็บข้อมูล events ทั้งหมดในชั่วโมงนี้
+      const eventsInThisHour = [];
+      
       if (existingEventsInHour.length > 0) {
         existingEventsInHour.forEach(event => {
           const eventStart = new Date(event.start.dateTime + 'Z');
@@ -282,23 +394,26 @@ const BookingModal = ({ isOpen, onClose, onSubmit, onPinModalClose }) => {
           const overlapEnd = new Date(Math.min(eventEnd.getTime(), hourEnd.getTime()));
           
           if (overlapStart < overlapEnd) {
-            const overlapMinutes = (overlapEnd - overlapStart) / (1000 * 60);
-            const eventPercentage = (overlapMinutes / 60) * 100;
-            
-            // คำนวณจุดเริ่มต้นของ existing event ในชั่วโมงนี้
             const eventStartMinutesFromHourStart = (overlapStart - hourStart) / (1000 * 60);
+            const eventEndMinutesFromHourStart = (overlapEnd - hourStart) / (1000 * 60);
+            
             const eventStartPercent = (eventStartMinutesFromHourStart / 60) * 100;
+            const eventEndPercent = (eventEndMinutesFromHourStart / 60) * 100;
             
-            // สำหรับ existing events หลายอัน เราจะใช้อันแรกเป็นหลัก
-            if (existingEventPercentage === 0) {
-              existingEventStartPercent = eventStartPercent;
-            }
-            
-            existingEventPercentage += eventPercentage;
+            eventsInThisHour.push({
+              startPercent: eventStartPercent,
+              endPercent: eventEndPercent,
+              type: 'existing'
+            });
           }
         });
-        existingEventPercentage = Math.min(existingEventPercentage, 100);
       }
+
+      // รวมข้อมูลเป็น properties เดิมเพื่อความเข้ากันได้
+      const hasExistingEvent = eventsInThisHour.length > 0;
+      const existingEventStartPercent = hasExistingEvent ? eventsInThisHour[0].startPercent : 0;
+      const existingEventPercentage = hasExistingEvent ? 
+        eventsInThisHour.reduce((total, event) => total + (event.endPercent - event.startPercent), 0) : 0;
 
       // คำนวณ proposed booking
       let proposedBookingPercentage = 0;
@@ -343,7 +458,6 @@ const BookingModal = ({ isOpen, onClose, onSubmit, onPinModalClose }) => {
       const isBooked = proposedBookingPercentage > 0;
       const isCurrentSlot = formData.startTime ? 
         hour === new Date(formData.startTime).getHours() : false;
-      const hasExistingEvent = existingEventPercentage > 0;
       
       return { 
         hour, 
@@ -353,7 +467,8 @@ const BookingModal = ({ isOpen, onClose, onSubmit, onPinModalClose }) => {
         existingEventPercentage,
         existingEventStartPercent,
         proposedBookingPercentage,
-        proposedBookingStartPercent
+        proposedBookingStartPercent,
+        eventsInThisHour  // เพิ่มข้อมูล events ทั้งหมดในชั่วโมง
       };
     });
   };
@@ -626,16 +741,38 @@ const BookingModal = ({ isOpen, onClose, onSubmit, onPinModalClose }) => {
       maxEndTime.setHours(19, 0, 0, 0);
       const proposedEndDate = new Date(startDate);
       proposedEndDate.setMinutes(proposedEndDate.getMinutes() + newDuration);
+      
       if (proposedEndDate > maxEndTime) {
+        // คำนวณ duration สูงสุดที่เป็นไปได้
         const maxDuration = (maxEndTime.getTime() - startDate.getTime()) / (1000 * 60);
-        newDuration = Math.max(15, Math.floor(maxDuration / 15) * 15);
-        if (newDuration < minutes) {
-          // หาเวลาเริ่มต้นที่เหมาะสมสำหรับ duration ที่ต้องการ
+        const maxDurationRounded = Math.max(15, Math.floor(maxDuration / 15) * 15);
+        
+        if (maxDurationRounded < minutes) {
+          // ถ้า duration ที่ต้องการมากเกินไป ให้หาเวลาเริ่มต้นใหม่
           const availableTime = findNextAvailableTime(formData.startTime, minutes, 'backward');
-          setFormData(prev => ({ ...prev, duration: minutes, startTime: availableTime }));
+          
+          // ตรวจสอบอีกครั้งว่าเวลาใหม่สามารถรองรับ duration ที่ต้องการได้หรือไม่
+          const newStartDate = new Date(availableTime);
+          const newProposedEndDate = new Date(newStartDate);
+          newProposedEndDate.setMinutes(newProposedEndDate.getMinutes() + minutes);
+          const newMaxEndTime = new Date(newStartDate);
+          newMaxEndTime.setHours(19, 0, 0, 0);
+          
+          if (newProposedEndDate <= newMaxEndTime) {
+            // ถ้าเวลาใหม่รองรับได้ ให้ใช้
+            setFormData(prev => ({ ...prev, duration: minutes, startTime: availableTime }));
+          } else {
+            // ถ้ายังไม่รองรับ ให้ใช้ duration สูงสุดที่เป็นไปได้
+            setFormData(prev => ({ ...prev, duration: maxDurationRounded }));
+          }
           return;
+        } else {
+          // ถ้า duration ที่คำนวณได้รองรับ ให้ใช้
+          newDuration = maxDurationRounded;
         }
       }
+      
+      // ตรวจสอบ conflict และหาเวลาที่เหมาะสม
       const availableTime = findNextAvailableTime(formData.startTime, newDuration);
       setFormData(prev => ({ ...prev, duration: newDuration, startTime: availableTime }));
     } else {
@@ -715,6 +852,11 @@ const BookingModal = ({ isOpen, onClose, onSubmit, onPinModalClose }) => {
 
   // แสดง warning ถ้ามีการทับซ้อน
   const renderTimeConflictWarning = () => {
+    // ไม่แสดง warning เมื่อกำลัง loading หรือ waiting เพื่อไม่ให้ user งง
+    if (loading || waitingEvent) {
+      return null;
+    }
+    
     if (checkTimeConflict(formData.startTime, formData.duration)) {
       return (
         <div style={{
@@ -738,10 +880,27 @@ const BookingModal = ({ isOpen, onClose, onSubmit, onPinModalClose }) => {
     <>
       {showPinModal && <PinModal />}
       {!showPinModal && (
-        <div className="modal-overlay">
+        <div 
+          className="modal-overlay"
+          onClick={(e) => {
+            // ป้องกันการปิด modal เมื่อคลิกที่ overlay ขณะกำลัง loading หรือ waiting
+            if (e.target === e.currentTarget && !loading && !waitingEvent) {
+              onClose();
+            }
+          }}
+        >
           <div className="modal-container">
             <div className="modal-header">
-              <button onClick={onClose} className="close-button">
+              <button 
+                onClick={(loading || waitingEvent) ? undefined : onClose} 
+                className="close-button"
+                disabled={loading || waitingEvent}
+                style={{
+                  opacity: (loading || waitingEvent) ? 0.3 : 1,
+                  cursor: (loading || waitingEvent) ? 'not-allowed' : 'pointer',
+                  pointerEvents: (loading || waitingEvent) ? 'none' : 'auto'
+                }}
+              >
                 <X size={25} />
               </button>
               <div className="header-info">
@@ -752,7 +911,54 @@ const BookingModal = ({ isOpen, onClose, onSubmit, onPinModalClose }) => {
               </div>
             </div>
 
-            <div className="modal-body">
+            <div className="modal-body" style={{ position: 'relative' }}>
+              {/* Loading Overlay for Modal Body Only */}
+              {(loading || waitingEvent) && (
+                <div style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  zIndex: 1000,
+                  borderRadius: '0 0 1rem 1rem'
+                }}>
+                  <div style={{
+                    fontSize: '1.5rem',
+                    fontWeight: 'bold',
+                    color: '#4B5563',
+                    marginBottom: '1rem',
+                    animation: 'fadeInOut 1.5s infinite'
+                  }}>
+                    {loading ? 'Booking...' : 'Waiting...'}
+                  </div>
+                  <div style={{
+                    width: '40px',
+                    height: '40px',
+                    border: '4px solid #E5E7EB',
+                    borderTop: '4px solid #10B981',
+                    borderRadius: '50%',
+                    animation: 'spin 1s linear infinite'
+                  }}></div>
+                  
+                  <style jsx>{`
+                    @keyframes spin {
+                      0% { transform: rotate(0deg); }
+                      100% { transform: rotate(360deg); }
+                    }
+                    @keyframes fadeInOut {
+                      0%, 100% { opacity: 0.6; }
+                      50% { opacity: 1; }
+                    }
+                  `}</style>
+                </div>
+              )}
+
               {/* --- Subject Name --- */}
               <div className="form-group">
                 <div className="label-checkbox-row">
@@ -763,6 +969,12 @@ const BookingModal = ({ isOpen, onClose, onSubmit, onPinModalClose }) => {
                     onChange={(e) => {
                       handleUserInteraction(); // หยุด timer เมื่อผู้ใช้เปิด/ปิด checkbox
                       setSubjectEnabled(e.target.checked);
+                    }}
+                    disabled={loading || waitingEvent}
+                    style={{
+                      opacity: (loading || waitingEvent) ? 0.3 : 1,
+                      cursor: (loading || waitingEvent) ? 'not-allowed' : 'pointer',
+                      pointerEvents: (loading || waitingEvent) ? 'none' : 'auto'
                     }}
                   />
                 </div>
@@ -776,7 +988,12 @@ const BookingModal = ({ isOpen, onClose, onSubmit, onPinModalClose }) => {
                   onFocus={handleUserInteraction} // หยุด timer เมื่อผู้ใช้คลิกที่ input
                   className={errors.subject ? 'input-error' : ''}
                   placeholder="Enter meeting subject"
-                  disabled={!subjectEnabled}
+                  disabled={!subjectEnabled || loading || waitingEvent}
+                  style={{
+                    opacity: (!subjectEnabled || loading || waitingEvent) ? 0.3 : 1,
+                    cursor: (!subjectEnabled || loading || waitingEvent) ? 'not-allowed' : 'text',
+                    pointerEvents: (!subjectEnabled || loading || waitingEvent) ? 'none' : 'auto'
+                  }}
                 />
                 {errors.subject && <p className="error-text">{errors.subject}</p>}
               </div>
@@ -807,7 +1024,7 @@ const BookingModal = ({ isOpen, onClose, onSubmit, onPinModalClose }) => {
               {renderTimeConflictWarning()}
 
               <div className="timeline">
-                {timelineData.map(({ hour, isBooked, isCurrentSlot, hasExistingEvent, existingEventPercentage, existingEventStartPercent, proposedBookingPercentage, proposedBookingStartPercent }) => (
+                {timelineData.map(({ hour, isBooked, isCurrentSlot, hasExistingEvent, existingEventPercentage, existingEventStartPercent, proposedBookingPercentage, proposedBookingStartPercent, eventsInThisHour }) => (
                   <div
                     key={hour}
                     className={`timeline-block ${
@@ -816,37 +1033,78 @@ const BookingModal = ({ isOpen, onClose, onSubmit, onPinModalClose }) => {
                     style={{
                       position: 'relative',
                       background: (() => {
-                        if (hasExistingEvent && isBooked) {
-                          // มีทั้ง existing event และ proposed booking ในชั่วโมงเดียวกัน
-                          // สร้าง gradient ที่แสดงทั้งสองสี
-                          const segments = [];
-                          
-                          // เรียงลำดับตามตำแหน่ง
-                          const events = [
-                            { start: existingEventStartPercent, end: existingEventStartPercent + existingEventPercentage, color: '#DC2626' },
-                            { start: proposedBookingStartPercent, end: proposedBookingStartPercent + proposedBookingPercentage, color: '#3B82F6' }
-                          ].sort((a, b) => a.start - b.start);
-                          
-                          let currentPos = 0;
-                          events.forEach(event => {
-                            if (currentPos < event.start) {
-                              segments.push(`#E5E7EB ${currentPos}%`, `#E5E7EB ${event.start}%`);
-                            }
-                            segments.push(`${event.color} ${event.start}%`, `${event.color} ${event.end}%`);
-                            currentPos = event.end;
+                        // สร้าง gradient สำหรับแสดง multiple events
+                        const segments = [];
+                        let currentPos = 0;
+                        
+                        // รวม existing events และ proposed booking
+                        const allEvents = [...eventsInThisHour];
+                        
+                        // เพิ่ม proposed booking ถ้ามี
+                        if (isBooked) {
+                          allEvents.push({
+                            startPercent: proposedBookingStartPercent,
+                            endPercent: proposedBookingStartPercent + proposedBookingPercentage,
+                            type: 'proposed'
                           });
-                          
-                          if (currentPos < 100) {
-                            segments.push(`#E5E7EB ${currentPos}%`, `#E5E7EB 100%`);
+                        }
+                        
+                        // เรียงลำดับตามตำแหน่ง
+                        allEvents.sort((a, b) => a.startPercent - b.startPercent);
+                        
+                        // วิธีใหม่: สร้าง timeline โดยตรวจสอบทุกจุดที่มีการเปลี่ยนแปลง
+                        const changePoints = [];
+                        allEvents.forEach(event => {
+                          changePoints.push({ pos: event.startPercent, type: 'start', event });
+                          changePoints.push({ pos: event.endPercent, type: 'end', event });
+                        });
+                        changePoints.sort((a, b) => a.pos - b.pos || (a.type === 'start' ? -1 : 1));
+                        
+                        let activeEvents = [];
+                        let lastPos = 0;
+                        
+                        changePoints.forEach(point => {
+                          // เติมส่วนก่อนหน้า
+                          if (lastPos < point.pos) {
+                            if (activeEvents.length === 0) {
+                              segments.push(`#E5E7EB ${lastPos}%`, `#E5E7EB ${point.pos}%`);
+                            } else if (activeEvents.length === 1) {
+                              const color = activeEvents[0].type === 'existing' ? '#4B5563' : '#10B981';
+                              segments.push(`${color} ${lastPos}%`, `${color} ${point.pos}%`);
+                            } else {
+                              // มีมากกว่า 1 event = conflict
+                              segments.push(`#eccd32 ${lastPos}%`, `#eccd32 ${point.pos}%`);
+                            }
                           }
                           
-                          return `linear-gradient(to right, ${segments.join(', ')})`;
-                        } else if (hasExistingEvent) {
-                          return `linear-gradient(to right, #E5E7EB 0%, #E5E7EB ${existingEventStartPercent}%, #DC2626 ${existingEventStartPercent}%, #DC2626 ${existingEventStartPercent + existingEventPercentage}%, #E5E7EB ${existingEventStartPercent + existingEventPercentage}%, #E5E7EB 100%)`;
-                        } else if (isBooked) {
-                          return `linear-gradient(to right, #E5E7EB 0%, #E5E7EB ${proposedBookingStartPercent}%, #3B82F6 ${proposedBookingStartPercent}%, #3B82F6 ${proposedBookingStartPercent + proposedBookingPercentage}%, #E5E7EB ${proposedBookingStartPercent + proposedBookingPercentage}%, #E5E7EB 100%)`;
+                          // อัปเดต activeEvents
+                          if (point.type === 'start') {
+                            activeEvents.push(point.event);
+                          } else {
+                            activeEvents = activeEvents.filter(e => e !== point.event);
+                          }
+                          
+                          lastPos = point.pos;
+                        });
+                        
+                        // เติมส่วนที่เหลือ
+                        if (lastPos < 100) {
+                          if (activeEvents.length === 0) {
+                            segments.push(`#E5E7EB ${lastPos}%`, `#E5E7EB 100%`);
+                          } else if (activeEvents.length === 1) {
+                            const color = activeEvents[0].type === 'existing' ? '#4B5563' : '#10B981';
+                            segments.push(`${color} ${lastPos}%`, `${color} 100%`);
+                          } else {
+                            segments.push(`#eccd32 ${lastPos}%`, `#eccd32 100%`);
+                          }
                         }
-                        return undefined;
+                        
+                        // ถ้าไม่มี events ใดๆ
+                        if (segments.length === 0) {
+                          return '#E5E7EB';
+                        }
+                        
+                        return `linear-gradient(to right, ${segments.join(', ')})`;
                       })()
                     }}
                   >
@@ -866,12 +1124,71 @@ const BookingModal = ({ isOpen, onClose, onSubmit, onPinModalClose }) => {
                 })}
               </div>
 
+              {/* Timeline Legend */}
+              <div style={{ 
+                display: 'flex', 
+                justifyContent: 'center', 
+                gap: '1rem', 
+                marginTop: '0.5rem', 
+                marginBottom: '1rem',
+                fontSize: '0.75rem',
+                color: '#666'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                  <div style={{ 
+                    width: '12px', 
+                    height: '12px', 
+                    backgroundColor: '#4B5563', 
+                    borderRadius: '2px' 
+                  }}></div>
+                  <span>unavailable</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                  <div style={{ 
+                    width: '12px', 
+                    height: '12px', 
+                    backgroundColor: '#10B981', 
+                    borderRadius: '2px' 
+                  }}></div>
+                  <span>Available</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                  <div style={{ 
+                    width: '12px', 
+                    height: '12px', 
+                    backgroundColor: '#eccd32', 
+                    borderRadius: '2px' 
+                  }}></div>
+                  <span>conflict</span>
+                </div>
+              </div>
+
               <div className="form-group">
                 <label>Start Time</label>
                 <div className="adjust-group">
-                  <button onClick={() => adjustTime(false)}><Minus size={16} /></button>
+                  <button 
+                    onClick={() => adjustTime(false)}
+                    disabled={loading || waitingEvent}
+                    style={{
+                      opacity: (loading || waitingEvent) ? 0.3 : 1,
+                      cursor: (loading || waitingEvent) ? 'not-allowed' : 'pointer',
+                      pointerEvents: (loading || waitingEvent) ? 'none' : 'auto'
+                    }}
+                  >
+                    <Minus size={16} />
+                  </button>
                   <div className="display-time">{formatDisplayTime(formData.startTime)}</div>
-                  <button onClick={() => adjustTime(true)}><Plus size={16} /></button>
+                  <button 
+                    onClick={() => adjustTime(true)}
+                    disabled={loading || waitingEvent}
+                    style={{
+                      opacity: (loading || waitingEvent) ? 0.3 : 1,
+                      cursor: (loading || waitingEvent) ? 'not-allowed' : 'pointer',
+                      pointerEvents: (loading || waitingEvent) ? 'none' : 'auto'
+                    }}
+                  >
+                    <Plus size={16} />
+                  </button>
                 </div>
                 {errors.startTime && <p className="error-text">{errors.startTime}</p>}
               </div>
@@ -879,9 +1196,29 @@ const BookingModal = ({ isOpen, onClose, onSubmit, onPinModalClose }) => {
               <div className="form-group">
                 <label>End Time</label>
                 <div className="adjust-group">
-                  <button onClick={() => adjustDuration(false)}><Minus size={16} /></button>
+                  <button 
+                    onClick={() => adjustDuration(false)}
+                    disabled={loading || waitingEvent}
+                    style={{
+                      opacity: (loading || waitingEvent) ? 0.3 : 1,
+                      cursor: (loading || waitingEvent) ? 'not-allowed' : 'pointer',
+                      pointerEvents: (loading || waitingEvent) ? 'none' : 'auto'
+                    }}
+                  >
+                    <Minus size={16} />
+                  </button>
                   <div className="display-time">{getEndTime()}</div>
-                  <button onClick={() => adjustDuration(true)}><Plus size={16} /></button>
+                  <button 
+                    onClick={() => adjustDuration(true)}
+                    disabled={loading || waitingEvent}
+                    style={{
+                      opacity: (loading || waitingEvent) ? 0.3 : 1,
+                      cursor: (loading || waitingEvent) ? 'not-allowed' : 'pointer',
+                      pointerEvents: (loading || waitingEvent) ? 'none' : 'auto'
+                    }}
+                  >
+                    <Plus size={16} />
+                  </button>
                 </div>
                 {errors.duration && <p className="error-text">{errors.duration}</p>}
                 
@@ -892,6 +1229,12 @@ const BookingModal = ({ isOpen, onClose, onSubmit, onPinModalClose }) => {
                       type="button"
                       onClick={() => setQuickDuration(30)}
                       className={`quick-duration-btn ${formData.duration === 30 ? 'active' : ''}`}
+                      disabled={loading || waitingEvent}
+                      style={{
+                        opacity: (loading || waitingEvent) ? 0.3 : 1,
+                        cursor: (loading || waitingEvent) ? 'not-allowed' : 'pointer',
+                        pointerEvents: (loading || waitingEvent) ? 'none' : 'auto'
+                      }}
                     >
                       30min
                     </button>
@@ -899,6 +1242,12 @@ const BookingModal = ({ isOpen, onClose, onSubmit, onPinModalClose }) => {
                       type="button"
                       onClick={() => setQuickDuration(60)}
                       className={`quick-duration-btn ${formData.duration === 60 ? 'active' : ''}`}
+                      disabled={loading || waitingEvent}
+                      style={{
+                        opacity: (loading || waitingEvent) ? 0.3 : 1,
+                        cursor: (loading || waitingEvent) ? 'not-allowed' : 'pointer',
+                        pointerEvents: (loading || waitingEvent) ? 'none' : 'auto'
+                      }}
                     >
                       1hr
                     </button>
@@ -906,6 +1255,12 @@ const BookingModal = ({ isOpen, onClose, onSubmit, onPinModalClose }) => {
                       type="button"
                       onClick={() => setQuickDuration(120)}
                       className={`quick-duration-btn ${formData.duration === 120 ? 'active' : ''}`}
+                      disabled={loading || waitingEvent}
+                      style={{
+                        opacity: (loading || waitingEvent) ? 0.3 : 1,
+                        cursor: (loading || waitingEvent) ? 'not-allowed' : 'pointer',
+                        pointerEvents: (loading || waitingEvent) ? 'none' : 'auto'
+                      }}
                     >
                       2hr
                     </button>
@@ -913,6 +1268,12 @@ const BookingModal = ({ isOpen, onClose, onSubmit, onPinModalClose }) => {
                       type="button"
                       onClick={() => setQuickDuration(660)}
                       className={`quick-duration-btn ${formData.duration === 660 ? 'active' : ''}`}
+                      disabled={loading || waitingEvent}
+                      style={{
+                        opacity: (loading || waitingEvent) ? 0.3 : 1,
+                        cursor: (loading || waitingEvent) ? 'not-allowed' : 'pointer',
+                        pointerEvents: (loading || waitingEvent) ? 'none' : 'auto'
+                      }}
                     >
                       All day
                     </button>
@@ -934,13 +1295,17 @@ const BookingModal = ({ isOpen, onClose, onSubmit, onPinModalClose }) => {
                     handleSubmit(e);
                   }} 
                   className="submit-btn"
-                  disabled={loading || !canBook}
+                  disabled={loading || !canBook || waitingEvent}
                   style={{
-                    opacity: !canBook ? 0.5 : 1,
-                    cursor: !canBook ? 'not-allowed' : 'pointer'
+                    opacity: (!canBook || loading || waitingEvent) ? 0.5 : 1,
+                    cursor: (!canBook || loading || waitingEvent) ? 'not-allowed' : 'pointer'
                   }}
                 >
-                  {loading ? 'Booking...' : (canBook ? 'Book Now' : 'Time Conflict')}
+                  {loading ? (
+                    <span>
+                      Booking...
+                    </span>
+                  ) : (canBook ? 'Book Now' : 'Time Conflict')}
                 </button>
                 {errors.submit && <p className="error-text">{errors.submit}</p>}
                 {errors.timeConflict && <p className="error-text">{errors.timeConflict}</p>}
