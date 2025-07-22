@@ -207,6 +207,10 @@ const handleAddAdmin = async () => {
     setAdminStatus('success');  // ✅ แสดง popup success
 
     setTimeout(() => {
+      setAdminStatus(null);
+      setShowAddAdminModal(false);
+      setAddAdminForm({ email: '', password: '', name: '', pin: '' });
+      setShowAddAdminPassword(false);
       setShowAdminStatus(false);  // ✅ ปิด popup หลัง 2 วินาที (เช่น)
     }, 2000);
 
@@ -214,11 +218,17 @@ const handleAddAdmin = async () => {
     setNewMember({ name: "", pin: "", email: "", password: "" });
 
   } catch (error) {
-    console.error("Backend error:", error.response?.data || error.message);
+      console.error("Error status:", error.response?.status);
+      console.error("Error data:", error.response?.data);
+      console.error("Error message:", error.message);
 
     setAdminStatus('error');      // ✅ แสดง popup error
 
     setTimeout(() => {
+      setAdminStatus(null);
+      setShowAddAdminModal(false);
+      setAddAdminForm({ email: '', password: '', name: '', pin: '' });
+      setShowAddAdminPassword(false);
       setShowAdminStatus(false);  // ✅ ปิด popup หลัง 2 วินาที
     }, 2000);
 
@@ -532,7 +542,7 @@ const handleDeleteAdmins = async () => {
         </div>
       )}
       {adminstatus === 'success' && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+        <div className="fixed inset-0 z-50 backdrop-blur-sm bg-white/20 flex items-center justify-center shadow-xl/30">
           <div className="bg-green-100 border border-green-400 text-green-700 px-6 py-4 rounded-xl shadow-lg text-lg">
             ✅ Admin created successfully!
           </div>
@@ -540,7 +550,7 @@ const handleDeleteAdmins = async () => {
       )}
 
       {adminstatus === 'error' && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+        <div className="fixed inset-0 z-50 backdrop-blur-sm bg-white/20 flex items-center justify-center shadow-xl/30">
           <div className="bg-red-100 border border-red-400 text-red-700 px-6 py-4 rounded-xl shadow-lg text-lg">
             ❌ Failed to create admin!
           </div>
