@@ -33,6 +33,7 @@ export default defineConfig({
       '/account/logsmonitoring': 'http://localhost:4000',
       '/account/me': 'http://localhost:4000',
       '/superadmin/createadmin': 'http://localhost:4000',
+      '/superadmin/deleteadmin': 'http://localhost:4000',
     }
   }
 })
