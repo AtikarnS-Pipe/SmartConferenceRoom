@@ -209,24 +209,6 @@ const handleSelectHousekeeper = (housekeeper) => {
       }
     };
 
-    const refreshToken = async () => {
-    try {
-      const refreshRes = await axios.post("/account/refreshtoken", {}, { withCredentials: true });
-      console.log("Refresh response:", refreshRes);
-      const newToken = refreshRes.data.accessToken;
-      if (!newToken) {
-        console.error("No accessToken returned in refresh response.");
-        return;
-      }
-
-      localStorage.setItem("token", newToken);
-      console.log("Access token refreshed successfully.");
-  } catch (err) {
-    console.error("Token refresh error:", err);
-    // navigate('/');
-  }
-};
-
 
 const handleDeleteHousekeepers = async () => {
   if (selectedMembers.length === 0) {
