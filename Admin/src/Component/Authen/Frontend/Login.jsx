@@ -70,30 +70,30 @@ function Verify({ setAuth }) {
       )}
 
       <div className="flex flex-1">
-        {/* Left Side - Logo */}
-        <div className="flex-1 bg-gray-10 flex items-center justify-center p-8">
+        {/* Left Side - Logo (Hidden on small screens) */}
+        <div className="hidden lg:flex flex-1 bg-gray-10 items-center justify-center p-8">
           <img src="src/assets/Logotcc.png" alt="Logo" className="w-120 h-70 mx-auto mb-4" />
         </div>
 
         {/* Right Side - Login Form */}
         <div
-          className="flex-1 relative flex items-center justify-center p-8"
+          className="flex-1 lg:flex-1 relative flex items-center justify-center p-4 lg:p-8"
           style={{
             backgroundImage: `url('https://images.pexels.com/photos/273209/pexels-photo-273209.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2')`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
           }}
         >
-          <div className="relative z-10 bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md">
-            <div className="text-center mb-8">
+          <div className="relative z-10 bg-white rounded-2xl shadow-2xl p-6 lg:p-8 w-full max-w-md mx-4 lg:mx-0">
+            <div className="text-center mb-6 lg:mb-8">
               <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Lock className="w-8 h-8 text-blue-600" />
               </div>
-              <h1 className="text-2xl font-bold text-gray-900 mb-2">Admin Authentication</h1>
+              <h1 className="text-xl lg:text-2xl font-bold text-gray-900 mb-2">Admin Authentication</h1>
               <p className="text-gray-600 text-sm">Sign in to your account</p>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-4 lg:space-y-6">
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
                   Email Address
@@ -109,7 +109,7 @@ function Verify({ setAuth }) {
                     required
                     value={formData.email}
                     onChange={handleInputChange}
-                    className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-gray-50 text-gray-900 placeholder-gray-500"
+                    className="block w-full pl-10 pr-3 py-2.5 lg:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-gray-50 text-gray-900 placeholder-gray-500"
                     placeholder="Enter your email address"
                   />
                 </div>
@@ -130,7 +130,7 @@ function Verify({ setAuth }) {
                     required
                     value={formData.password}
                     onChange={handleInputChange}
-                    className="block w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-gray-50 text-gray-900 placeholder-gray-500"
+                    className="block w-full pl-10 pr-10 py-2.5 lg:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-gray-50 text-gray-900 placeholder-gray-500"
                     placeholder="Enter password"
                   />
                   <button
@@ -150,14 +150,14 @@ function Verify({ setAuth }) {
               <button
                 type="submit"
                 disabled={isLoading || loginSuccess}
-                className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 flex items-center justify-center"
+                className="w-full bg-blue-600 text-white py-2.5 lg:py-3 px-4 rounded-lg font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors disabled:opacity-50 flex items-center justify-center"
               >
                 <LogIn className="w-5 h-5 mr-2" />
                 {isLoading ? "Signing in..." : "Sign in"}
               </button>
             </form>
 
-            <div className="mt-6 text-center">
+            <div className="mt-4 lg:mt-6 text-center">
               <button
                 onClick={handleForgotPassword}
                 className="text-blue-600 hover:text-blue-700 text-sm font-medium transition-colors"

@@ -62,7 +62,8 @@ function Roomdata({ rooms, currentTime,icons }) {
     navigate("/Unavailable", { state: { rooms: unavailableRooms, allRooms: rooms, icons: icons } ,replace: true });
   };
   return (
-    <div className='grid grid-cols-1 md:mx-50 lg:grid-cols-2 lg:ml-10 lg:mr-15 gap-2 '>
+    <div className='m-10 flex items-center justify-center px-4'>
+      <div className='grid grid-cols-1 lg:grid-cols-2 gap-6 justify-items-center w-full max-w-6xl'>
       {total.map((t, index) => {
         const isAvailable = t.Name === "Room Available";
         const mainColor = isAvailable ? "bg-[#00c21b]" : "bg-red-600";
@@ -72,7 +73,7 @@ function Roomdata({ rooms, currentTime,icons }) {
         return (
           <div
             key={index}
-            className="flex  items-center bg-[#f8f7f1] rounded-[20px] shadow-xl/30 overflow-hidden w-[330px] sm:w-[420px] md:w-[400px] lg:w-[450px] xl:w-[550px] max-sm:ml-5 sm:ml-5 xl:ml-20 my-10"
+            className="flex items-center bg-[#f8f7f1] rounded-[20px] shadow-xl/30 overflow-hidden w-full max-w-[550px] mx-auto"
           >
             <div className={`w-14 sm:w-16 rounded-l-3xl ${mainColor} h-full`}></div>
 
@@ -117,6 +118,7 @@ function Roomdata({ rooms, currentTime,icons }) {
           </div>
         );
       })}
+      </div>
     </div>
   )
 }
