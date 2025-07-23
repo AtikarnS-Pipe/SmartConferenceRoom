@@ -559,7 +559,7 @@ const handleSignout = async () => {
                   </div>
                 </div>
                 
-                <div className="flex items-center gap-3">
+                {/* <div className="flex items-center gap-3">
                   <RefreshButton
                     onClick={() => setAutoRefresh(!autoRefresh)}
                     className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
@@ -577,7 +577,7 @@ const handleSignout = async () => {
                     <Download className="w-4 h-4" />
                     Export
                   </RefreshButton>
-                </div>
+                </div> */}
               </div>
             </div>
 

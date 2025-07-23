@@ -389,7 +389,9 @@ const Room1501 = () => {
               className="relative bg-gradient-to-b from-white to-slate-50"
               style={{
                 height: `${calendarHeight}px`,
-                minWidth: `${COLUMN_LEFT_OFFSET + columnWidth * numDays + 40}px`
+                minWidth: view === 'Day'
+                  ? '100%' // Prevent horizontal scroll in Day view
+                  : `${COLUMN_LEFT_OFFSET + columnWidth * numDays + 40}px`
               }}
             >
               {renderDayHeaders()}

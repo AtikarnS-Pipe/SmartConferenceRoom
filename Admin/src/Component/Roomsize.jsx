@@ -112,26 +112,26 @@ function RoomSize() {
                 <RefreshButton className='mr-5 cursor-pointer hover:text-gray-300' onClick={()=>navigate('/admin/api')}>Home</RefreshButton>
                 <li className='md:mr-5 lg:mx-5 cursor-pointer hover:text-gray-300' onClick={toggleDropdown1}>Size Room {openMenu1 ? '▴' : '▾'}
                   {openMenu1 && (
-            <ul className="absolute mt-2 w-25 bg-blue-700 rounded-md shadow-lg z-10">
-              <RefreshButton 
-                className="px-4 py-2 hover:bg-blue-400 rounded-md cursor-pointer"
-                onClick={() => handleSizeNavigate(2)}
-              >
-                Size S
-              </RefreshButton>
-              <RefreshButton 
-                className="px-4 py-2 hover:bg-blue-400  rounded-md cursor-pointer"
-                onClick={() => handleSizeNavigate(4)}
-              >
-                Size M
-              </RefreshButton>
-              <RefreshButton 
-                className="px-4 py-2 hover:bg-blue-400  rounded-md cursor-pointer"
-                onClick={() => handleSizeNavigate(6)}
-              >
-                Size L
-              </RefreshButton>
-            </ul>
+           <ul className="absolute mt-2 w-25 bg-blue-700 rounded-md shadow-lg z-10">
+                                <RefreshButton 
+                                  className="px-6.5 py-2 hover:bg-blue-400 rounded-md cursor-pointer"
+                                  onClick={() => handleSizeNavigate(2)}
+                                >
+                                  Size S
+                                </RefreshButton>
+                                <RefreshButton 
+                                  className="px-6 py-2 hover:bg-blue-400  rounded-md cursor-pointer"
+                                  onClick={() => handleSizeNavigate(4)}
+                                >
+                                  Size M
+                                </RefreshButton>
+                                <RefreshButton 
+                                  className="px-6.5 py-2 hover:bg-blue-400  rounded-md cursor-pointer"
+                                  onClick={() => handleSizeNavigate(6)}
+                                >
+                                  Size L
+                                </RefreshButton>
+                              </ul>
           )}
           </li>
           <RefreshButton>
