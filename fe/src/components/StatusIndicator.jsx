@@ -2,7 +2,8 @@ import { CircleCheckBig, CircleX } from 'lucide-react';
 
 export default function StatusIndicator({ isOccupied }) {
   const Icon = isOccupied ? CircleX : CircleCheckBig; // ใช้ตัวแปร component ไม่ใช่ JSX ทันที
-  const text = isOccupied ? 'Occupied' : 'Available';
+  // const text = isOccupied ? 'Occupied' : 'Available';
+  const text = isOccupied ? 'อยู่ระหว่างการ test ระบบ' : 'อยู่ระหว่างการ test ระบบ';
 
   return (
     <div className={`status-indicator ${isOccupied ? 'occupied' : 'available'}`}>
