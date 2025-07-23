@@ -680,7 +680,7 @@ const handleDeleteAdmins = async () => {
                 </div>
 
                 <div
-                  className={`absolute right-0 mt-2 w-42 border rounded-lg shadow-xl z-50 transition-all duration-200 ease-in-out ${
+                  className={`absolute right-0 mt-2 w-35 border rounded-lg shadow-xl z-50 transition-all duration-200 ease-in-out ${
                     darkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-100 border-gray-200'
                   } ${
                     open ? "opacity-100 visible" : "opacity-0 invisible pointer-events-none"
@@ -709,7 +709,7 @@ const handleDeleteAdmins = async () => {
                         <rect width="18" height="12" x="3" y="10" rx="2" />
                         <path d="M7 10V7a5 5 0 0 1 9.33-2.5" />
                       </svg>
-                      Change Password
+                      Change PIN
                     </li>
                     <li className={`px-3 py-2 cursor-pointer flex ${
                       darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-300'
