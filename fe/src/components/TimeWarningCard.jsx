@@ -21,7 +21,7 @@ const TimeWarningCard = ({ currentEvent, getTimeRemaining }) => {
       const remainingSeconds = Math.floor(diffMs / 1000);
 
       // Show card when 10 minutes remaining and hasn't been shown yet
-      if (remainingMinutes < 1000 && remainingSeconds > 0 && !hasShown) {
+      if (remainingMinutes < 10 && remainingSeconds > 0 && !hasShown) {
         setShowCard(true);
         setHasShown(true);
         setIsSlideUp(false);
@@ -64,12 +64,6 @@ const TimeWarningCard = ({ currentEvent, getTimeRemaining }) => {
             Time Remaining: <span className="time-warning-countdown">{getTimeRemaining(currentEvent)}</span>
           </p>
         </div>
-        {/* <button 
-          className="time-warning-close"
-          onClick={() => setShowCard(false)}
-        >
-          ×
-        </button> */}
       </div>
     </div>
   );

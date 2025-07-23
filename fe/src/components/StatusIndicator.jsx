@@ -6,7 +6,7 @@ export default function StatusIndicator({ isOccupied }) {
 
   return (
     <div className={`status-indicator ${isOccupied ? 'occupied' : 'available'}`}>
-      <Icon size={50} color={isOccupied ? '#ef4444' : '#16a34a'} /> {/* สีแดง/เขียว */}
+      <Icon size={50} color={isOccupied ? '#DF2121' : '#16a34a'} /> {/* สีแดง/เขียว */}
       <h1>{text}</h1>
     </div>
   );

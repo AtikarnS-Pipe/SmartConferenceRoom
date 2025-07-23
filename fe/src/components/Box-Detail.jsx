@@ -1,7 +1,7 @@
 import { User, Clock, NotepadText, Check, X} from 'lucide-react';
 import { useIsFullDayEvent } from '../hooks/useIsFullDayEvent.jsx';
 import BookingModal from './BookingModal';
-import React, { useState } from 'react';
+import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useRoomData } from '../hooks/useRoomData';
 
@@ -16,12 +16,27 @@ export default function Boxdetail({ isOccupied, event, getTimeRemaining, loading
   const { floor, room } = useRoomData(); 
   const roomId = `${floor}${room}`;
 
-  const handleEndMeeting = async () => {
-    if (!event || !event.organizer || !event.start || !event.end) {
-      alert('ไม่พบข้อมูลการประชุม');
-      return;
-    }
+// ปิด EndConfirmModal อัตโนมัติใน 30 วิ
+useEffect(() => {
+  if (!showEndConfirmModal) return;
+  const timeoutId = setTimeout(() => {
+    setShowEndConfirmModal(false);
+  }, 30000); // 30 วินาที
 
+  return () => clearTimeout(timeoutId);
+}, [showEndConfirmModal]);
+
+// ปิด ResultModal อัตโนมัติใน 30 วิ
+useEffect(() => {
+if (!showResultModal) return;
+const timeoutId = setTimeout(() => {
+  setShowResultModal(false);
+}, 30000);
+
+return () => clearTimeout(timeoutId);
+}, [showResultModal]);
+
+  const handleEndMeeting = async () => {
     setIsEnding(true);
     try {
       const endmeetingdata = {
@@ -342,36 +357,40 @@ export default function Boxdetail({ isOccupied, event, getTimeRemaining, loading
             </div>
 
             {/* ✅ Organizer */}
-            <div style={{ marginBottom: "10px" }} className="detail-row">
-              <span className="detail-label">
-                <User size={30} /> Organizer :
-              </span>
-              <span className="detail-value">
-                {event.organizer.emailAddress.name}
-              </span>
+            <div style={{ marginBottom: "10px" }} className="detail-row flex-row-between">
+              <div className="detail-row-left">
+                <span className="detail-label">
+                  <User size={30} /> Organizer :
+                </span>
+                <span className="detail-value">
+                  {event.organizer.emailAddress.name}
+                </span>
+              </div>
             </div>
 
             {/* ✅ Time */}
-            <div style={{ marginBottom: "10px" }} className="detail-row">
-              <span className="detail-label">
-                <Clock size={30} /> Time :
-              </span>
-              <span className="time-value">
-                {isFullDayEvent(event)
-                  ? 'Full day'
-                  : `${new Date(event.start.dateTime + 'Z').toLocaleTimeString('en-US', {
-                      timeZone: 'Asia/Bangkok',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                      hour12: true
-                    })} - ${new Date(event.end.dateTime + 'Z').toLocaleTimeString('en-US', {
-                      timeZone: 'Asia/Bangkok',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                      hour12: true
-                    })}`
-                }
-              </span>
+            <div style={{ marginBottom: "10px" }} className="detail-row flex-row-between">
+              <div className="detail-row-left">
+                <span className="detail-label">
+                  <Clock size={30} /> Time :
+                </span>
+                <span className="time-value">
+                  {isFullDayEvent(event)
+                    ? 'Full day'
+                    : `${new Date(event.start.dateTime + 'Z').toLocaleTimeString('en-US', {
+                        timeZone: 'Asia/Bangkok',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: true
+                      })} - ${new Date(event.end.dateTime + 'Z').toLocaleTimeString('en-US', {
+                        timeZone: 'Asia/Bangkok',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: true
+                      })}`
+                  }
+                </span>
+              </div>
             </div>
           </div>
           <div className="box-detail-action-buttons">

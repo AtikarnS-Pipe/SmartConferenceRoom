@@ -74,11 +74,63 @@ function ZoomControls({ zoomLevel, setZoomLevel }) {
         white-space: nowrap;
       }
 
+      @media (max-width: 768px) {
+        .zoom-btn {
+          font-size: 13px;
+          padding: 5px 15px;
+          border-radius: 7px;
+          gap: 5px;
+        }
+        
+        .zoom-icon {
+          font-size: 15px;
+        }
+      }
+
       @media (max-width: 600px) {
         .zoom-btn {
           font-size: 12px;
           padding: 4px 12px;
           border-radius: 6px;
+          gap: 4px;
+        }
+        
+        .zoom-icon {
+          font-size: 14px;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .zoom-btn {
+          font-size: 11px;
+          padding: 3px 5px;
+          border-radius: 5px;
+          gap: 3px;
+          min-width: 65px;
+        }
+        
+        .zoom-icon {
+          font-size: 13px;
+        }
+        
+        .zoom-label {
+          font-size: 10px;
+        }
+      }
+
+      @media (max-width: 360px) {
+        .zoom-btn {
+          padding: 3px 8px;
+          font-size: 10px;
+          min-width: 55px;
+        }
+        
+        .zoom-icon {
+          font-size: 12px;
+        }
+        
+        .zoom-label {
+          font-size: 9px;
         }
       }
     `}</style>

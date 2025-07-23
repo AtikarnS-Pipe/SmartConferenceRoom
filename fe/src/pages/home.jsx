@@ -60,20 +60,16 @@ function Home() {
           {/* schedule */}
           <div className="schedule-section">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h1 className="schedule-heading">Today's Schedule</h1>
-            <ZoomControl zoomLevel={zoomLevel} setZoomLevel={setZoomLevel} />
+              <h1 className="schedule-heading">Today's Schedule</h1>
+              <ZoomControl zoomLevel={zoomLevel} setZoomLevel={setZoomLevel} />
             </div>
             <div className="schedule-container">
               <TimeSchedule currentTime={currentTime} events={events} zoomLevel={zoomLevel} setZoomLevel={setZoomLevel} />
             </div>
-            {/* <p className = 'touchscreen'>#Touch‑Supported</p> */}
           </div>
         </div>
       {/* Time Warning Card */}
-      <TimeWarningCard 
-        currentEvent={currentEvent} 
-        getTimeRemaining={getTimeRemaining} 
-      />
+      <TimeWarningCard currentEvent={currentEvent} getTimeRemaining={getTimeRemaining}/>
       </div>
 
       {/* popup */}

@@ -5,7 +5,7 @@ import { useEvents } from '../hooks/useEvents';
 import axios from 'axios';
 
 //constant
-const COUNTDOWN_TIME = 1000; //เวลาปิดอัตโนมัติ 30 วินาที
+const COUNTDOWN_TIME = 60; //เวลาปิดอัตโนมัติ 30 วินาที
 const BookingModal = ({ isOpen, onClose, onSubmit, onPinModalClose }) => {
   const [formData, setFormData] = useState({
     subject: '',
@@ -27,6 +27,16 @@ const BookingModal = ({ isOpen, onClose, onSubmit, onPinModalClose }) => {
   const { floor, room } = useRoomData();
   const { events } = useEvents(floor, room);
   const roomId = `${floor}${room}`; // สร้าง roomId จาก floor และ room
+
+  //ปิด pinmodal หลัง 30 วินาที
+  useEffect(() => {
+  if (!showPinModal) return;
+    const timeoutId = setTimeout(() => {
+      setShowPinModal(false);
+    }, 30000);
+
+    return () => clearTimeout(timeoutId);
+  }, [showPinModal]); // run effect only when showPinModal changes
 
   // Reset countdown when modal opens
   useEffect(() => {
