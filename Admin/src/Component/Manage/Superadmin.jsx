@@ -4,6 +4,7 @@ import {
   Shield,
   UserCheck,
   MoreHorizontal,
+  CheckCircle,
   Crown ,
   ChevronDown,
   Search,
@@ -35,7 +36,7 @@ function Superadmin() {
   const [newPassword, setNewPassword] = useState('');
   const [show, setShow] = useState(false);
   const [showAdminStatus, setShowAdminStatus] = useState(false);
-  const [error, setError] = useState(null);
+  const [signoutsuccess, setSignoutsuccess] = useState(false);
   const [pinChanged, setPinChanged] = useState(null);
   const [adminstatus, setAdminStatus] = useState(null);
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -154,7 +155,7 @@ const handleSignout = async () => {
     const token = localStorage.getItem('token');
     const res = await axios.post(
       '/account/signout',
-      {},  // ไม่มี body ในการ signout (เว้นเปล่า)
+      {}, // ไม่มี body ในการ signout (เว้นเปล่า)
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -164,11 +165,12 @@ const handleSignout = async () => {
     );
 
     if (res.data.success) {
-      alert('Signed out successfully.');
-      window.location.href = '/';
-    } else {
-      alert('Signout failed: ' + (res.data.message || 'Unknown error'));
+      setSignoutsuccess(true);
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 3000); // แสดงข้อความสำเร็จ 3 วินาทีแล้ว redirect
     }
+
   } catch (error) {
     console.error('Signout error:', error);
     alert('Failed to sign out.');
@@ -555,6 +557,15 @@ const handleDeleteAdmins = async () => {
         <div className="fixed inset-0 z-50 backdrop-blur-sm bg-white/20 flex items-center justify-center shadow-xl/30">
           <div className="bg-red-100 border border-red-400 text-red-700 px-6 py-4 rounded-xl shadow-lg text-lg">
             ❌ Failed to create admin!
+          </div>
+        </div>
+      )}
+
+              {signoutsuccess && (
+        <div className="fixed top-6 right-115 z-50">
+          <div className="bg-green-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-2 animate-slide-in">
+            <CheckCircle className="w-5 h-5" />
+            <span className="font-medium">Signout Successful! Redirecting...</span>
           </div>
         </div>
       )}

@@ -4,7 +4,7 @@ import {
   Shield,
   UserCheck,
   MoreHorizontal,
-  MessageCircle,
+  CheckCircle,
   ChevronDown,
   Search,
   Plus,
@@ -24,7 +24,7 @@ import { DarkModeContext } from '../Context/DarkModeContext';
 function Admin() {
   const [searchTerm, setSearchTerm] = useState('');
   const [members, setMembers] = useState([]);
-  const [currentUserName, setCurrentUserName] = useState('');
+  const [signoutsuccess, setSignoutsuccess] = useState(false);
   const [profile, setProfile] = useState(null);
   const [selectedMembers, setSelectedMembers] = useState([]);
   const [newPassword, setNewPassword] = useState('');
@@ -135,7 +135,7 @@ const handleSignout = async () => {
     const token = localStorage.getItem('token');
     const res = await axios.post(
       '/account/signout',
-      {},  // ไม่มี body ในการ signout (เว้นเปล่า)
+      {}, // ไม่มี body ในการ signout (เว้นเปล่า)
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -145,11 +145,12 @@ const handleSignout = async () => {
     );
 
     if (res.data.success) {
-      alert('Signed out successfully.');
-      window.location.href = '/';
-    } else {
-      alert('Signout failed: ' + (res.data.message || 'Unknown error'));
+      setSignoutsuccess(true);
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 3000); // แสดงข้อความสำเร็จ 3 วินาทีแล้ว redirect
     }
+
   } catch (error) {
     console.error('Signout error:', error);
     alert('Failed to sign out.');
@@ -295,6 +296,16 @@ const handleSignout = async () => {
           </div>
         </div>
       )}
+
+        {signoutsuccess && (
+        <div className="fixed top-6 right-115 z-50">
+          <div className="bg-green-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-2 animate-slide-in">
+            <CheckCircle className="w-5 h-5" />
+            <span className="font-medium">Signout Successful! Redirecting...</span>
+          </div>
+        </div>
+      )}
+
 
       {/* Sidebar */}
       <div className={`w-full md:w-64 ${darkMode ? 'bg-gray-800' : 'bg-slate-800'} text-white flex flex-row md:flex-col sticky top-0 h-screen transition-colors duration-300`}>

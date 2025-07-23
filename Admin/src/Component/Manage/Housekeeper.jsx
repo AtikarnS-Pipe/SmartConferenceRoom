@@ -3,7 +3,7 @@ import {
   Users,
   Shield,
   UserCheck,
-  MoreHorizontal,
+  CheckCircle,
   Crown,
   ChevronDown,
   Search,
@@ -26,6 +26,7 @@ function Housekeeper() {
   const [newPassword, setNewPassword] = useState('');
   const [newPin, setNewPin] = useState('');
   const [confirmPin, setConfirmPin] = useState('');
+  const [signoutsuccess, setSignoutsuccess] = useState(false);
   const [adminStatus, setAdminStatus] = useState(null);
   const [pinTargetName, setPinTargetName] = useState('');
   const [show, setShow] = useState(false);
@@ -332,6 +333,33 @@ const handleDeleteHousekeepers = async () => {
   if (role === 'Admin') return 'bg-blue-600';
 };
 
+const handleSignout = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    const res = await axios.post(
+      '/account/signout',
+      {}, // ไม่มี body ในการ signout (เว้นเปล่า)
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        withCredentials: true,
+      }
+    );
+
+    if (res.data.success) {
+      setSignoutsuccess(true);
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 3000); // แสดงข้อความสำเร็จ 3 วินาทีแล้ว redirect
+    }
+
+  } catch (error) {
+    console.error('Signout error:', error);
+    alert('Failed to sign out.');
+  }
+};
+
   // คำนวณจำนวน
   const totalUsers = housekeeper.length;
   const adminCount = housekeeper.filter(m => m.role && m.role.toLowerCase() === 'admin').length;
@@ -507,6 +535,15 @@ const handleDeleteHousekeepers = async () => {
           </div>
         </div>
       )}
+
+        {signoutsuccess && (
+        <div className="fixed top-6 right-115 z-50">
+          <div className="bg-green-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-2 animate-slide-in">
+            <CheckCircle className="w-5 h-5" />
+            <span className="font-medium">Signout Successful! Redirecting...</span>
+          </div>
+        </div>
+      )}
       {/* Sidebar */}
       <div className={`w-full md:w-64 ${darkMode ? 'bg-gray-800' : 'bg-slate-800'} text-white flex flex-row md:flex-col sticky top-0 h-screen`}>
         <div className={`p-4 md:p-6 border-b ${darkMode ? 'border-gray-700' : 'border-slate-700'} w-full`}>
@@ -648,7 +685,7 @@ const handleDeleteHousekeepers = async () => {
                                   </svg>
                                   Change PIN
                                 </li>
-                                <li className={`px-3 py-2 ${darkMode ? 'hover:bg-gray-600' : 'hover:bg-gray-300'} cursor-pointer flex`}>
+                                <li className={`px-3 py-2 ${darkMode ? 'hover:bg-gray-600' : 'hover:bg-gray-300'} cursor-pointer flex`} onClick={handleSignout}>
                                   <svg
                                     xmlns="http://www.w3.org/2000/svg"
                                     className="mr-3"

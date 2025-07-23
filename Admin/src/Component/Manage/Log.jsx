@@ -3,6 +3,7 @@ import {
   Activity,
   Crown,
   XCircle,
+  CheckCircle,
   Info,
   Search,
   Filter,
@@ -11,7 +12,6 @@ import {
   Clock,
   Server,
   Bug,
-  CheckCircle,
   ChevronDown,
   Eye,
   EyeOff,
@@ -31,7 +31,7 @@ function Log() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedLevel, setSelectedLevel] = useState('all');
   const [selectedSource, setSelectedSource] = useState('all');
-  const [autoRefresh, setAutoRefresh] = useState(false);
+  const [signoutsuccess, setSignoutsuccess] = useState(false);
   const [logs, setLogs] = useState([]);
   const [newPassword, setNewPassword] = useState('');
   const [show, setShow] = useState(false);
@@ -145,14 +145,6 @@ function Log() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  useEffect(() => {
-    if (autoRefresh) {
-      const interval = setInterval(() => {
-        console.log('Auto-refreshing logs...');
-      }, 5000);
-      return () => clearInterval(interval);
-    }
-  }, [autoRefresh]);
 
   const handleSubmitPasswordChange = async () => {
     if (newPassword !== confirmPassword) {
@@ -192,23 +184,32 @@ function Log() {
     }
   };
 
-  const handleSignout = async () => {
-    try {
-      const res = await axios.post('/account/signout', {}, {
+const handleSignout = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    const res = await axios.post(
+      '/account/signout',
+      {}, // ไม่มี body ในการ signout (เว้นเปล่า)
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
         withCredentials: true,
-      });
-
-      if (res.data.success) {
-        alert('Signed out successfully.');
-        window.location.href = '/';
-      } else {
-        alert('Signout failed: ' + (res.data.message || 'Unknown error'));
       }
-    } catch (error) {
-      console.error('Signout error:', error);
-      alert('Failed to sign out.');
+    );
+
+    if (res.data.success) {
+      setSignoutsuccess(true);
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 3000); // แสดงข้อความสำเร็จ 3 วินาทีแล้ว redirect
     }
-  };
+
+  } catch (error) {
+    console.error('Signout error:', error);
+    alert('Failed to sign out.');
+  }
+};
     useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) return;
@@ -252,6 +253,8 @@ function Log() {
   if (role === 'Superadmin') return 'bg-yellow-600';
   if (role === 'Admin') return 'bg-blue-600';
 };
+
+
 
   return (
     <div className={`min-h-screen ${darkMode ? 'bg-gray-900' : 'bg-gray-50'} flex flex-col md:flex-row font-display transition-colors duration-300`}>
@@ -340,6 +343,14 @@ function Log() {
           </div>
         </div>
       )}
+              {signoutsuccess && (
+              <div className="fixed top-6 right-115 z-50">
+                <div className="bg-green-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-2 animate-slide-in">
+                  <CheckCircle className="w-5 h-5" />
+                  <span className="font-medium">Signout Successful! Redirecting...</span>
+                </div>
+              </div>
+            )}
 
       {/* Sidebar */}
       <div className={`w-full md:w-64 ${darkMode ? 'bg-gray-800' : 'bg-slate-800'} text-white flex flex-row md:flex-col sticky top-0 h-screen transition-colors duration-300`}>
@@ -547,25 +558,6 @@ function Log() {
                   </div>
                 </div>
                 
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={() => setAutoRefresh(!autoRefresh)}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      autoRefresh 
-                        ? 'bg-green-100 text-green-700 hover:bg-green-200' 
-                        : darkMode 
-                          ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                  >
-                    <RefreshCw className={`w-4 h-4 ${autoRefresh ? 'animate-spin' : ''}`} />
-                    Auto Refresh
-                  </button>
-                  <button className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
-                    <Download className="w-4 h-4" />
-                    Export
-                  </button>
-                </div>
               </div>
             </div>
 
