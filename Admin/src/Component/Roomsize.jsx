@@ -3,12 +3,17 @@ import { useLocation,useNavigate,useParams } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import Roomdata from './Roomdata';
 import Roomcard from './Roomcard';
+<<<<<<< HEAD
 import RefreshButton from "../utils/refreshToken"; // Assuming you have a RefreshButton component
+=======
+import axios from 'axios';
+>>>>>>> 3dc9c5ea0f61523f1d2f326b95939e77f1cd584b
 
 function RoomSize() {
   const location = useLocation();
   const { size } = useParams();          // size มาจาก URL เช่น /roomsize/4
   const peopleSize = Number(size);       // แปลงเป็น number ถ้าจำเป็น
+  const [profile, setProfile] = useState(null);
   const { rooms = [], icons = [] } = location.state || {};
   const [currentTime, setCurrentTime] = useState(new Date());
   const navigate = useNavigate(); 
@@ -31,6 +36,38 @@ function RoomSize() {
 }, [peopleSize]);
 
   useEffect(() => {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+  
+      axios.get('/account/me', {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+        .then(res => {
+          setProfile(res.data);
+          console.log("Profile data fetched:", res.data);
+        })
+        .catch(err => console.error(err));
+    }, []);
+  
+    useEffect(() => {
+      if (profile) {
+        console.log("Profile state updated:", profile);
+      }
+    }, [profile]);
+  
+    const handleNavigateByRole = () => {
+    const role = profile?.role; // ดึง role จาก localStorage
+      console.log("Navigating based on role:", role);
+    if (role === 'Superadmin') {
+      navigate('/account/superadmin');
+    } else if (role === 'Admin') {
+      navigate('/account/admin');
+    } else {
+      navigate('/'); // สำรองเผื่อ role อื่นหรือไม่มี role
+    }
+  };
+
+  useEffect(() => {
         const timer = setInterval(() => {
           setCurrentTime(new Date());
         }, 1000);
@@ -51,6 +88,7 @@ function RoomSize() {
       hour12: false,
       timeZone: 'Asia/Bangkok'
     });
+    
 
   // กรอง icons ที่ตรงกับจำนวนคน
  const filteredIcons = icons.filter(icon => icon.people === selectedSize);
@@ -74,8 +112,8 @@ function RoomSize() {
       <nav className='shadow-md p-6 items-center md:flex justify-between bg-[#000042] text-white sticky top-0 z-40'>
             <div className="md:text-2xl text-xl underline underline-offset-10 ">Conference Room</div>
             <ul className='flex text-center md:ml-5 max-md:mb-10 max-md:mt-10'>
-                <RefreshButton className='mr-5 cursor-pointer' onClick={()=>navigate('/admin/api')}>Home</RefreshButton>
-                <li className='md:mr-5 lg:mx-5 cursor-pointer' onClick={toggleDropdown1}>Size Room {openMenu1 ? '▴' : '▾'}
+                <RefreshButton className='mr-5 cursor-pointer hover:text-gray-300' onClick={()=>navigate('/admin/api')}>Home</RefreshButton>
+                <li className='md:mr-5 lg:mx-5 cursor-pointer hover:text-gray-300' onClick={toggleDropdown1}>Size Room {openMenu1 ? '▴' : '▾'}
                   {openMenu1 && (
             <ul className="absolute mt-2 w-25 bg-blue-700 rounded-md shadow-lg z-10">
               <RefreshButton 
@@ -100,7 +138,7 @@ function RoomSize() {
           )}
           </li>
           <RefreshButton>
-            <h1 className='cursor-pointer' onClick={()=>navigate('/account/admin')}>Management</h1>
+            <h1 className='cursor-pointer hover:text-gray-300' onClick={handleNavigateByRole}>Management</h1>
           </RefreshButton>
             </ul>
             <div className=' max-md:flex'>

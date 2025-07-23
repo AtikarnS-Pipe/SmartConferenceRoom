@@ -257,12 +257,12 @@ function Log() {
   return (
     <div className={`min-h-screen ${darkMode ? 'bg-gray-900' : 'bg-gray-50'} flex flex-col md:flex-row font-display transition-colors duration-300`}>
       {showPasswordModal && (
-        <div className="fixed inset-0 z-50 bg-black bg-opacity-40 flex items-center justify-center">
+        <div className="fixed inset-0 z-50 backdrop-blur-sm bg-gray-300/30 flex items-center justify-center">
           <div className={`${darkMode ? 'bg-gray-800 text-white' : 'bg-white'} p-6 rounded-xl shadow-lg w-96`}>
-            <h2 className={`text-lg font-semibold mb-4 ${darkMode ? 'text-white' : 'text-gray-800'}`}>Change Password</h2>
+            <h2 className={`text-lg font-semibold mb-4 ${darkMode ? 'text-white' : 'text-gray-800'}`}>Change PIN</h2>
 
             <div className="mb-4">
-              <label className={`block text-sm mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>New Password</label>
+              <label className={`block text-sm mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>New PIN</label>
               <div className="relative">
                 <input
                   type={showNewPassword ? "text" : "password"}
@@ -283,7 +283,7 @@ function Log() {
             </div>
 
             <div className="mb-6">
-              <label className={`block text-sm mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>Confirm New Password</label>
+              <label className={`block text-sm mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>Confirm New PIN</label>
               <div className="relative">
                 <input
                   type={showConfirmPassword ? "text" : "password"}
@@ -319,7 +319,7 @@ function Log() {
                 }}
                 className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
               >
-                Update Password
+                Update Pin
               </RefreshButton>
             </div>
           </div>
@@ -473,7 +473,7 @@ function Log() {
                 </div>
 
                 <div
-                  className={`absolute right-0 mt-2 w-42 border rounded-lg shadow-xl z-50 transition-all duration-200 ease-in-out ${
+                  className={`absolute right-0 mt-2 w-35 border rounded-lg shadow-xl z-50 transition-all duration-200 ease-in-out ${
                     darkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-100 border-gray-200'
                   } ${
                     open ? "opacity-100 visible" : "opacity-0 invisible pointer-events-none"
@@ -502,7 +502,7 @@ function Log() {
                         <rect width="18" height="12" x="3" y="10" rx="2" />
                         <path d="M7 10V7a5 5 0 0 1 9.33-2.5" />
                       </svg>
-                      Change Password
+                      Change PIN
                     </li>
                     <li className={`px-3 py-2 cursor-pointer flex ${
                       darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-300'

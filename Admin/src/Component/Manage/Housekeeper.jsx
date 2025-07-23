@@ -27,9 +27,11 @@ function Housekeeper() {
   const [newPassword, setNewPassword] = useState('');
   const [newPin, setNewPin] = useState('');
   const [confirmPin, setConfirmPin] = useState('');
+  const [adminStatus, setAdminStatus] = useState(null);
   const [pinTargetName, setPinTargetName] = useState('');
   const [show, setShow] = useState(false);
   const [showPinModal, setShowPinModal] = useState(false);
+  const [showPin, setShowPin] = useState(false);
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [statusPopup, setStatusPopup] = useState(null);
@@ -49,22 +51,22 @@ function Housekeeper() {
       withCredentials: true,
     });
 
-    console.log("SSE connection established for housekeepers", eventSource);
+    // console.log("SSE connection established for housekeepers", eventSource);
 
     const handleHousekeeperList = (event) => {
       try {
-        console.log('SSE raw event.data:', event.data);
+        // console.log('SSE raw event.data:', event.data);
         const data = JSON.parse(event.data);
-        console.log('SSE parsed housekeeper data:', data);
+        // console.log('SSE parsed housekeeper data:', data);
 
         if (Array.isArray(data)) {
           setHousekeeper(data);  // ใช้ได้ตรงนี้เลย
         } else {
-          console.error('Housekeeper data is not an array:', data);
+          // console.error('Housekeeper data is not an array:', data);
         }
         
       } catch (error) {
-        console.error('Error parsing SSE data:', error);
+        // console.error('Error parsing SSE data:', error);
       }
     };
 
@@ -161,54 +163,61 @@ const handleSelectHousekeeper = (housekeeper) => {
   }
 };
 
-    const handleAddMember = async () => {
-      if (!newMember.name || !newMember.pin) {
-        alert("Please fill in all fields.");
-        return;
-      }
+const handleAddMember = async () => {
+  if (!newMember.name?.trim() || !newMember.pin?.trim()) {
+    alert("Please fill in all fields.");
+    return;
+  }
 
-      try {
-        const token = localStorage.getItem("token"); // หรือจาก Context
-        const response = await axios.post(
-          "/account/createhousekeeper",
-          {
-            name: newMember.name,
-            pin: newMember.pin,
-            role: newMember.role
-          },
-          
+  try {
+    const token = localStorage.getItem("token");
+
+    const response = await axios.post(
+      "/account/createhousekeeper",
+      {
+        name: newMember.name.trim(),
+        pin: newMember.pin.trim(),
+      },
       {
         headers: {
           Authorization: `Bearer ${token}`
-        }
-        // ถ้า backend ใช้ cookie auth ด้วย ให้เพิ่ม:
-        , withCredentials: true
+        },
+        withCredentials: true
       }
-        );
+    );
 
-        // สมมุติ backend ส่ง object housekeeper กลับมา
-        const createdMember = response.data;
+    const createdMember = response.data;
 
-        setHousekeeper((prev) => [
-          ...prev,
-          {
-            id: prev.length + 1, // หรือใช้ createdMember.id ถ้า backend สร้าง id
-            name: createdMember.name,
-            // email: `${createdMember.name.toLowerCase().replace(/\s+/g, "")}@tcc.com`,
-            role: createdMember.role,
-            status: "Offline",
-            lastLogin: "N/A"
-          }
-        ]);
-
-        setShowModal(false);
-        setNewMember({ name: "", pin: "", role: "Housekeeper" });
-
-      } catch (error) {
-        console.error("Error creating housekeeper:", error);
-        alert("Failed to create housekeeper. Please try again.");
+    setHousekeeper((prev) => [
+      ...prev,
+      {
+        id: createdMember._id || prev.length + 1,   // ใช้ _id ถ้า backend ส่งกลับ
+        name: createdMember.name,
+        role: createdMember.role || "Housekeeper",  // fallback role เผื่อ backend ไม่ส่งกลับ
+        status: "Offline",
+        lastLogin: "N/A"
       }
-    };
+    ]);
+
+    setAdminStatus('success');
+    setTimeout(() => {
+      setAdminStatus(null);
+      setShowModal(false);
+      setNewMember({ name: "", pin: "", role: "Housekeeper" });
+    }, 3000);
+
+  } catch (error) {
+    console.error("Error creating housekeeper:", error.response?.data || error.message);
+
+    setAdminStatus('error');
+
+    setTimeout(() => {
+      setAdminStatus(null);
+      setShowModal(false);
+      setNewMember({ name: "", pin: "", role: "Housekeeper" });
+    }, 3000);
+  }
+};
 
 
 const handleDeleteHousekeepers = async () => {
@@ -228,7 +237,7 @@ const handleDeleteHousekeepers = async () => {
           Authorization: `Bearer ${token}`,
         },
         data: {
-          name: member.name,
+          id: member.id,
         },
         withCredentials: true,
       });
@@ -312,7 +321,7 @@ const handleDeleteHousekeepers = async () => {
               <label className={`block text-sm mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>New PIN</label>
               <input
                 type="password"
-                maxLength={6}
+                maxLength="4"
                 inputMode="numeric"
                 className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring focus:ring-blue-200 ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'}`}
                 value={newPin}
@@ -342,13 +351,13 @@ const handleDeleteHousekeepers = async () => {
         </div>
       )}
       {showPasswordModal && (
-        <div className="fixed inset-0 z-50 bg-black bg-opacity-40 flex items-center justify-center">
+        <div className="fixed inset-0 z-50 backdrop-blur-sm bg-gray-300/30 flex items-center justify-center">
           <div className={`${darkMode ? 'bg-gray-800 text-white' : 'bg-white'} p-6 rounded-xl shadow-lg w-96`}>
-            <h2 className={`text-lg font-semibold mb-4 ${darkMode ? 'text-white' : 'text-gray-800'}`}>Change Password</h2>
+            <h2 className={`text-lg font-semibold mb-4 ${darkMode ? 'text-white' : 'text-gray-800'}`}>Change PIN</h2>
 
             {/* New Password */}
             <div className="mb-4">
-              <label className={`block text-sm mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>New Password</label>
+              <label className={`block text-sm mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>New PIN</label>
               <div className="relative">
                 <input
                   type={showNewPassword ? "text" : "password"}
@@ -381,7 +390,7 @@ const handleDeleteHousekeepers = async () => {
 
             {/* Confirm Password */}
             <div className="mb-6">
-              <label className={`block text-sm mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>Confirm New Password</label>
+              <label className={`block text-sm mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>Confirm New PIN</label>
               <div className="relative">
                 <input
                   type={showConfirmPassword ? "text" : "password"}
@@ -425,23 +434,39 @@ const handleDeleteHousekeepers = async () => {
                 }}
                 className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
               >
-                Update Password
+                Update Pin
               </RefreshButton>
             </div>
           </div>
         </div>
       )}
       {statusPopup === 'success' && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+        <div className="fixed inset-0 z-50 backdrop-blur-sm bg-white/20 flex items-center justify-center shadow-xl/30">
           <div className="bg-green-100 border border-green-400 text-green-700 px-6 py-4 rounded-xl shadow-lg text-lg">
-            ✅ Password updated successfully!
+            ✅ PIN updated successfully!
           </div>
         </div>
       )}
+
       {statusPopup === 'error' && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+        <div className="fixed inset-0 z-50 backdrop-blur-sm bg-white/20 flex items-center justify-center shadow-xl/30">
           <div className="bg-red-100 border border-red-400 text-red-700 px-6 py-4 rounded-xl shadow-lg text-lg">
-            ❌ Failed to update password!
+            ❌ Failed to update PIN!
+          </div>
+        </div>
+      )}
+      {adminStatus === 'success' && (
+        <div className="fixed inset-0 z-50 backdrop-blur-sm bg-white/20 flex items-center justify-center shadow-xl/30">
+          <div className="bg-green-100 border border-green-400 text-green-700 px-6 py-4 rounded-xl shadow-lg text-lg">
+            ✅ Admin created successfully!
+          </div>
+        </div>
+      )}
+
+      {adminStatus === 'error' && (
+        <div className="fixed inset-0 z-50 backdrop-blur-sm bg-white/20 flex items-center justify-center shadow-xl/30">
+          <div className="bg-red-100 border border-red-400 text-red-700 px-6 py-4 rounded-xl shadow-lg text-lg">
+            ❌ Failed to create admin!
           </div>
         </div>
       )}
@@ -559,7 +584,7 @@ const handleDeleteHousekeepers = async () => {
                             </div>
               
                             <div
-                              className={`absolute right-0 mt-2 w-42 ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-100 border-gray-200 text-gray-700'} border rounded-lg shadow-xl z-50 transition-all duration-200 ease-in-out ${
+                              className={`absolute right-0 mt-2 w-35 ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-100 border-gray-200 text-gray-700'} border rounded-lg shadow-xl z-50 transition-all duration-200 ease-in-out ${
                                 open ? "opacity-100 visible" : "opacity-0 invisible pointer-events-none"
                               }`}
                             >
@@ -584,7 +609,7 @@ const handleDeleteHousekeepers = async () => {
                                     <rect width="18" height="12" x="3" y="10" rx="2" />
                                     <path d="M7 10V7a5 5 0 0 1 9.33-2.5" />
                                   </svg>
-                                  Change Password
+                                  Change PIN
                                 </li>
                                 <li className={`px-3 py-2 ${darkMode ? 'hover:bg-gray-600' : 'hover:bg-gray-300'} cursor-pointer flex`}>
                                   <svg
@@ -746,9 +771,9 @@ const handleDeleteHousekeepers = async () => {
       </div>
       {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center px-2">
+        <div className="fixed inset-0 z-50 backdrop-blur-sm bg-gray-300/30 flex items-center justify-center">
           <div className={`${darkMode ? 'bg-gray-800 text-white' : 'bg-white'} rounded-xl shadow-lg w-full max-w-md p-4 md:p-6`}>
-            <h2 className={`text-xl font-semibold mb-4 ${darkMode ? 'text-white' : ''}`}>Add Member</h2>
+            <h2 className={`text-xl font-semibold mb-4 ${darkMode ? 'text-white' : ''}`}>Add Housekeeper</h2>
             <div className="space-y-4">
               <div>
                 <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Name</label>
@@ -762,22 +787,33 @@ const handleDeleteHousekeepers = async () => {
               <div>
                 <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Pin</label>
                 <input
-                  type="password"
+                  type={showPin ? "text" : "password"}
+                  maxLength="4"
                   value={newMember.pin}
-                  onChange={(e) => setNewMember({ ...newMember, pin: e.target.value })}
+                  onChange={(e) => setNewMember({
+                    ...newMember,
+                    pin: e.target.value.replace(/\D/g, '')  // กรองไม่ให้มีตัวอักษรที่ไม่ใช่ตัวเลข
+                  })}
                   className={`mt-1 block w-full p-2 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'}`}
                 />
+                      <button
+                        type="button"
+                        onClick={() => setShowPin(!showPin)}
+                        className="absolute top-[358px] right-[515px]"  // ปรับตำแหน่งให้ปุ่มอยู่ขอบ input
+                      >
+                        {showPin ? <EyeOff className="w-5 h-5 text-gray-400" /> : <Eye className="w-5 h-5 text-gray-400" />}
+                      </button>
               </div>
-              <div>
+              {/* <div>
                 <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Role</label>
-                <select
+                <div
                   value={newMember.role}
                   onChange={(e) => setNewMember({ ...newMember, role: e.target.value })}
                   className={`mt-1 block w-full p-2 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'}`}
                 >
                   <option value="Housekeeper">Housekeeper</option>
-                </select>
-              </div>
+                </div>
+              </div> */}
             </div>
             <div className="mt-6 flex justify-end gap-3">
               <RefreshButton
