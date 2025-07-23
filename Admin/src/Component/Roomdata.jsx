@@ -1,5 +1,6 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom';
+import RefreshButton from "../utils/refreshToken"; // Assuming you have a RefreshButton component
 
 function Roomdata({ rooms, currentTime,icons }) {
   console.log("Roomdata - icons:", icons); 
@@ -82,7 +83,7 @@ function Roomdata({ rooms, currentTime,icons }) {
                 {t.count}
                 <span className="text-xl font-medium"> / {t.total}</span>
               </div>
-              <button 
+              <RefreshButton 
               onClick={() => {
                   if (t.Name === "Room Available") {
                     handleClickAvailable(); // เรียกฟังก์ชันสำหรับห้องว่าง
@@ -92,7 +93,7 @@ function Roomdata({ rooms, currentTime,icons }) {
                 }}
               className="mt-2 px-4 py-3 bg-gray-200 rounded-xl text-sm font-medium text-black w-max cursor-pointer hover:bg-gray-300">
                 View Details
-              </button>
+              </RefreshButton>
             </div>
 
             <div className={`flex items-center justify-center w-12 h-12 relative right-5 sm:right-10 rounded-full ${bgCircle}`}>

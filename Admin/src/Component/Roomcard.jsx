@@ -3,6 +3,7 @@ import { MdPeople } from "react-icons/md";
 import { FaClock } from "react-icons/fa6";
 import { IoPerson } from "react-icons/io5";
 import { useNavigate } from 'react-router-dom';
+import RefreshButton from "../utils/refreshToken"; // Assuming you have a RefreshButton component
 
 function Roomcard(props) {
   const { data, icons } = props
@@ -100,12 +101,12 @@ function Roomcard(props) {
               <div className='w-full flex justify-center items-center mb-6'>{iconClass}</div>
               <div className='flex items-center justify-center space-x-3'>
                 <FaClock size={20} />
-                <div
+                <RefreshButton
                   onClick={handleScheduleClick}
                   className='border border-black px-3 py-1 rounded-2xl bg-black text-white cursor-pointer text-sm sm:text-base hover:bg-gray-700 transition-colors duration-200'
                 >
                   Schedule
-                </div>
+                </RefreshButton>
               </div>
             </div>
           </div>

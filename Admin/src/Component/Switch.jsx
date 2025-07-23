@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-
+import RefreshButton from "../utils/refreshToken"; // Assuming you have a RefreshButton component
 export default function Switch() {
   const [isOn, setIsOn] = useState(false);
 
@@ -14,7 +14,7 @@ export default function Switch() {
   }, [isOn]);
 
   return (
-    <button
+    <RefreshButton
       onClick={() => setIsOn(true)}
       className={`w-16 h-8 flex items-center rounded-full p-1 transition-colors duration-300 ${
         isOn ? "bg-green-500" : "bg-gray-300"
@@ -25,6 +25,6 @@ export default function Switch() {
           isOn ? "translate-x-8" : "translate-x-0"
         }`}
       />
-    </button>
+    </RefreshButton>
   );
 }

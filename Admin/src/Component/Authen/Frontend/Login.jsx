@@ -51,7 +51,7 @@ function Verify({ setAuth }) {
       console.log("Login successful:", res.data.token);
       setAuth(true);
       setLoginSuccess(true);
-
+      console.log("Profile data:");
       // แสดง toast success 4 วินาทีแล้วไปหน้าอื่น
       setTimeout(() => {
         navigate('/login/ms');

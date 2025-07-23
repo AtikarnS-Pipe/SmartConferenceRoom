@@ -21,6 +21,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { DarkModeContext } from '../Context/DarkModeContext';
+import RefreshButton from '../../utils/refreshToken';
 
 function Superadmin() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -376,13 +377,13 @@ const handleDeleteAdmins = async () => {
                     darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'
                   }`}
                 />
-                <button
+                <RefreshButton
                   type="button"
                   onClick={() => setShowNewPassword(!showNewPassword)}
                   className={`absolute inset-y-0 right-0 flex items-center px-3 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}
                 >
                   {showNewPassword ? <Eye className="h-5 w-5" /> : <EyeOff className="h-5 w-5" />}
-                </button>
+                </RefreshButton>
               </div>
             </div>
 
@@ -398,34 +399,34 @@ const handleDeleteAdmins = async () => {
                     darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'
                   }`}
                 />
-                <button
+                <RefreshButton
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   className={`absolute inset-y-0 right-0 flex items-center px-3 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}
                 >
                   {showConfirmPassword ? <Eye className="h-5 w-5" /> : <EyeOff className="h-5 w-5" />}
-                </button>
+                </RefreshButton>
               </div>
             </div>
 
             <div className="flex justify-end gap-2">
-              <button
+              <RefreshButton
                 onClick={() => setShowPasswordModal(false)}
                 className={`px-4 py-2 rounded-md ${
                   darkMode ? 'bg-gray-600 text-gray-300 hover:bg-gray-500' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                 }`}
               >
                 Cancel
-              </button>
-              <button
+              </RefreshButton>
+              <RefreshButton
                 onClick={() => {
                   setShowPasswordModal(false);
                   handleSubmitPasswordChange();
                 }}
                 className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
               >
-                Update PIN
-              </button>
+                Update Pin
+              </RefreshButton>
             </div>
           </div>
         </div>
@@ -462,13 +463,13 @@ const handleDeleteAdmins = async () => {
                   }`}
                   placeholder="Enter password"
                 />
-                <button
+                <RefreshButton
                   type="button"
                   onClick={() => setShowAddAdminPassword(!showAddAdminPassword)}
                   className={`absolute inset-y-0 right-0 flex items-center px-3 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}
                 >
                   {showAddAdminPassword ? <Eye className="h-5 w-5" /> : <EyeOff className="h-5 w-5" />}
-                </button>
+                </RefreshButton>
               </div>
             </div>
 
@@ -497,17 +498,17 @@ const handleDeleteAdmins = async () => {
                   placeholder="Enter PIN"
                   maxLength="4"
                 />
-                <button
+                <RefreshButton
                   type="button"
                   onClick={() => setShowAddAdminPassword(!showAddAdminPassword)}
                   className={`absolute right-3 top-11 transform -translate-y-1/2 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}
                 >
                   {showAddAdminPassword ? <Eye className="h-5 w-5" /> : <EyeOff className="h-5 w-5" />}
-                </button>
+                </RefreshButton>
               </div>
 
             <div className="flex justify-end gap-2">
-              <button
+              <RefreshButton
                 onClick={() => {
                   setShowAddAdminModal(false);
                   setAddAdminForm({ email: '', password: '', name: '', pin: '' });
@@ -518,13 +519,13 @@ const handleDeleteAdmins = async () => {
                 }`}
               >
                 Cancel
-              </button>
-              <button
+              </RefreshButton>
+              <RefreshButton
                 onClick={handleAddAdmin}
                 className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center gap-2"
               >
                 Confirm
-              </button>
+              </RefreshButton>
             </div>
           </div>
         </div>
@@ -582,27 +583,27 @@ const handleDeleteAdmins = async () => {
         </div>
         <div className="flex-1 p-2 md:p-4">
           <div className="space-y-2">
-            <button className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left hover:${darkMode ? 'bg-gray-700' : 'bg-slate-700'} cursor-pointer`} onClick={() => navigate('/admin/api')}>
+            <RefreshButton className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left hover:${darkMode ? 'bg-gray-700' : 'bg-slate-700'} cursor-pointer`} onClick={() => navigate('/admin/api')}>
               <Home className="w-4 h-4" />
               <span className="text-sm">Home</span>
-            </button>
+            </RefreshButton>
           </div>
           <div className="mt-4 md:mt-6">
             <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-slate-400'} uppercase tracking-wider mb-3 px-3`}>Role Filter</p>
             <div className="space-y-1">
-              <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg bg-white text-blue-600 text-left">
+              <RefreshButton className="w-full flex items-center gap-3 px-3 py-2 rounded-lg bg-white text-blue-600 text-left">
                 <Shield className="w-4 h-4" />
                 <span className="text-sm">Admin</span>
-              </button>
-              <button className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-300 hover:${darkMode ? 'bg-gray-700' : 'bg-slate-700'} text-left cursor-pointer`} onClick={() => navigate('/account/housekeeper')}>
+              </RefreshButton>
+              <RefreshButton className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-300 hover:${darkMode ? 'bg-gray-700' : 'bg-slate-700'} text-left cursor-pointer`} onClick={() => navigate('/account/housekeeper')}>
                 <UserCheck className="w-4 h-4 text-white" />
                 <span className="text-sm text-white">Housekeeper</span>
-              </button>
+              </RefreshButton>
               <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-slate-400'} uppercase tracking-wider mb-3 px-3 mt-5`}>MONITORING</p>
-              <button className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-300 hover:${darkMode ? 'bg-gray-700' : 'bg-slate-700'} text-left cursor-pointer`} onClick={() => navigate('/account/dashboard')}>
+              <RefreshButton className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-300 hover:${darkMode ? 'bg-gray-700' : 'bg-slate-700'} text-left cursor-pointer`} onClick={() => navigate('/account/dashboard')}>
                 <LayoutDashboard className="w-4 h-4 text-white" />
                 <span className="text-sm text-white">Dashboard</span>
-              </button>
+              </RefreshButton>
             </div>
           </div>
         </div>
@@ -623,7 +624,7 @@ const handleDeleteAdmins = async () => {
                    <h1>{profile?.role}</h1>
                 </div>
               {/* Dark Mode Toggle */}
-              <button
+              <RefreshButton
                 onClick={toggleDarkMode}
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
                   darkMode 
@@ -643,7 +644,7 @@ const handleDeleteAdmins = async () => {
                     <span className="text-sm">Dark</span>
                   </>
                 )}
-              </button>
+              </RefreshButton>
 
               {/* PIN Display */}
               <div className={`flex items-center gap-2 px-4 py-1.5 rounded-lg w-fit ${
@@ -652,14 +653,14 @@ const handleDeleteAdmins = async () => {
                 <div className={`text-lg tracking-widest ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                   {show ? profile?.pin : '●'.repeat(profile?.pin?.length || 4)}
                 </div>
-                <button
+                <RefreshButton
                   type="button"
                   onClick={() => setShow(!show)}
                   className={`focus:outline-none ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}
                   title={show ? "Hide PIN" : "Show PIN"}
                 >
                   {show ? <EyeOff size={20} /> : <Eye size={20} />}
-                </button>
+                </RefreshButton>
               </div>
 
               {/* User Dropdown */}
@@ -793,14 +794,14 @@ const handleDeleteAdmins = async () => {
                   />
                 </div>
                 <div className="flex gap-2">
-                  <button
+                  <RefreshButton
                     onClick={handleAddAdminClick}
                     className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                   >
                     <Plus className="w-4 h-4" />
                     <span className="text-sm">Add Admin</span>
-                  </button>
-                  <button
+                  </RefreshButton>
+                  <RefreshButton
                     onClick={handleDeleteAdmins}
                     className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
                       selectedMembers.length > 0
@@ -811,7 +812,7 @@ const handleDeleteAdmins = async () => {
                   >
                     <Trash2 className="w-4 h-4" />
                     <span className="text-sm">Delete Admin</span>
-                  </button>
+                  </RefreshButton>
                 </div>
               </div>
             </div>

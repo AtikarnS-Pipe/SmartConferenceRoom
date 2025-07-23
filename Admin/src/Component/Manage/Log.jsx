@@ -26,6 +26,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { DarkModeContext } from '../Context/DarkModeContext';
+import RefreshButton from '../../utils/refreshToken';
 
 function Log() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -274,13 +275,13 @@ const handleSignout = async () => {
                     darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'
                   }`}
                 />
-                <button
+                <RefreshButton
                   type="button"
                   onClick={() => setShowNewPassword(!showNewPassword)}
                   className={`absolute inset-y-0 right-0 flex items-center px-3 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}
                 >
                   {showNewPassword ? <Eye className="h-5 w-5" /> : <EyeOff className="h-5 w-5" />}
-                </button>
+                </RefreshButton>
               </div>
             </div>
 
@@ -295,34 +296,34 @@ const handleSignout = async () => {
                     darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'
                   }`}
                 />
-                <button
+                <RefreshButton
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   className={`absolute inset-y-0 right-0 flex items-center px-3 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}
                 >
                   {showConfirmPassword ? <Eye className="h-5 w-5" /> : <EyeOff className="h-5 w-5" />}
-                </button>
+                </RefreshButton>
               </div>
             </div>
 
             <div className="flex justify-end gap-2">
-              <button
+              <RefreshButton
                 onClick={() => setShowPasswordModal(false)}
                 className={`px-4 py-2 rounded-md ${
                   darkMode ? 'bg-gray-600 text-gray-300 hover:bg-gray-500' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                 }`}
               >
                 Cancel
-              </button>
-              <button
+              </RefreshButton>
+              <RefreshButton
                 onClick={() => {
                   setShowPasswordModal(false);
                   handleSubmitPasswordChange();
                 }}
                 className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
               >
-                Update PIN
-              </button>
+                Update Pin
+              </RefreshButton>
             </div>
           </div>
         </div>
@@ -364,27 +365,27 @@ const handleSignout = async () => {
         </div>
         <div className="flex-1 p-2 md:p-4">
           <div className="space-y-2">
-            <button className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left hover:${darkMode ? 'bg-gray-700' : 'bg-slate-700'} cursor-pointer`} onClick={() => navigate('/admin/api')}>
+            <RefreshButton className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left hover:${darkMode ? 'bg-gray-700' : 'bg-slate-700'} cursor-pointer`} onClick={() => navigate('/admin/api')}>
               <Home className="w-4 h-4" />
               <span className="text-sm">Home</span>
-            </button>
+            </RefreshButton>
           </div>
           <div className="mt-4 md:mt-6">
             <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-slate-400'} uppercase tracking-wider mb-3 px-3`}>ROLE FILTER</p>
             <div className="space-y-1">
-              <button className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-300 hover:${darkMode ? 'bg-gray-700' : 'bg-slate-700'} text-left cursor-pointer`} onClick={handleNavigateByRole}>
+              <RefreshButton className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-300 hover:${darkMode ? 'bg-gray-700' : 'bg-slate-700'} text-left cursor-pointer`} onClick={handleNavigateByRole}>
                 <Shield className="w-4 h-4 text-white" />
                 <span className="text-sm text-white">Admin</span>
-              </button>
-              <button className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-300 hover:${darkMode ? 'bg-gray-700' : 'bg-slate-700'} text-left cursor-pointer`} onClick={() => navigate('/account/housekeeper')}>
+              </RefreshButton>
+              <RefreshButton className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-300 hover:${darkMode ? 'bg-gray-700' : 'bg-slate-700'} text-left cursor-pointer`} onClick={() => navigate('/account/housekeeper')}>
                 <UserCheck className="w-4 h-4 text-white" />
                 <span className="text-sm text-white">Housekeeper</span>
-              </button>
+              </RefreshButton>
               <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-slate-400'} uppercase tracking-wider mb-3 px-3 mt-5`}>MONITORING</p>
-              <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg bg-white text-blue-600 text-left">
+              <RefreshButton className="w-full flex items-center gap-3 px-3 py-2 rounded-lg bg-white text-blue-600 text-left">
                 <LayoutDashboard className="w-4 h-4" />
                 <span className="text-sm">Dashboard</span>
-              </button>
+              </RefreshButton>
             </div>
           </div>
         </div>
@@ -415,7 +416,7 @@ const handleSignout = async () => {
                   <h1>{profile?.role}</h1>
               </div>
               {/* Dark Mode Toggle */}
-              <button
+              <RefreshButton
                 onClick={toggleDarkMode}
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
                   darkMode 
@@ -435,7 +436,7 @@ const handleSignout = async () => {
                     <span className="text-sm">Dark</span>
                   </>
                 )}
-              </button>
+              </RefreshButton>
 
               {/* PIN Display */}
               <div className={`flex items-center gap-2 px-4 py-1.5 rounded-lg w-fit ${
@@ -444,14 +445,14 @@ const handleSignout = async () => {
                 <div className={`text-lg tracking-widest ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                  {show ? profile?.pin || '0000' : '●'.repeat(profile?.pin?.length || 4)}
                 </div>
-                <button
+                <RefreshButton
                   type="button"
                   onClick={() => setShow(!show)}
                   className={`focus:outline-none ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}
                   title={show ? "Hide PIN" : "Show PIN"}
                 >
                   {show ? <EyeOff size={20} /> : <Eye size={20} />}
-                </button>
+                </RefreshButton>
               </div>
 
               {/* User Dropdown */}
@@ -558,6 +559,25 @@ const handleSignout = async () => {
                   </div>
                 </div>
                 
+                <div className="flex items-center gap-3">
+                  <RefreshButton
+                    onClick={() => setAutoRefresh(!autoRefresh)}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      autoRefresh 
+                        ? 'bg-green-100 text-green-700 hover:bg-green-200' 
+                        : darkMode 
+                          ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    <RefreshCw className={`w-4 h-4 ${autoRefresh ? 'animate-spin' : ''}`} />
+                    Auto Refresh
+                  </RefreshButton>
+                  <RefreshButton className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
+                    <Download className="w-4 h-4" />
+                    Export
+                  </RefreshButton>
+                </div>
               </div>
             </div>
 
@@ -661,7 +681,7 @@ const handleSignout = async () => {
                   Showing {filteredLogs.length} of {logs.length} log entries
                 </p>
                 <div className="flex justify-center mt-4">
-                  <button
+                  <RefreshButton
                     disabled={currentPage === 1}
                     onClick={() => setCurrentPage(prev => prev - 1)}
                     className={`px-3 py-1 mx-1 rounded disabled:opacity-50 ${
@@ -669,13 +689,13 @@ const handleSignout = async () => {
                     }`}
                   >
                     Prev
-                  </button>
+                  </RefreshButton>
 
                   <span className={`px-3 py-1 mx-1 ${darkMode ? 'text-gray-300' : ''}`}>
                     {currentPage} / {totalPages}
                   </span>
 
-                  <button
+                  <RefreshButton
                     disabled={currentPage === totalPages}
                     onClick={() => setCurrentPage(prev => prev + 1)}
                     className={`px-3 py-1 mx-1 rounded disabled:opacity-50 ${
@@ -683,7 +703,7 @@ const handleSignout = async () => {
                     }`}
                   >
                     Next
-                  </button>
+                  </RefreshButton>
                 </div>
                 <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                   Last updated: {new Date().toLocaleTimeString()}

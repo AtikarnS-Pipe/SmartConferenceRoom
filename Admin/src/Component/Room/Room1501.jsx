@@ -3,7 +3,7 @@ import dayjs from 'dayjs';
 import isBetween from 'dayjs/plugin/isBetween';
 import { ChevronLeft, ChevronRight, Home, Calendar, Clock, User, X, MapPin } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
-import io from 'socket.io-client';
+import RefreshButton from '../../utils/refreshToken';
 
 dayjs.extend(isBetween);
 
@@ -305,13 +305,13 @@ const Room1501 = () => {
           <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
             {/* Left Section */}
             <div className="flex flex-col gap-4">
-              <button
+              <RefreshButton
                 onClick={() => navigate('/admin/api')}
                 className="flex items-center gap-2 px-4 py-2 bg-slate-800 text-white rounded-xl hover:bg-slate-700 transition-colors duration-200 shadow-md hover:shadow-lg w-fit"
               >
                 <Home className="h-5 w-5" />
                 <span className="font-medium">Home</span>
-              </button>
+              </RefreshButton>
               
               <div className="flex items-center gap-3">
                 <div className="bg-gradient-to-r from-slate-800 to-slate-900 text-white p-4 rounded-xl shadow-lg">
@@ -346,7 +346,7 @@ const Room1501 = () => {
               
               <div className="flex gap-2">
                 {['Day', 'Week'].map((option) => (
-                  <button
+                  <RefreshButton
                     key={option}
                     onClick={() => updateURLForView(option)}
                     className={`px-4 py-2 rounded-xl font-medium transition-all duration-200 ${
@@ -356,23 +356,23 @@ const Room1501 = () => {
                     }`}
                   >
                     {option}
-                  </button>
+                  </RefreshButton>
                 ))}
               </div>
               
               <div className="flex items-center gap-2">
-                <button
+                <RefreshButton
                   onClick={() => handleDateChange(-1)}
                   className="p-2 bg-slate-800 text-white rounded-xl hover:bg-slate-700 transition-colors duration-200 shadow-md hover:shadow-lg"
                 >
                   <ChevronLeft className="h-5 w-5" />
-                </button>
-                <button
+                </RefreshButton>
+                <RefreshButton
                   onClick={() => handleDateChange(1)}
                   className="p-2 bg-slate-800 text-white rounded-xl hover:bg-slate-700 transition-colors duration-200 shadow-md hover:shadow-lg"
                 >
                   <ChevronRight className="h-5 w-5" />
-                </button>
+                </RefreshButton>
               </div>
             </div>
           </div>
@@ -409,12 +409,12 @@ const Room1501 = () => {
             <div className="p-6">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-bold text-slate-800">Booking Details</h2>
-                <button
+                <RefreshButton
                   onClick={() => setSelectedEvent(null)}
                   className="p-2 hover:bg-slate-100 rounded-xl transition-colors duration-200"
                 >
                   <X className="h-5 w-5 text-slate-500" />
-                </button>
+                </RefreshButton>
               </div>
               
               <div className="space-y-4">
@@ -456,12 +456,12 @@ const Room1501 = () => {
               </div>
               
               <div className="mt-8 flex justify-end">
-                <button
+                <RefreshButton
                   onClick={() => setSelectedEvent(null)}
                   className="px-6 py-3 bg-slate-800 text-white rounded-xl hover:bg-slate-700 transition-colors duration-200 font-medium shadow-lg hover:shadow-xl"
                 >
                   Close
-                </button>
+                </RefreshButton>
               </div>
             </div>
           </div>

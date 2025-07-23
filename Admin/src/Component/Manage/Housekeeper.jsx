@@ -19,6 +19,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { DarkModeContext } from '../Context/DarkModeContext'; // Adjust the import path as necessary
+import RefreshButton from '../../utils/refreshToken'; // Adjust the import path as necessary
 
 function Housekeeper() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -220,44 +221,6 @@ const handleAddMember = async () => {
 };
 
 
-  const refreshToken = async () => {
-    try {
-      const refreshRes = await axios.post("/account/refreshtoken", {}, {
-        withCredentials: true,
-        timeout: 10000
-      });
-
-      const newToken = refreshRes?.data?.accessToken;
-      console.log("Refresh response:", refreshRes);
-
-      if (!newToken) {
-        console.error("No accessToken returned in refresh response.");
-        return null;
-      }
-
-      localStorage.setItem("token", newToken);
-      console.log("Access token refreshed successfully.", newToken);
-      return newToken;
-
-    } catch (err) {
-      console.error("Token refresh error:", {
-      message: err.message,
-      code: err.code,
-      status: err.response?.status,
-      full: err
-    });
-
-      if (err.response?.status === 401) {
-        console.warn("Refresh token expired. Redirecting to login.");
-        // navigate('/');  // ปลดคอมเมนต์ถ้าต้องการบังคับ logout
-      }
-
-      return null;
-    }
-  };
-
-
-
 const handleDeleteHousekeepers = async () => {
   if (selectedMembers.length === 0) {
     alert('Please select at least one housekeeper.');
@@ -394,7 +357,7 @@ const handleSignout = async () => {
               />
             </div>
             <div className="flex justify-end gap-2">
-              <button
+              <RefreshButton
                 onClick={() => {
                   setShowPinModal(false);
                   setNewPin('');
@@ -404,13 +367,13 @@ const handleSignout = async () => {
                 className={`px-4 py-2 rounded-md ${darkMode ? 'bg-gray-600 text-gray-300 hover:bg-gray-500' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
               >
                 Cancel
-              </button>
-              <button
+              </RefreshButton>
+              <RefreshButton
                 onClick={handleChangePin}
                 className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
               >
                 Confirm
-              </button>
+              </RefreshButton>
             </div>
           </div>
         </div>
@@ -430,7 +393,7 @@ const handleSignout = async () => {
                   onChange={(e) => setNewPassword(e.target.value)}
                   className={`w-full px-3 py-2 pr-10 border rounded-md shadow-sm focus:ring focus:ring-blue-200 ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'}`}
                 />
-                <button
+                <RefreshButton
                   type="button"
                   onClick={() => setShowNewPassword(!showNewPassword)}
                   className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-500"
@@ -449,7 +412,7 @@ const handleSignout = async () => {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3l18 18" />
                     </svg>
                   )}
-                </button>
+                </RefreshButton>
               </div>
             </div>
 
@@ -463,7 +426,7 @@ const handleSignout = async () => {
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   className={`w-full px-3 py-2 pr-10 border rounded-md shadow-sm focus:ring focus:ring-blue-200 ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'}`}
                 />
-                <button
+                <RefreshButton
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-500"
@@ -480,27 +443,27 @@ const handleSignout = async () => {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3l18 18" />
                     </svg>
                   )}
-                </button>
+                </RefreshButton>
               </div>
             </div>
 
             {/* Buttons */}
             <div className="flex justify-end gap-2">
-              <button
+              <RefreshButton
                 onClick={() => setShowPasswordModal(false)}
                 className={`px-4 py-2 rounded-md ${darkMode ? 'bg-gray-600 text-gray-300 hover:bg-gray-500' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
               >
                 Cancel
-              </button>
-              <button
+              </RefreshButton>
+              <RefreshButton
                 onClick={() => {
                   setShowPasswordModal(false);
                   handleSubmitPasswordChange();
                 }}
                 className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
               >
-                Update PIN
-              </button>
+                Update Pin
+              </RefreshButton>
             </div>
           </div>
         </div>
@@ -556,27 +519,27 @@ const handleSignout = async () => {
         </div>
         <div className="flex-1 p-2 md:p-4">
           <div className="space-y-2">
-            <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left hover:bg-slate-700  cursor-pointer"  onClick={()=>navigate('/admin/api')}>
+            <RefreshButton className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left hover:bg-slate-700  cursor-pointer"  onClick={()=>navigate('/admin/api')}>
               <Home className="w-4 h-4" />
               <span className="text-sm">Home</span>
-            </button>
+            </RefreshButton>
           </div>
           <div className="mt-4 md:mt-6">
             <p className="text-xs text-slate-400 uppercase tracking-wider mb-3 px-3">Role Filter</p>
             <div className="space-y-1">
-              <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-700 text-left  cursor-pointer" onClick={handleNavigateByRole}>
+              <RefreshButton className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-700 text-left  cursor-pointer" onClick={handleNavigateByRole}>
                 <Shield className="w-4 h-4 text-white" />
                 <span className="text-sm text-white">Admin</span>
-              </button>
-              <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg bg-white text-blue-600 text-left">
+              </RefreshButton>
+              <RefreshButton className="w-full flex items-center gap-3 px-3 py-2 rounded-lg bg-white text-blue-600 text-left">
                 <UserCheck className="w-4 h-4" />
                 <span className="text-sm">Housekeeper</span>
-              </button>
+              </RefreshButton>
               <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-slate-400'} uppercase tracking-wider mb-3 px-3 mt-5`}>MONITORING</p>
-              <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-700 text-left cursor-pointer" onClick={()=>navigate('/account/dashboard')}>
+              <RefreshButton className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-700 text-left cursor-pointer" onClick={()=>navigate('/account/dashboard')}>
                 <LayoutDashboard className="w-4 h-4 text-white" />
                 <span className="text-sm text-white">Dashboard</span>
-              </button>
+              </RefreshButton>
             </div>
           </div>
         </div>
@@ -596,7 +559,7 @@ const handleSignout = async () => {
                   <h1>{profile?.role}</h1>
               </div>
               {/* Dark Mode Toggle */}
-              <button
+              <RefreshButton
                 onClick={toggleDarkMode}
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
                   darkMode 
@@ -616,21 +579,21 @@ const handleSignout = async () => {
                     <span className="text-sm">Dark</span>
                   </>
                 )}
-              </button>
+              </RefreshButton>
               <div className={`flex items-center gap-2 px-4 py-1.5 rounded-lg w-fit ${
                 darkMode ? 'bg-gray-700' : 'bg-gray-200'
               }`}>
                 <div className="text-lg tracking-widest">
                   {show ? profile?.pin || '0000' : '●'.repeat(profile?.pin?.length || 4)}
                 </div>
-                <button
+                <RefreshButton
                   type="button"
                   onClick={() => setShow(!show)}
                   className="focus:outline-none"
                   title={show ? "Hide PIN" : "Show PIN"}
                 >
                   {show ? <EyeOff size={20} /> : <Eye size={20} />}
-                </button>
+                </RefreshButton>
               </div>
                           <div className="relative" ref={dropdownRef}>
                             <div
@@ -752,7 +715,7 @@ const handleSignout = async () => {
                   />
                 </div>
                 <div className="flex gap-2">
-                  <button
+                  <RefreshButton
                     onClick={() => {
                     setShowModal(true)
                   }}
@@ -760,9 +723,9 @@ const handleSignout = async () => {
                     className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
                   >
                     <Plus className="w-4 h-4" />
-                    Add Housekeeper
-                  </button>
-                  <button
+                    Add Member
+                  </RefreshButton>
+                  <RefreshButton
                     disabled={selectedMembers.length === 0}
                     onClick={handleDeleteHousekeepers}
                     className={`flex items-center gap-2 px-4 py-2 rounded-lg ${
@@ -771,7 +734,7 @@ const handleSignout = async () => {
                   >
                     <Trash2 className="w-4 h-4" />
                     Delete
-                  </button>
+                  </RefreshButton>
                 </div>
               </div>
             </div>
@@ -812,7 +775,7 @@ const handleSignout = async () => {
                 </span>
               </td>
               <td className="px-6 py-4">
-                <button
+                <RefreshButton
                   onClick={() => {
                     setPinTargetName(h.name);
                     setShowPinModal(true);
@@ -820,7 +783,7 @@ const handleSignout = async () => {
                   className="px-3 py-1 bg-blue-500 text-white text-xs font-medium rounded hover:bg-blue-600 transition"
                 >
                   Change PIN
-                </button>
+                </RefreshButton>
               </td>
             </tr>
           ))}
@@ -890,21 +853,20 @@ const handleSignout = async () => {
               </div> */}
             </div>
             <div className="mt-6 flex justify-end gap-3">
-              <button
+              <RefreshButton
                 onClick={() => setShowModal(false)}
                 className={`px-4 py-2 rounded-lg border ${darkMode ? 'border-gray-600 text-gray-300 hover:bg-gray-700' : 'border-gray-300 text-gray-700 hover:bg-gray-100'}`}
               >
                 Cancel
-              </button>
-              <button
+              </RefreshButton>
+              <RefreshButton
                 onClick={async () => {
                   await handleAddMember();
-                  await refreshToken();
                 }}
                 className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700"
               >
                 Add
-              </button>
+              </RefreshButton>
             </div>
           </div>
         </div>
