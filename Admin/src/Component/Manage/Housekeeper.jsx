@@ -17,6 +17,7 @@ import {
   Moon
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-hot-toast';
 import axios from 'axios';
 import { DarkModeContext } from '../Context/DarkModeContext'; // Adjust the import path as necessary
 

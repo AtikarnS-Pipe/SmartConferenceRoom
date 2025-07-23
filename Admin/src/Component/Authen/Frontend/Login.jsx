@@ -22,14 +22,13 @@ function Verify({ setAuth }) {
     })
       .then(res => {
         setProfile(res.data);
-        console.log("Profile data fetched:", res.data);
       })
       .catch(err => console.error(err));
   }, []);
 
   useEffect(() => {
     if (profile) {
-      console.log("Profile state updated:", profile);
+      // console.log("Profile state updated:", profile);
     }
   }, [profile]);
 
