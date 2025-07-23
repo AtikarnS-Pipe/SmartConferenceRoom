@@ -3,7 +3,6 @@ const bookingKey = require('../models/bookingkey');
 // const getGraphClient = require("../graph");
 const User = require('../models/User');
 const { AddLogmonitoring } = require('../utils/AddLogmonitoring');
-const { sendMailAsync } = require('../services/sendmail.services');
 
 /**
  * service for compare the pin, user inserted, with the pin of the room in database

@@ -75,10 +75,16 @@ async function syncAllRooms() {
                             });
                             console.log('mail send:', key);
                             RoomStr = roomData.room.toString();
-                            const mailContent = `รหัสผ่านสำหรับ L: /${RoomStr.slice(0,2)}>${RoomStr.slice(2,4)} คือ ${key}`;
-                            const mail = "Nareupol.A@tcc-technology.com" //event.organizer?.emailAddress?.address *********************************
+                            const mailContent = `Password for Room: /${RoomStr.slice(0,2)}>${RoomStr.slice(2,4)} is ${key}
+Thank you for your attention.
+
+Best regards,  
+Smart Conference Display System`;
+                            subject = "🔔 Pin for room booking";
+                            const mail = process.env.CENTERLIZED_MAIL //event.organizer?.emailAddress?.address *********************************
                             if(process.env.DEBUG_MODE) console.log('mail content:',mailContent);
                             // await sendMailAsync(event.organizer?.emailAddress?.address, mailContent, mail, tokenCache.getAccessToken()); //หัวข้ออีเมล, รหัสผ่าน, หมายเลขห้องที่จะส่งไป
+                            await sendMailAsync(subject, mailContent, mail, tokenCache.getAccessToken()); //หัวข้ออีเมล, รหัสผ่าน, หมายเลขห้องที่จะส่งไป
                         }
                     // }
                 }

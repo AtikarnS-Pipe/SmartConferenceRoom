@@ -134,9 +134,18 @@ const deleteroom = async (req, res) => {
         // send mail alert
         if (countbacklist.pinMissCount >= 5){
             const mailData = {
-                subject: `Warning: การจองห้องเเล้วมาไม่มาใช้งานตามที่กำหนด`,
-                body: `คุณใช้งานระบบ Smart Conference Display System ได้ทำการจองห้องประชุม เเละไม่ได้มาใช้งานตามที่กำหนดเกิน 5 ครั้ง กรุณาติดต่อผู้ดูเเลระบบหากมีข้อสงสัย \n\nThack you\nSmart Conforence Display System`,
-                recipient: process.env.CENTERLIZED_MAIL, // คนรับใคร เดี๋ยวค่อยเเก้ไข // countbacklist.organizerMail *********************************************
+                subject: `Warning: Repeated No-Shows for Reserved Meeting Room`,
+                body: `Dear User,
+
+Our records indicate that you have made reservations through the Smart Conference Display System but failed to utilize the meeting room on more than 5 occasions.
+
+Please be advised that repeated no-shows may affect your ability to reserve rooms in the future. If you believe this is an error or have any questions, kindly contact the system administrator.
+
+Thank you for your attention.
+
+Best regards,  
+Smart Conference Display System`,
+                recipient: process.env.CENTERLIZED_MAIL,
                 accessToken: tokenCache.getAccessToken(),
             };
             await sendMailAsync(mailData.subject, mailData.body, mailData.recipient, mailData.accessToken);
