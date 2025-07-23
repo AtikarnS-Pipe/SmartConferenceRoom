@@ -22,14 +22,17 @@ async function getuserdatabyroom(res, RoomNumber) {
                 endDateTime: endDateTime,
                 "$orderby": "start/dateTime",
                 "$top": 100,
-                "$select": "id,subject,organizer,start,end,locations,isAllDay",
+                "$select": "id,subject,organizer,start,end,locations,isAllDay,responseStatus",
                 "$filter": "isCancelled eq false" 
             })
             .get();
         if (!graphResponse || !graphResponse.value) {
             throw new Error(`No value in graphResponse for room ${RoomNumber}: ${JSON.stringify(graphResponse)}`);
         }
-        const results = graphResponse.value
+        const acceptedEvents = graphResponse.value.filter(event => // กรองเอาอันที่ไม่ถูก decline
+            event.responseStatus?.response === "accepted"
+        );
+        const results = acceptedEvents
         // if(process.env.DEBUG_MODE) console.log("usersdate => ",results)
         res.write(`data: ${JSON.stringify({ results })}\n\n`);
         

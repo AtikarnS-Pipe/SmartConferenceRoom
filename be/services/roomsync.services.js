@@ -33,17 +33,19 @@ async function syncAllRooms() {
                     endDateTime: endDateTime,
                     "$orderby": "start/dateTime",
                     "$top": 100,
-                    "$select": "id,organizer,start,end,locations",
+                    "$select": "id,organizer,start,end,locations,responseStatus",
                     "$filter": "isCancelled eq false" 
                 })
                 .get();
                 if (!graphResponse || !graphResponse.value) {
                     throw new Error(`No value in graphResponse for room ${room}: ${JSON.stringify(graphResponse)}`);
                 }
-
+                const acceptedEvents = graphResponse.value.filter(event =>
+                    event.responseStatus?.response === "accepted"
+                );
                 return {
                     room,
-                    events: graphResponse.value
+                    events: acceptedEvents
                 };
             } catch (error) {
                 console.error(`Error fetching data for room ${room}:`, error.message);

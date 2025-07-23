@@ -36,7 +36,7 @@ async function GetScheduleData(actoken, Room, start, end){
             throw new Error("No access token in schedule Page.")
         }
         const graphResponse = await getGraphClient(actoken)
-            .api(`https://graph.microsoft.com/v1.0/me/calendars/${roomobject[Room]}/calendarView?`)
+            .api(`https://graph.microsoft.com/v1.0/users/${Room}@tcc-technology.com/calendarView?`)
             .query({
                 startDateTime: startDateTime,
                 endDateTime: endDateTime,
