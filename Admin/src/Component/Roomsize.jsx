@@ -3,6 +3,7 @@ import { useLocation,useNavigate,useParams } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import Roomdata from './Roomdata';
 import Roomcard from './Roomcard';
+import RefreshButton from "../utils/refreshToken"; // Assuming you have a RefreshButton component
 
 function RoomSize() {
   const location = useLocation();
@@ -73,34 +74,34 @@ function RoomSize() {
       <nav className='shadow-md p-6 items-center md:flex justify-between bg-[#000042] text-white sticky top-0 z-40'>
             <div className="md:text-2xl text-xl underline underline-offset-10 ">Conference Room</div>
             <ul className='flex text-center md:ml-5 max-md:mb-10 max-md:mt-10'>
-                <li className='mr-5 cursor-pointer' onClick={()=>navigate('/admin/api')}>Home</li>
+                <RefreshButton className='mr-5 cursor-pointer' onClick={()=>navigate('/admin/api')}>Home</RefreshButton>
                 <li className='md:mr-5 lg:mx-5 cursor-pointer' onClick={toggleDropdown1}>Size Room {openMenu1 ? '▴' : '▾'}
                   {openMenu1 && (
             <ul className="absolute mt-2 w-25 bg-blue-700 rounded-md shadow-lg z-10">
-              <li 
+              <RefreshButton 
                 className="px-4 py-2 hover:bg-blue-400 rounded-md cursor-pointer"
                 onClick={() => handleSizeNavigate(2)}
               >
                 Size S
-              </li>
-              <li 
+              </RefreshButton>
+              <RefreshButton 
                 className="px-4 py-2 hover:bg-blue-400  rounded-md cursor-pointer"
                 onClick={() => handleSizeNavigate(4)}
               >
                 Size M
-              </li>
-              <li 
+              </RefreshButton>
+              <RefreshButton 
                 className="px-4 py-2 hover:bg-blue-400  rounded-md cursor-pointer"
                 onClick={() => handleSizeNavigate(6)}
               >
                 Size L
-              </li>
+              </RefreshButton>
             </ul>
           )}
           </li>
-          <li>
+          <RefreshButton>
             <h1 className='cursor-pointer' onClick={()=>navigate('/account/admin')}>Management</h1>
-          </li>
+          </RefreshButton>
             </ul>
             <div className=' max-md:flex'>
                 <h2 className='md:text-2xl max-md:mr-5'>{timeString}</h2>
