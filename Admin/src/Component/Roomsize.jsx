@@ -3,11 +3,8 @@ import { useLocation,useNavigate,useParams } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import Roomdata from './Roomdata';
 import Roomcard from './Roomcard';
-<<<<<<< HEAD
 import RefreshButton from "../utils/refreshToken"; // Assuming you have a RefreshButton component
-=======
 import axios from 'axios';
->>>>>>> 3dc9c5ea0f61523f1d2f326b95939e77f1cd584b
 
 function RoomSize() {
   const location = useLocation();
