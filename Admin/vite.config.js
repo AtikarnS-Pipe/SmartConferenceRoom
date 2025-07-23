@@ -19,6 +19,7 @@ export default defineConfig({
       '/account/edithousekeeper': 'http://localhost:4000',
       '/account/deletehousekeeper': 'http://localhost:4000',
       '/account/member': 'http://localhost:4000',
+      '/account/auth': 'http://localhost:4000',
       '/account/housekeepers': 'http://localhost:4000',
       '/account/signout': 'http://localhost:4000',
       '/account/getname': 'http://localhost:4000',
