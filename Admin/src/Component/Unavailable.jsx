@@ -2,12 +2,13 @@ import React,{useState, useEffect} from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Roomcard from './Roomcard';
 import Roomdata from './Roomdata';
+import axios from 'axios';
 
 function Unavailable() {
   const location = useLocation();
   const navigate = useNavigate();
   const [currentTime, setCurrentTime] = useState(new Date());
-
+  const [profile, setProfile] = useState(null);
   // เพิ่ม state แยกให้กับ rooms และ icons
   const [rooms, setRooms] = useState([]);
   const [allRooms, setAllRooms] = useState([]);
@@ -26,6 +27,37 @@ function Unavailable() {
     //   navigate("/", { replace: true });
     // }
   }, [location.state]);
+          useEffect(() => {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+  
+      axios.get('/account/me', {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+        .then(res => {
+          setProfile(res.data);
+          console.log("Profile data fetched:", res.data);
+        })
+        .catch(err => console.error(err));
+    }, []);
+  
+    useEffect(() => {
+      if (profile) {
+        console.log("Profile state updated:", profile);
+      }
+    }, [profile]);
+  
+    const handleNavigateByRole = () => {
+    const role = profile?.role; // ดึง role จาก localStorage
+      console.log("Navigating based on role:", role);
+    if (role === 'Superadmin') {
+      navigate('/account/superadmin');
+    } else if (role === 'Admin') {
+      navigate('/account/admin');
+    } else {
+      navigate('/'); // สำรองเผื่อ role อื่นหรือไม่มี role
+    }
+  };
 
   console.log("Rooms:", rooms);
   console.log("All Rooms:", allRooms);
@@ -67,8 +99,8 @@ function Unavailable() {
         <nav className='shadow-md p-6 items-center md:flex justify-between bg-[#000042] text-white sticky top-0 z-40'>
             <div className="md:text-2xl text-xl underline underline-offset-10">Conference Room</div>
             <ul className='flex text-center md:ml-5 max-md:mb-10 max-md:mt-10'>
-                <li className='mr-5 cursor-pointer' onClick={() => navigate('/admin/api')}>Home</li>
-                <li className='md:mr-5 lg:mx-5 cursor-pointer' onClick={toggleDropdown1}>Size Room {openMenu1 ? '▴' : '▾'}
+                <li className='mr-5 cursor-pointer hover:text-gray-300' onClick={() => navigate('/admin/api')}>Home</li>
+                <li className='md:mr-5 lg:mx-5 cursor-pointer hover:text-gray-300' onClick={toggleDropdown1}>Size Room {openMenu1 ? '▴' : '▾'}
                   {openMenu1 && (
             <ul className="absolute mt-2 w-25 bg-blue-700 rounded-md shadow-lg z-10">
               <li 
@@ -93,7 +125,7 @@ function Unavailable() {
           )}
           </li>
           <li>
-            <h1 className='cursor-pointer' onClick={()=>navigate('/account/admin')}>Management</h1>
+            <h1 className='cursor-pointer hover:text-gray-300' onClick={handleNavigateByRole}>Management</h1>
           </li>
             </ul>
             <div className=' max-md:flex'>

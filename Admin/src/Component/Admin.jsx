@@ -144,9 +144,9 @@ function RoomPage() {
         <nav className='shadow-md p-6 items-center md:flex justify-between bg-[#000042] text-white sticky top-0 z-40'>
             <div className="md:text-2xl text-xl underline underline-offset-10 ">Conference Room</div>
             <ul className='flex text-center md:ml-5 max-md:mb-10 max-md:mt-10'>
-                <li className='mr-5 cursor-pointer'>Home</li>
+                <li className='mr-5 cursor-pointer hover:text-gray-300'>Home</li>
                  {/* <li className='mx-5 text-xl'>Booking</li> */}
-                <li className='md:mr-5 lg:mx-5 cursor-pointer' onClick={toggleDropdown1}>Size Room {openMenu1 ? '▴' : '▾'}
+                <li className='md:mr-5 lg:mx-5 cursor-pointer hover:text-gray-300' onClick={toggleDropdown1}>Size Room {openMenu1 ? '▴' : '▾'}
                   {openMenu1 && (
             <ul className="absolute mt-2 w-25 bg-blue-700 rounded-md shadow-lg z-10">
               <li 
@@ -172,7 +172,7 @@ function RoomPage() {
           </li>
           <li>
                     <h1
-                      className='cursor-pointer'
+                      className='cursor-pointer hover:text-gray-300'
                       onClick={handleNavigateByRole}
                     >
                       Management

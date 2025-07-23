@@ -408,7 +408,7 @@ function Log() {
                 onClick={toggleDarkMode}
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
                   darkMode 
-                    ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
+                    ? 'bg-gray-700 text-white hover:bg-gray-600' 
                     : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                 }`}
                 title={darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
@@ -430,13 +430,13 @@ function Log() {
               <div className={`flex items-center gap-2 px-4 py-1.5 rounded-lg w-fit ${
                 darkMode ? 'bg-gray-700' : 'bg-gray-200'
               }`}>
-                <div className="text-lg tracking-widest">
+                <div className={`text-lg tracking-widest ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                  {show ? profile?.pin || '0000' : '●'.repeat(profile?.pin?.length || 4)}
                 </div>
                 <button
                   type="button"
                   onClick={() => setShow(!show)}
-                  className="focus:outline-none"
+                  className={`focus:outline-none ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}
                   title={show ? "Hide PIN" : "Show PIN"}
                 >
                   {show ? <EyeOff size={20} /> : <Eye size={20} />}
@@ -461,14 +461,14 @@ function Log() {
                     strokeWidth="2"
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    className="lucide lucide-circle-user-icon lucide-circle-user"
+                    className={`lucide lucide-circle-user-icon lucide-circle-user ${darkMode ? 'text-gray-300' : 'text-gray-800'}`}
                   >
                     <circle cx="12" cy="12" r="10" />
                     <circle cx="12" cy="10" r="3" />
                     <path d="M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662" />
                   </svg>
-                  <span className="text-sm font-medium">{profile?.name || 'quest'}</span>
-                  <ChevronDown className={`w-4 h-4 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`} />
+                  <span className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>{profile?.name || 'quest'}</span>
+                  <ChevronDown className={`w-4 h-4 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`} />
                 </div>
 
                 <div
@@ -592,7 +592,10 @@ function Log() {
                     <Server className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${darkMode ? 'text-gray-400' : 'text-gray-400'}`} />
                     <select
                       value={selectedSource}
-                      onChange={(e) => setSelectedSource(e.target.value)}
+                        onChange={(e) => {
+                                setSelectedSource(e.target.value);  // เปลี่ยน filter
+                                setCurrentPage(1);                // รีเซ็ตกลับหน้า 1
+                              }}
                       className={`pl-10 pr-8 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 appearance-none min-w-[140px] ${
                         darkMode ? 'bg-gray-800 border-gray-600 text-white' : 'bg-white border-gray-300'
                       }`}

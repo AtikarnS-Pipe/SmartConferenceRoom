@@ -102,7 +102,7 @@ function Roomcard(props) {
                 <FaClock size={20} />
                 <div
                   onClick={handleScheduleClick}
-                  className='border border-black px-3 py-1 rounded-2xl bg-black text-white cursor-pointer text-sm sm:text-base'
+                  className='border border-black px-3 py-1 rounded-2xl bg-black text-white cursor-pointer text-sm sm:text-base hover:bg-gray-700 transition-colors duration-200'
                 >
                   Schedule
                 </div>
