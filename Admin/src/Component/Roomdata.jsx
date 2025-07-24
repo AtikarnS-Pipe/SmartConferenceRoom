@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import RefreshButton from "../utils/refreshToken"; // Assuming you have a RefreshButton component
 
 function Roomdata({ rooms, currentTime,icons }) {
-  console.log("Roomdata - icons:", icons); 
+  // console.log("Roomdata - icons:", icons); 
   let availableCount = 0;
   let unavailableCount = 0;
 

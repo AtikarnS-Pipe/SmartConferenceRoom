@@ -136,7 +136,11 @@ function Unavailable() {
         </nav>
       <Roomdata rooms={allRooms} currentTime={new Date()} icons={icons}/>
       <div className='bg-[#f8f7f1] p-4 mx-2 rounded-3xl shadow-xl'>
-      <Roomcard data={rooms} icons={icons} />
+      {rooms.length === 0 ? (
+      <div className="flex justify-center item-center text-xl text-gray-500 p-20">All rooms are currently available.</div>
+        ) : (
+          <Roomcard data={rooms} icons={icons} />
+        )}
       </div>
     </div>
   );

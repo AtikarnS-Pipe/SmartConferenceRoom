@@ -155,7 +155,7 @@ function RoomPage() {
         
   return (
     <div className='font-display'>
-       <nav className='shadow-md p-6 items-center md:flex justify-between bg-[#000042] text-white sticky top-0 z-40'>
+       <nav className='shadow-md p-6 items-center md:flex justify-between bg-slate-800 text-white sticky top-0 z-40'>
                    <div className="md:text-2xl text-xl underline underline-offset-10">Conference Room</div>
                    <ul className='flex text-center md:ml-5 max-md:mb-10 max-md:mt-10'>
                        <RefreshButton className='mr-5 cursor-pointer hover:text-gray-300' onClick={() => navigate('/admin/api')}>Home</RefreshButton>
@@ -191,18 +191,18 @@ function RoomPage() {
                        <h2 className='md:text-2xl max-md:mr-5'>{timeString}</h2>
                        <h4 className=''>{dateString}</h4> 
                    </div>
-               </nav>
+       </nav>
         <Roomdata rooms={events} currentTime={new Date()} icons={iconClass}/>
         <div className='bg-[#f8f7f1] p-4 mx-2 rounded-3xl shadow-xl'>
-  {loading ? (
-    <div className="flex justify-center py-6 gap-[5px]">
-      <span>loading</span>
-      <div className="animate-spin rounded-full h-8 w-8 border-t-4 border-gray-500 border-solid"></div>
-    </div>
-      ) : (
-        <Roomcard data={events} icons={iconClass} />
-      )}
-    </div>
+        {loading ? (
+          <div className="flex justify-center py-20 gap-[5px]">
+            <span>loading</span>
+            <div className="animate-spin rounded-full h-8 w-8 border-t-4 border-gray-500 border-solid"></div>
+          </div>
+            ) : (
+              <Roomcard data={events} icons={iconClass} />
+            )}
+        </div>
   </div>
   );
 }
