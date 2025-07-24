@@ -10,7 +10,7 @@ function Navbar({
   dateString 
 }) {
   return (
-    <nav className='shadow-md p-6 items-center md:flex justify-between bg-[#000042] text-white sticky top-0 z-40'>
+    <nav className='shadow-md p-6 items-center md:flex justify-between bg-slate-800 text-white sticky top-0 z-40'>
       <div className="md:text-2xl text-xl underline underline-offset-10">Conference Room</div>
       <ul className='flex text-center md:ml-5 max-md:mb-10 max-md:mt-10'>
         <RefreshButton className='mr-5 cursor-pointer hover:text-gray-300' onClick={() => navigate('/admin/api')}>Home</RefreshButton>
