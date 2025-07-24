@@ -215,7 +215,7 @@ const handleAddAdmin = async () => {
       setAddAdminForm({ email: '', password: '', name: '', pin: '' });
       setShowAddAdminPassword(false);
       setShowAdminStatus(false);  // ✅ ปิด popup หลัง 2 วินาที (เช่น)
-    }, 2000);
+    }, 5000);
 
     // ล้างฟอร์มหรือปิด modal ถ้าต้องการ
     setNewMember({ name: "", pin: "", email: "", password: "" });

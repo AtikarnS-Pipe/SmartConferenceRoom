@@ -6,6 +6,7 @@ import Roomcard from './Roomcard';
 import RefreshButton from "../utils/refreshToken"; // Assuming you have a RefreshButton component
 import axios from 'axios';
 import Navbar from './navbar.jsx';
+import { useDarkMode } from './Context/DarkModeContext';
 
 function RoomSize() {
   const location = useLocation();
@@ -17,6 +18,7 @@ function RoomSize() {
   const navigate = useNavigate(); 
   const [openMenu1, setOpenMenu1] = useState(false); 
   const [selectedSize, setSelectedSize] = useState(peopleSize);
+  const { darkMode } = useDarkMode();
   const handleSizeNavigate = (size) => {
         navigate(`/roomsize/${size}`, {
           state: {
@@ -102,11 +104,30 @@ function RoomSize() {
   });
 
   if (filteredRooms.length === 0) {
-    return <div className="p-10 text-xl">ไม่พบห้องสำหรับ {peopleSize} คน</div>;
+    return (
+      <div className={`font-display min-h-screen transition-colors duration-300 ${
+        darkMode ? 'bg-gray-900' : 'bg-white'
+      }`}>
+        <Navbar 
+          navigate={navigate}
+          toggleDropdown1={toggleDropdown1}
+          openMenu1={openMenu1}
+          handleSizeNavigate={handleSizeNavigate}
+          handleNavigateByRole={handleNavigateByRole}
+          timeString={timeString}
+          dateString={dateString}
+        />
+        <div className={`p-10 text-xl transition-colors duration-300 ${
+          darkMode ? 'text-white' : 'text-black'
+        }`}>ไม่พบห้องสำหรับ {peopleSize} คน</div>
+      </div>
+    );
   }
 
   return (
-    <div className='font-display'>
+    <div className={`font-display min-h-screen transition-colors duration-300 ${
+      darkMode ? 'bg-gray-900' : 'bg-white'
+    }`}>
        <Navbar 
           navigate={navigate}
           toggleDropdown1={toggleDropdown1}
@@ -117,7 +138,9 @@ function RoomSize() {
           dateString={dateString}
         />
         <Roomdata rooms={rooms} currentTime={new Date()} icons={icons}/>
-      <div className='bg-[#f8f7f1] p-4 mx-2 rounded-3xl shadow-xl'>
+      <div className={`p-4 mx-2 rounded-3xl shadow-xl transition-colors duration-300 ${
+        darkMode ? 'bg-gray-800' : 'bg-[#f8f7f1]'
+      }`}>
         <Roomcard data={filteredRooms} icons={filteredIcons} />
       </div>
     </div>

@@ -1,4 +1,6 @@
 import RefreshButton from "../utils/refreshToken";
+import { useDarkMode } from './Context/DarkModeContext';
+import { Sun, Moon } from 'lucide-react';
 
 function Navbar({ 
   navigate, 
@@ -9,38 +11,61 @@ function Navbar({
   timeString, 
   dateString 
 }) {
+  const { darkMode, toggleDarkMode } = useDarkMode();
+
   return (
-    <nav className='shadow-md p-6 items-center md:flex justify-between bg-slate-800 text-white sticky top-0 z-40'>
+    <nav className={`shadow-md p-6 items-center md:flex justify-between text-white sticky top-0 z-40 transition-colors duration-300 ${
+      darkMode ? 'bg-gray-900' : 'bg-slate-800'
+    }`}>
       <div className="md:text-2xl text-xl underline underline-offset-10">Conference Room</div>
-      <ul className='flex text-center md:ml-5 max-md:mb-10 max-md:mt-10'>
+      <ul className='flex items-center text-center md:ml-5 max-md:mb-10 max-md:mt-10'>
         <RefreshButton className='mr-5 cursor-pointer hover:text-gray-300' onClick={() => navigate('/admin/api')}>Home</RefreshButton>
         <li className='md:mr-5 lg:mx-5 cursor-pointer hover:text-gray-300' onClick={toggleDropdown1}>Size Room {openMenu1 ? '▴' : '▾'}
           {openMenu1 && (
-            <ul className="absolute mt-2 w-25 bg-blue-700 rounded-md shadow-lg z-10">
+            <ul className={`absolute mt-2 w-25 rounded-md shadow-lg z-10 transition-colors duration-300 ${
+              darkMode ? 'bg-gray-800' : 'bg-blue-700'
+            }`}>
               <RefreshButton 
-                className="px-6.5 py-2 hover:bg-blue-400 rounded-md cursor-pointer"
-                onClick={() => handleSizeNavigate(2)}
+                className={`px-6.5 py-2 rounded-md cursor-pointer transition-colors duration-300 ${
+                  darkMode ? 'hover:bg-gray-700' : 'hover:bg-blue-400'
+                }`}
+                onClick={() => handleSizeNavigate(4)}
               >
                 Size S
               </RefreshButton>
               <RefreshButton 
-                className="px-6 py-2 hover:bg-blue-400  rounded-md cursor-pointer"
-                onClick={() => handleSizeNavigate(4)}
+                className={`px-6 py-2 rounded-md cursor-pointer transition-colors duration-300 ${
+                  darkMode ? 'hover:bg-gray-700' : 'hover:bg-blue-400'
+                }`}
+                onClick={() => handleSizeNavigate(6)}
               >
                 Size M
               </RefreshButton>
               <RefreshButton 
-                className="px-6.5 py-2 hover:bg-blue-400  rounded-md cursor-pointer"
-                onClick={() => handleSizeNavigate(6)}
+                className={`px-6.5 py-2 rounded-md cursor-pointer transition-colors duration-300 ${
+                  darkMode ? 'hover:bg-gray-700' : 'hover:bg-blue-400'
+                }`}
+                onClick={() => handleSizeNavigate(10)}
               >
                 Size L
               </RefreshButton>
             </ul>
           )}
         </li>
-        <RefreshButton>
+        <RefreshButton className='mr-5'>
           <h1 className='cursor-pointer hover:text-gray-300' onClick={handleNavigateByRole}>Management</h1>
         </RefreshButton>
+        <li>
+          <button
+            onClick={toggleDarkMode}
+            className={`p-2 rounded-full transition-all duration-300 hover:scale-110 ${
+              darkMode ? 'bg-yellow-500 text-gray-900' : 'bg-gray-700 text-yellow-400'
+            }`}
+            title={darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+          >
+            {darkMode ? <Sun size={20} /> : <Moon size={20} />}
+          </button>
+        </li>
       </ul>
       <div className=' max-md:flex'>
         <h2 className='md:text-2xl max-md:mr-5'>{timeString}</h2>

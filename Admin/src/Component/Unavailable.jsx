@@ -5,12 +5,14 @@ import Roomdata from './Roomdata';
 import RefreshButton from "../utils/refreshToken"; // Assuming you have a RefreshButton component
 import axios from 'axios';
 import Navbar from './navbar.jsx';
+import { useDarkMode } from './Context/DarkModeContext';
 
 function Unavailable() {
   const location = useLocation();
   const navigate = useNavigate();
   const [currentTime, setCurrentTime] = useState(new Date());
   const [profile, setProfile] = useState(null);
+  const { darkMode } = useDarkMode();
   // เพิ่ม state แยกให้กับ rooms และ icons
   const [rooms, setRooms] = useState([]);
   const [allRooms, setAllRooms] = useState([]);
@@ -97,7 +99,9 @@ function Unavailable() {
       };
 
   return (
-    <div className='font-display'>
+    <div className={`font-display min-h-screen transition-colors duration-300 ${
+      darkMode ? 'bg-gray-900' : 'bg-white'
+    }`}>
         <Navbar 
           navigate={navigate}
           toggleDropdown1={toggleDropdown1}
@@ -108,9 +112,13 @@ function Unavailable() {
           dateString={dateString}
         />
       <Roomdata rooms={allRooms} currentTime={new Date()} icons={icons}/>
-      <div className='bg-[#f8f7f1] p-4 mx-2 rounded-3xl shadow-xl'>
+      <div className={`p-4 mx-2 rounded-3xl shadow-xl transition-colors duration-300 ${
+        darkMode ? 'bg-gray-800' : 'bg-[#f8f7f1]'
+      }`}>
       {rooms.length === 0 ? (
-      <div className="flex justify-center item-center text-xl text-gray-500 p-20">All rooms are currently available.</div>
+      <div className={`flex justify-center item-center text-xl p-20 transition-colors duration-300 ${
+        darkMode ? 'text-gray-400' : 'text-gray-500'
+      }`}>All rooms are currently available.</div>
         ) : (
           <Roomcard data={rooms} icons={icons} />
         )}

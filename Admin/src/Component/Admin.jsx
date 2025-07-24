@@ -5,6 +5,7 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import RefreshButton from "../utils/refreshToken"; // Assuming you have a RefreshButton component
 import Navbar from './navbar.jsx';
+import { useDarkMode } from './Context/DarkModeContext';
 
 
 function RoomPage() {
@@ -15,6 +16,7 @@ function RoomPage() {
     const navigate = useNavigate(); 
     const [openMenu1, setOpenMenu1] = useState(false); 
     const [events, setEvents] = useState([]);
+    const { darkMode } = useDarkMode();
 
     useEffect(() => {
   const code = new URLSearchParams(location.search).get("code");
@@ -134,14 +136,14 @@ function RoomPage() {
   const iconClass = [
     {id:1, room: "1501", icons: 2, people: 4},
     {id:2, room: "1502", icons: 2, people: 4},
-    {id:3, room: "1503", icons: 1, people: 2},
-    {id:4, room: "1504", icons: 1, people: 2},
-    {id:5, room: "1505", icons: 2, people: 4},
-    {id:6, room: "1506", icons: 2, people: 4},
-    {id:7, room: "1514", icons: 3, people: 6},
-    {id:8, room: "1515", icons: 3, people: 6},
-    {id:9, room: "1519", icons: 1, people: 2},
-    {id:10, room: "1520", icons: 1,people: 2},
+    {id:3, room: "1503", icons: 1, people: 4},
+    {id:4, room: "1504", icons: 1, people: 4},
+    {id:5, room: "1505", icons: 2, people: 6},
+    {id:6, room: "1506", icons: 2, people: 6},
+    {id:7, room: "1514", icons: 3, people: 10},
+    {id:8, room: "1515", icons: 3, people: 10},
+    {id:9, room: "1519", icons: 1, people: 4},
+    {id:10, room: "1520", icons: 1,people: 4},
   ];
       const handleSizeNavigate = (peopleSize) => {
         navigate(`/roomsize/${peopleSize}`, {
@@ -155,7 +157,9 @@ function RoomPage() {
   const toggleDropdown1 = () => setOpenMenu1(prev => !prev);
         
   return (
-    <div className='font-display'>
+    <div className={`font-display min-h-screen transition-colors duration-300 ${
+      darkMode ? 'bg-gray-900' : 'bg-white'
+    }`}>
         <Navbar 
           navigate={navigate}
           toggleDropdown1={toggleDropdown1}
@@ -166,11 +170,17 @@ function RoomPage() {
           dateString={dateString}
         />
         <Roomdata rooms={events} currentTime={new Date()} icons={iconClass}/>
-        <div className='bg-[#f8f7f1] p-4 mx-2 rounded-3xl shadow-xl'>
+        <div className={`p-4 mx-2 rounded-3xl shadow-xl transition-colors duration-300 ${
+          darkMode ? 'bg-gray-800' : 'bg-[#f8f7f1]'
+        }`}>
         {loading ? (
-          <div className="flex justify-center py-20 gap-[5px]">
+          <div className={`flex justify-center py-20 gap-[5px] transition-colors duration-300 ${
+            darkMode ? 'text-white' : 'text-black'
+          }`}>
             <span>loading</span>
-            <div className="animate-spin rounded-full h-8 w-8 border-t-4 border-gray-500 border-solid"></div>
+            <div className={`animate-spin rounded-full h-8 w-8 border-t-4 border-solid ${
+              darkMode ? 'border-white' : 'border-gray-500'
+            }`}></div>
           </div>
             ) : (
               <Roomcard data={events} icons={iconClass} />
