@@ -4,7 +4,7 @@ require('dotenv').config({ path: './config/.env'});
 const tokenCache = require("../utils/tokenCache");
 const { getuserdatabyroom, waitUntil } = require('../services/users.services');
 const { roomobject } = require('../utils/tokenCache');
-const { GetDateTimeTH } = require('../utils/getTodaydatetime');
+const { GetDateTimeUTC } = require('../utils/getTodaydatetime');
 // crud microsoft
 const {  GeteventId, createMSEvent } = require('../services/users.services');
 const getGraphClient = require("../utils/graph");
@@ -204,7 +204,7 @@ const searchpinByeventId = async (req, res) => {
 const endmeeting = async (req, res) => {
     try{
         const { endmeetingdata } = req.body; // endmeetingdata = {eventId, startdatetime, isAllDay}
-        const enddate = await GetDateTimeTH();
+        const enddate = await GetDateTimeUTC();
         const AccessToken = tokenCache.getAccessToken();
         let startDateTime;
         if (endmeetingdata.isAllDay) {
