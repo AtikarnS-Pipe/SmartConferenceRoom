@@ -4,11 +4,13 @@ import { FaClock } from "react-icons/fa6";
 import { IoPerson } from "react-icons/io5";
 import { useNavigate } from 'react-router-dom';
 import RefreshButton from "../utils/refreshToken"; // Assuming you have a RefreshButton component
+import { useDarkMode } from './Context/DarkModeContext';
 
 function Roomcard(props) {
   const { data, icons } = props
   const [currentTime, setCurrentTime] = useState(new Date());
   const navigate = useNavigate();
+  const { darkMode } = useDarkMode();
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentTime(new Date());
@@ -89,21 +91,33 @@ function Roomcard(props) {
         return (
           <div
             key={index}
-            className="bg-white rounded-[25px] pt-5 pb-10 px-4 shadow-xl flex flex-col justify-between min-h-[250px] max-w-full
-              transition-all duration-200 font-medium"
+            className={`rounded-[25px] pt-5 pb-10 px-4 shadow-xl flex flex-col justify-between min-h-[250px] max-w-full
+              transition-all duration-200 font-medium ${
+                darkMode ? 'bg-gray-600' : 'bg-white'
+              }`}
           >
             <div className="flex justify-between items-center mb-3">
-              <div className='font-semibold flex items-center text-base sm:text-lg'><IoPerson className='mr-1' />{peopleCount}</div>
-              <div className='border text-white bg-black px-3 py-1 rounded-2xl text-sm sm:text-base'>{roomNameMap[d.room] || d.room}</div>
+              <div className={`font-semibold flex items-center text-base sm:text-lg transition-colors duration-300 ${
+                darkMode ? 'text-white' : 'text-black'
+              }`}><IoPerson className='mr-1' />{peopleCount}</div>
+              <div className={`border px-3 py-1 rounded-2xl text-sm sm:text-base transition-colors duration-300 ${
+                darkMode ? 'text-white bg-gray-700 border-gray-600' : 'text-white bg-black border-black'
+              }`}>{roomNameMap[d.room] || d.room}</div>
               <div className={`ml-2 ${statusColor} w-4 h-4 rounded-full`} />
             </div>
-            <div className='flex-1 flex flex-col  justify-center items-center bg-gray-200 rounded-[25px] mt-2'>
+            <div className={`flex-1 flex flex-col justify-center items-center rounded-[25px] mt-2 transition-colors duration-300 ${
+              darkMode ? 'bg-gray-700' : 'bg-gray-200'
+            }`}>
               <div className='w-full flex justify-center items-center mb-6'>{iconClass}</div>
               <div className='flex items-center justify-center space-x-3'>
-                <FaClock size={20} />
+                <FaClock size={20} className={darkMode ? 'text-white' : 'text-black'} />
                 <RefreshButton
                   onClick={handleScheduleClick}
-                  className='border border-black px-3 py-1 rounded-2xl bg-black text-white cursor-pointer text-sm sm:text-base hover:bg-gray-700 transition-colors duration-200'
+                  className={`border px-3 py-1 rounded-2xl cursor-pointer text-sm sm:text-base transition-all duration-200 ${
+                    darkMode 
+                      ? 'border-gray-600 bg-gray-600 text-white hover:bg-gray-500' 
+                      : 'border-black bg-black text-white hover:bg-gray-700'
+                  }`}
                 >
                   Schedule
                 </RefreshButton>

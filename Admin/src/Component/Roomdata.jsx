@@ -1,9 +1,11 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom';
 import RefreshButton from "../utils/refreshToken"; // Assuming you have a RefreshButton component
+import { useDarkMode } from './Context/DarkModeContext';
 
 function Roomdata({ rooms, currentTime,icons }) {
-  console.log("Roomdata - icons:", icons); 
+  const { darkMode } = useDarkMode();
+  // console.log("Roomdata - icons:", icons); 
   let availableCount = 0;
   let unavailableCount = 0;
 
@@ -63,7 +65,9 @@ function Roomdata({ rooms, currentTime,icons }) {
     navigate("/Unavailable", { state: { rooms: unavailableRooms, allRooms: rooms, icons: icons } ,replace: true });
   };
   return (
-    <div className='m-10 flex items-center justify-center px-4'>
+    <div className={`m-10 flex items-center justify-center px-4 transition-colors duration-300 ${
+      darkMode ? 'bg-gray-900' : ''
+    }`}>
       <div className='grid grid-cols-1 lg:grid-cols-2 gap-6 justify-items-center w-full max-w-6xl'>
       {total.map((t, index) => {
         const isAvailable = t.Name === "Room Available";
@@ -74,12 +78,16 @@ function Roomdata({ rooms, currentTime,icons }) {
         return (
           <div
             key={index}
-            className="flex items-center bg-[#f8f7f1] rounded-[20px] shadow-xl/30 overflow-hidden w-full max-w-[550px] mx-auto"
+            className={`flex items-center rounded-[20px] shadow-xl/30 overflow-hidden w-full max-w-[550px] mx-auto transition-colors duration-300 ${
+              darkMode ? 'bg-gray-800' : 'bg-[#f8f7f1]'
+            }`}
             >
             <div className={`w-14 sm:w-16 rounded-l-3xl ${mainColor} h-full`}></div>
 
             <div className="flex-grow flex flex-col justify-between px-5 py-5 sm:px-7 sm:py-5">
-              <div className="text-black font-semibold text-2xl">{t.Name}</div>
+              <div className={`font-semibold text-2xl transition-colors duration-300 ${
+                darkMode ? 'text-white' : 'text-black'
+              }`}>{t.Name}</div>
               <div className={`${textColor} text-5xl font-bold`}>
                 {t.count}
                 <span className="text-xl font-medium"> / {t.total}</span>
@@ -92,7 +100,11 @@ function Roomdata({ rooms, currentTime,icons }) {
                     handleClickUnavailable(); // เรียกฟังก์ชันสำหรับห้องไม่ว่าง
                   }
                 }}
-              className="mt-2 px-4 py-3 bg-gray-200 rounded-xl text-sm font-medium text-black w-max cursor-pointer hover:bg-gray-300">
+              className={`mt-2 px-4 py-3 rounded-xl text-sm font-medium w-max cursor-pointer transition-colors duration-300 ${
+                darkMode 
+                  ? 'bg-gray-700 text-white hover:bg-gray-600' 
+                  : 'bg-gray-200 text-black hover:bg-gray-300'
+              }`}>
                 View Details
               </RefreshButton>
             </div>

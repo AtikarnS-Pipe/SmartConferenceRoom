@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 export const refreshToken = async () => {
   try {
     const refreshRes = await axios.post("/account/refreshtoken", {}, { withCredentials: true });
-    console.log("Refresh response:", refreshRes);
+    console.log("Refresh response success:", refreshRes);
     const newToken = refreshRes.data.accessToken;
     if (!newToken) {
       console.error("No accessToken returned in refresh response.");

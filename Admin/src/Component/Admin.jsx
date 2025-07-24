@@ -4,6 +4,8 @@ import Roomdata from './Roomdata';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import RefreshButton from "../utils/refreshToken"; // Assuming you have a RefreshButton component
+import Navbar from './navbar.jsx';
+import { useDarkMode } from './Context/DarkModeContext';
 
 
 function RoomPage() {
@@ -14,6 +16,7 @@ function RoomPage() {
     const navigate = useNavigate(); 
     const [openMenu1, setOpenMenu1] = useState(false); 
     const [events, setEvents] = useState([]);
+    const { darkMode } = useDarkMode();
 
     useEffect(() => {
   const code = new URLSearchParams(location.search).get("code");
@@ -133,14 +136,14 @@ function RoomPage() {
   const iconClass = [
     {id:1, room: "1501", icons: 2, people: 4},
     {id:2, room: "1502", icons: 2, people: 4},
-    {id:3, room: "1503", icons: 1, people: 2},
-    {id:4, room: "1504", icons: 1, people: 2},
-    {id:5, room: "1505", icons: 2, people: 4},
-    {id:6, room: "1506", icons: 2, people: 4},
-    {id:7, room: "1514", icons: 3, people: 6},
-    {id:8, room: "1515", icons: 3, people: 6},
-    {id:9, room: "1519", icons: 1, people: 2},
-    {id:10, room: "1520", icons: 1,people: 2},
+    {id:3, room: "1503", icons: 1, people: 4},
+    {id:4, room: "1504", icons: 1, people: 4},
+    {id:5, room: "1505", icons: 2, people: 6},
+    {id:6, room: "1506", icons: 2, people: 6},
+    {id:7, room: "1514", icons: 3, people: 10},
+    {id:8, room: "1515", icons: 3, people: 10},
+    {id:9, room: "1519", icons: 1, people: 4},
+    {id:10, room: "1520", icons: 1,people: 4},
   ];
       const handleSizeNavigate = (peopleSize) => {
         navigate(`/roomsize/${peopleSize}`, {
@@ -154,51 +157,38 @@ function RoomPage() {
   const toggleDropdown1 = () => setOpenMenu1(prev => !prev);
         
   return (
-    <div className='font-display'>
-       <nav className='shadow-md p-6 items-center md:flex justify-between bg-[#000042] text-white sticky top-0 z-40'>
-                   <div className="md:text-2xl text-xl underline underline-offset-10">Conference Room</div>
-                   <ul className='flex text-center md:ml-5 max-md:mb-10 max-md:mt-10'>
-                       <RefreshButton className='mr-5 cursor-pointer hover:text-gray-300' onClick={() => navigate('/admin/api')}>Home</RefreshButton>
-                       <li className='md:mr-5 lg:mx-5 cursor-pointer hover:text-gray-300' onClick={toggleDropdown1}>Size Room {openMenu1 ? '▴' : '▾'}
-                         {openMenu1 && (
-                   <ul className="absolute mt-2 w-25 bg-blue-700 rounded-md shadow-lg z-10">
-                     <RefreshButton 
-                       className="px-6.5 py-2 hover:bg-blue-400 rounded-md cursor-pointer"
-                       onClick={() => handleSizeNavigate(2)}
-                     >
-                       Size S
-                     </RefreshButton>
-                     <RefreshButton 
-                       className="px-6 py-2 hover:bg-blue-400  rounded-md cursor-pointer"
-                       onClick={() => handleSizeNavigate(4)}
-                     >
-                       Size M
-                     </RefreshButton>
-                     <RefreshButton 
-                       className="px-6.5 py-2 hover:bg-blue-400  rounded-md cursor-pointer"
-                       onClick={() => handleSizeNavigate(6)}
-                     >
-                       Size L
-                     </RefreshButton>
-                   </ul>
-                 )}
-                 </li>
-                 <RefreshButton>
-                   <h1 className='cursor-pointer hover:text-gray-300' onClick={handleNavigateByRole}>Management</h1>
-                 </RefreshButton>
-                   </ul>
-                   <div className=' max-md:flex'>
-                       <h2 className='md:text-2xl max-md:mr-5'>{timeString}</h2>
-                       <h4 className=''>{dateString}</h4> 
-                   </div>
-               </nav>
+    <div className={`font-display min-h-screen transition-colors duration-300 ${
+      darkMode ? 'bg-gray-900' : 'bg-white'
+    }`}>
+        <Navbar 
+          navigate={navigate}
+          toggleDropdown1={toggleDropdown1}
+          openMenu1={openMenu1}
+          handleSizeNavigate={handleSizeNavigate}
+          handleNavigateByRole={handleNavigateByRole}
+          timeString={timeString}
+          dateString={dateString}
+        />
         <Roomdata rooms={events} currentTime={new Date()} icons={iconClass}/>
-        <div className='bg-[#f8f7f1] p-4 mx-2 rounded-3xl shadow-xl'>
-        <Roomcard data={events} icons={iconClass}  />
+        <div className={`p-4 mx-2 rounded-3xl shadow-xl transition-colors duration-300 ${
+          darkMode ? 'bg-gray-800' : 'bg-[#f8f7f1]'
+        }`}>
+        {loading ? (
+          <div className={`flex justify-center py-20 gap-[5px] transition-colors duration-300 ${
+            darkMode ? 'text-white' : 'text-black'
+          }`}>
+            <span>loading</span>
+            <div className={`animate-spin rounded-full h-8 w-8 border-t-4 border-solid ${
+              darkMode ? 'border-white' : 'border-gray-500'
+            }`}></div>
+          </div>
+            ) : (
+              <Roomcard data={events} icons={iconClass} />
+            )}
         </div>
-    </div>
-  )
+  </div>
+  );
 }
 
 
-export { RoomPage } 
+export default  RoomPage;
