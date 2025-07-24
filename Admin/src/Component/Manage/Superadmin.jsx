@@ -16,7 +16,8 @@ import {
   EyeOff,
   LayoutDashboard,
   Sun,
-  Moon
+  Moon,
+  XCircle
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -39,6 +40,7 @@ function Superadmin() {
   const [showAdminStatus, setShowAdminStatus] = useState(false);
   const [signoutsuccess, setSignoutsuccess] = useState(false);
   const [pinChanged, setPinChanged] = useState(null);
+  const [deleteadmin, setDeleteadmin] = useState(null);
   const [adminstatus, setAdminStatus] = useState(null);
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -46,10 +48,12 @@ function Superadmin() {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [open, setOpen] = useState(false);
-  const [selectedAdmins, setSelectedAdmins] = useState([]);
+  const [showDeleteAdminConfirm, setShowDeleteAdminConfirm] = useState(false);
+  const [pendingDeleteAdmin, setPendingDeleteAdmin] = useState(null); // ฟังก์ชันที่รอการยืนยัน
   
   // New states for Add Admin functionality
   const [showAddAdminModal, setShowAddAdminModal] = useState(false);
+  const [message, setMessage] = useState('');
   const [addAdminForm, setAddAdminForm] = useState({
     email: '',
     password: '',
@@ -112,44 +116,55 @@ function Superadmin() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleSubmitPasswordChange = async () => {
-    if (newPassword !== confirmPassword) {
-      setStatusPopup('error');
-      setTimeout(() => setStatusPopup(null), 3000);
-      return;
-    }
+const handleSubmitPasswordChange = async () => {
+  if (newPassword !== confirmPassword) {
+    setStatusPopup('error');
+    setMessage('Passwords do not match');
+    setTimeout(() => setStatusPopup(null), 3000);
+    return;
+  }
 
-    try {
-      const token = localStorage.getItem('token');
+  try {
+    const token = localStorage.getItem('token');
 
-      const res = await axios.patch(
-        '/account/changeadminpw',
-        { newpin: newPassword },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      if (res.status === 200) {
-        setStatusPopup('success');
-        setTimeout(() => {
-          setPinChanged(res.data.newPinPlaintext);
-          setStatusPopup(null);
-          setShowPasswordModal(false);
-          setNewPassword('');
-          setConfirmPassword('');
-        }, 3000);
-      } else {
-        setStatusPopup('error');
-        setTimeout(() => setStatusPopup(null), 3000);
+    const res = await axios.patch(
+      '/account/changeadminpw',
+      { newpin: newPassword },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       }
-    } catch (error) {
-      console.error(error);
-      setStatusPopup('error');
-      setTimeout(() => setStatusPopup(null), 3000);
-    }
-  };
+    );
+
+    setMessage(res.data.message);
+    setStatusPopup('success');
+
+    setTimeout(() => {
+      setStatusPopup(null);
+      setShowPasswordModal(false);
+      setNewPassword('');
+      setConfirmPassword('');
+    }, 3000);
+
+  } catch (error) {
+    // ✅ ใช้ error.response แทน res
+    const messageFromBackend =
+      error.res?.data?.message || 'Failed to update PIN. Please try again.';
+
+    console.error('Error updating PIN:', messageFromBackend);
+
+    setMessage(messageFromBackend);
+    setStatusPopup('error');
+
+    setTimeout(() => {
+      setStatusPopup(null);
+      setShowPasswordModal(false);
+      setNewPassword('');
+      setConfirmPassword('');
+    }, 3000);
+  }
+};
 
 const handleSignout = async () => {
   try {
@@ -206,6 +221,7 @@ const handleAddAdmin = async () => {
     );
 
     console.log('Response:', response.data);
+    
 
     setAdminStatus('success');  // ✅ แสดง popup success
 
@@ -239,18 +255,20 @@ const handleAddAdmin = async () => {
   }
 };
 
-const handleDeleteAdmins = async () => {
+const handleDeleteAdmins = () => {
   if (selectedMembers.length === 0) {
     alert('Please select at least one admin.');
     return;
   }
 
-  const confirmDelete = window.confirm("Are you sure you want to delete selected admins?");
-  if (!confirmDelete) return;
-
+  // เปิด popup และเก็บฟังก์ชันที่จะลบไว้
+  setPendingDeleteAdmin(() => performDeleteAdmins);
+  setShowDeleteAdminConfirm(true);
+};
+const performDeleteAdmins = async () => {
   try {
     const token = localStorage.getItem("token");
-    // Find selected member objects by their _id
+
     const selectedMemberObjects = members.filter(m => selectedMembers.includes(m._id));
     for (const member of selectedMemberObjects) {
       await axios.delete(`/superadmin/deleteadmin`, {
@@ -258,20 +276,27 @@ const handleDeleteAdmins = async () => {
           Authorization: `Bearer ${token}`,
         },
         data: {
-          id: member._id, // or use member._id if backend expects id
+          id: member._id,
         },
         withCredentials: true,
       });
     }
 
-    // Remove deleted members from the list
     setMembers(prev => prev.filter(m => !selectedMembers.includes(m._id)));
     setSelectedMembers([]);
-    alert('Selected admins have been deleted.');
 
+    setDeleteadmin('success');
   } catch (error) {
     console.error('Delete failed:', error);
-    alert('Failed to delete some or all admins.');
+    setDeleteadmin('error');
+  } finally {
+    setShowDeleteAdminConfirm(false);
+    setPendingDeleteAdmin(null);
+
+    // ซ่อน status popup หลัง 3 วินาที
+    setTimeout(() => {
+      setDeleteadmin(null);
+    }, 3000);
   }
 };
 
@@ -532,17 +557,19 @@ const handleDeleteAdmins = async () => {
       )}
 
       {statusPopup === 'success' && (
-        <div className="fixed inset-0 z-50 backdrop-blur-sm bg-white/20 flex items-center justify-center shadow-xl/30">
-          <div className="bg-green-100 border border-green-400 text-green-700 px-6 py-4 rounded-xl shadow-lg text-lg">
-            ✅ PIN updated successfully!
+        <div className="fixed top-6 right-6 z-[9999]">
+            <div className="bg-green-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-2 animate-slide-in">
+              <CheckCircle className="w-5 h-5" />
+              <span className="font-medium">{message}</span>
+            </div>
           </div>
-        </div>
       )}
 
       {statusPopup === 'error' && (
-        <div className="fixed inset-0 z-50 backdrop-blur-sm bg-white/20 flex items-center justify-center shadow-xl/30">
-          <div className="bg-red-100 border border-red-400 text-red-700 px-6 py-4 rounded-xl shadow-lg text-lg">
-            ❌ Failed to update PIN!
+        <div className="fixed top-6 right-6 z-[9999]">
+          <div className="bg-red-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-2 animate-slide-in">
+            <XCircle className="w-5 h-5" />
+            <span className="font-medium">{message}</span>
           </div>
         </div>
       )}
@@ -558,6 +585,47 @@ const handleDeleteAdmins = async () => {
         <div className="fixed inset-0 z-50 backdrop-blur-sm bg-white/20 flex items-center justify-center shadow-xl/30">
           <div className="bg-red-100 border border-red-400 text-red-700 px-6 py-4 rounded-xl shadow-lg text-lg">
             ❌ Failed to create admin!
+          </div>
+        </div>
+      )}
+      {deleteadmin === 'success' && (
+          <div className="fixed top-6 right-6 z-[9999]">
+            <div className="bg-green-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-2 animate-slide-in">
+              <CheckCircle className="w-5 h-5" />
+              <span className="font-medium">Delete Housekeeper Successful.</span>
+            </div>
+          </div>
+        )}
+       {deleteadmin === 'error' && (
+          <div className="fixed top-6 right-6 z-[9999]">
+          <div className="bg-red-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-2 animate-slide-in">
+            <XCircle className="w-5 h-5" />
+            <span className="font-medium">Delete Housekeeper Failed..</span>
+          </div>
+        </div>
+        )}
+      {showDeleteAdminConfirm && (
+        <div className="fixed inset-0 z-50 backdrop-blur-sm bg-white/20 flex items-center justify-center shadow-xl/30">
+          <div className="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full text-center">
+            <h2 className="text-lg font-semibold mb-4">Confirm Admin Deletion</h2>
+            <p className="mb-6 text-gray-700">Are you sure you want to delete selected Admin?</p>
+            <div className="flex justify-center gap-4">
+              <button
+                onClick={() => pendingDeleteAdmin && pendingDeleteAdmin()}
+                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+              >
+                Yes
+              </button>
+              <button
+                onClick={() => {
+                  setShowDeleteAdminConfirm(false);
+                  setPendingDeleteAdmin(null);
+                }}
+                className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -811,7 +879,7 @@ const handleDeleteAdmins = async () => {
                     disabled={selectedMembers.length === 0}
                   >
                     <Trash2 className="w-4 h-4" />
-                    <span className="text-sm">Delete Admin</span>
+                    <span className="text-sm">Delete</span>
                   </RefreshButton>
                 </div>
               </div>

@@ -14,7 +14,8 @@ import {
   Home,
   LayoutDashboard,
   Sun,
-  Moon
+  Moon,
+  XCircle
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -27,8 +28,14 @@ function Housekeeper() {
   const [newPassword, setNewPassword] = useState('');
   const [newPin, setNewPin] = useState('');
   const [confirmPin, setConfirmPin] = useState('');
+  const [pinerr, setPinerr] = useState('');
+  const [createhousekeeper, setCreatehousekeeper] = useState('');
+  const [deletehousekeeper, setDeletehousekeeper] = useState('');
+  const [error, setError] = useState('');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState(null); // ใช้เก็บ callback ลบจริง
   const [signoutsuccess, setSignoutsuccess] = useState(false);
-  const [adminStatus, setAdminStatus] = useState(null);
+  const [pinadmin, setPinadmin] = useState(null);
   const [pinTargetName, setPinTargetName] = useState('');
   const [show, setShow] = useState(false);
   const [showPinModal, setShowPinModal] = useState(false);
@@ -39,6 +46,7 @@ function Housekeeper() {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [housekeeper, setHousekeeper] = useState([]);
+  const [message, setMessage] = useState('');
   const [open, setOpen] = useState(false);
   const [profile, setProfile] = useState('');
   const dropdownRef = useRef(null);
@@ -124,6 +132,44 @@ const handleSelectHousekeeper = (housekeeper) => {
   });
 };
 
+  const handleSubmitPasswordChange = async () => {
+    if (newPassword !== confirmPassword) {
+      setStatusPopup('error');
+      setTimeout(() => setStatusPopup(null), 3000);
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+
+      const res = await axios.patch(
+        '/account/changeadminpw',
+        { newpin: newPassword },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      if (res.status === 200) {
+        setPinadmin('success');
+        setTimeout(() => {
+          setPinadmin(null);
+          setShowPasswordModal(false);
+          setNewPassword('');
+          setConfirmPassword('');
+        }, 3000);
+      } else {
+        setPinadmin('error');
+        setTimeout(() => setStatusPopup(null), 3000);
+      }
+    } catch (error) {
+      console.error(error);
+      setStatusPopup('error');
+      setTimeout(() => setStatusPopup(null), 3000);
+    }
+  };
+
 
  const handleChangePin = async () => {
   // if (newPin !== confirmPin) {
@@ -145,23 +191,28 @@ const handleSelectHousekeeper = (housekeeper) => {
     );
 
     if (res.status === 200) {
-      setStatusPopup('success');
+      setMessage(res.data.message || 'PIN updated successfully');
+      setPinerr('success');
       setTimeout(() => {
-        setStatusPopup(null);
+        setPinerr(null);
         setShowPinModal(false);
         setNewPin('');
         setConfirmPin('');
         setPinTargetName('');
       }, 2000);
-    } else {
-      setStatusPopup('error');
-      setTimeout(() => setStatusPopup(null), 3000);
-    }
+    } 
   } catch (error) {
-    console.error(error);
-    // setStatusPopup('error');
-    // setTimeout(() => setStatusPopup(null), 3000);
-  }
+    const messageFromBackend = error.res?.data?.message || 'Failed to update PIN. Please try again.';
+      setMessage(messageFromBackend);
+      setPinerr('error');
+      setTimeout(() => {
+        setPinerr(null);
+        setShowPinModal(false);
+        setNewPin('');
+        setConfirmPin('');
+        setPinTargetName('');
+      }, 3000);
+    }
 };
 
 const handleAddMember = async () => {
@@ -200,9 +251,10 @@ const handleAddMember = async () => {
       }
     ]);
 
-    setAdminStatus('success');
+    setCreatehousekeeper('success');
+    
     setTimeout(() => {
-      setAdminStatus(null);
+      setCreatehousekeeper(null);
       setShowModal(false);
       setNewMember({ name: "", pin: "", role: "Housekeeper" });
     }, 3000);
@@ -210,10 +262,10 @@ const handleAddMember = async () => {
   } catch (error) {
     console.error("Error creating housekeeper:", error.response?.data || error.message);
 
-    setAdminStatus('error');
+    setCreatehousekeeper('error');
 
     setTimeout(() => {
-      setAdminStatus(null);
+      setCreatehousekeeper(null);
       setShowModal(false);
       setNewMember({ name: "", pin: "", role: "Housekeeper" });
     }, 3000);
@@ -221,15 +273,18 @@ const handleAddMember = async () => {
 };
 
 
-const handleDeleteHousekeepers = async () => {
+const handleDeleteHousekeepers = () => {
   if (selectedMembers.length === 0) {
     alert('Please select at least one housekeeper.');
     return;
   }
 
-  const confirmDelete = window.confirm("Are you sure you want to delete selected housekeepers?");
-  if (!confirmDelete) return;
+  // แค่เปิด popup และเก็บฟังก์ชันลบไว้
+  setPendingDelete(() => performDeleteHousekeepers);
+  setShowDeleteConfirm(true);
+};
 
+const performDeleteHousekeepers = async () => {
   try {
     const token = localStorage.getItem("token");
     for (const member of selectedMembers) {
@@ -237,19 +292,21 @@ const handleDeleteHousekeepers = async () => {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-        data: {
-          id: member.id,
-        },
+        data: { id: member.id },
         withCredentials: true,
       });
     }
 
     setHousekeeper(prev => prev.filter(h => !selectedMembers.some(m => m.id === h._id)));
     setSelectedMembers([]);
-    alert('Selected housekeepers have been deleted.');
+    setDeletehousekeeper('success');
   } catch (error) {
     console.error('Delete failed:', error);
-    alert('Failed to delete some or all housekeepers.');
+    setDeletehousekeeper('error');
+  } finally {
+    setShowDeleteConfirm(false);
+    setPendingDelete(null);
+    setTimeout(() => setDeletehousekeeper(null), 3000);
   }
 };
     useEffect(() => {
@@ -265,6 +322,8 @@ const handleDeleteHousekeepers = async () => {
       })
       .catch(err => console.error(err));
   }, []);
+
+
 
   useEffect(() => {
     if (profile) {
@@ -331,52 +390,76 @@ const handleSignout = async () => {
   return (
     <div className={`min-h-screen ${darkMode ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'} flex flex-col md:flex-row font-display`}>
       {showPinModal && (
-        <div className="fixed inset-0 z-50 bg-black bg-opacity-40 flex items-center justify-center">
-          <div className={`${darkMode ? 'bg-gray-800 text-white' : 'bg-white'} p-6 rounded-xl shadow-lg w-96`}>
-            <h2 className={`text-lg font-semibold mb-4 ${darkMode ? 'text-white' : 'text-gray-800'}`}>Change PIN</h2>
-            <div className="mb-4">
-              <label className={`block text-sm mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>Name</label>
-              <input
-                type="username"
-                maxLength={20}
-                inputMode="numeric"
-                className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring focus:ring-blue-200 ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'}`}
-                value={pinTargetName}
-                onChange={(e) => setPinTargetName(e.target.value)}
-              />
+       <div className="fixed inset-0 z-50 backdrop-blur-sm bg-gray-300/30 flex items-center justify-center">
+      <div className={`${darkMode ? 'bg-gray-800 text-white' : 'bg-white'} p-6 rounded-xl shadow-lg w-96`}>
+        <h2 className={`text-lg font-semibold mb-4 ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+          Change PIN
+        </h2>
+        
+        <div className="mb-4">
+          <label className={`block text-sm mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+            Name
+          </label>
+          <div
+              className={`w-full px-3 py-2 border rounded-md shadow-sm ${
+                darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-100 border-gray-300 text-gray-800'
+              }`}
+            >
+              {pinTargetName || '-'}
             </div>
-            <div className="mb-6">
-              <label className={`block text-sm mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>New PIN</label>
-              <input
-                type="password"
-                maxLength="4"
-                inputMode="numeric"
-                className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring focus:ring-blue-200 ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'}`}
-                value={newPin}
-                onChange={(e) => setNewPin(e.target.value)}
-              />
-            </div>
-            <div className="flex justify-end gap-2">
-              <RefreshButton
-                onClick={() => {
-                  setShowPinModal(false);
-                  setNewPin('');
-                  setConfirmPin('');
-                  setPinTargetName('');
-                }}
-                className={`px-4 py-2 rounded-md ${darkMode ? 'bg-gray-600 text-gray-300 hover:bg-gray-500' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
-              >
-                Cancel
-              </RefreshButton>
-              <RefreshButton
-                onClick={handleChangePin}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-              >
-                Confirm
-              </RefreshButton>
-            </div>
+        </div>
+        
+        <div className="mb-6">
+          <label className={`block text-sm mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+            New PIN
+          </label>
+          <div className="relative">
+            <input
+              type={showPin ? "text" : "password"}
+              maxLength="4"
+              inputMode="numeric"
+              className={`w-full px-3 py-2 pr-10 border rounded-md shadow-sm focus:ring focus:ring-blue-200 ${
+                darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'
+              }`}
+              value={newPin}
+              onChange={(e) => setNewPin(e.target.value.replace(/\D/g, ''))}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPin(!showPin)}
+              className="absolute inset-y-0 right-0 flex items-center pr-3 hover:bg-opacity-10 rounded-r-md transition-colors"
+            >
+              {showPin ? 
+                <EyeOff className="w-5 h-5 text-gray-400 hover:text-gray-600" /> : 
+                <Eye className="w-5 h-5 text-gray-400 hover:text-gray-600" />
+              }
+            </button>
           </div>
         </div>
+        
+        <div className="flex justify-end gap-2">
+          <RefreshButton
+          onClick={() => {
+            setShowPinModal(false);
+            setNewPin('');
+            setConfirmPin('');
+            setPinTargetName('');
+          }}
+            className={`px-4 py-2 rounded-md ${
+              darkMode ? 'bg-gray-600 text-gray-300 hover:bg-gray-500' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
+          >
+            Cancel
+          </RefreshButton>
+          <RefreshButton
+            onClick={handleChangePin}
+            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+          >
+            Confirm
+          </RefreshButton>
+        </div>
+      </div>
+    </div>
       )}
       {showPasswordModal && (
         <div className="fixed inset-0 z-50 backdrop-blur-sm bg-gray-300/30 flex items-center justify-center">
@@ -483,18 +566,36 @@ const handleSignout = async () => {
           </div>
         </div>
       )}
-      {adminStatus === 'success' && (
-        <div className="fixed inset-0 z-50 backdrop-blur-sm bg-white/20 flex items-center justify-center shadow-xl/30">
-          <div className="bg-green-100 border border-green-400 text-green-700 px-6 py-4 rounded-xl shadow-lg text-lg">
-            ✅ Admin created successfully!
+      {pinadmin === 'success' && (
+        <div className="fixed top-6 right-6 z-50">
+          <div className="bg-green-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-2 animate-slide-in">
+            <CheckCircle className="w-5 h-5" />
+            <span className="font-medium">{message}</span>
           </div>
         </div>
       )}
 
-      {adminStatus === 'error' && (
-        <div className="fixed inset-0 z-50 backdrop-blur-sm bg-white/20 flex items-center justify-center shadow-xl/30">
-          <div className="bg-red-100 border border-red-400 text-red-700 px-6 py-4 rounded-xl shadow-lg text-lg">
-            ❌ Failed to create admin!
+      {pinadmin === 'error' && (
+        <div className="fixed top-6 right-6 z-50">
+          <div className="bg-red-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-2 animate-slide-in">
+            <XCircle className="w-5 h-5" />
+            <span className="font-medium">{message}</span>
+          </div>
+        </div>
+      )}
+      {pinerr == 'success' && (
+        <div className="fixed top-6 right-6 z-50">
+          <div className="bg-green-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-2 animate-slide-in">
+            <CheckCircle className="w-5 h-5" />
+            <span className="font-medium">{message}</span>
+          </div>
+        </div>
+      )}
+      {pinerr == 'error' && (
+        <div className="fixed top-6 right-6 z-50">
+          <div className="bg-red-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-2 animate-slide-in">
+            <XCircle className="w-5 h-5" />
+            <span className="font-medium">{message}</span>
           </div>
         </div>
       )}
@@ -507,6 +608,63 @@ const handleSignout = async () => {
           </div>
         </div>
       )}
+        {createhousekeeper === 'success' && (
+          <div className="fixed top-6 right-6 z-[9999]">
+            <div className="bg-green-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-2 animate-slide-in">
+              <CheckCircle className="w-5 h-5" />
+              <span className="font-medium">Create Housekeeper Successful.</span>
+            </div>
+          </div>
+        )}
+        {createhousekeeper == 'error' && (
+        <div className="fixed top-6 right-6 z-[9999]">
+          <div className="bg-red-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-2 animate-slide-in">
+            <XCircle className="w-5 h-5" />
+            <span className="font-medium">Create Housekeeper Failed, Please Try Again.</span>
+          </div>
+        </div>
+      )}
+       {deletehousekeeper === 'success' && (
+          <div className="fixed top-6 right-6 z-[9999]">
+            <div className="bg-green-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-2 animate-slide-in">
+              <CheckCircle className="w-5 h-5" />
+              <span className="font-medium">Delete Housekeeper Successful.</span>
+            </div>
+          </div>
+        )}
+       {deletehousekeeper === 'error' && (
+          <div className="fixed top-6 right-6 z-[9999]">
+          <div className="bg-red-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-2 animate-slide-in">
+            <XCircle className="w-5 h-5" />
+            <span className="font-medium">Delete Housekeeper Failed..</span>
+          </div>
+        </div>
+        )}
+        {showDeleteConfirm && (
+          <div className="fixed inset-0 z-50 backdrop-blur-sm bg-white/20 flex items-center justify-center shadow-xl/30">
+            <div className="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full text-center">
+              <h2 className="text-lg font-semibold mb-4">Confirm Deletion</h2>
+              <p className="mb-6 text-gray-700">Are you sure you want to delete selected housekeepers?</p>
+              <div className="flex justify-center gap-4">
+                <button
+                  onClick={() => pendingDelete && pendingDelete()}
+                  className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+                >
+                  Yes
+                </button>
+                <button
+                  onClick={() => {
+                    setShowDeleteConfirm(false);
+                    setPendingDelete(null);
+                  }}
+                  className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       {/* Sidebar */}
       <div className={`w-full md:w-64 ${darkMode ? 'bg-gray-800' : 'bg-slate-800'} text-white flex flex-row md:flex-col sticky top-0 h-screen`}>
         <div className={`p-4 md:p-6 border-b ${darkMode ? 'border-gray-700' : 'border-slate-700'} w-full`}>
@@ -723,7 +881,7 @@ const handleSignout = async () => {
                     className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
                   >
                     <Plus className="w-4 h-4" />
-                    Add Member
+                    Add Housekeeper
                   </RefreshButton>
                   <RefreshButton
                     disabled={selectedMembers.length === 0}
@@ -807,55 +965,65 @@ const handleSignout = async () => {
         </div>
       </div>
       {/* Modal */}
-      {showModal && (
+     {showModal && (
         <div className="fixed inset-0 z-50 backdrop-blur-sm bg-gray-300/30 flex items-center justify-center">
           <div className={`${darkMode ? 'bg-gray-800 text-white' : 'bg-white'} rounded-xl shadow-lg w-full max-w-md p-4 md:p-6`}>
             <h2 className={`text-xl font-semibold mb-4 ${darkMode ? 'text-white' : ''}`}>Add Housekeeper</h2>
+            
             <div className="space-y-4">
+              {/* Name Field */}
               <div>
                 <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Name</label>
                 <input
                   type="text"
                   value={newMember.name}
                   onChange={(e) => setNewMember({ ...newMember, name: e.target.value })}
-                  className={`mt-1 block w-full p-2 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'}`}
+                  className={`mt-1 block w-full p-2 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 ${
+                    darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'
+                  }`}
                 />
               </div>
+
+              {/* Pin Field */}
               <div>
                 <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Pin</label>
-                <input
-                  type={showPin ? "text" : "password"}
-                  maxLength="4"
-                  value={newMember.pin}
-                  onChange={(e) => setNewMember({
+                <div className="relative mt-1">
+              <input
+                type={showPin ? "text" : "password"}
+                maxLength="4"
+                value={newMember.pin}
+                onChange={(e) =>
+                  setNewMember({
                     ...newMember,
-                    pin: e.target.value.replace(/\D/g, '')  // กรองไม่ให้มีตัวอักษรที่ไม่ใช่ตัวเลข
-                  })}
-                  className={`mt-1 block w-full p-2 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'}`}
-                />
-                      <button
-                        type="button"
-                        onClick={() => setShowPin(!showPin)}
-                        className="absolute top-[358px] right-[515px]"  // ปรับตำแหน่งให้ปุ่มอยู่ขอบ input
-                      >
-                        {showPin ? <EyeOff className="w-5 h-5 text-gray-400" /> : <Eye className="w-5 h-5 text-gray-400" />}
-                      </button>
-              </div>
-              {/* <div>
-                <label className={`block text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Role</label>
-                <div
-                  value={newMember.role}
-                  onChange={(e) => setNewMember({ ...newMember, role: e.target.value })}
-                  className={`mt-1 block w-full p-2 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'}`}
-                >
-                  <option value="Housekeeper">Housekeeper</option>
-                </div>
-              </div> */}
+                    pin: e.target.value.replace(/\D/g, '')
+                  })
+                }
+                className={`block w-full p-2 pr-10 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 ${
+                  darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'
+                }`}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPin(!showPin)}
+                className="absolute inset-y-0 right-0 flex items-center pr-3"
+              >
+                {showPin ? (
+                  <EyeOff className="w-5 h-5 text-gray-400 hover:text-gray-600" />
+                ) : (
+                  <Eye className="w-5 h-5 text-gray-400 hover:text-gray-600" />
+                )}
+              </button>
             </div>
+              </div>
+            </div>
+
+            {/* Buttons */}
             <div className="mt-6 flex justify-end gap-3">
               <RefreshButton
                 onClick={() => setShowModal(false)}
-                className={`px-4 py-2 rounded-lg border ${darkMode ? 'border-gray-600 text-gray-300 hover:bg-gray-700' : 'border-gray-300 text-gray-700 hover:bg-gray-100'}`}
+                className={`px-4 py-2 rounded-lg border ${
+                  darkMode ? 'border-gray-600 text-gray-300 hover:bg-gray-700' : 'border-gray-300 text-gray-700 hover:bg-gray-100'
+                }`}
               >
                 Cancel
               </RefreshButton>
