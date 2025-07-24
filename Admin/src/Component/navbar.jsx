@@ -56,15 +56,27 @@ function Navbar({
           <h1 className='cursor-pointer hover:text-gray-300' onClick={handleNavigateByRole}>Management</h1>
         </RefreshButton>
         <li>
-          <button
-            onClick={toggleDarkMode}
-            className={`p-2 rounded-full transition-all duration-300 hover:scale-110 ${
-              darkMode ? 'bg-yellow-500 text-gray-900' : 'bg-gray-700 text-yellow-400'
-            }`}
-            title={darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-          >
-            {darkMode ? <Sun size={20} /> : <Moon size={20} />}
-          </button>
+          <RefreshButton
+                          onClick={toggleDarkMode}
+                          className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                            darkMode 
+                              ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
+                              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                          }`}
+                          title={darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+                        >
+                          {darkMode ? (
+                            <>
+                              <Sun className="w-4 h-4" />
+                              <span className="text-sm">Light</span>
+                            </>
+                          ) : (
+                            <>
+                              <Moon className="w-4 h-4" />
+                              <span className="text-sm">Dark</span>
+                            </>
+                          )}
+                        </RefreshButton>
         </li>
       </ul>
       <div className=' max-md:flex'>
