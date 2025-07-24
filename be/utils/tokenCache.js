@@ -28,7 +28,7 @@ async function monitorToken() {
 
   console.log("🚀 Starting token monitor...");
   while (true) {
-    if (!refreshToken || !expiryDate) {
+    if (!refreshToken || !expiryDate || refreshToken === null) {
       const tokenData = await Token.findOne().sort({ createdAt: -1 });
       if (!tokenData) console.log("No token found in DB");
       refreshToken = tokenData ? decryptToken(tokenData.refreshToken) : null;

@@ -4,6 +4,7 @@ require('dotenv').config({ path: './config/.env'});
 const tokenCache = require("../utils/tokenCache");
 const { getuserdatabyroom, waitUntil } = require('../services/users.services');
 const { roomobject } = require('../utils/tokenCache');
+const { GetDateTimeTH } = require('../utils/getTodaydatetime');
 // crud microsoft
 const {  GeteventId, createMSEvent } = require('../services/users.services');
 const getGraphClient = require("../utils/graph");
@@ -190,7 +191,7 @@ const searchpinByeventId = async (req, res) => {
     if (!eventId) return res.status(400).json({ error: "Event ID is required" });
 
     try {
-        const booking = await waitUntil(() => bookingkey.findOne({ eventId, room: room_number }), 15000, 1000);
+        const booking = await waitUntil(() => bookingkey.findOne({ eventId, room: room_number }), 30000, 1000);
         // const booking = await bookingkey.findOne({ eventId, room: room_number });
         if (!booking) return res.status(404).json({ error: "Not found eventId" });
         res.status(200).json({ success: true, pin: booking.pin });
@@ -203,23 +204,23 @@ const searchpinByeventId = async (req, res) => {
 const endmeeting = async (req, res) => {
     try{
         const { endmeetingdata } = req.body; // endmeetingdata = {eventId, startdatetime, isAllDay}
-
+        const enddate = await GetDateTimeTH();
         const AccessToken = tokenCache.getAccessToken();
         let startDateTime;
         if (endmeetingdata.isAllDay) {
-    // Parse วันที่จาก startdatetime มาเป็นปี/เดือน/วัน
-    const date = new Date(endmeetingdata.startdatetime);
-    const year  = date.getUTCFullYear();
-    const month = date.getUTCMonth();      // zero‑based
-    const day   = date.getUTCDate();
+        // Parse วันที่จาก startdatetime มาเป็นปี/เดือน/วัน
+        const date = new Date(endmeetingdata.startdatetime);
+        const year  = date.getUTCFullYear();
+        const month = date.getUTCMonth();      // zero‑based
+        const day   = date.getUTCDate();
 
-    // สร้าง timestamp ของ 00:00 UTC
-    const utcMidnight = Date.UTC(year, month, day);
-    // บวก 1 ชั่วโมง (1 * 60 * 60 * 1000 ms)
-    const oneHourMs = 1 * 60 * 60 * 1000;
-    const dt = new Date(utcMidnight + oneHourMs);
-
-    // toISOString() จะคืนแบบ "...Z" เราเลย .replace เพื่อได้ ".0000000"
+        // สร้าง timestamp ของ 00:00 UTC
+        const utcMidnight = Date.UTC(year, month, day);
+        // บวก 1 ชั่วโมง (1 * 60 * 60 * 1000 ms)
+        const oneHourMs = 1 * 60 * 60 * 1000;
+        const dt = new Date(utcMidnight + oneHourMs);
+        
+        // toISOString() จะคืนแบบ "...Z" เราเลย .replace เพื่อได้ ".0000000"``
         startDateTime = dt
             .toISOString()           // e.g. "2025-07-21T18:00:00.000Z"
             .replace(/.000Z$/, ".0000000");
@@ -238,7 +239,7 @@ const endmeeting = async (req, res) => {
                 timeZone: "UTC"
             },
             end: {
-                dateTime: new Date().toISOString(), // ใช้เวลาปัจจุบันเป็นเวลาสิ้นสุด ex.test == "2025-07-10T12:45:00Z"
+                dateTime: enddate.toISOString(), // ใช้เวลาปัจจุบันเป็นเวลาสิ้นสุด ex.test == "2025-07-10T12:45:00Z"
                 timeZone: "UTC"
             },
         })

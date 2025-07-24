@@ -1,4 +1,6 @@
 const mongoose = require('mongoose');
+const { GetDateTimeTH } = require('../utils/getTodaydatetime');
+
 
 const logschema = new mongoose.Schema({ 
     user_Id:{ // foremost
@@ -25,7 +27,6 @@ const logschema = new mongoose.Schema({
     },
     L_createdAt:{
         type: Date,
-        default: () => new Date(),
         index: { expires: '90d'} // TTL index to auto delete logs
     },
     // createdBy:{

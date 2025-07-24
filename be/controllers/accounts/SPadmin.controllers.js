@@ -3,6 +3,7 @@ const {AddLogmonitoring} = require('../../utils/AddLogmonitoring');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 require('dotenv').config();
+const { GetDateTimeTH } = require('../../utils/getTodaydatetime');
 
 const createadmin = async (req, res) => {
   const SuperAdmin = req.user;
@@ -43,7 +44,7 @@ const createadmin = async (req, res) => {
       L_status: 'Admin was created', 
       role: newAdmin.role, 
       Details: `Admin name: ${newAdmin.name}`, 
-      L_createdAt: new Date(),
+      L_createdAt: await GetDateTimeTH(),
     };
     const log = await AddLogmonitoring(datalogs);
   
@@ -107,7 +108,7 @@ const deleteadmin = async (req, res) => {
       L_status: 'Admin was deleted',
       role: 'Admin',
       Details: `Admin name: ${ThisAdmin.name}`,
-      L_createdAt: new Date(),
+      L_createdAt: await GetDateTimeTH(),
     };
 
     const log = await AddLogmonitoring(datalogs);

@@ -3,6 +3,7 @@ const bookingKey = require('../models/bookingkey');
 // const getGraphClient = require("../graph");
 const User = require('../models/User');
 const { AddLogmonitoring } = require('../utils/AddLogmonitoring');
+const { GetDateTimeTH } = require('../utils/getTodaydatetime');
 
 /**
  * service for compare the pin, user inserted, with the pin of the room in database
@@ -47,8 +48,8 @@ async function adminCompareKey( pin, room_number ) {
         if (!user) return { success: false, message: "User not found!"};
         if (user.role === 'Deactivate') return { success: false, message: "User is Deactivated"};
         /**
-         * ! update database to log admin/housekeeper insert pin
-         * await log.create({ userId: user._id, action: `access room ${room_number}`, role: user.role, timestamp: new Date() });
+         * ! update database to log admin/housekeeper insert pinnew Date()
+         * await log.create({ userId: user._id, action: `access room ${room_number}`, role: user.role, timestamp:  });
          * */
         
         // logsmonitoring function
@@ -57,7 +58,7 @@ async function adminCompareKey( pin, room_number ) {
             L_status: 'Access room', 
             role: user.role, 
             Details: `${user.name} access room ${room_number}`, 
-            L_createdAt: new Date(),
+            L_createdAt: await GetDateTimeTH(),
         };
         const log = await AddLogmonitoring(datalogs);
 

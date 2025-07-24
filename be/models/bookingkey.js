@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { GetDateTimeTH } = require('../utils/getTodaydatetime');
 
 const bookingKeySchema = new mongoose.Schema({
     room: Number,
@@ -18,7 +19,6 @@ const bookingKeySchema = new mongoose.Schema({
     },
     B_createdAt:{
         type: Date,
-        default: () => new Date(),
         index: { expires: '90d'} // TTL index to auto delete logs
     }
 });

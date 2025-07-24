@@ -3,7 +3,7 @@ const bookingkey = require('../models/bookingkey');
 const sendMailAsync = require("./sendmail.services")
 require('dotenv').config({ path: '../config/.env' });
 const tokenCache = require("../utils/tokenCache")
-const getTodaydatetime = require('../utils/getTodaydatetime');
+const {getTodaydatetime} = require('../utils/getTodaydatetime');
 const { roomobject } = require('../utils/tokenCache')
 
 function randomPin() {
@@ -13,7 +13,7 @@ function randomPin() {
 // สร้างรหัสผ่านแบบสุ่ม 4 หลัก เเละเก็บค่าใน DB เเละมีการเช็คโดยดึง api มาเช็คตลอด
 async function syncAllRooms() {
     
-    const {startDateTime, endDateTime} = getTodaydatetime();
+    const {startDateTime, endDateTime} = await getTodaydatetime();
       
     // ดึงข้อมูลจาก Microsoft Graph API
     const rawtoken = tokenCache.getAccessToken();

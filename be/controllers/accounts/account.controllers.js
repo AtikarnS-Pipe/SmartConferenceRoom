@@ -6,6 +6,7 @@ const { sendOTP, verifyOTP, resetPassword } = require('../../services/admin.serv
 //models
 const User = require('../../models/User');
 const { AddLogmonitoring } = require('../../utils/AddLogmonitoring');
+const { GetDateTimeTH } = require('../../utils/getTodaydatetime');
 
 const Auth = async (req, res) => { // admin sign-in
     const { email, password } = req.body;
@@ -34,7 +35,7 @@ const Auth = async (req, res) => { // admin sign-in
         L_status: 'Admin Logged in', 
         role: user.role, 
         Details: `Admin name: ${user.name}`, 
-        L_createdAt: new Date(),
+        L_createdAt: await GetDateTimeTH(),
       };
       const log = await AddLogmonitoring(datalogs);
 
@@ -108,7 +109,7 @@ const Createhousekeeper = async (req, res) => {
       L_status: 'Housekeeper was created', 
       role: newHousekeeper.role, 
       Details: `Housekeeper name: ${newHousekeeper.name}`, 
-      L_createdAt: new Date(),
+      L_createdAt: await GetDateTimeTH(),
     };
     const log = await AddLogmonitoring(datalogs);
     res.status(201).json({
@@ -132,7 +133,7 @@ const signout = async (req, res) => {
     L_status: 'Admin Logged out', 
     role: user.role, 
     Details: `Admin name: ${user.name}`, 
-    L_createdAt: new Date(),
+    L_createdAt: await GetDateTimeTH(),
   };
   const log = await AddLogmonitoring(datalogs);
   res.clearCookie("refreshtoken", { path: '/account/refreshtoken' }); // ลบ cookie refresh token
@@ -160,7 +161,7 @@ const deletehousekeeper = async (req, res) => {
       L_status: 'Housekeeper was deleted', 
       role: 'Housekeeper', 
       Details: `Housekeeper name: ${ThisHousekeeper.name}`, 
-      L_createdAt: new Date(),
+      L_createdAt: await GetDateTimeTH(),
     };
     const log = await AddLogmonitoring(datalogs);
 
@@ -202,7 +203,7 @@ const editpinhousekeeper = async (req, res) => {
       L_status: 'Housekeeper was changed pin', 
       role: ThisHousekeeper.role, 
       Details: `Housekeeper name: ${ThisHousekeeper.name}`, 
-      L_createdAt: new Date(),
+      L_createdAt:await GetDateTimeTH(),
     };
     const log = await AddLogmonitoring(datalogs);
 

@@ -1,7 +1,7 @@
 require('dotenv').config({ path: './config/.env'});
 const getGraphClient = require("../utils/graph");
 const tokenCache = require('../utils/tokenCache');
-const getTodaydatetime = require('../utils/getTodaydatetime');
+const {getTodaydatetime} = require('../utils/getTodaydatetime');
 const { roomobject } = require('../utils/tokenCache');
 
 async function getuserdatabyroom(res, RoomNumber) {
@@ -9,7 +9,7 @@ async function getuserdatabyroom(res, RoomNumber) {
         if(!(RoomNumber in roomobject)){
             throw new Error(`Invalid room number: ${RoomNumber}`)
         }
-        const {startDateTime, endDateTime} = getTodaydatetime();
+        const {startDateTime, endDateTime} = await getTodaydatetime();
         const accesstoken = tokenCache.getAccessToken();
         if(!accesstoken){
             throw new Error("No access token in Users")
@@ -125,7 +125,7 @@ const createMSEvent = async (AccessToken, createroomdata) => {
     }
 }
 
-async function waitUntil(conditionFn, timeout = 10000, interval = 1000) {
+async function waitUntil(conditionFn, timeout = 15000, interval = 1000) {
     const start = Date.now();
     return new Promise(async (resolve, reject) => {
         const check = async () => {

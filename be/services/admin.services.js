@@ -1,7 +1,7 @@
 const getGraphClient = require("../utils/graph"); 
 const Token = require('../models/token');
 const tokenCache = require('../utils/tokenCache')
-const getTodaydatetime  = require('../utils/getTodaydatetime');
+const {getTodaydatetime}  = require('../utils/getTodaydatetime');
 const userModel = require('../models/User');
 const sendMailAsync = require('../services/sendmail.services')
 const jwt = require('jsonwebtoken');
@@ -113,7 +113,7 @@ async function addCacheandDB(tokenObject) {
 
 async function fetchAllRoom(res, accessToken) {
     try {
-        const {startDateTime, endDateTime} = getTodaydatetime();
+        const {startDateTime, endDateTime} = await getTodaydatetime();
         if (!accessToken) {
             throw new Error("No accessToken");
         }
