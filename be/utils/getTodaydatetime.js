@@ -34,7 +34,8 @@ async function GetDateTimeTH() {
 async function GetDateTimeUTC() {
     const result = await axios.get('https://timeapi.io/api/Time/current/zone?timeZone=UTC');
     const time3 = new Date(result.data.dateTime);
-    console.log(`Current UTC : ${time3}`);
+    if (isNaN(time3.getTime())) console.error("❌ Invalid UTC time received:", result.data.dateTime);
+    console.log(`Current UTC : ${time3.toISOString()}`);
     return time3;
 }
 
