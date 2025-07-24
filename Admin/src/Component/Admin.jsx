@@ -16,38 +16,50 @@ function RoomPage() {
     const [events, setEvents] = useState([]);
 
     useEffect(() => {
-      const code = new URLSearchParams(location.search).get("code");
-      const token = localStorage.getItem("token");
+  const code = new URLSearchParams(location.search).get("code");
+  const token = localStorage.getItem("token");
 
-      if (!token) {
-        window.location.href = "/admin/login";
-        return;
-      }
-      // if (!code) {
-      //   window.location.href="/admin/login";
-      // }
-      const eventSource = new EventSource(`/admin/sse?code=${code}&token=${token}`);
-      eventSource.onmessage = (e) => {
-        try {
-          const data = JSON.parse(e.data);
-          setEvents(data.results);
-          console.log(data)
-          setLoading(false);
-        } catch (err) {
-          console.error("Error parsing SSE data:", err);
-          setLoading(false);
-        }
-      };
-      eventSource.onerror = (err) => {
-        console.error("SSE error:", err);
-        setLoading(false);
-        eventSource.close();
-        window.location.href="/admin/login"; /* ***************** */
-      };
-      return () => {
-        eventSource.close();
-      };
-    }, []);
+  if (!token) {
+    window.location.href = "/admin/login";
+    return;
+  }
+
+  const eventSource = new EventSource(`/admin/sse?code=${code}&token=${token}`);
+
+  eventSource.onmessage = (e) => {
+    try {
+      const data = JSON.parse(e.data);
+      setEvents(data.results);
+      setLoading(false);
+    } catch (err) {
+      console.error("Error parsing SSE data:", err);
+      setLoading(false);
+    }
+  };
+
+  // ✅ ดัก forceLogout
+  eventSource.addEventListener("forceLogout", (event) => {
+    try {
+      const data = JSON.parse(event.data);
+      alert(data.error);
+      window.location.href = "/admin/login";
+    } catch (err) {
+      console.error("Error in forceLogout:", err);
+    }
+  });
+
+  eventSource.onerror = (err) => {
+    console.error("SSE error:", err);
+    setLoading(false);
+    eventSource.close();
+    window.location.href = "/admin/login";
+  };
+
+  return () => {
+    eventSource.close();
+  };
+}, []);
+
   
       useEffect(() => {
     const token = localStorage.getItem('token');
@@ -182,11 +194,18 @@ function RoomPage() {
                </nav>
         <Roomdata rooms={events} currentTime={new Date()} icons={iconClass}/>
         <div className='bg-[#f8f7f1] p-4 mx-2 rounded-3xl shadow-xl'>
-        <Roomcard data={events} icons={iconClass}  />
-        </div>
+  {loading ? (
+    <div className="flex justify-center py-6 gap-[5px]">
+      <span>loading</span>
+      <div className="animate-spin rounded-full h-8 w-8 border-t-4 border-gray-500 border-solid"></div>
     </div>
-  )
+      ) : (
+        <Roomcard data={events} icons={iconClass} />
+      )}
+    </div>
+  </div>
+  );
 }
 
 
-export { RoomPage } 
+export default  RoomPage;
