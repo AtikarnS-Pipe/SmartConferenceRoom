@@ -16,38 +16,50 @@ function RoomPage() {
     const [events, setEvents] = useState([]);
 
     useEffect(() => {
-      const code = new URLSearchParams(location.search).get("code");
-      const token = localStorage.getItem("token");
+  const code = new URLSearchParams(location.search).get("code");
+  const token = localStorage.getItem("token");
 
-      if (!token) {
-        window.location.href = "/admin/login";
-        return;
-      }
-      // if (!code) {
-      //   window.location.href="/admin/login";
-      // }
-      const eventSource = new EventSource(`/admin/sse?code=${code}&token=${token}`);
-      eventSource.onmessage = (e) => {
-        try {
-          const data = JSON.parse(e.data);
-          setEvents(data.results);
-          console.log(data)
-          setLoading(false);
-        } catch (err) {
-          console.error("Error parsing SSE data:", err);
-          setLoading(false);
-        }
-      };
-      eventSource.onerror = (err) => {
-        console.error("SSE error:", err);
-        setLoading(false);
-        eventSource.close();
-        window.location.href="/admin/login"; /* ***************** */
-      };
-      return () => {
-        eventSource.close();
-      };
-    }, []);
+  if (!token) {
+    window.location.href = "/admin/login";
+    return;
+  }
+
+  const eventSource = new EventSource(`/admin/sse?code=${code}&token=${token}`);
+
+  eventSource.onmessage = (e) => {
+    try {
+      const data = JSON.parse(e.data);
+      setEvents(data.results);
+      setLoading(false);
+    } catch (err) {
+      console.error("Error parsing SSE data:", err);
+      setLoading(false);
+    }
+  };
+
+  // ✅ ดัก forceLogout
+  eventSource.addEventListener("forceLogout", (event) => {
+    try {
+      const data = JSON.parse(event.data);
+      alert(data.error);
+      window.location.href = "/admin/login";
+    } catch (err) {
+      console.error("Error in forceLogout:", err);
+    }
+  });
+
+  eventSource.onerror = (err) => {
+    console.error("SSE error:", err);
+    setLoading(false);
+    eventSource.close();
+    window.location.href = "/admin/login";
+  };
+
+  return () => {
+    eventSource.close();
+  };
+}, []);
+
   
       useEffect(() => {
     const token = localStorage.getItem('token');
