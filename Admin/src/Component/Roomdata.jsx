@@ -74,7 +74,7 @@ function Roomdata({ rooms, currentTime,icons }) {
           <div
             key={index}
             className="flex items-center bg-[#f8f7f1] rounded-[20px] shadow-xl/30 overflow-hidden w-full max-w-[550px] mx-auto"
-          >
+            >
             <div className={`w-14 sm:w-16 rounded-l-3xl ${mainColor} h-full`}></div>
 
             <div className="flex-grow flex flex-col justify-between px-5 py-5 sm:px-7 sm:py-5">
