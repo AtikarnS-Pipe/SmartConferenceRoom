@@ -182,11 +182,18 @@ function RoomPage() {
                </nav>
         <Roomdata rooms={events} currentTime={new Date()} icons={iconClass}/>
         <div className='bg-[#f8f7f1] p-4 mx-2 rounded-3xl shadow-xl'>
-        <Roomcard data={events} icons={iconClass}  />
-        </div>
+  {loading ? (
+    <div className="flex justify-center py-6 gap-[5px]">
+      <span>loading</span>
+      <div className="animate-spin rounded-full h-8 w-8 border-t-4 border-gray-500 border-solid"></div>
     </div>
-  )
+      ) : (
+        <Roomcard data={events} icons={iconClass} />
+      )}
+    </div>
+  </div>
+  );
 }
 
 
-export { RoomPage } 
+export default  RoomPage;

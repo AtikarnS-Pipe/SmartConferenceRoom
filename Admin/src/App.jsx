@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { RoomPage } from './Component/Admin'
+import  RoomPage  from './Component/Admin'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import Available from './Component/Available'
 import Unavailable from './Component/Unavailable'
