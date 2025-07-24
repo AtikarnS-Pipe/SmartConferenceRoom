@@ -100,7 +100,7 @@ function Unavailable() {
 
   return (
     <div className={`font-display min-h-screen transition-colors duration-300 ${
-      darkMode ? 'bg-gray-900' : 'bg-white'
+      darkMode ? 'bg-gray-700' : 'bg-white'
     }`}>
         <Navbar 
           navigate={navigate}

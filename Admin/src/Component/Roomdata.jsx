@@ -66,7 +66,7 @@ function Roomdata({ rooms, currentTime,icons }) {
   };
   return (
     <div className={`m-10 flex items-center justify-center px-4 transition-colors duration-300 ${
-      darkMode ? 'bg-gray-900' : ''
+      darkMode ? 'bg-gray-700' : ''
     }`}>
       <div className='grid grid-cols-1 lg:grid-cols-2 gap-6 justify-items-center w-full max-w-6xl'>
       {total.map((t, index) => {

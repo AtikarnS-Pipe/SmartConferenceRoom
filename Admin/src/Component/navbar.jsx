@@ -9,7 +9,8 @@ function Navbar({
   handleSizeNavigate, 
   handleNavigateByRole, 
   timeString, 
-  dateString 
+  dateString,
+  showSizeRoom = true // Add prop to control size room visibility
 }) {
   const { darkMode, toggleDarkMode } = useDarkMode();
 
@@ -20,63 +21,65 @@ function Navbar({
       <div className="md:text-2xl text-xl underline underline-offset-10">Conference Room</div>
       <ul className='flex items-center text-center md:ml-5 max-md:mb-10 max-md:mt-10'>
         <RefreshButton className='mr-5 cursor-pointer hover:text-gray-300' onClick={() => navigate('/admin/api')}>Home</RefreshButton>
-        <li className='md:mr-5 lg:mx-5 cursor-pointer hover:text-gray-300' onClick={toggleDropdown1}>Size Room {openMenu1 ? '▴' : '▾'}
-          {openMenu1 && (
-            <ul className={`absolute mt-2 w-25 rounded-md shadow-lg z-10 transition-colors duration-300 ${
-              darkMode ? 'bg-gray-800' : 'bg-blue-700'
-            }`}>
-              <RefreshButton 
-                className={`px-6.5 py-2 rounded-md cursor-pointer transition-colors duration-300 ${
-                  darkMode ? 'hover:bg-gray-700' : 'hover:bg-blue-400'
-                }`}
-                onClick={() => handleSizeNavigate(4)}
-              >
-                Size S
-              </RefreshButton>
-              <RefreshButton 
-                className={`px-6 py-2 rounded-md cursor-pointer transition-colors duration-300 ${
-                  darkMode ? 'hover:bg-gray-700' : 'hover:bg-blue-400'
-                }`}
-                onClick={() => handleSizeNavigate(6)}
-              >
-                Size M
-              </RefreshButton>
-              <RefreshButton 
-                className={`px-6.5 py-2 rounded-md cursor-pointer transition-colors duration-300 ${
-                  darkMode ? 'hover:bg-gray-700' : 'hover:bg-blue-400'
-                }`}
-                onClick={() => handleSizeNavigate(10)}
-              >
-                Size L
-              </RefreshButton>
-            </ul>
-          )}
-        </li>
+        {showSizeRoom && (
+          <li className='md:mr-5 lg:mx-5 cursor-pointer hover:text-gray-300' onClick={toggleDropdown1}>Size Room {openMenu1 ? '▴' : '▾'}
+            {openMenu1 && (
+              <ul className={`absolute mt-2 w-25 rounded-md shadow-lg z-10 transition-colors duration-300 ${
+                darkMode ? 'bg-gray-800' : 'bg-blue-700'
+              }`}>
+                <RefreshButton 
+                  className={`px-6.5 py-2 rounded-md cursor-pointer transition-colors duration-300 ${
+                    darkMode ? 'hover:bg-gray-700' : 'hover:bg-blue-400'
+                  }`}
+                  onClick={() => handleSizeNavigate(4)}
+                >
+                  Size S
+                </RefreshButton>
+                <RefreshButton 
+                  className={`px-6 py-2 rounded-md cursor-pointer transition-colors duration-300 ${
+                    darkMode ? 'hover:bg-gray-700' : 'hover:bg-blue-400'
+                  }`}
+                  onClick={() => handleSizeNavigate(6)}
+                >
+                  Size M
+                </RefreshButton>
+                <RefreshButton 
+                  className={`px-6.5 py-2 rounded-md cursor-pointer transition-colors duration-300 ${
+                    darkMode ? 'hover:bg-gray-700' : 'hover:bg-blue-400'
+                  }`}
+                  onClick={() => handleSizeNavigate(10)}
+                >
+                  Size L
+                </RefreshButton>
+              </ul>
+            )}
+          </li>
+        )}
         <RefreshButton className='mr-5'>
           <h1 className='cursor-pointer hover:text-gray-300' onClick={handleNavigateByRole}>Management</h1>
         </RefreshButton>
         <li>
           <RefreshButton
-                          onClick={toggleDarkMode}
-                          className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-                            darkMode 
-                              ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
-                              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                          }`}
-                          title={darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-                        >
-                          {darkMode ? (
-                            <>
-                              <Sun className="w-4 h-4" />
-                              <span className="text-sm">Light</span>
-                            </>
-                          ) : (
-                            <>
-                              <Moon className="w-4 h-4" />
-                              <span className="text-sm">Dark</span>
-                            </>
-                          )}
-                        </RefreshButton>
+            onClick={toggleDarkMode}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+              darkMode 
+                ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
+            title={darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+          >
+            {darkMode ? (
+              <>
+                <Sun className="w-4 h-4" />
+                <span className="text-sm">Light</span>
+              </>
+            ) : (
+              <>
+                <Moon className="w-4 h-4" />
+                <span className="text-sm">Dark</span>
+              </>
+            )}
+          </RefreshButton>
         </li>
       </ul>
       <div className=' max-md:flex'>
