@@ -19,8 +19,8 @@ async function getTodaydatetime() {
     const startDateTime = startTH.toISOString();
     const endDateTime = endTH.toISOString();
 
-    console.log("startDateTime (UTC):", startDateTime);
-    console.log("endDateTime (UTC):", endDateTime);
+    // console.log("startDateTime (UTC):", startDateTime);
+    // console.log("endDateTime (UTC):", endDateTime);
     return {
         startDateTime,endDateTime
         }    
@@ -34,9 +34,9 @@ async function GetDateTimeTH() {
 
 async function GetDateTimeUTC() {
     const result = await axios.get('https://timeapi.io/api/Time/current/zone?timeZone=UTC');
-    const time3 = new Date(result.data.dateTime);
-    if (isNaN(time3.getTime())) console.error("❌ Invalid UTC time received:", result.data.dateTime);
-    console.log(`Current UTC : ${time3.toISOString()}`);
+    const time3 = result.data.dateTime;
+    // if (isNaN(time3.getTime())) console.error("❌ Invalid UTC time received:", result.data.dateTime);
+    // console.log(`Current UTC : ${time3.toISOString()}`);
     return time3;
 }
 

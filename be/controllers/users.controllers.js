@@ -197,7 +197,7 @@ const searchpinByeventId = async (req, res) => {
 const endmeeting = async (req, res) => {
     try{
         const { endmeetingdata } = req.body; // endmeetingdata = {eventId, startdatetime, isAllDay}
-        const enddate = await GetDateTimeTH();
+        const enddate = await GetDateTimeUTC();
         const newenddate = new Date(enddate);
         
         const AccessToken = tokenCache.getAccessToken();
