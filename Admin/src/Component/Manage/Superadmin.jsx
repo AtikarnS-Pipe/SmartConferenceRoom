@@ -23,20 +23,23 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { DarkModeContext } from '../Context/DarkModeContext';
 import RefreshButton from '../../utils/refreshToken';
+import HousekeeperStats from '../Housekeeperstats';
 
 function Superadmin() {
   const [searchTerm, setSearchTerm] = useState('');
   const [members, setMembers] = useState([]);
-const [newMember, setNewMember] = useState({ email: '', password: '', name: '', pin: '' });
-const [showPassword, setShowPassword] = useState(false);
-const [showPin, setShowPin] = useState(false);
+  const [newMember, setNewMember] = useState({ email: '', password: '', name: '', pin: '' });
+  const [showPassword, setShowPassword] = useState(false);
+  const [showPin, setShowPin] = useState(false);
   const [profile, setProfile] = useState(null);
   const [selectedMembers, setSelectedMembers] = useState([]);
   const [newPassword, setNewPassword] = useState('');
   const [show, setShow] = useState(false);
   const [showAdminStatus, setShowAdminStatus] = useState(false);
   const [signoutsuccess, setSignoutsuccess] = useState(false);
-  const [pinChanged, setPinChanged] = useState(null);
+  const [housekeepers, setHousekeepers] = useState([]);
+  const [admins, setAdmins] = useState([]);
+  const [allUsers, setAllUsers] = useState([]);  // รวมทั้งหมด
   const [deleteadmin, setDeleteadmin] = useState(null);
   const [adminstatus, setAdminStatus] = useState(null);
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -73,44 +76,47 @@ const [showPin, setShowPin] = useState(false);
   });
 
   useEffect(() => {
-    const eventSource = new EventSource('/account/member', {
+    const housekeeperSource = new EventSource('/account/housekeepers', {
       withCredentials: true,
     });
-
-    const handleAdminList = (event) => {
-      try {
-        console.log('Raw SSE event data:', event.data); 
-        const data = JSON.parse(event.data);
-          console.log("Selected Members:", data);
-        setMembers(data);
-      } catch (error) {
-        console.error('Error parsing SSE data:', error);
-      }
-    };
-
-    eventSource.addEventListener('adminList', handleAdminList);
-
-    eventSource.onerror = (error) => {
-      console.error('SSE connection error:', error);
-      eventSource.close();
-    };
-
-    return () => {
-      eventSource.removeEventListener('adminList', handleAdminList);
-      eventSource.close();
-    };
-  }, []);
-
-  console.log("Members data fetched:", members);
-
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setOpen(false);
-      }
+  
+    const adminSource = new EventSource('/account/member', {
+      withCredentials: true,
+    });
+  
+  const handleHousekeeperList = (event) => {
+    const data = JSON.parse(event.data);
+    if (Array.isArray(data)) {
+      setHousekeepers(data);
     }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+  };
+  
+  const handleAdminList = (event) => {
+    const data = JSON.parse(event.data);
+     console.log("📥 AdminList SSE data received:", data); // ⬅️ ใส่ตรงนี้
+    if (Array.isArray(data)) {
+      setAdmins(data);
+    }
+  };
+  
+    housekeeperSource.addEventListener('HousekeeperList', handleHousekeeperList);
+    adminSource.addEventListener('adminList', handleAdminList);
+  
+    housekeeperSource.onerror = (err) => {
+      console.error('SSE error (housekeeper):', err);
+      housekeeperSource.close();
+    };
+    adminSource.onerror = (err) => {
+      console.error('SSE error (admin):', err);
+      adminSource.close();
+    };
+  
+    return () => {
+      housekeeperSource.removeEventListener('HousekeeperList', handleHousekeeperList);
+      adminSource.removeEventListener('AdminList', handleAdminList);
+      housekeeperSource.close();
+      adminSource.close();
+    };
   }, []);
 
 const handleSubmitPasswordChange = async () => {
@@ -276,7 +282,7 @@ const performDeleteAdmins = async () => {
   try {
     const token = localStorage.getItem("token");
 
-    const selectedMemberObjects = members.filter(m => selectedMembers.includes(m._id));
+    const selectedMemberObjects = superadminmem.filter(m => selectedMembers.includes(m._id));
     for (const member of selectedMemberObjects) {
       await axios.delete(`/superadmin/deleteadmin`, {
         headers: {
@@ -306,8 +312,6 @@ const performDeleteAdmins = async () => {
     }, 3000);
   }
 };
-
-
 
   const handleSelectAll = () => {
     if (selectedMembers.length === filteredMembers.length) {
@@ -348,32 +352,6 @@ const performDeleteAdmins = async () => {
     setShowAddAdminModal(true);
   };
 
-  const handleDeleteAdminClick = () => {
-    if (selectedMembers.length === 0) {
-      alert('Please select members to delete');
-      return;
-    }
-    if (confirm(`Are you sure you want to delete ${selectedMembers.length} selected member(s)?`)) {
-      // Add delete logic here
-      console.log('Deleting members:', selectedMembers);
-    }
-  };
-
-  // const handleAddAdminSubmit = () => {
-  //   // Add validation and submit logic here
-  //   console.log('Adding admin:', addAdminForm);
-  //   // Reset form and close modal
-  //   setAddAdminForm({ email: '', password: '', name: '', pin: '' });
-  //   setShowAddAdminModal(false);
-  // };
-
-  // const handleAddAdminFormChange = (field, value) => {
-  //   setAddAdminForm(prev => ({
-  //     ...prev,
-  //     [field]: value
-  //   }));
-  // };
-
   const formatDate = (isoString) => {
     const date = new Date(isoString);
     return date.toLocaleString('en-GB', {
@@ -386,9 +364,26 @@ const performDeleteAdmins = async () => {
     }).replace(',', '');
   };
 
-  const totalUsers = members.length;
-  const adminCount = members.filter((m) => m.role && m.role.toLowerCase() === 'admin').length;
-  const housekeeperCount = members.filter((m) => m.role && m.role.toLowerCase() === 'housekeeper').length;
+const [adminCount, setAdminCount] = useState(0);
+const [housekeeperCount, setHousekeeperCount] = useState(0);
+const [totalUsers, setTotalUsers] = useState(0);
+
+useEffect(() => {
+  setAllUsers([...admins, ...housekeepers]);
+}, [admins, housekeepers]);
+
+useEffect(() => {
+  const adminList = allUsers.filter(u => u.role === 'Admin');
+  const housekeeperList = allUsers.filter(u => u.role === 'Housekeeper');
+
+  console.log("🧑‍💼 allUsers (in housekeeper page):", allUsers);
+
+  setAdminCount(adminList.length);
+  setHousekeeperCount(housekeeperList.length);
+  setTotalUsers(adminList.length + housekeeperList.length);
+}, [allUsers]);
+
+const superadminmem = allUsers.filter(user => user.role === 'Admin');
 
   return (
     <div className={`min-h-screen ${darkMode ? 'bg-gray-900' : 'bg-gray-50'} flex flex-col md:flex-row font-display transition-colors duration-300`}>
@@ -828,25 +823,16 @@ const performDeleteAdmins = async () => {
           </div>
         </div>
 
+     
         <div className="p-2 md:p-6">
-          {/* Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 mb-6 md:mb-8">
-            {[['Total users', totalUsers, Users, 'green'],
-              ['Admins', adminCount, Shield, 'purple'],
-              ['Housekeepers', housekeeperCount, UserCheck, 'blue']].map(([label, count, Icon, color]) => (
-              <div key={label} className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} rounded-xl p-4 md:p-6 shadow-sm border transition-colors duration-300`}>
-                <div className="flex items-center gap-4">
-                  <div className={`w-12 h-12 bg-${color}-100 rounded-lg flex items-center justify-center`}>
-                    <Icon className={`w-6 h-6 text-${color}-600`} />
-                  </div>
-                  <div>
-                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{label}</p>
-                    <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>{count}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+          {/* Replace the old stats section with the new component */}
+          <HousekeeperStats 
+            housekeeperCount={housekeeperCount}
+            adminCount={adminCount}
+            filteredMembers={filteredMembers}
+            darkMode={darkMode}
+          />
+
 
           {/* Table */}
           <div className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} rounded-xl shadow-sm border transition-colors duration-300`}>
@@ -912,7 +898,7 @@ const performDeleteAdmins = async () => {
                   </tr>
                 </thead>
                 <tbody className={`${darkMode ? 'bg-gray-800' : 'bg-white'} divide-y ${darkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
-                  {members.map((m) => (
+                  {superadminmem.map((m) => (
                     <tr key={m._id} className={darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}>
                       <td className="px-6 py-4">
                         <input
@@ -949,7 +935,7 @@ const performDeleteAdmins = async () => {
               </table>
             </div>
 
-            {filteredMembers.length === 0 && (
+            {superadminmem.length === 0 && (
               <div className="text-center py-12">
                 <Shield className={`mx-auto w-12 h-12 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`} />
                 <p className={`mt-2 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>No admins found</p>
@@ -958,7 +944,7 @@ const performDeleteAdmins = async () => {
 
             <div className={`px-4 md:px-6 py-4 border-t ${darkMode ? 'border-gray-700 bg-gray-700' : 'border-gray-100 bg-gray-50'} transition-colors duration-300`}>
               <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                {filteredMembers.length} of {adminCount} results
+                Updated Real-Time
               </p>
             </div>
           </div>
