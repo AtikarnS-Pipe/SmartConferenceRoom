@@ -2,7 +2,9 @@ const axios = require('axios');
 
 async function getTodaydatetime() {
     const tzOffset = 7 * 60; // Thailand UTC+7 (minutes)
-    const now = await GetDateTimeTH();
+    const gettime = await GetDateTimeTH();
+    const now = new Date(gettime);
+
     console.log(`Current local time: ${now}`);
     const thYear = now.getFullYear();
     const thMonth = now.getMonth();
@@ -26,8 +28,7 @@ async function getTodaydatetime() {
 
 async function GetDateTimeTH() {
     const result = await axios.get('https://timeapi.io/api/Time/current/zone?timeZone=Asia/Bangkok');
-    const time2 = new Date(result.data.dateTime);
-    console.log(`Current TH : ${time2}`);
+    const time2 = result.data.dateTime;
     return time2;
 }
 

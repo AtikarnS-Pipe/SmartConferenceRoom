@@ -198,6 +198,8 @@ const endmeeting = async (req, res) => {
     try{
         const { endmeetingdata } = req.body; // endmeetingdata = {eventId, startdatetime, isAllDay}
         const enddate = await GetDateTimeTH();
+        const newenddate = new Date(enddate);
+        
         const AccessToken = tokenCache.getAccessToken();
         let startDateTime;
         if (endmeetingdata.isAllDay) {
@@ -214,13 +216,9 @@ const endmeeting = async (req, res) => {
         const dt = new Date(utcMidnight + oneHourMs);
         
         // toISOString() จะคืนแบบ "...Z" เราเลย .replace เพื่อได้ ".0000000"``
-        startDateTime = dt
-            .toISOString()           // e.g. "2025-07-21T18:00:00.000Z"
-            .replace('Z', '');
+        startDateTime = dt.toISOString()           // e.g. "2025-07-21T18:00:00.000Z"
         } else {
-        startDateTime = new Date(endmeetingdata.startdatetime)
-            .toISOString()
-            .replace('Z', '');
+        startDateTime = new Date(endmeetingdata.startdatetime).toISOString()
         }
         await getGraphClient(AccessToken)
         .api(`/me/events/${endmeetingdata.eventId}`)
@@ -232,7 +230,7 @@ const endmeeting = async (req, res) => {
                 timeZone: "UTC"
             },
             end: {
-                dateTime: new Date(enddate), // เวลาสิ้นสุด "2025-07-10T12:45:00"
+                dateTime: newenddate.toISOString(), 
                 timeZone: "UTC"
             },
         })
