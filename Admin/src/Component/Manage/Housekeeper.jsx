@@ -331,7 +331,7 @@ const performDeleteHousekeepers = async () => {
     }
   }, [profile]);
   const handleNavigateByRole = () => {
-  const role = profile?.role; // ดึง role จาก localStorage
+  const role = localStorage.getItem('role'); // ดึง role จาก localStorage
     console.log("Navigating based on role:", role);
   if (role === 'Superadmin') {
     navigate('/account/superadmin');
@@ -643,7 +643,7 @@ const handleSignout = async () => {
         {showDeleteConfirm && (
           <div className="fixed inset-0 z-50 backdrop-blur-sm bg-white/20 flex items-center justify-center shadow-xl/30">
             <div className="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full text-center">
-              <h2 className="text-lg font-semibold mb-4">Confirm Deletion</h2>
+              <h2 className="text-lg text-gray-700 font-semibold mb-4">Confirm Deletion</h2>
               <p className="mb-6 text-gray-700">Are you sure you want to delete selected housekeepers?</p>
               <div className="flex justify-center gap-4">
                 <button
