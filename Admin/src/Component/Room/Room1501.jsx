@@ -6,8 +6,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import RefreshButton from '../../utils/refreshToken';
 import { useDarkMode } from '../Context/DarkModeContext';
 import Navbar from '../navbar';
-import axios from 'axios';
-
+import axios from 'axios'
+import {CircularProgress,} from '@mui/material';
 
 dayjs.extend(isBetween);
 
@@ -546,9 +546,10 @@ const Room1501 = () => {
         }`}>
           {isLoading ? (
             <div className="flex items-center justify-center h-64">
-              <div className={`animate-spin rounded-full h-12 w-12 border-b-2 ${
+              {/* <div className={`animate-spin rounded-full h-12 w-12 border-b-2 ${
                 darkMode ? 'border-gray-400' : 'border-slate-800'
-              }`}></div>
+              }`}></div> */}
+              <CircularProgress size="30px"/>  
             </div>
           ) : (
             <div
