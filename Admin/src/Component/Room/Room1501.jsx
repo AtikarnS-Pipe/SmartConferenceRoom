@@ -406,9 +406,9 @@ const Room1501 = () => {
       <div className="p-4 sm:p-6 max-w-[1800px] mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between gap-4 md:gap-6">
+          <div className="flex flex-col sm:flex-row items-center justify-center sm:justify-between gap-4 md:gap-6">
             {/* Left Section */}
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-4 items-center sm:items-start">
               {/* <RefreshButton
                 onClick={() => navigate('/admin/api')}
                 className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg w-fit ${
@@ -491,7 +491,7 @@ const Room1501 = () => {
               </div> */}
               
               
-              <div className="flex gap-2 w-full justify-end lg:justify-center"> 
+              <div className="flex gap-2 w-full justify-center sm:justify-end lg:justify-center"> 
               <div className="flex gap-2">
                 {['Day', 'Week'].map((option) => (
                   <RefreshButton
