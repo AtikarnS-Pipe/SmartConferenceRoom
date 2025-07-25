@@ -52,7 +52,7 @@ function Unavailable() {
     }, [profile]);
   
     const handleNavigateByRole = () => {
-    const role = profile?.role; // ดึง role จาก localStorage
+    const role = localStorage.getItem('role'); // ดึง role จาก localStorage
       console.log("Navigating based on role:", role);
     if (role === 'Superadmin') {
       navigate('/account/superadmin');
