@@ -38,10 +38,13 @@ return () => clearTimeout(timeoutId);
 
   const handleEndMeeting = async () => {
     setIsEnding(true);
+    const now = new Date();
+
     try {
       const endmeetingdata = {
         eventId : event.id,
         startdatetime: event.start.dateTime + 'Z',
+        enddatetime: formatToUtcWith7Digits(now),
         room_number: roomId,
         isAllDay : event.isAllDay,
       };
@@ -66,6 +69,19 @@ return () => clearTimeout(timeoutId);
       setIsEnding(false);
     }
   };
+
+  function formatToUtcWith7Digits(date) {
+  const pad = (n, length = 2) => n.toString().padStart(length, '0');
+  return (
+    date.getUTCFullYear() +
+    '-' + pad(date.getUTCMonth() + 1) +
+    '-' + pad(date.getUTCDate()) +
+    'T' + pad(date.getUTCHours()) +
+    ':' + pad(date.getUTCMinutes()) +
+    ':' + pad(date.getUTCSeconds()) +
+    '.0000000Z'
+  );
+}
 
   // Function เพื่อเปิด confirmation modal
   const handleEndButtonClick = () => {
