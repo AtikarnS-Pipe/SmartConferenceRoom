@@ -27,12 +27,9 @@ import RefreshButton from '../../utils/refreshToken';
 function Superadmin() {
   const [searchTerm, setSearchTerm] = useState('');
   const [members, setMembers] = useState([]);
-  const [newMember, setNewMember] = useState({
-        email: '',
-        password: '',
-        name: '',
-        pin: ''
-      });
+const [newMember, setNewMember] = useState({ email: '', password: '', name: '', pin: '' });
+const [showPassword, setShowPassword] = useState(false);
+const [showPin, setShowPin] = useState(false);
   const [profile, setProfile] = useState(null);
   const [selectedMembers, setSelectedMembers] = useState([]);
   const [newPassword, setNewPassword] = useState('');
@@ -221,39 +218,49 @@ const handleAddAdmin = async () => {
     );
 
     console.log('Response:', response.data);
-    
 
-    setAdminStatus('success');  // ✅ แสดง popup success
+    // ✅ เช็คให้แน่ว่าสถานะ 201 เท่านั้นถึงถือว่าสำเร็จ
+    if (response.status === 201) {
+      setMessage(response.data.message || 'Admin created successfully');
+      setAdminStatus('success');
 
-    setTimeout(() => {
-      setAdminStatus(null);
-      setShowAddAdminModal(false);
-      setAddAdminForm({ email: '', password: '', name: '', pin: '' });
-      setShowAddAdminPassword(false);
-      setShowAdminStatus(false);  // ✅ ปิด popup หลัง 2 วินาที (เช่น)
-    }, 5000);
+      // ✅ ล้างฟอร์ม
+      setNewMember({ name: "", pin: "", email: "", password: "" });
+      setShowPassword(false);
+      setShowPin(false);
 
-    // ล้างฟอร์มหรือปิด modal ถ้าต้องการ
-    setNewMember({ name: "", pin: "", email: "", password: "" });
+      setTimeout(() => {
+        setAdminStatus(null);
+        setShowAddAdminModal(false);
+        setShowAdminStatus(false);
+      }, 2000);
+    } else {
+      throw new Error("Unexpected response status: " + response.status);
+    }
 
   } catch (error) {
-      console.error("Error status:", error.response?.status);
-      console.error("Error data:", error.response?.data);
-      console.error("Error message:", error.message);
+    console.error("Error status:", error.response?.status);
+    console.error("Error data:", error.response?.data);
+    console.error("Error message:", error.message);
 
-    setAdminStatus('error');      // ✅ แสดง popup error
+    // ✅ แสดงข้อความ error จาก backend หรือ fallback เป็น error.message
+    const errorMsg = error.response?.data?.message || error.message || "An unexpected error occurred";
+    setMessage(errorMsg);
+    setAdminStatus('error');
+
+    // ✅ ล้างฟอร์ม
+    setNewMember({ email: '', password: '', name: '', pin: '' });
+    setShowPassword(false);
+    setShowPin(false);
 
     setTimeout(() => {
       setAdminStatus(null);
       setShowAddAdminModal(false);
-      setAddAdminForm({ email: '', password: '', name: '', pin: '' });
-      setShowAddAdminPassword(false);
-      setShowAdminStatus(false);  // ✅ ปิด popup หลัง 2 วินาที
+      setShowAdminStatus(false);
     }, 2000);
-
-    alert("Failed to create admin. Please check form data or contact developer.");
   }
 };
+
 
 const handleDeleteAdmins = () => {
   if (selectedMembers.length === 0) {
@@ -480,21 +487,21 @@ const performDeleteAdmins = async () => {
               <label className={`block text-sm mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>Password</label>
               <div className="relative">
                 <input
-                  type={showAddAdminPassword ? "text" : "password"}
-                  value={newMember.password}
-                  onChange={(e) => setNewMember({ ...newMember, password: e.target.value })}
-                  className={`w-full px-3 py-2 pr-10 border rounded-md shadow-sm focus:ring focus:ring-blue-200 ${
-                    darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'
-                  }`}
-                  placeholder="Enter password"
-                />
-                <RefreshButton
-                  type="button"
-                  onClick={() => setShowAddAdminPassword(!showAddAdminPassword)}
-                  className={`absolute inset-y-0 right-0 flex items-center px-3 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}
-                >
-                  {showAddAdminPassword ? <Eye className="h-5 w-5" /> : <EyeOff className="h-5 w-5" />}
-                </RefreshButton>
+                    type={showPassword ? "text" : "password"}
+                    value={newMember.password}
+                    onChange={(e) => setNewMember({ ...newMember, password: e.target.value })}
+                    className={`w-full px-3 py-2 pr-10 border rounded-md shadow-sm focus:ring focus:ring-blue-200 ${
+                      darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'
+                    }`}
+                    placeholder="Enter password"
+                  />
+                  <RefreshButton
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className={`absolute inset-y-0 right-0 flex items-center px-3 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}
+                  >
+                    {showPassword ? <Eye className="h-5 w-5" /> : <EyeOff className="h-5 w-5" />}
+                  </RefreshButton>
               </div>
             </div>
 
@@ -514,22 +521,22 @@ const performDeleteAdmins = async () => {
             <div className="mb-6 relative">  {/* เพิ่ม relative */}
                 <label className={`block text-sm mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>PIN</label>
                 <input
-                  type={showAddAdminPassword ? "text" : "password"}
-                  value={newMember.pin}
-                  onChange={(e) => setNewMember({ ...newMember, pin: e.target.value })}
-                  className={`w-full px-3 py-2 pr-10 border rounded-md shadow-sm focus:ring focus:ring-blue-200 ${
-                    darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'
-                  }`}
-                  placeholder="Enter PIN"
-                  maxLength="4"
-                />
-                <RefreshButton
-                  type="button"
-                  onClick={() => setShowAddAdminPassword(!showAddAdminPassword)}
-                  className={`absolute right-3 top-11 transform -translate-y-1/2 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}
-                >
-                  {showAddAdminPassword ? <Eye className="h-5 w-5" /> : <EyeOff className="h-5 w-5" />}
-                </RefreshButton>
+                    type={showPin ? "text" : "password"}
+                    value={newMember.pin}
+                    onChange={(e) => setNewMember({ ...newMember, pin: e.target.value })}
+                    className={`w-full px-3 py-2 pr-10 border rounded-md shadow-sm focus:ring focus:ring-blue-200 ${
+                      darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'
+                    }`}
+                    placeholder="Enter PIN"
+                    maxLength="4"
+                  />
+                  <RefreshButton
+                    type="button"
+                    onClick={() => setShowPin(!showPin)}
+                    className={`absolute right-3 top-11 transform -translate-y-1/2 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}
+                  >
+                    {showPin ? <Eye className="h-5 w-5" /> : <EyeOff className="h-5 w-5" />}
+                  </RefreshButton>
               </div>
 
             <div className="flex justify-end gap-2">
@@ -574,17 +581,19 @@ const performDeleteAdmins = async () => {
         </div>
       )}
       {adminstatus === 'success' && (
-        <div className="fixed inset-0 z-50 backdrop-blur-sm bg-white/20 flex items-center justify-center shadow-xl/30">
-          <div className="bg-green-100 border border-green-400 text-green-700 px-6 py-4 rounded-xl shadow-lg text-lg">
-            ✅ Admin created successfully!
+        <div className="fixed top-6 right-6 z-[9999]">
+            <div className="bg-green-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-2 animate-slide-in">
+              <CheckCircle className="w-5 h-5" />
+              <span className="font-medium">{message}</span>
+            </div>
           </div>
-        </div>
       )}
 
       {adminstatus === 'error' && (
-        <div className="fixed inset-0 z-50 backdrop-blur-sm bg-white/20 flex items-center justify-center shadow-xl/30">
-          <div className="bg-red-100 border border-red-400 text-red-700 px-6 py-4 rounded-xl shadow-lg text-lg">
-            ❌ Failed to create admin!
+        <div className="fixed top-6 right-6 z-[9999]">
+          <div className="bg-red-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-2 animate-slide-in">
+            <XCircle className="w-5 h-5" />
+            <span className="font-medium">{message}</span>
           </div>
         </div>
       )}

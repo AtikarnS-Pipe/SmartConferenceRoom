@@ -51,7 +51,7 @@ const Room1501 = () => {
   };
   
   const handleNavigateByRole = () => {
-    const role = profile?.role; // ดึง role จาก profile state
+    const role = localStorage.getItem('role');// ดึง role จาก profile state
     console.log("Navigating based on role:", role);
     if (role === 'Superadmin') {
       navigate('/account/superadmin');
