@@ -1,4 +1,5 @@
 const axios = require('axios');
+require('dotenv').config({path: '../config/.env'});
 
 let dailyCache = {
   valueTH: null,
@@ -31,33 +32,33 @@ async function getTodaydatetime() {
         }    
 }
 
-async function GetDateTimeTH() {
-    const result = await axios.get('https://timeapi.io/api/Time/current/zone?timeZone=Asia/Bangkok');
-    const time2 = result.data.dateTime;
-    console.log(`Current TH23124122341 : ${time2}`);
-    return time2;
-}
+// async function GetDateTimeTH() {
+//     const result = await axios.get('https://timeapi.io/api/Time/current/zone?timeZone=Asia/Bangkok');
+//     const time2 = result.data.dateTime;
+//     console.log(`Current TH23124122341 : ${time2}`);
+//     return time2;
+// }
 
-async function GetDateTimeUTC() {
-    const result = await axios.get('https://timeapi.io/api/Time/current/zone?timeZone=UTC');
-    const time3 = result.data.dateTime;
-    console.log(`Current UTC23124122341 : ${time3}`);
-    // if (isNaN(time3.getTime())) console.error("❌ Invalid UTC time received:", result.data.dateTime);
-    // console.log(`Current UTC : ${time3.toISOString()}`);
-    return time3;
-}
+// async function GetDateTimeUTC() {
+//     const result = await axios.get('https://timeapi.io/api/Time/current/zone?timeZone=UTC');
+//     const time3 = result.data.dateTime;
+//     console.log(`Current UTC23124122341 : ${time3}`);
+//     // if (isNaN(time3.getTime())) console.error("❌ Invalid UTC time received:", result.data.dateTime);
+//     // console.log(`Current UTC : ${time3.toISOString()}`);
+//     return time3;
+// }
 
 
 
-const GetTimeAPI = async (timezone) => {
+const GetTimeAPI = async (timezone) => { // this api's rate limit is 1000 requests per day and 1 request per second
     const today = new Date().toISOString().slice(0, 10); // เอาวันปัจจุบันบน server มา check เคลื่อน 3 นาทีถ้า sensetime  
 
     // หากยังไม่มี cache หรือเป็นของวันเก่า จะ fetch ใหม่
     if (!dailyCache.date || !dailyCache.valueTH || !dailyCache.valueUTC || dailyCache.date !== today) {
         try{
-            const thRes = await axios.get(`https://api.timezonedb.com/v2.1/get-time-zone?key=BIM3EA5O5VSV&format=json&by=zone&zone=Asia/Bangkok`);
-            const utcRes = await axios.get(`https://api.timezonedb.com/v2.1/get-time-zone?key=BIM3EA5O5VSV&format=json&by=zone&zone=UTC`);
-             
+            const thRes = await axios.get(`https://api.timezonedb.com/v2.1/get-time-zone?key=${process.env.API_TIME_KEY}&format=json&by=zone&zone=Asia/Bangkok`);
+            const utcRes = await axios.get(`https://api.timezonedb.com/v2.1/get-time-zone?key=${process.env.API_TIME_KEY}&format=json&by=zone&zone=UTC`);
+
             dailyCache.valueTH = thRes.data.formatted;
             dailyCache.valueUTC = utcRes.data.formatted + "Z";
             dailyCache.date = today;
@@ -71,7 +72,7 @@ const GetTimeAPI = async (timezone) => {
 }
 module.exports = {
     getTodaydatetime,
-    GetDateTimeTH,
-    GetDateTimeUTC,
+    // GetDateTimeTH,
+    // GetDateTimeUTC,
     GetTimeAPI
 };
