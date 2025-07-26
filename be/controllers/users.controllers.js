@@ -33,7 +33,7 @@ const getuser = async (req, res) => {
     getuserdatabyroom(res, RoomNumber);
     const intervalId = setInterval(async () => {
         getuserdatabyroom(res, RoomNumber);
-    }, 5000);
+    }, 4000);
 
     // จัดการ cleanup 
     req.on('close', () => {

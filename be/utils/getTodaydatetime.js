@@ -9,7 +9,7 @@ let dailyCache = {
 
 async function getTodaydatetime() {
     const tzOffset = 7 * 60; // Thailand UTC+7 (minutes)
-    const gettime = await GetTimeAPI('Asia/Bangkok');
+    const gettime = await GetTimeAPICache('Asia/Bangkok');
     const now = new Date(gettime);
 
     const thYear = now.getFullYear();
@@ -50,7 +50,7 @@ async function getTodaydatetime() {
 
 
 
-const GetTimeAPI = async (timezone) => { // this api's rate limit is 1000 requests per day and 1 request per second
+const GetTimeAPICache = async (timezone) => { // this api's rate limit is 1000 requests per day and 1 request per second
     const today = new Date().toISOString().slice(0, 10); // เอาวันปัจจุบันบน server มา check เคลื่อน 3 นาทีถ้า sensetime  
 
     // หากยังไม่มี cache หรือเป็นของวันเก่า จะ fetch ใหม่
@@ -74,9 +74,28 @@ const GetTimeAPI = async (timezone) => { // this api's rate limit is 1000 reques
     }
     return timezone === "UTC" ? dailyCache.valueUTC : dailyCache.valueTH; // Date type
 }
+
+const GetTimeAPI = async (timezone) => { // this api's rate limit is 1000 requests per day and 1 request per second
+    let timedata;
+    const baseURL = 'https://api.timezonedb.com/v2.1/get-time-zone';
+
+    if (timezone === 'Asia/Bangkok') {
+        const thRes = await axios.get(`${baseURL}?key=${process.env.API_TIME_KEY}&format=json&by=zone&zone=Asia/Bangkok`);
+        const iso = thRes.data.formatted.replace(' ', 'T') + '+07:00';
+        timedata = new Date(iso);
+    } else {
+        const utcRes = await axios.get(`${baseURL}?key=${process.env.API_TIME_KEY}&format=json&by=zone&zone=UTC`);
+        const iso = utcRes.data.formatted.replace(' ', 'T') + '+00:00';
+        timedata = new Date(iso);
+    }
+
+    return timedata;
+}
+
 module.exports = {
     getTodaydatetime,
     // GetDateTimeTH,
     // GetDateTimeUTC,
+    GetTimeAPICache,
     GetTimeAPI
 };
