@@ -1,4 +1,5 @@
 // accounts.controllers.js
+require('dotenv').config({ path: '../../config/.env' });
 const bcrypt = require('bcryptjs');
 const { refreshalltoken } = require('../../utils/refreshalltoken');
 const { sendOTP, verifyOTP, resetPassword } = require('../../services/admin.services');
@@ -9,10 +10,10 @@ const { GetTimeAPI } = require('../../utils/getTodaydatetime');
 
 const Auth = async (req, res) => { // admin sign-in
     const { email, password } = req.body;
-    console.log("ready to auth", email, password);
+    if(process.env.DEBUG_MODE) console.log("ready to auth", email, password);
     try{
       const user = await User.findOne({ email, role: { $in: ['Admin', 'Superadmin'] } });
-      console.log("user :", user);
+      console.log("user find in Auth!");
       if(!user){
         console.log("[Login] User not found:", email);
         return res.status(404).json({error: "User not found"});

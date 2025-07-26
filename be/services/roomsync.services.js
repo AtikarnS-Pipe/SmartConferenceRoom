@@ -73,7 +73,7 @@ async function syncAllRooms() {
                                 startDateTime: new Date(event.start?.dateTime + "Z"),
                                 endDateTime: new Date(event.end?.dateTime + "Z")
                             });
-                            console.log('mail send:', key);
+                            // console.log('mail send:', key);
                             RoomStr = roomData.room.toString();
                             const mailContent = `Password for Room: /${RoomStr.slice(0,2)}>${RoomStr.slice(2,4)} is ${key}
 Thank you for your attention.

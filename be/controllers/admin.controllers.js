@@ -40,7 +40,6 @@ const getAllusers = async (req, res) => {
                 return;
             }
 
-            console.log(`✅ Authorized user: ${userProfile.mail}`);
 
             // เข้ารหัสและบันทึก token
             const encryptedRefreshToken = encryptToken(tokenResponse.refresh_token);

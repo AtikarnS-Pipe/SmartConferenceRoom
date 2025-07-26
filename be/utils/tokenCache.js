@@ -97,7 +97,7 @@ async function monitorCalendarId(token) {
       console.log("Preloading calendar IDs api...");
       const calendars = await GetIdRoomnumber(token, roomobject); // update roomobject value with calendar IDs
     } else{ 
-      console.log("😘 Calendar IDs alrePreloading calendar IDs foreach...ady preloaded, skipping...");
+      console.log("Calendar IDs alrePreloading calendar IDs foreach...ady preloaded, skipping...");
     }
     
   } catch (err) {

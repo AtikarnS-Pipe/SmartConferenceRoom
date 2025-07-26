@@ -56,19 +56,23 @@ const GetTimeAPI = async (timezone) => { // this api's rate limit is 1000 reques
     // หากยังไม่มี cache หรือเป็นของวันเก่า จะ fetch ใหม่
     if (!dailyCache.date || !dailyCache.valueTH || !dailyCache.valueUTC || dailyCache.date !== today) {
         try{
+            // 2025-07-26 14:00:00 th
             const thRes = await axios.get(`https://api.timezonedb.com/v2.1/get-time-zone?key=${process.env.API_TIME_KEY}&format=json&by=zone&zone=Asia/Bangkok`);
-            const utcRes = await axios.get(`https://api.timezonedb.com/v2.1/get-time-zone?key=${process.env.API_TIME_KEY}&format=json&by=zone&zone=UTC`);
+            const bangkokTime = new Date(`${thRes.data.formatted}+07:00`);
+            const utcTime = bangkokTime;
+            // console.log("Bangkok Time:", thRes.data.formatted , "UTC Time:", utcTime);
 
             dailyCache.valueTH = thRes.data.formatted;
-            dailyCache.valueUTC = utcRes.data.formatted + "Z";
+            dailyCache.valueUTC = utcTime;
             dailyCache.date = today;
+            console.log("Time data fetched TH:", dailyCache.valueTH);
         } catch (error) {
             console.error("Error fetching time data:", error);
             throw new Error("Failed to fetch time data from API");
         }
        
     }
-    return timezone === "UTC" ? dailyCache.valueUTC : dailyCache.valueTH;
+    return timezone === "UTC" ? dailyCache.valueUTC : dailyCache.valueTH; // Date type
 }
 module.exports = {
     getTodaydatetime,
