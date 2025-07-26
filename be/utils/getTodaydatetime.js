@@ -1,11 +1,16 @@
 const axios = require('axios');
 
+let dailyCache = {
+  valueTH: null,
+  valueUTC: null,
+  date: null, // format: YYYY-MM-DD
+};
+
 async function getTodaydatetime() {
     const tzOffset = 7 * 60; // Thailand UTC+7 (minutes)
-    const gettime = await GetDateTimeTH();
+    const gettime = await GetTimeAPI('Asia/Bangkok');
     const now = new Date(gettime);
 
-    console.log(`Current local time: ${now}`);
     const thYear = now.getFullYear();
     const thMonth = now.getMonth();
     const thDate = now.getDate();
@@ -29,15 +34,44 @@ async function getTodaydatetime() {
 async function GetDateTimeTH() {
     const result = await axios.get('https://timeapi.io/api/Time/current/zone?timeZone=Asia/Bangkok');
     const time2 = result.data.dateTime;
+    console.log(`Current TH23124122341 : ${time2}`);
     return time2;
 }
 
 async function GetDateTimeUTC() {
     const result = await axios.get('https://timeapi.io/api/Time/current/zone?timeZone=UTC');
     const time3 = result.data.dateTime;
+    console.log(`Current UTC23124122341 : ${time3}`);
     // if (isNaN(time3.getTime())) console.error("❌ Invalid UTC time received:", result.data.dateTime);
     // console.log(`Current UTC : ${time3.toISOString()}`);
     return time3;
 }
 
-module.exports = {getTodaydatetime, GetDateTimeTH, GetDateTimeUTC};
+
+
+const GetTimeAPI = async (timezone) => {
+    const today = new Date().toISOString().slice(0, 10); // เอาวันปัจจุบันบน server มา check เคลื่อน 3 นาทีถ้า sensetime  
+
+    // หากยังไม่มี cache หรือเป็นของวันเก่า จะ fetch ใหม่
+    if (!dailyCache.date || !dailyCache.valueTH || !dailyCache.valueUTC || dailyCache.date !== today) {
+        try{
+            const thRes = await axios.get(`https://api.timezonedb.com/v2.1/get-time-zone?key=BIM3EA5O5VSV&format=json&by=zone&zone=Asia/Bangkok`);
+            const utcRes = await axios.get(`https://api.timezonedb.com/v2.1/get-time-zone?key=BIM3EA5O5VSV&format=json&by=zone&zone=UTC`);
+             
+            dailyCache.valueTH = thRes.data.formatted;
+            dailyCache.valueUTC = utcRes.data.formatted + "Z";
+            dailyCache.date = today;
+        } catch (error) {
+            console.error("Error fetching time data:", error);
+            throw new Error("Failed to fetch time data from API");
+        }
+       
+    }
+    return timezone === "UTC" ? dailyCache.valueUTC : dailyCache.valueTH;
+}
+module.exports = {
+    getTodaydatetime,
+    GetDateTimeTH,
+    GetDateTimeUTC,
+    GetTimeAPI
+};

@@ -4,13 +4,15 @@ require('dotenv').config({ path: './config/.env'});
 const tokenCache = require("../utils/tokenCache");
 const { getuserdatabyroom, waitUntil } = require('../services/users.services');
 const { roomobject } = require('../utils/tokenCache');
-const { GetDateTimeTH, GetDateTimeUTC } = require('../utils/getTodaydatetime');
 // crud microsoft
 const { GeteventId, createMSEvent } = require('../services/users.services');
 const getGraphClient = require("../utils/graph");
 
 // create ms room
 const bookingkey = require('../models/bookingkey')
+
+//end meeting ms
+const { GetTimeAPI } = require('../utils/getTodaydatetime');
 // penalty alert email 
 const sendMailAsync = require('../services/sendmail.services');
 
@@ -197,8 +199,9 @@ const searchpinByeventId = async (req, res) => {
 const endmeeting = async (req, res) => {
     try{
         const { endmeetingdata } = req.body; // endmeetingdata = {eventId, startdatetime, isAllDay}
-        const enddate = await GetDateTimeUTC();
+        const enddate = await GetTimeAPI('UTC');
         const newenddate = new Date(enddate);
+        console.log("Enddate data3333:", newenddate.toISOString());
         
         const AccessToken = tokenCache.getAccessToken();
         let startDateTime;

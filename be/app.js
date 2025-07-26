@@ -13,6 +13,7 @@ const Accountrouter = require("./routes/account_manage.routes");
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const app = express();
+const {GetTimeAPI } = require('./utils/getTodaydatetime');
 
 app.use(cors({
   origin: [process.env.FRONTEND_ADMIN, process.env.FRONTEND_USERS], // ***********************
@@ -37,6 +38,18 @@ app.get('/', (req, res) => {
 const sintervalId = setInterval(() => {
   syncAllRooms();
 }, 6000);
+
+(async () => {
+  const thTime = await GetTimeAPI("Asia/Bangkok");
+  console.log("Thai Time:", thTime);
+  console.log("Thai Time:", new Date(thTime));
+  console.log("Thai Time:", new Date(thTime).toISOString());
+
+  const utcTime = await GetTimeAPI("UTC");
+  console.log("UTC Time:", utcTime);
+  console.log("UTC Time:", new Date(utcTime));
+  console.log("UTC Time:", new Date(utcTime).toISOString());
+})();
 
 app.listen(process.env.PORT, async () => {
   console.log(`Server running at http://localhost:${process.env.PORT}`);

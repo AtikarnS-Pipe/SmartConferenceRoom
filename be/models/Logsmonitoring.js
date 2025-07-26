@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-const { GetDateTimeTH } = require('../utils/getTodaydatetime');
 
 
 const logschema = new mongoose.Schema({ 

@@ -91,7 +91,6 @@ function sleep(ms) {
 }
 
 async function monitorCalendarId(token) {
-  console.log("🆔 Starting id monitor...");
   const isroomissing = Object.values(roomobject).some(val => !val) // if any roomobject key is empty
   try{
     if(isroomissing){ //อยากให้เช็คถ้า value ด้านในว่างเปล่า หรือ server down ไรงี้ให้ ดึงมาใหม่ที ทำยังไงครับ
