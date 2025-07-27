@@ -7,6 +7,7 @@ const { roomobject } = require('../utils/tokenCache');
 // crud microsoft
 const { GeteventId, createMSEvent } = require('../services/users.services');
 const getGraphClient = require("../utils/graph");
+const PinStats = require('../models/RoomAccessLog');
 
 // create ms room
 const bookingkey = require('../models/bookingkey')
@@ -129,26 +130,63 @@ const adminKeyPin = async (req, res) => {
     }
 }
 
-// รับ Roomnumber เเละ eventId ของการประชุมที่ต้องการลบ
+// รับ eventId ของการประชุมที่ต้องการลบ
 const deleteroom = async (req, res) => {
-    const { deleteRoomData } = req.body; // RoomNumber, email, startdatetime, enddatetime
+    console.log("deleting...", req.body);
+    const { eventId } = req.body; // , eventId
     const AccessToken = tokenCache.getAccessToken();
     if (!AccessToken) {
         console.error("No refresh token found in cache...");
         throw new Error("No refresh token found in caches. Please login again.");
     }
-    const calendarId = await GetIdRoomnumber(AccessToken, deleteRoomData.RoomNumber);
-    const eventId = await GeteventId(AccessToken, calendarId, deleteRoomData.email, deleteRoomData.startdatetime, deleteRoomData.enddatetime); //datetime UTC: 2024-06-09T00:00:00Z
-
-    console.log("Delete event request:", { calendarId, eventId });
     try {
         await getGraphClient(AccessToken)
-        .api(`/me/calendars/${calendarId}/events/${eventId}`)
+        .api(`/me/events/${eventId}`)
         .delete();
 
         console.log("Delete event success");
-        res.status(200).json({ message: "Event deleted successfully" });
+        const falselist = await bookingkey.findOneAndUpdate(
+            { eventId }, // หา booking key ที่ตรงกับ eventId
+            { isPinVerified: 'not access' }, // ห้องไม่ถูกยืนยัน
+            { new: true } 
+        );
+        const organizerEmail = falselist.organizerMail;
+        
+        if (organizerEmail) {
+            // ใช้ upsert เพื่อสร้างใหม่หากไม่มี หรือ update หากมีอยู่แล้ว
+            const countbacklist = await PinStats.findOneAndUpdate(
+                { organizerMail: organizerEmail }, // หาด้วย organizerMail
+                { 
+                    $inc: { pinMissCount: +1 }, // เพิ่มจำนวนครั้งที่ miss
+                    lastMissedAt: new Date(),
+                    EventId: eventId
+                },
+                { 
+                    new: true, // return document หลัง update
+                    upsert: true, // สร้างใหม่ถ้าไม่มี
+                    setDefaultsOnInsert: true // set default values เมื่อสร้างใหม่
+                }
+            );
 
+            console.log(`Miss count for ${organizerEmail}: ${countbacklist.pinMissCount}`);
+
+            if (countbacklist.pinMissCount >= 5) { // ส่งเมลเตือนถ้าครบ 5 ครั้ง
+                const mailData = {
+                    subject: `Warning: การจองห้องแล้วมาไม่มาใช้งานตามที่กำหนด`,
+                    body: `คุณใช้งานระบบ Smart Conference Display System ได้ทำการจองห้องประชุม และไม่ได้มาใช้งานตามที่กำหนดเกิน 5 ครั้ง กรุณาติดต่อผู้ดูแลระบบหากมีข้อสงสัย \n\nThank you\nSmart Conference Display System`,
+                    recipient: organizerEmail, // ส่งให้คนที่จองห้อง
+                    accessToken: tokenCache.getAccessToken(),
+                };
+                
+                try {
+                    await sendMailAsync(mailData.subject, mailData.body, mailData.recipient, mailData.accessToken);
+                    console.log(`📧 Warning email sent to ${organizerEmail} (${countbacklist.pinMissCount} misses)`);
+                } catch (emailError) {
+                    console.error("Error sending warning email:", emailError);
+                }
+            }
+        }
+        res.status(200).json({ message: "Event deleted successfully" });
     } catch (error) {
         console.error("Error deleting event:", error);
         res.status(500).json({ error: "Failed to delete event" });

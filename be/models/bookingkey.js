@@ -8,13 +8,9 @@ const bookingKeySchema = new mongoose.Schema({
     startDateTime: Date,
     endDateTime: Date,
     isPinVerified:{
-        type: Boolean,
-        default: false,
-    },
-    pinMissCount: {
-        type: Number,
-        default: 0, 
-        index: true // for faster queries
+        type: String,
+        default: "false",
+        enum: ['false', 'true', 'not access'],
     },
     B_createdAt:{
         type: Date,

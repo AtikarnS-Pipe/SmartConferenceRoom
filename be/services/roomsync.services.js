@@ -81,10 +81,10 @@ Thank you for your attention.
 Best regards,  
 Smart Conference Display System`;
                             subject = "🔔 Pin for room booking";
-                            const mail = process.env.CENTERLIZED_MAIL //event.organizer?.emailAddress?.address *********************************
+                            const mail = event.organizer?.emailAddress?.address //  process.env.CENTERLIZED_MAIL*********************************
                             if(process.env.DEBUG_MODE) console.log('mail content:',mailContent);
-                            // await sendMailAsync(event.organizer?.emailAddress?.address, mailContent, mail, tokenCache.getAccessToken()); //หัวข้ออีเมล, รหัสผ่าน, หมายเลขห้องที่จะส่งไป
-                            await sendMailAsync(subject, mailContent, mail, tokenCache.getAccessToken()); //หัวข้ออีเมล, รหัสผ่าน, หมายเลขห้องที่จะส่งไป
+                            await sendMailAsync(event.organizer?.emailAddress?.address, mailContent, mail, tokenCache.getAccessToken()); //หัวข้ออีเมล, รหัสผ่าน, หมายเลขห้องที่จะส่งไป
+                            // await sendMailAsync(subject, mailContent, mail, tokenCache.getAccessToken()); //หัวข้ออีเมล, รหัสผ่าน, หมายเลขห้องที่จะส่งไป
                         }
                     // }
                 }
