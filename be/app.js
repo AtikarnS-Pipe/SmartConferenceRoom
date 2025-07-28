@@ -37,7 +37,7 @@ app.get('/', (req, res) => {
 // Sync all rooms for mail sending every 10 s
 const sintervalId = setInterval(() => {
   syncAllRooms();
-}, 5000);
+}, 3000);
 
 // (async () => {
 //   const thTime = await GetTimeAPI("Asia/Bangkok");

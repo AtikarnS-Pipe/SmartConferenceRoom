@@ -7,7 +7,7 @@ const { roomobject } = require('../utils/tokenCache');
 // crud microsoft
 const { GeteventId, createMSEvent } = require('../services/users.services');
 const getGraphClient = require("../utils/graph");
-const PinStats = require('../models/RoomAccessLog');
+const pinstats = require('../models/RoomAccessLog');
 
 // create ms room
 const bookingkey = require('../models/bookingkey')
@@ -34,7 +34,7 @@ const getuser = async (req, res) => {
     getuserdatabyroom(res, RoomNumber);
     const intervalId = setInterval(async () => {
         getuserdatabyroom(res, RoomNumber);
-    }, 4000);
+    }, 3000);
 
     // จัดการ cleanup 
     req.on('close', () => {
@@ -132,7 +132,6 @@ const adminKeyPin = async (req, res) => {
 
 // รับ eventId ของการประชุมที่ต้องการลบ
 const deleteroom = async (req, res) => {
-    console.log("deleting...", req.body);
     const { eventId } = req.body; // , eventId
     const AccessToken = tokenCache.getAccessToken();
     if (!AccessToken) {
@@ -145,23 +144,34 @@ const deleteroom = async (req, res) => {
         .delete();
 
         console.log("Delete event success");
-        const falselist = await bookingkey.findOneAndUpdate(
-            { eventId }, // หา booking key ที่ตรงกับ eventId
-            { isPinVerified: 'not access' }, // ห้องไม่ถูกยืนยัน
-            { new: true } 
-        );
+        const falselist = await waitUntil(async () => {
+            const result = await bookingkey.findOneAndUpdate(
+                { eventId },
+                { isPinVerified: 'not access' },
+                { new: true }
+            );
+
+            // ถ้ามี organizerMail แล้วถึงจะ return
+            if (result?.organizerMail) return result;
+            return null;
+        }, 30000, 3000);
         const organizerEmail = falselist.organizerMail;
         
-        if (organizerEmail) {
+        if (organizerEmail && organizerEmail !== process.env.CENTERLIZED_MAIL) {
             // ใช้ upsert เพื่อสร้างใหม่หากไม่มี หรือ update หากมีอยู่แล้ว
-            const countbacklist = await PinStats.findOneAndUpdate(
+            const countbacklist = await pinstats.findOneAndUpdate(
                 { organizerMail: organizerEmail }, // หาด้วย organizerMail
                 { 
                     $inc: { pinMissCount: +1 }, // เพิ่มจำนวนครั้งที่ miss
-                    lastMissedAt: new Date(),
-                    EventId: eventId
+                    $push: { 
+                        EventId: {
+                            eventId,
+                            missedAt: await GetTimeAPI('Asia/Bangkok'),
+                            RoomNumber: Number(falselist.room)  
+                        }
+                    }
                 },
-                { 
+                {
                     new: true, // return document หลัง update
                     upsert: true, // สร้างใหม่ถ้าไม่มี
                     setDefaultsOnInsert: true // set default values เมื่อสร้างใหม่
@@ -170,10 +180,31 @@ const deleteroom = async (req, res) => {
 
             console.log(`Miss count for ${organizerEmail}: ${countbacklist.pinMissCount}`);
 
-            if (countbacklist.pinMissCount >= 5) { // ส่งเมลเตือนถ้าครบ 5 ครั้ง
+            if (countbacklist.pinMissCount % 5 === 0) { // ส่งเมลเตือนถ้าครบ 5 ครั้ง
+                await pinstats.findOneAndUpdate(
+                    { organizerMail: organizerEmail },
+                    { isBanned: true },
+                    { new: true }
+                );
                 const mailData = {
-                    subject: `Warning: การจองห้องแล้วมาไม่มาใช้งานตามที่กำหนด`,
-                    body: `คุณใช้งานระบบ Smart Conference Display System ได้ทำการจองห้องประชุม และไม่ได้มาใช้งานตามที่กำหนดเกิน 5 ครั้ง กรุณาติดต่อผู้ดูแลระบบหากมีข้อสงสัย \n\nThank you\nSmart Conference Display System`,
+                    subject: `Usage Warning - Smart Conference Display System`,
+                    body: `Dear User,
+
+We are writing to inform you that our system has recorded five or more instances of unattended room reservations under your account.
+
+This notification serves as a formal reminder to ensure responsible use of the conference room booking system. Unattended reservations without prior cancellation impact the availability of facilities for other users.
+
+Account Information:
+- Email: ${organizerEmail}
+- Total Missed Bookings: ${countbacklist.pinMissCount}
+- Status: Warning Issued
+
+We kindly ask that you review your future bookings and cancel in advance if you are unable to attend. Continued misuse may lead to temporary suspension of your booking privileges.
+
+Thank you for your attention and cooperation.
+
+Sincerely,
+Smart Conference Display System Administration Team`,
                     recipient: organizerEmail, // ส่งให้คนที่จองห้อง
                     accessToken: tokenCache.getAccessToken(),
                 };
