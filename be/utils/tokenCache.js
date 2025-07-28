@@ -29,16 +29,20 @@ async function monitorToken() {
   console.log("🚀 Starting token monitor...");
   while (true) {
     if (!refreshToken || !expiryDate || refreshToken === null) {
-      const tokenData = await Token.findOne().sort({ createdAt: -1 });
-      if (!tokenData) console.log("No token found in DB");
+      const tokenData = await Token.findOne({ 
+        token_status: { $in: ['refreshed', 'createtoken'] } 
+      }).sort({ createdAt: -1 });
+      if (!tokenData) console.log("No token found in DB, Admin needs to login.");
+
       refreshToken = tokenData ? decryptToken(tokenData.refreshToken) : null;
       expiryDate = tokenData ? new Date(tokenData.expiryDate) : null;
       accessToken = tokenData ? tokenData.accessToken : null;
-      if (!refreshToken || !expiryDate) {
-        console.log("⏳ Monitoring is waiting for token in cache...");
-        await sleep(5000);
-        continue;
-      }
+
+        if (!refreshToken || !expiryDate) {
+          console.log("⏳ Monitoring is waiting for token in cache...");
+          await sleep(5000);
+          continue;
+        }
     }
 
     const now = new Date();
@@ -50,7 +54,11 @@ async function monitorToken() {
         // console.log("refresh tokenn:", refreshToken );
         const newToken = await refreshAccessToken(refreshToken);
         if (!newToken || !newToken.access_token) {
-          console.error("logs status: refresh token failed in DB");
+          console.log("logs status: refresh token failed in DB");
+          accessToken = null
+          refreshToken =  null
+          expiryDate = null
+
           await Token.create({
             accessToken,
             refreshToken,
@@ -77,11 +85,10 @@ async function monitorToken() {
         console.log("✅ Token refreshed and inserted into DB");
       } catch (err) {
         console.error("❌ Failed to refresh token:", err.message);
-        await sleep(10*1000); // wait 10s before retrying
         continue;
       }
     }
-    await monitorCalendarId(accessToken); // Call to monitor calendar IDs
+    if(accessToken) await monitorCalendarId(accessToken); // Call to monitor calendar IDs
     await sleep(60*1000);
   }
 }
@@ -96,8 +103,6 @@ async function monitorCalendarId(token) {
     if(isroomissing){ //อยากให้เช็คถ้า value ด้านในว่างเปล่า หรือ server down ไรงี้ให้ ดึงมาใหม่ที ทำยังไงครับ
       console.log("Preloading calendar IDs api...");
       const calendars = await GetIdRoomnumber(token, roomobject); // update roomobject value with calendar IDs
-    } else{ 
-      console.log("Calendar IDs alrePreloading calendar IDs foreach...ady preloaded, skipping...");
     }
     
   } catch (err) {
