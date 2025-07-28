@@ -21,7 +21,7 @@ export function useEvents(floor, room) {
   const fallbackTimeout = setTimeout(() => {
     console.warn("SSE fallback timeout: no data received.");
     setEvents([]);
-    setLoading(false); // หรือให้เป็น Available state
+    setLoading(true);
   }, 10000); // รอ 10 วิ ถ้าไม่มีข้อมูล
 
   eventSource.onmessage = (e) => {

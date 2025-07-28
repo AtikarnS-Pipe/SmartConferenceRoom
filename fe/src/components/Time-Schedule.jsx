@@ -37,25 +37,50 @@ export default function TimeSchedule({ currentTime, events = [], zoomLevel, setZ
   // ฟังก์ชันคำนวณเวลาที่เหลือ
   function getTimeRemaining(event) {
     if (!event?.start?.dateTime || !event?.end?.dateTime) return '-';
-  
+
     const now = new Date();
     const start = new Date(event.start.dateTime + 'Z');
     const end = new Date(event.end.dateTime + 'Z');
-  
-    if (now < start) return 'Not time yet.';
+
+    if (now < start) {
+      // แสดง countdown เวลาที่เหลือจนกว่าจะเริ่ม event (ไม่มีคำว่า "Starts in")
+      const diff = start - now;
+      const seconds = Math.floor(diff / 1000) % 60;
+      const minutes = Math.floor(diff / (1000 * 60)) % 60;
+      const hours = Math.floor(diff / (1000 * 60 * 60)) % 24;
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+
+      let result = '';
+      if (days > 0) result += `${days}d `;
+      if (hours > 0) result += `${hours}h `;
+      if (minutes > 0 || hours > 0 || days > 0) result += `${minutes}m `;
+      result += `${seconds}s`;
+
+      return result.trim();
+    }
+
     if (now >= end) return 'Time up.';
-  
+
+    // แสดงเวลาที่เหลือของ event ที่กำลังดำเนินอยู่
     const diff = end - now;
     const seconds = Math.floor(diff / 1000) % 60;
     const minutes = Math.floor(diff / (1000 * 60)) % 60;
     const hours = Math.floor(diff / (1000 * 60 * 60));
-  
+
     let result = '';
     if (hours > 0) result += `${hours}h `;
     if (minutes > 0 || hours > 0) result += `${minutes}m `;
     result += `${seconds}s`;
-  
+
     return result.trim();
+  }
+
+  // เพิ่มฟังก์ชันใหม่เพื่อตรวจสอบว่า event ยังไม่เริ่มหรือไม่
+  function isEventNotStarted(event) {
+    if (!event?.start?.dateTime) return false;
+    const now = new Date();
+    const start = new Date(event.start.dateTime + 'Z');
+    return now < start;
   }
   
 
@@ -457,7 +482,9 @@ export default function TimeSchedule({ currentTime, events = [], zoomLevel, setZ
       >
         <Timer size={25} />
         <span>
-          <strong>Time Remaining:</strong> {getTimeRemaining(selectedEvent)}
+          <strong>
+            {isEventNotStarted(selectedEvent) ? 'Count Down Time:' : 'Time Remaining:'}
+          </strong> {getTimeRemaining(selectedEvent)}
         </span>
       </div>
 

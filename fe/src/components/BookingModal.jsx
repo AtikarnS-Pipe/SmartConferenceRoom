@@ -336,6 +336,14 @@ const BookingModal = ({ isOpen, onClose, onSubmit, onPinModalClose }) => {
       }
     }
 
+    // ตรวจสอบว่าเวลาที่จองไม่ใช่เวลาในอดีต
+    const now = new Date();
+    // เพิ่ม buffer 1 นาที เพื่อให้สามารถจองเวลาปัจจุบันได้
+    const bufferTime = new Date(now.getTime() - 60000); // ลบ 1 นาที
+    if (proposedStart < bufferTime) {
+      return true; // Conflict: ไม่สามารถจองย้อนหลังได้
+    }
+
     // ตรวจสอบการทับซ้อนกับ events ที่มีอยู่
     return events.some(event => {
       const eventStart = new Date(event.start.dateTime + 'Z');
@@ -349,6 +357,24 @@ const BookingModal = ({ isOpen, onClose, onSubmit, onPinModalClose }) => {
 
   // ตรวจสอบว่าสามารถจองได้หรือไม่
   const canBook = !checkTimeConflict(formData.startTime, formData.duration);
+  
+  // ตรวจสอบว่าเป็นเวลาในอดีตหรือไม่ สำหรับแสดงข้อความปุ่ม
+  const isPastTime = () => {
+    if (!formData.startTime) return false;
+    const proposedStart = new Date(formData.startTime);
+    const now = new Date();
+    // เพิ่ม buffer 1 นาที เพื่อให้สามารถจองเวลาปัจจุบันได้
+    const bufferTime = new Date(now.getTime() - 60000); // ลบ 1 นาที
+    return proposedStart < bufferTime;
+  };
+
+  // ฟังก์ชันสำหรับกำหนดข้อความปุ่ม
+  const getBookingButtonText = () => {
+    if (loading) return 'Booking...';
+    if (isPastTime()) return 'Past Time - Cannot Book';
+    if (!canBook) return 'Time Conflict';
+    return 'Book Now';
+  };
 
   const validateForm = () => {
     const newErrors = {};
@@ -357,9 +383,22 @@ const BookingModal = ({ isOpen, onClose, onSubmit, onPinModalClose }) => {
     if (bookedByEnabled && !formData.bookedBy.trim()) newErrors.bookedBy = 'Booked by is required';
     if (formData.duration < 15) newErrors.duration = 'Minimum duration is 15 minutes';
     
+    // ตรวจสอบการจองย้อนหลัง
+    if (formData.startTime) {
+      const proposedStart = new Date(formData.startTime);
+      const now = new Date();
+      // เพิ่ม buffer 1 นาที เพื่อให้สามารถจองเวลาปัจจุบันได้
+      const bufferTime = new Date(now.getTime() - 60000); // ลบ 1 นาที
+      if (proposedStart < bufferTime) {
+        newErrors.timeConflict = 'Cannot book for past time. Please select a future time.';
+      }
+    }
+    
     // เพิ่มการตรวจสอบการทับซ้อนเวลา
     if (checkTimeConflict(formData.startTime, formData.duration)) {
-      newErrors.timeConflict = 'Selected time conflicts with existing booking';
+      if (!newErrors.timeConflict) { // ถ้ายังไม่มี error จากการจองย้อนหลัง
+        newErrors.timeConflict = 'Selected time conflicts with existing booking';
+      }
     }
     
     setErrors(newErrors);
@@ -867,20 +906,47 @@ const BookingModal = ({ isOpen, onClose, onSubmit, onPinModalClose }) => {
       return null;
     }
     
-    if (checkTimeConflict(formData.startTime, formData.duration)) {
-      return (
-        <div style={{
-          backgroundColor: '#FEF2F2',
-          border: '1px solid #FECACA',
-          borderRadius: '0.5rem',
-          padding: '0.75rem',
-          marginBottom: '1rem',
-          color: '#DC2626'
-        }}>
-          ⚠️ Selected time conflicts with existing booking
-        </div>
-      );
+    if (formData.startTime) {
+      const proposedStart = new Date(formData.startTime);
+      const now = new Date();
+      
+      // ตรวจสอบการจองย้อนหลัง
+      if (proposedStart < now) {
+        // เพิ่ม buffer 1 นาที เพื่อให้สามารถจองเวลาปัจจุบันได้
+        const bufferTime = new Date(now.getTime() - 60000); // ลบ 1 นาที
+        if (proposedStart < bufferTime) {
+          return (
+            <div style={{
+              backgroundColor: '#fef2f2',
+              border: '1px solid #fecaca',
+              borderRadius: '0.5rem',
+              padding: '0.75rem',
+              marginBottom: '1rem',
+              color: '#DC2626'
+            }}>
+              ⚠️ Cannot book for past time. Please select current or future time.
+            </div>
+          );
+        }
+      }
+      
+      // ตรวจสอบการทับซ้อนกับ events อื่น
+      if (checkTimeConflict(formData.startTime, formData.duration) && proposedStart > now) {
+        return (
+          <div style={{
+            backgroundColor: '#FEF2F2',
+            border: '1px solid #FECACA',
+            borderRadius: '0.5rem',
+            padding: '0.75rem',
+            marginBottom: '1rem',
+            color: '#DC2626'
+          }}>
+            ⚠️ Selected time conflicts with existing booking or business hours
+          </div>
+        );
+      }
     }
+    
     return null;
   };
 
@@ -1305,17 +1371,13 @@ const BookingModal = ({ isOpen, onClose, onSubmit, onPinModalClose }) => {
                     handleSubmit(e);
                   }} 
                   className="submit-btn"
-                  disabled={loading || !canBook || waitingEvent}
+                  disabled={loading || !canBook || waitingEvent || isPastTime()}
                   style={{
-                    opacity: (!canBook || loading || waitingEvent) ? 0.5 : 1,
-                    cursor: (!canBook || loading || waitingEvent) ? 'not-allowed' : 'pointer'
+                    opacity: (!canBook || loading || waitingEvent || isPastTime()) ? 0.5 : 1,
+                    cursor: (!canBook || loading || waitingEvent || isPastTime()) ? 'not-allowed' : 'pointer'
                   }}
                 >
-                  {loading ? (
-                    <span>
-                      Booking...
-                    </span>
-                  ) : (canBook ? 'Book Now' : 'Time Conflict')}
+                  {getBookingButtonText()}
                 </button>
                 {errors.submit && <p className="error-text">{errors.submit}</p>}
                 {errors.timeConflict && <p className="error-text">{errors.timeConflict}</p>}

@@ -55,11 +55,12 @@ const PinPopupManager = ({ events, onPinSuccess, closeSignal, bookingInProgress 
   // ฟังก์ชัน: ลบ event เมื่อ timeout (method DELETE)
   // const deleteEventOnBackend = async ({ eventId }) => {
   //   try {
-  //     const res = await fetch('user/ms/delete', { 
+  //     const res = await fetch('/user/ms/delete', { 
   //       method: 'DELETE',
   //       headers: { 'Content-Type': 'application/json' },
   //       body: JSON.stringify({ eventId }),
   //     });
+  //     console.log('deleteEventOnBackend response:', res);
   //     return await res.json();
   //   } catch (e) {
   //     return { success: false, error: 'Network error' };
