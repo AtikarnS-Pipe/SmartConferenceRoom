@@ -3,7 +3,7 @@ const bookingKey = require('../models/bookingkey');
 // const getGraphClient = require("../graph");
 const User = require('../models/User');
 const { AddLogmonitoring } = require('../utils/AddLogmonitoring');
-const { GetTimeAPI } = require('../utils/getTodaydatetime');
+// const { GetTimeAPI } = require('../utils/getTodaydatetime');
 
 /**
  * service for compare the pin, user inserted, with the pin of the room in database
@@ -58,7 +58,7 @@ async function adminCompareKey( pin, room_number ) {
             L_status: 'Access room', 
             role: user.role, 
             Details: `${user.name} access room ${room_number}`, 
-            L_createdAt: await GetTimeAPI('Asia/Bangkok'),
+            L_createdAt: new Date(), //await GetTimeAPI('Asia/Bangkok'),
         };
         const log = await AddLogmonitoring(datalogs);
 

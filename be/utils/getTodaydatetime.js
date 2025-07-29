@@ -9,7 +9,7 @@ let dailyCache = {
 
 async function getTodaydatetime() {
     const tzOffset = 7 * 60; // Thailand UTC+7 (minutes)
-    const gettime = await GetTimeAPICache('Asia/Bangkok');
+    const gettime = new Date();  //await GetTimeAPICache('Asia/Bangkok');
     const now = new Date(gettime);
 
     const thYear = now.getFullYear();

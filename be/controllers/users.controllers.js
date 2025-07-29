@@ -13,7 +13,7 @@ const pinstats = require('../models/RoomAccessLog');
 const bookingkey = require('../models/bookingkey')
 
 //end meeting ms
-const { GetTimeAPI } = require('../utils/getTodaydatetime');
+// const { GetTimeAPI } = require('../utils/getTodaydatetime');
 // penalty alert email 
 const sendMailAsync = require('../services/sendmail.services');
 
@@ -166,7 +166,7 @@ const deleteroom = async (req, res) => {
                     $push: { 
                         EventId: {
                             eventId,
-                            missedAt: await GetTimeAPI('Asia/Bangkok'),
+                            missedAt: new Date(), //await GetTimeAPI('Asia/Bangkok'),
                             RoomNumber: Number(falselist.room)  
                         }
                     }
@@ -282,9 +282,8 @@ const createsearchpin = async (req, res) => {
 const endmeeting = async (req, res) => {
     try{
         const { endmeetingdata } = req.body; // endmeetingdata = {eventId, startdatetime, isAllDay}
-        const enddate = await GetTimeAPI('UTC');
+        const enddate = new Date(); // await GetTimeAPI('UTC');
         const newenddate = new Date(enddate);
-        console.log("Enddate data3333:", newenddate.toISOString());
         
         const AccessToken = tokenCache.getAccessToken();
         let startDateTime;
