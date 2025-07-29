@@ -115,7 +115,12 @@ function Admin() {
   if (newPassword !== confirmPassword) {
     setStatusPopup('error');
     setMessage('Passwords do not match');
-    setTimeout(() => setStatusPopup(null), 3000);
+    setTimeout(() => {
+      setStatusPopup(null);
+      setShowPasswordModal(false);
+      setNewPassword('');
+      setConfirmPassword('');
+    }, 3000);
     return;
   }
 

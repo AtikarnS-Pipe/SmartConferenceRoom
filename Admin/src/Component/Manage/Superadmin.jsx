@@ -123,7 +123,12 @@ const handleSubmitPasswordChange = async () => {
   if (newPassword !== confirmPassword) {
     setStatusPopup('error');
     setMessage('Passwords do not match');
-    setTimeout(() => setStatusPopup(null), 3000);
+    setTimeout(() => {
+      setStatusPopup(null);
+      setShowPasswordModal(false);
+      setNewPassword('');
+      setConfirmPassword('');
+    }, 3000);
     return;
   }
 
@@ -390,7 +395,7 @@ const superadminmem = allUsers.filter(user => user.role === 'Admin');
       {showPasswordModal && (
         <div className="fixed inset-0 z-50 backdrop-blur-sm bg-gray-300/30 flex items-center justify-center">
           <div className={`${darkMode ? 'bg-gray-800 text-white' : 'bg-white'} p-6 rounded-xl shadow-lg w-96`}>
-            <h2 className={`text-lg font-semibold mb-4 ${darkMode ? 'text-white' : 'text-gray-800'}`}>Change My Pin</h2>
+            <h2 className={`text-lg font-semibold mb-4 ${darkMode ? 'text-white' : 'text-gray-800'}`}>Change Pin</h2>
 
             <div className="mb-4">
               <label className={`block text-sm mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>New PIN</label>

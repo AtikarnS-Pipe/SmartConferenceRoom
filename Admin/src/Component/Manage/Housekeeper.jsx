@@ -144,7 +144,12 @@ const handleSelectHousekeeper = (housekeeper) => {
   if (newPassword !== confirmPassword) {
     setStatusPopup('error');
     setMessage('Passwords do not match');
-    setTimeout(() => setStatusPopup(null), 3000);
+    setTimeout(() => {
+      setStatusPopup(null);
+      setShowPasswordModal(false);
+      setNewPassword('');
+      setConfirmPassword('');
+    }, 3000);
     return;
   }
 
@@ -161,7 +166,7 @@ const handleSelectHousekeeper = (housekeeper) => {
       }
     );
 
-    setMessage(res.data.message);
+    setMessage(res.data.message || 'Housekeeper PIN changed successfully');
     setStatusPopup('success');
 
     setTimeout(() => {
@@ -887,7 +892,7 @@ useEffect(() => {
                     setShowModal(true)
                   }}
                     
-                    className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+                    className="flex items-center gap-2 bg-blue-600 text-sm text-white px-4 py-2 rounded-lg hover:bg-blue-700"
                   >
                     <Plus className="w-4 h-4" />
                     Add Housekeeper
@@ -895,7 +900,7 @@ useEffect(() => {
                   <RefreshButton
                     disabled={selectedMembers.length === 0}
                     onClick={handleDeleteHousekeepers}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-lg ${
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm ${
                       selectedMembers.length > 0 ? 'bg-red-600 text-white hover:bg-red-700' : 'bg-gray-100 text-gray-400'
                     }`}
                   >

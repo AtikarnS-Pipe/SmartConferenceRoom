@@ -114,12 +114,21 @@ function Log() {
     return matchesSearch && matchesLevel && matchesSource;
   });
 
+  // Sort filteredLogs by timestamp (latest first) before paginating
+  const sortedFilteredLogs = [...filteredLogs].sort(
+    (a, b) => new Date(b.L_createdAt || b.timestamp) - new Date(a.L_createdAt || a.timestamp)
+  );
+
   const totalPages = Math.ceil(filteredLogs.length / ITEMS_PER_PAGE);
 
-  const paginatedLogs = filteredLogs.slice(
+  const paginatedLogs = sortedFilteredLogs.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
   );
+
+  const sortedLogs = [...paginatedLogs].sort(
+  (a, b) => new Date(b.L_createdAt || b.timestamp) - new Date(a.L_createdAt || a.timestamp)
+);
 
   const formatTimestamp = (timestamp) => {
     if (!timestamp) return 'N/A';
@@ -148,11 +157,17 @@ function Log() {
 
 
   const handleSubmitPasswordChange = async () => {
-    if (newPassword !== confirmPassword) {
-      setStatusPopup('error');
-      setTimeout(() => setStatusPopup(null), 3000);
-      return;
-    }
+  if (newPassword !== confirmPassword) {
+    setStatusPopup('error');
+    setMessage('Passwords do not match');
+    setTimeout(() => {
+      setStatusPopup(null);
+      setShowPasswordModal(false);
+      setNewPassword('');
+      setConfirmPassword('');
+    }, 3000);
+    return;
+  }
 
     try {
       const token = localStorage.getItem('token');
@@ -642,34 +657,34 @@ const handleSignout = async () => {
                 
                 <tbody>
                   {paginatedLogs.length === 0 ? (
-                    <tr>
-                      <td colSpan="5" className={`px-6 py-8 text-center ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                        <Activity className={`mx-auto w-8 h-8 mb-2 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`} />
-                        <p>No logs Found</p>
-                        <p className="text-xs">Connection: {connectionStatus}</p>
-                      </td>
-                    </tr>
-                  ) : (
-                    paginatedLogs.map((log, index) => (
-                      <tr key={log._id || index} className={darkMode ? 'border-gray-700' : ''}>
-                        <td className={`px-6 py-4 text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-800'}`}>
-                          {log.L_status || log.level || 'N/A'}
-                        </td>
-                        <td className={`px-6 py-4 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                          {formatTimestamp(log.L_createdAt || log.timestamp)}
-                        </td>
-                        <td className={`px-6 py-4 text-sm capitalize ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                          {log.role || log.source || 'N/A'}
-                        </td>
-                        <td className={`px-6 py-4 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                          {log.Details || log.message || 'N/A'}
-                        </td>
-                        <td className={`px-6 py-4 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                          {log.user_Id || log.userId || 'N/A'}
+                      <tr>
+                        <td colSpan="5" className={`px-6 py-8 text-center ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                          <Activity className={`mx-auto w-8 h-8 mb-2 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`} />
+                          <p>No logs Found</p>
+                          <p className="text-xs">Connection: {connectionStatus}</p>
                         </td>
                       </tr>
-                    ))
-                  )}
+                    ) : (
+                      paginatedLogs.map((log, index) => (
+                          <tr key={log._id || index} className={darkMode ? 'border-gray-700' : ''}>
+                            <td className={`px-6 py-4 text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-800'}`}>
+                              {log.L_status || log.level || 'N/A'}
+                            </td>
+                            <td className={`px-6 py-4 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                              {formatTimestamp(log.L_createdAt || log.timestamp)}
+                            </td>
+                            <td className={`px-6 py-4 text-sm capitalize ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                              {log.role || log.source || 'N/A'}
+                            </td>
+                            <td className={`px-6 py-4 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                              {log.Details || log.message || 'N/A'}
+                            </td>
+                            <td className={`px-6 py-4 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                              {log.user_Id || log.userId || 'N/A'}
+                            </td>
+                          </tr>
+                        ))
+                    )}
                 </tbody>
               </table>
             </div>
