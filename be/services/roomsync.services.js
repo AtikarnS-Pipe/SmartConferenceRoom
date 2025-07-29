@@ -59,7 +59,7 @@ async function syncAllRooms() {
         for (const roomData of results) {
             if (roomData && roomData.events && roomData.events.length > 0) {
                 for (const event of roomData.events) {
-                    // if(event.organizer?.emailAddress?.address !== process.env.CENTERLIZED_MAIL) { // ถ้าไม่ใช่ผู้ดูแลระบบ
+                    if(event.organizer?.emailAddress?.address !== process.env.CENTERLIZED_MAIL) { // ถ้าไม่ใช่ผู้ดูแลระบบ
                         // console.log(`Processing event for room ${roomData.room}:`, event.organizer?.emailAddress?.address);
                         let booking = await bookingkey.findOne({ room: roomData.room, eventId: event.id });
                         if (!booking) { // ถ้ายังไม่มี ให้สร้างใหม่
@@ -80,13 +80,13 @@ Thank you for your attention.
 
 Best regards,  
 Smart Conference Display System`;
-                            subject = "🔔 Pin for room booking";
-                            const mail = event.organizer?.emailAddress?.address //  process.env.CENTERLIZED_MAIL*********************************
+                            subject = "Pin for room booking";
+                            const mail =  process.env.CENTERLIZED_MAIL   //event.organizer?.emailAddress?.address *********************************
                             if(process.env.DEBUG_MODE) console.log('mail content:',mailContent);
-                            await sendMailAsync(event.organizer?.emailAddress?.address, mailContent, mail, tokenCache.getAccessToken()); //หัวข้ออีเมล, รหัสผ่าน, หมายเลขห้องที่จะส่งไป
+                            await sendMailAsync(subject, mailContent, mail, tokenCache.getAccessToken()); //หัวข้ออีเมล, รหัสผ่าน, หมายเลขห้องที่จะส่งไป
                             // await sendMailAsync(subject, mailContent, mail, tokenCache.getAccessToken()); //หัวข้ออีเมล, รหัสผ่าน, หมายเลขห้องที่จะส่งไป
                         }
-                    // }
+                    }
                 }
             }
         }

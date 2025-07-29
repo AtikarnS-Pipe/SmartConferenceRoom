@@ -210,7 +210,7 @@ Smart Conference Display System Administration Team`,
                 };
                 
                 try {
-                    await sendMailAsync(mailData.subject, mailData.body, mailData.recipient, mailData.accessToken);
+                    // await sendMailAsync(mailData.subject, mailData.body, mailData.recipient, mailData.accessToken);
                     console.log(`📧 Warning email sent to ${organizerEmail} (${countbacklist.pinMissCount} misses)`);
                 } catch (emailError) {
                     console.error("Error sending warning email:", emailError);
@@ -224,41 +224,55 @@ Smart Conference Display System Administration Team`,
     }
 }
 
-const createroom = async (req, res) => { // createroomdata = {RoomNumber, startdatetime, enddatetime, subject}
-    const { createroomdata } = req.body; // datetime UTC: 2024-06-09T00:00:00Z 
-    if (!createroomdata || !createroomdata.RoomNumber || !createroomdata.startdatetime || !createroomdata.enddatetime) {
+const createroom = async (req, res) => {
+    const { createroomdata } = req.body;
+
+    if (!createroomdata ||
+        !createroomdata.RoomNumber ||
+        !createroomdata.startdatetime ||
+        !createroomdata.enddatetime) {
         return res.status(400).json({ error: "Missing required fields" });
     }
 
     const AccessToken = tokenCache.getAccessToken();
     if (!AccessToken) {
-        console.error("No refresh token found in cache...");
-        throw new Error("No refresh token found in caches. Please login again.");
+        console.error("No access token found in cache.");
+        return res.status(401).json({ error: "Please login again." });
     }
-    // const calendarId = await GetIdRoomnumber(AccessToken, RoomNumber);
+
     try {
-        const iscreated = await createMSEvent(AccessToken, createroomdata);
-        if (!iscreated) {
-            throw new Error("Failed to create event");
-        }
-        console.log(`Booking ${createroomdata.RoomNumber} with Meetingroom`);
-        res.status(200).json({ success: true });
+        const isCreated = await createMSEvent(AccessToken, createroomdata);
+        if (!isCreated) return res.status(400).json({ error: "Event creation failed. Please check input or schedule conflicts." });
+
+        console.log(`Booking created for room ${createroomdata.RoomNumber}`);
+        return res.status(200).json({ success: true });
 
     } catch (error) {
-        console.error("Error create event:", error);
-        res.status(500).json({ error: error.message || "Failed to create event" });
+        console.error("Error during createMSEvent:", error);
+        return res.status(500).json({ error: error.message || "Internal server error" });
     }
-}
+};
 
-const searchpinByeventId = async (req, res) => {
-    const { eventId, room_number } = req.body;
-    if (!eventId) return res.status(400).json({ error: "Event ID is required" });
+
+const createsearchpin = async (req, res) => {
+    const { pindata } = req.body;
+    if (!pindata || !pindata.eventId || !pindata.room || !pindata.organizerMail || !pindata.pin || !pindata.startDateTime || !pindata.endDateTime) {
+        return res.status(400).json({ error: "All fields are required" });
+    }
 
     try {
-        const booking = await waitUntil(() => bookingkey.findOne({ eventId, room: room_number }), 30000, 1000);
+        const booking = await bookingkey.create({ 
+            room: pindata.room_number,
+            eventId: pindata.eventId,
+            organizerMail: pindata.organizerMail,
+            pin: pindata.pin,
+            startDateTime: new Date(pindata.startDateTime),
+            endDateTime: new Date(pindata.endDateTime),
+            B_createdAt: new Date()
+        });
         // const booking = await bookingkey.findOne({ eventId, room: room_number });
-        if (!booking) return res.status(404).json({ error: "Not found eventId" });
-        res.status(200).json({ success: true, pin: booking.pin });
+        if (!booking) return res.status(400).json({ error: "Not found eventId" });
+        res.status(200).json({ success: true });
     } catch (error) {
         console.error("Error searching pin by event ID:", error);
         res.status(500).json({ success: false, error: "Failed to search pin by event ID" });
@@ -332,7 +346,7 @@ const closedoor = async (req, res) => {
 
 module.exports = { 
     getuser
-    , keyPins, searchpinByeventId
+    , keyPins, createsearchpin
     , adminKeyPin, closedoor
     , deleteroom, createroom ,endmeeting
 };
