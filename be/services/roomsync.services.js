@@ -75,11 +75,12 @@ async function syncAllRooms() {
                             });
                             // console.log('mail send:', key);
                             RoomStr = roomData.room.toString();
-                            const mailContent = `Password for Room: /${RoomStr.slice(0,2)}>${RoomStr.slice(2,4)} is ${key}
-Thank you for your attention.
-
-Best regards,  
-Smart Conference Display System`;
+                            const mailContent = `
+                                Password for Room: /${RoomStr.slice(0, 2)}&gt;${RoomStr.slice(2, 4)} is <strong>${key}</strong><br><br>
+                                Thank you for your attention.<br><br>
+                                Best regards,<br>
+                                Smart Conference Display System
+                            `;
                             subject = "Pin for room booking";
                             const mail =  process.env.CENTERLIZED_MAIL   //event.organizer?.emailAddress?.address *********************************
                             if(process.env.DEBUG_MODE) console.log('mail content:',mailContent);

@@ -34,7 +34,7 @@ const getuser = async (req, res) => {
     getuserdatabyroom(res, RoomNumber);
     const intervalId = setInterval(async () => {
         getuserdatabyroom(res, RoomNumber);
-    }, 3000);
+    }, 5000);
 
     // จัดการ cleanup 
     req.on('close', () => {
@@ -204,7 +204,7 @@ We kindly ask that you review your future bookings and cancel in advance if you 
 Thank you for your attention and cooperation.
 
 Sincerely,
-Smart Conference Display System Administration Team`,
+Smart Conference Display System Team`,
                     recipient: organizerEmail, // ส่งให้คนที่จองห้อง
                     accessToken: tokenCache.getAccessToken(),
                 };
@@ -231,22 +231,21 @@ const createroom = async (req, res) => {
         !createroomdata.RoomNumber ||
         !createroomdata.startdatetime ||
         !createroomdata.enddatetime) {
-        return res.status(400).json({ error: "Missing required fields" });
+        return res.status(400).json({ success: false, error: "Missing required fields" });
     }
 
     const AccessToken = tokenCache.getAccessToken();
     if (!AccessToken) {
         console.error("No access token found in cache.");
-        return res.status(401).json({ error: "Please login again." });
+        return res.status(400).json({ success: false, error: "Please login again." });
     }
 
     try {
         const isCreated = await createMSEvent(AccessToken, createroomdata);
-        if (!isCreated) return res.status(400).json({ error: "Event creation failed. Please check input or schedule conflicts." });
+        if (!isCreated) return res.status(400).json({ success: false, error: "Event creation failed." });
 
         console.log(`Booking created for room ${createroomdata.RoomNumber}`);
         return res.status(200).json({ success: true });
-
     } catch (error) {
         console.error("Error during createMSEvent:", error);
         return res.status(500).json({ error: error.message || "Internal server error" });
@@ -256,7 +255,7 @@ const createroom = async (req, res) => {
 
 const createsearchpin = async (req, res) => {
     const { pindata } = req.body;
-    if (!pindata || !pindata.eventId || !pindata.room || !pindata.organizerMail || !pindata.pin || !pindata.startDateTime || !pindata.endDateTime) {
+    if (!pindata || !pindata.eventId || !pindata.room_number || !pindata.organizerMail || !pindata.pin || !pindata.startDateTime || !pindata.endDateTime) {
         return res.status(400).json({ error: "All fields are required" });
     }
 

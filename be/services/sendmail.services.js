@@ -7,7 +7,7 @@ async function sendMailAsync(subject, body, recipient, accessToken) { // เเ�
     const message = {
         message: {
         subject,
-        body: { contentType: 'Text', content: body },
+        body: { contentType: 'HTML', content: body },
         toRecipients: [{ emailAddress: { address: recipient } }] //`${@tcc-technology}`
     },
     saveToSentItems: true
