@@ -341,7 +341,7 @@ const BookingModal = ({ isOpen, onClose, onSubmit, onPinModalClose }) => {
     // ตรวจสอบว่าเวลาที่จองไม่ใช่เวลาในอดีต
     const now = new Date();
     // เพิ่ม buffer 1 นาที เพื่อให้สามารถจองเวลาปัจจุบันได้
-    const bufferTime = new Date(now.getTime() - 60000); // ลบ 1 นาที
+    const bufferTime = new Date(now.getTime() - 15 * 60 * 1000); // ลบ 1 นาที
     if (proposedStart < bufferTime) {
       return true; // Conflict: ไม่สามารถจองย้อนหลังได้
     }
@@ -366,7 +366,7 @@ const BookingModal = ({ isOpen, onClose, onSubmit, onPinModalClose }) => {
     const proposedStart = new Date(formData.startTime);
     const now = new Date();
     // เพิ่ม buffer 1 นาที เพื่อให้สามารถจองเวลาปัจจุบันได้
-    const bufferTime = new Date(now.getTime() - 60000); // ลบ 1 นาที
+    const bufferTime = new Date(now.getTime() - 15 * 60 * 1000);; // ลบ 1 นาที
     return proposedStart < bufferTime;
   };
 
@@ -390,7 +390,7 @@ const BookingModal = ({ isOpen, onClose, onSubmit, onPinModalClose }) => {
       const proposedStart = new Date(formData.startTime);
       const now = new Date();
       // เพิ่ม buffer 1 นาที เพื่อให้สามารถจองเวลาปัจจุบันได้
-      const bufferTime = new Date(now.getTime() - 60000); // ลบ 1 นาที
+      const bufferTime = new Date(now.getTime() - 15 * 60 * 1000); // ลบ 1 นาที
       if (proposedStart < bufferTime) {
         newErrors.timeConflict = 'Cannot book for past time. Please select a future time.';
       }
@@ -569,12 +569,7 @@ const BookingModal = ({ isOpen, onClose, onSubmit, onPinModalClose }) => {
         console.log("Submitting booking:", payload);
         
         // Step 1: Create the event
-        const response = await axios.post('/user/ms/create', { createroomdata: payload });
-        
-        if (!response.data.success) {
-          throw new Error('Failed to create booking');
-        }
-
+        const response = await axios.post('/user/ms/create', { createroomdata: payload })
         console.log("Booking created successfully, waiting for events to update...");
 
         // Step 2: ตั้ง flag เพื่อรอ event จาก SSE
@@ -923,7 +918,7 @@ const BookingModal = ({ isOpen, onClose, onSubmit, onPinModalClose }) => {
       // ตรวจสอบการจองย้อนหลัง
       if (proposedStart < now) {
         // เพิ่ม buffer 1 นาที เพื่อให้สามารถจองเวลาปัจจุบันได้
-        const bufferTime = new Date(now.getTime() - 60000); // ลบ 1 นาที
+        const bufferTime = new Date(now.getTime() - 15 * 60 * 1000); // ลบ 1 นาที
         if (proposedStart < bufferTime) {
           return (
             <div style={{
@@ -1311,6 +1306,19 @@ const BookingModal = ({ isOpen, onClose, onSubmit, onPinModalClose }) => {
                 {/* Quick Duration Menu */}
                 <div className="quick-duration-menu">
                   <div className="quick-duration-container">
+                    <button 
+                      type="button"
+                      onClick={() => setQuickDuration(15)}
+                      className={`quick-duration-btn ${formData.duration === 15 ? 'active' : ''}`}
+                      disabled={loading || waitingEvent}
+                      style={{
+                        opacity: (loading || waitingEvent) ? 0.3 : 1,
+                        cursor: (loading || waitingEvent) ? 'not-allowed' : 'pointer',
+                        pointerEvents: (loading || waitingEvent) ? 'none' : 'auto'
+                      }}
+                    >
+                      15min
+                    </button>
                     <button 
                       type="button"
                       onClick={() => setQuickDuration(30)}
