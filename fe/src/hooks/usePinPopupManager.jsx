@@ -94,13 +94,13 @@ const PinPopupManager = ({ events, onPinSuccess, closeSignal, bookingInProgress 
   //เปิดปิด pinpopup
 useEffect(() => {
   if (isOccupied && !pinVerified && !bookingInProgress) {
-      setPinVisible(true);
-    } else if (!isOccupied) {
-      setPinVisible(false);
-      setPinVerified(false); // reset เมื่อตารางหมด
-      setError('');
-    }
-  },[isOccupied, pinVerified, bookingInProgress]);
+    setPinVisible(true);
+  } else if (!isOccupied) {
+    setPinVisible(false);
+    setPinVerified(false); // reset เมื่อตารางหมด
+    setError('');
+  }
+}, [isOccupied, pinVerified, bookingInProgress]);
 
   // เปิดหน้า pin ค้างไว้เพื่อเทส
   // useEffect(() => {

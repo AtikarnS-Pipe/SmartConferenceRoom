@@ -4,8 +4,10 @@ import { useRoomData } from '../hooks/useRoomData';
 import { useEvents } from '../hooks/useEvents';
 import axios from 'axios';
 
+
 //constant
 const COUNTDOWN_TIME = 60; //เวลาปิดอัตโนมัติ 30 วินาที
+
 const BookingModal = ({ isOpen, onClose, onSubmit, onPinModalClose }) => {
   const [formData, setFormData] = useState({
     subject: '',
@@ -589,12 +591,24 @@ const BookingModal = ({ isOpen, onClose, onSubmit, onPinModalClose }) => {
     }
   };
 
+  function randomPin() {
+    return Math.floor(1000 + Math.random() * 9000).toString(); // 0.000-0.999*9000ได้ 0-8999 + 1000 จะได้ Range 1000-9999 
+  }
+
   // ฟังก์ชันสำหรับดึง PIN
-  const getPin = async (eventId) => {
+  const getPin = async (matchevent) => {
     try {
+      const Pin = randomPin();
+      console.log("Generated PIN:", Pin);
       const pinResponse = await axios.post('/user/search-pin', {
-        eventId,
-        room_number: roomId
+        pindata: {
+          eventId: matchevent.id,
+          room_number: roomId,
+          organizerMail: matchevent.organizer?.emailAddress?.address,        
+          pin: Pin,
+          startDateTime: matchevent.start?.dateTime,
+          endDateTime: matchevent.end?.dateTime
+        }
       });
 
       if (!pinResponse.data.success) {
@@ -603,10 +617,6 @@ const BookingModal = ({ isOpen, onClose, onSubmit, onPinModalClose }) => {
         });
         return;
       }
-
-      const Pin = pinResponse.data.pin;
-      console.log("Retrieved PIN:", Pin);
-
       setBookingPin(Pin);
       setShowPinModal(true);
       if (onSubmit) onSubmit(formData);
@@ -637,7 +647,7 @@ const BookingModal = ({ isOpen, onClose, onSubmit, onPinModalClose }) => {
 
     if (matchedEvent) {
       console.log("Found matching event from SSE:", matchedEvent.id);
-      getPin(matchedEvent.id);
+      getPin(matchedEvent);
       setWaitingEvent(false);
       setTargetStart(null);
       setTargetEnd(null);
