@@ -67,14 +67,14 @@ const PinPopupManager = ({ events, onPinSuccess, closeSignal, bookingInProgress 
 
     // ถ้าเลยเวลาแล้ว ลบทันที
     if (msSinceStart >= deadline) {
-      deleteEventOnBackend({ eventId: currentEvent.id });
+      // deleteEventOnBackend({ eventId: currentEvent.id });
       resetAllStates();
       return;
     }
 
     // ยังไม่ครบ 15 นาที: ตั้ง timeout
     const id = setTimeout(() => {
-      deleteEventOnBackend({ eventId: currentEvent.id });
+      // deleteEventOnBackend({ eventId: currentEvent.id });
       resetAllStates();
     }, deadline - msSinceStart);
 
@@ -98,7 +98,7 @@ const PinPopupManager = ({ events, onPinSuccess, closeSignal, bookingInProgress 
         setPinVisible(true);
         setIsTemporarilyHidden(false);
       } else {
-        deleteEventOnBackend({ eventId: currentEvent.id });
+        // deleteEventOnBackend({ eventId: currentEvent.id });
         resetAllStates();
       }
     }
