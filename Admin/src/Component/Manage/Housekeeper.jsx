@@ -858,20 +858,19 @@ useEffect(() => {
                       </div>
 
         <div className="p-2 md:p-6">
-          {/* Replace the old stats section with the new component */}
+          {/* Stats */}
           <HousekeeperStats 
             housekeeperCount={housekeeperCount}
             adminCount={adminCount}
             filteredMembers={filteredMembers}
             darkMode={darkMode}
           />
-
           {/* Table */}
           <div className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} rounded-xl shadow-sm border`}>
             <div className={`p-4 md:p-6 border-b ${darkMode ? 'border-gray-700' : 'border-gray-100'} flex flex-col sm:flex-row sm:justify-between gap-4 flex-wrap`}>
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <Users className="w-5 h-5 text-blue-600" />
+                  <UserCheck className="w-5 h-5 text-blue-600" />
                 </div>
                 <h2 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>Housekeepers</h2>
               </div>
@@ -911,57 +910,57 @@ useEffect(() => {
               </div>
             </div>
 
-        <div className="overflow-x-auto">
-      <table className={`w-full min-w-[450px] sm:min-w-[500px] md:min-w-[600px]`}>
-        <thead className={darkMode ? 'bg-gray-700' : 'bg-gray-50'}>
-          <tr>
-            <th className="px-6 py-3 text-left">
-              <input
-                type="checkbox"
-                checked={selectedMembers.length === filteredMembers.length && filteredMembers.length > 0}
-                onChange={handleSelectAll}
-                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-              />
-            </th>
-            {['Member', 'Role', 'Action'].map((title) => (
-              <th key={title} className={`px-6 py-3 text-left text-xs font-medium uppercase ${darkMode ? 'text-gray-300' : 'text-gray-500'}`}>{title}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody className={`${darkMode ? 'bg-gray-800 divide-gray-700 text-white' : 'bg-white divide-gray-200 text-gray-900'} divide-y`}>
-          {filteredMembers.map((h) => (
-            <tr key={h._id} className={`${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}`}>
-              <td className="px-6 py-4">
-                <input
-                  type="checkbox"
-                  checked={selectedMembers.some(m => m.id === h._id)}
-                  onChange={() => handleSelectHousekeeper(h)}
-                />
-              </td>
-              <td className="px-6 py-4">
-                <div className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>{h.name}</div>
-              </td>
-              <td className="px-6 py-4">
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                  {h.role}
-                </span>
-              </td>
-              <td className="px-6 py-4">
-                <RefreshButton
-                  onClick={() => {
-                    setPinTargetName(h.name);
-                    setShowPinModal(true);
-                  }}
-                  className="px-3 py-1 bg-blue-500 text-white text-xs font-medium rounded hover:bg-blue-600 transition"
-                >
-                  Change PIN
-                </RefreshButton>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+            <div className="overflow-x-auto">
+              <table className={`w-full min-w-[450px] sm:min-w-[500px] md:min-w-[600px]`}>
+                <thead className={darkMode ? 'bg-gray-700' : 'bg-gray-50'}>
+                  <tr>
+                    <th className="px-6 py-3 text-left">
+                      <input
+                        type="checkbox"
+                        checked={selectedMembers.length === filteredMembers.length && filteredMembers.length > 0}
+                        onChange={handleSelectAll}
+                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      />
+                    </th>
+                    {['Member', 'Role', 'Action'].map((title) => (
+                      <th key={title} className={`px-6 py-3 text-left text-xs font-medium uppercase ${darkMode ? 'text-gray-300' : 'text-gray-500'}`}>{title}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className={`${darkMode ? 'bg-gray-800 divide-gray-700 text-white' : 'bg-white divide-gray-200 text-gray-900'} divide-y`}>
+                  {filteredMembers.map((h) => (
+                    <tr key={h._id} className={`${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}`}>
+                      <td className="px-6 py-4">
+                        <input
+                          type="checkbox"
+                          checked={selectedMembers.some(m => m.id === h._id)}
+                          onChange={() => handleSelectHousekeeper(h)}
+                        />
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>{h.name}</div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                          {h.role}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <RefreshButton
+                          onClick={() => {
+                            setPinTargetName(h.name);
+                            setShowPinModal(true);
+                          }}
+                          className="px-3 py-1 bg-blue-500 text-white text-xs font-medium rounded-lg hover:bg-blue-600 transition"
+                        >
+                          Change PIN
+                        </RefreshButton>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
 
             {filteredMembers.length === 0 && (
               <div className="text-center py-12">
