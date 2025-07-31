@@ -36,7 +36,7 @@ app.get('/', (req, res) => {
 // Sync all rooms for mail sending every 10 s
 const sintervalId = setInterval(() => {
   syncAllRooms();
-}, 6000);
+}, 8000);
 
 app.listen(process.env.PORT, async () => {
   console.log(`Server running at http://localhost:${process.env.PORT}`);

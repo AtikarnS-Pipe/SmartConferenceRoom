@@ -33,7 +33,7 @@ async function getuserdatabyroom(res, RoomNumber) {
             event.responseStatus?.response === "accepted"
         );
         const results = acceptedEvents
-        // if(process.env.DEBUG_MODE) console.log("usersdate => ",results)
+        console.log("usersdate => ",results)
         res.write(`data: ${JSON.stringify({ results })}\n\n`);
         
     } catch (error) {
