@@ -6,7 +6,8 @@ import axios from 'axios';
 import RefreshButton from "../utils/refreshToken"; // Assuming you have a RefreshButton component
 import Navbar from './navbar.jsx';
 import { useDarkMode } from './Context/DarkModeContext';
-
+import {CircularProgress,} from '@mui/material';
+import LinearProgress from '@mui/material/LinearProgress';
 
 function RoomPage() {
     const [currentTime, setCurrentTime] = useState(new Date());
@@ -178,9 +179,8 @@ function RoomPage() {
             darkMode ? 'text-white' : 'text-black'
           }`}>
             <span>loading</span>
-            <div className={`animate-spin rounded-full h-8 w-8 border-t-4 border-solid ${
-              darkMode ? 'border-white' : 'border-gray-500'
-            }`}></div>
+            <CircularProgress size="25px"/>
+
           </div>
             ) : (
               <Roomcard data={events} icons={iconClass} />

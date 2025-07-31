@@ -6,8 +6,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import RefreshButton from '../../utils/refreshToken';
 import { useDarkMode } from '../Context/DarkModeContext';
 import Navbar from '../navbar';
-import axios from 'axios';
-
+import axios from 'axios'
+import {CircularProgress,} from '@mui/material';
 
 dayjs.extend(isBetween);
 
@@ -406,9 +406,9 @@ const Room1501 = () => {
       <div className="p-4 sm:p-6 max-w-[1800px] mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between gap-4 md:gap-6">
+          <div className="flex flex-col sm:flex-row items-center justify-center sm:justify-between gap-4 md:gap-6">
             {/* Left Section */}
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-4 items-center sm:items-start">
               {/* <RefreshButton
                 onClick={() => navigate('/admin/api')}
                 className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg w-fit ${
@@ -491,7 +491,7 @@ const Room1501 = () => {
               </div> */}
               
               
-              <div className="flex gap-2 w-full justify-end lg:justify-center"> 
+              <div className="flex gap-2 w-full justify-center sm:justify-end lg:justify-center"> 
               <div className="flex gap-2">
                 {['Day', 'Week'].map((option) => (
                   <RefreshButton
@@ -546,9 +546,10 @@ const Room1501 = () => {
         }`}>
           {isLoading ? (
             <div className="flex items-center justify-center h-64">
-              <div className={`animate-spin rounded-full h-12 w-12 border-b-2 ${
+              {/* <div className={`animate-spin rounded-full h-12 w-12 border-b-2 ${
                 darkMode ? 'border-gray-400' : 'border-slate-800'
-              }`}></div>
+              }`}></div> */}
+              <CircularProgress size="30px"/>  
             </div>
           ) : (
             <div

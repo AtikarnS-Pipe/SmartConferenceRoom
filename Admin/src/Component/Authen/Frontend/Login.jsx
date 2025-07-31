@@ -93,9 +93,12 @@ function Verify({ setAuth }) {
 
       <div className="flex flex-1">
         {/* Left Side - Logo (Hidden on small screens) */}
-        <div className="hidden lg:flex flex-1 bg-gray-10 items-center justify-center p-8">
-          <img src="src/assets/Logotcc.png" alt="Logo" className="w-120 h-70 mx-auto mb-4" />
+        <div className="hidden lg:flex flex-1 bg-[#0398fc] items-center justify-center p-8">
+          <img src="src/assets/Logotcc.png" alt="Logo" className="w-auto h-80 mx-auto mb-4" />
         </div>
+        {/* <div className="hidden lg:flex flex-1 bg-gray-10 items-center justify-center p-8">
+          <img src="src/assets/Logotcc-old.png" alt="Logo" className="w-auto h-80 mx-auto mb-4" />
+        </div> */}
 
         {/* Right Side - Login Form */}
         <div
