@@ -21,6 +21,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { DarkModeContext } from '../Context/DarkModeContext'; // Adjust the import path as necessary
 import RefreshButton from '../../utils/refreshToken'; // Adjust the import path as necessary
+import HousekeeperStats from '../Housekeeperstats';
 
 function Housekeeper() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -32,6 +33,7 @@ function Housekeeper() {
   const [createhousekeeper, setCreatehousekeeper] = useState('');
   const [deletehousekeeper, setDeletehousekeeper] = useState('');
   const [error, setError] = useState('');
+  const [allUsers, setAllUsers] = useState([]);  // รวมทั้งหมด
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [pendingDelete, setPendingDelete] = useState(null); // ใช้เก็บ callback ลบจริง
   const [signoutsuccess, setSignoutsuccess] = useState(false);
@@ -47,6 +49,8 @@ function Housekeeper() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [housekeeper, setHousekeeper] = useState([]);
   const [message, setMessage] = useState('');
+  const [housekeepers, setHousekeepers] = useState([]);
+  const [admins, setAdmins] = useState([]);
   const [open, setOpen] = useState(false);
   const [profile, setProfile] = useState('');
   const dropdownRef = useRef(null);
@@ -55,43 +59,49 @@ function Housekeeper() {
   const navigate = useNavigate();
   const { darkMode, toggleDarkMode } = useContext(DarkModeContext);
 
-  useEffect(() => {
-    const eventSource = new EventSource('/account/housekeepers', {
-      withCredentials: true,
-    });
+useEffect(() => {
+  const housekeeperSource = new EventSource('/account/housekeepers', {
+    withCredentials: true,
+  });
 
-    // console.log("SSE connection established for housekeepers", eventSource);
+  const adminSource = new EventSource('/account/member', {
+    withCredentials: true,
+  });
 
-    const handleHousekeeperList = (event) => {
-      try {
-        // console.log('SSE raw event.data:', event.data);
-        const data = JSON.parse(event.data);
-        // console.log('SSE parsed housekeeper data:', data);
+const handleHousekeeperList = (event) => {
+  const data = JSON.parse(event.data);
+  if (Array.isArray(data)) {
+    setHousekeepers(data);
+  }
+};
 
-        if (Array.isArray(data)) {
-          setHousekeeper(data);  // ใช้ได้ตรงนี้เลย
-        } else {
-          // console.error('Housekeeper data is not an array:', data);
-        }
-        
-      } catch (error) {
-        // console.error('Error parsing SSE data:', error);
-      }
-    };
+const handleAdminList = (event) => {
+  const data = JSON.parse(event.data);
+   console.log("📥 AdminList SSE data received:", data); // ⬅️ ใส่ตรงนี้
+  if (Array.isArray(data)) {
+    setAdmins(data);
+  }
+};
 
-    // ✅ ชื่อ event ต้องตรงเป๊ะ (เคารพ case-sensitive)
-    eventSource.addEventListener('HousekeeperList', handleHousekeeperList);
+  housekeeperSource.addEventListener('HousekeeperList', handleHousekeeperList);
+  adminSource.addEventListener('adminList', handleAdminList);
 
-    eventSource.onerror = (error) => {
-      console.error('SSE connection error:', error);
-      eventSource.close();
-    };
+  housekeeperSource.onerror = (err) => {
+    console.error('SSE error (housekeeper):', err);
+    housekeeperSource.close();
+  };
+  adminSource.onerror = (err) => {
+    console.error('SSE error (admin):', err);
+    adminSource.close();
+  };
 
-    return () => {
-      eventSource.removeEventListener('HousekeeperList', handleHousekeeperList);
-      eventSource.close();
-    };
-  }, []);
+  return () => {
+    housekeeperSource.removeEventListener('HousekeeperList', handleHousekeeperList);
+    adminSource.removeEventListener('AdminList', handleAdminList);
+    housekeeperSource.close();
+    adminSource.close();
+  };
+}, []);
 
 
     useEffect(() => {
@@ -106,9 +116,7 @@ function Housekeeper() {
 
 
   // filter สำหรับค้นหา housekeeper
-  const filteredMembers = housekeeper.filter(member =>
-    member.name && member.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+const filteredMembers = allUsers.filter(user => user.role === 'Housekeeper');
 
 
 const handleSelectAll = () => {
@@ -133,42 +141,59 @@ const handleSelectHousekeeper = (housekeeper) => {
 };
 
   const handleSubmitPasswordChange = async () => {
-    if (newPassword !== confirmPassword) {
-      setStatusPopup('error');
-      setTimeout(() => setStatusPopup(null), 3000);
-      return;
-    }
+  if (newPassword !== confirmPassword) {
+    setStatusPopup('error');
+    setMessage('Passwords do not match');
+    setTimeout(() => {
+      setStatusPopup(null);
+      setShowPasswordModal(false);
+      setNewPassword('');
+      setConfirmPassword('');
+    }, 3000);
+    return;
+  }
 
-    try {
-      const token = localStorage.getItem('token');
+  try {
+    const token = localStorage.getItem('token');
 
-      const res = await axios.patch(
-        '/account/changeadminpw',
-        { newpin: newPassword },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      if (res.status === 200) {
-        setPinadmin('success');
-        setTimeout(() => {
-          setPinadmin(null);
-          setShowPasswordModal(false);
-          setNewPassword('');
-          setConfirmPassword('');
-        }, 3000);
-      } else {
-        setPinadmin('error');
-        setTimeout(() => setStatusPopup(null), 3000);
+    const res = await axios.patch(
+      '/account/changeadminpw',
+      { newpin: newPassword },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       }
-    } catch (error) {
-      console.error(error);
-      setStatusPopup('error');
-      setTimeout(() => setStatusPopup(null), 3000);
-    }
-  };
+    );
+
+    setMessage(res.data.message || 'Housekeeper PIN changed successfully');
+    setStatusPopup('success');
+
+    setTimeout(() => {
+      setStatusPopup(null);
+      setShowPasswordModal(false);
+      setNewPassword('');
+      setConfirmPassword('');
+    }, 3000);
+
+  } catch (error) {
+    // ✅ ใช้ error.response แทน res
+    const messageFromBackend =
+      error.res?.data?.message || 'Failed to update PIN. Please try again.';
+
+    console.error('Error updating PIN:', messageFromBackend);
+
+    setMessage(messageFromBackend);
+    setStatusPopup('error');
+
+    setTimeout(() => {
+      setStatusPopup(null);
+      setShowPasswordModal(false);
+      setNewPassword('');
+      setConfirmPassword('');
+    }, 3000);
+  }
+};
 
 
  const handleChangePin = async () => {
@@ -257,7 +282,7 @@ const handleAddMember = async () => {
       setCreatehousekeeper(null);
       setShowModal(false);
       setNewMember({ name: "", pin: "", role: "Housekeeper" });
-    }, 3000);
+    }, 2000);
 
   } catch (error) {
     console.error("Error creating housekeeper:", error.response?.data || error.message);
@@ -268,7 +293,7 @@ const handleAddMember = async () => {
       setCreatehousekeeper(null);
       setShowModal(false);
       setNewMember({ name: "", pin: "", role: "Housekeeper" });
-    }, 3000);
+    }, 2000);
   }
 };
 
@@ -309,6 +334,7 @@ const performDeleteHousekeepers = async () => {
     setTimeout(() => setDeletehousekeeper(null), 3000);
   }
 };
+  
     useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) return;
@@ -383,9 +409,23 @@ const handleSignout = async () => {
 };
 
   // คำนวณจำนวน
-  const totalUsers = housekeeper.length;
-  const adminCount = housekeeper.filter(m => m.role && m.role.toLowerCase() === 'admin').length;
-  const housekeeperCount = housekeeper.filter(m => m.role && m.role.toLowerCase() === 'housekeeper').length;
+const [adminCount, setAdminCount] = useState(0);
+const [housekeeperCount, setHousekeeperCount] = useState(0);
+
+useEffect(() => {
+  setAllUsers([...admins, ...housekeepers]);
+}, [admins, housekeepers]);
+
+useEffect(() => {
+  const adminList = allUsers.filter(u => u.role === 'Admin');
+  const housekeeperList = allUsers.filter(u => u.role === 'Housekeeper');
+
+  console.log("🧑‍💼 allUsers (in housekeeper page):", allUsers);
+
+  setAdminCount(adminList.length);
+  setHousekeeperCount(housekeeperList.length);
+}, [allUsers]);
+
 
   return (
     <div className={`min-h-screen ${darkMode ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'} flex flex-col md:flex-row font-display`}>
@@ -552,37 +592,22 @@ const handleSignout = async () => {
         </div>
       )}
       {statusPopup === 'success' && (
-        <div className="fixed inset-0 z-50 backdrop-blur-sm bg-white/20 flex items-center justify-center shadow-xl/30">
-          <div className="bg-green-100 border border-green-400 text-green-700 px-6 py-4 rounded-xl shadow-lg text-lg">
-            ✅ PIN updated successfully!
+        <div className="fixed top-6 right-6 z-[9999]">
+            <div className="bg-green-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-2 animate-slide-in">
+              <CheckCircle className="w-5 h-5" />
+              <span className="font-medium">{message}</span>
+            </div>
           </div>
-        </div>
       )}
 
       {statusPopup === 'error' && (
-        <div className="fixed inset-0 z-50 backdrop-blur-sm bg-white/20 flex items-center justify-center shadow-xl/30">
-          <div className="bg-red-100 border border-red-400 text-red-700 px-6 py-4 rounded-xl shadow-lg text-lg">
-            ❌ Failed to update PIN!
-          </div>
-        </div>
-      )}
-      {pinadmin === 'success' && (
-        <div className="fixed top-6 right-6 z-50">
-          <div className="bg-green-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-2 animate-slide-in">
-            <CheckCircle className="w-5 h-5" />
-            <span className="font-medium">{message}</span>
-          </div>
-        </div>
-      )}
-
-      {pinadmin === 'error' && (
-        <div className="fixed top-6 right-6 z-50">
+        <div className="fixed top-6 right-6 z-[9999]">
           <div className="bg-red-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-2 animate-slide-in">
             <XCircle className="w-5 h-5" />
             <span className="font-medium">{message}</span>
           </div>
         </div>
-      )}
+      )}  
       {pinerr == 'success' && (
         <div className="fixed top-6 right-6 z-50">
           <div className="bg-green-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-2 animate-slide-in">
@@ -833,24 +858,13 @@ const handleSignout = async () => {
                       </div>
 
         <div className="p-2 md:p-6">
-          {/* Stats */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 mb-6 md:mb-8">
-            {[['Total users', totalUsers, Users, 'green'],
-              ['Admins', adminCount, Shield, 'purple'],
-              ['Housekeepers', housekeeperCount, UserCheck, 'blue']].map(([label, count, Icon, color]) => (
-              <div key={label} className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} rounded-xl p-4 md:p-6 shadow-sm border`}>
-                <div className="flex items-center gap-4">
-                  <div className={`w-12 h-12 bg-${color}-100 rounded-lg flex items-center justify-center`}>
-                    <Icon className={`w-6 h-6 text-${color}-600`} />
-                  </div>
-                  <div>
-                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{label}</p>
-                    <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>{count}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+          {/* Replace the old stats section with the new component */}
+          <HousekeeperStats 
+            housekeeperCount={housekeeperCount}
+            adminCount={adminCount}
+            filteredMembers={filteredMembers}
+            darkMode={darkMode}
+          />
 
           {/* Table */}
           <div className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} rounded-xl shadow-sm border`}>
@@ -878,7 +892,7 @@ const handleSignout = async () => {
                     setShowModal(true)
                   }}
                     
-                    className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+                    className="flex items-center gap-2 bg-blue-600 text-sm text-white px-4 py-2 rounded-lg hover:bg-blue-700"
                   >
                     <Plus className="w-4 h-4" />
                     Add Housekeeper
@@ -886,7 +900,7 @@ const handleSignout = async () => {
                   <RefreshButton
                     disabled={selectedMembers.length === 0}
                     onClick={handleDeleteHousekeepers}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-lg ${
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm ${
                       selectedMembers.length > 0 ? 'bg-red-600 text-white hover:bg-red-700' : 'bg-gray-100 text-gray-400'
                     }`}
                   >
@@ -958,7 +972,7 @@ const handleSignout = async () => {
 
             <div className={`px-4 md:px-6 py-4 border-t ${darkMode ? 'border-gray-700 bg-gray-700 text-gray-300' : 'border-gray-100 bg-gray-50 text-gray-500'}`}>
               <p className="text-sm">
-                {filteredMembers.length} of {housekeeperCount} results
+                Updated Real-Time
               </p>
             </div>
           </div>

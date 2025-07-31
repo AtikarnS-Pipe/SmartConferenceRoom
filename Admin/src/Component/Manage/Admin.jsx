@@ -8,7 +8,7 @@ import {
   ChevronDown,
   Search,
   Plus,
-  Trash2,
+  XCircle,
   Clock,
   Home,
   Eye,
@@ -21,6 +21,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { DarkModeContext } from '../Context/DarkModeContext';
 import RefreshButton from '../../utils/refreshToken'; // Adjust the import path as necessary
+import HousekeeperStats from '../Housekeeperstats';
 
 function Admin() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -30,8 +31,11 @@ function Admin() {
   const [selectedMembers, setSelectedMembers] = useState([]);
   const [newPassword, setNewPassword] = useState('');
   const [show, setShow] = useState(false);
-  const [pinChanged, setPinChanged] = useState(null);
+  const [message, setMessage] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [housekeepers, setHousekeepers] = useState([]);
+  const [admins, setAdmins] = useState([]);
+  const [allUsers, setAllUsers] = useState([]);  // รวมทั้งหมด
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [statusPopup, setStatusPopup] = useState(null);
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -51,31 +55,46 @@ function Admin() {
   });
 
   useEffect(() => {
-    const eventSource = new EventSource('/account/member', {
+    const housekeeperSource = new EventSource('/account/housekeepers', {
       withCredentials: true,
     });
-
-    const handleAdminList = (event) => {
-      try {
-        console.log('Raw SSE event data:', event.data); 
-        const data = JSON.parse(event.data);
-          console.log("Selected Members:", data);
-        setMembers(data);
-      } catch (error) {
-        console.error('Error parsing SSE data:', error);
-      }
+  
+    const adminSource = new EventSource('/account/member', {
+      withCredentials: true,
+    });
+  
+  const handleHousekeeperList = (event) => {
+    const data = JSON.parse(event.data);
+    if (Array.isArray(data)) {
+      setHousekeepers(data);
+    }
+  };
+  
+  const handleAdminList = (event) => {
+    const data = JSON.parse(event.data);
+     console.log("📥 AdminList SSE data received:", data); // ⬅️ ใส่ตรงนี้
+    if (Array.isArray(data)) {
+      setAdmins(data);
+    }
+  };
+  
+    housekeeperSource.addEventListener('HousekeeperList', handleHousekeeperList);
+    adminSource.addEventListener('adminList', handleAdminList);
+  
+    housekeeperSource.onerror = (err) => {
+      console.error('SSE error (housekeeper):', err);
+      housekeeperSource.close();
     };
-
-    eventSource.addEventListener('adminList', handleAdminList);
-
-    eventSource.onerror = (error) => {
-      console.error('SSE connection error:', error);
-      eventSource.close();
+    adminSource.onerror = (err) => {
+      console.error('SSE error (admin):', err);
+      adminSource.close();
     };
-
+  
     return () => {
-      eventSource.removeEventListener('adminList', handleAdminList);
-      eventSource.close();
+      housekeeperSource.removeEventListener('HousekeeperList', handleHousekeeperList);
+      adminSource.removeEventListener('AdminList', handleAdminList);
+      housekeeperSource.close();
+      adminSource.close();
     };
   }, []);
 
@@ -93,43 +112,59 @@ function Admin() {
   }, []);
 
   const handleSubmitPasswordChange = async () => {
-    if (newPassword !== confirmPassword) {
-      setStatusPopup('error');
-      setTimeout(() => setStatusPopup(null), 3000);
-      return;
-    }
+  if (newPassword !== confirmPassword) {
+    setStatusPopup('error');
+    setMessage('Passwords do not match');
+    setTimeout(() => {
+      setStatusPopup(null);
+      setShowPasswordModal(false);
+      setNewPassword('');
+      setConfirmPassword('');
+    }, 3000);
+    return;
+  }
 
-    try {
-      const token = localStorage.getItem('token');
+  try {
+    const token = localStorage.getItem('token');
 
-      const res = await axios.patch(
-        '/account/changeadminpw',
-        { newpin: newPassword },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      if (res.status === 200) {
-        setStatusPopup('success');
-        setTimeout(() => {
-          setPinChanged(res.data.newPinPlaintext);
-          setStatusPopup(null);
-          setShowPasswordModal(false);
-          setNewPassword('');
-          setConfirmPassword('');
-        }, 3000);
-      } else {
-        setStatusPopup('error');
-        setTimeout(() => setStatusPopup(null), 3000);
+    const res = await axios.patch(
+      '/account/changeadminpw',
+      { newpin: newPassword },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       }
-    } catch (error) {
-      console.error(error);
-      setStatusPopup('error');
-      setTimeout(() => setStatusPopup(null), 3000);
-    }
-  };
+    );
+
+    setMessage(res.data.message);
+    setStatusPopup('success');
+
+    setTimeout(() => {
+      setStatusPopup(null);
+      setShowPasswordModal(false);
+      setNewPassword('');
+      setConfirmPassword('');
+    }, 3000);
+
+  } catch (error) {
+    // ✅ ใช้ error.response แทน res
+    const messageFromBackend =
+      error.res?.data?.message || 'Failed to update PIN. Please try again.';
+
+    console.error('Error updating PIN:', messageFromBackend);
+
+    setMessage(messageFromBackend);
+    setStatusPopup('error');
+
+    setTimeout(() => {
+      setStatusPopup(null);
+      setShowPasswordModal(false);
+      setNewPassword('');
+      setConfirmPassword('');
+    }, 3000);
+  }
+};
 
 const handleSignout = async () => {
   try {
@@ -205,15 +240,28 @@ const handleSignout = async () => {
       hour12: false,
     }).replace(',', '');
   };
+const [adminCount, setAdminCount] = useState(0);
+const [housekeeperCount, setHousekeeperCount] = useState(0);
+useEffect(() => {
+  setAllUsers([...admins, ...housekeepers]);
+}, [admins, housekeepers]);
 
-  const totalUsers = members.length;
-  const adminCount = members.filter((m) => m.role && m.role.toLowerCase() === 'admin').length;
-  const housekeeperCount = members.filter((m) => m.role && m.role.toLowerCase() === 'housekeeper').length;
+useEffect(() => {
+  const adminList = allUsers.filter(u => u.role === 'Admin');
+  const housekeeperList = allUsers.filter(u => u.role === 'Housekeeper');
+
+  console.log("🧑‍💼 allUsers (in housekeeper page):", allUsers);
+
+  setAdminCount(adminList.length);
+  setHousekeeperCount(housekeeperList.length);
+}, [allUsers]);
+
+const adminmem = allUsers.filter(user => user.role === 'Admin');
 
   return (
     <div className={`min-h-screen ${darkMode ? 'bg-gray-900' : 'bg-gray-50'} flex flex-col md:flex-row font-display transition-colors duration-300`}>
       {showPasswordModal && (
-        <div className="fixed inset-0 z-50 bg-black bg-opacity-40 flex items-center justify-center">
+        <div className="fixed inset-0 z-50 backdrop-blur-sm bg-gray-300/30 flex items-center justify-center">
           <div className={`${darkMode ? 'bg-gray-800 text-white' : 'bg-white'} p-6 rounded-xl shadow-lg w-96`}>
             <h2 className={`text-lg font-semibold mb-4 ${darkMode ? 'text-white' : 'text-gray-800'}`}>Change PIN</h2>
 
@@ -283,17 +331,19 @@ const handleSignout = async () => {
       )}
 
       {statusPopup === 'success' && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-          <div className="bg-green-100 border border-green-400 text-green-700 px-6 py-4 rounded-xl shadow-lg text-lg">
-            ✅ Password updated successfully!
+        <div className="fixed top-6 right-6 z-[9999]">
+            <div className="bg-green-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-2 animate-slide-in">
+              <CheckCircle className="w-5 h-5" />
+              <span className="font-medium">{message}</span>
+            </div>
           </div>
-        </div>
       )}
 
       {statusPopup === 'error' && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-          <div className="bg-red-100 border border-red-400 text-red-700 px-6 py-4 rounded-xl shadow-lg text-lg">
-            ❌ Failed to update password!
+        <div className="fixed top-6 right-6 z-[9999]">
+          <div className="bg-red-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-2 animate-slide-in">
+            <XCircle className="w-5 h-5" />
+            <span className="font-medium">{message}</span>
           </div>
         </div>
       )}
@@ -492,24 +542,13 @@ const handleSignout = async () => {
         </div>
 
         <div className="p-2 md:p-6">
-          {/* Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 mb-6 md:mb-8">
-            {[['Total users', totalUsers, Users, 'green'],
-              ['Admins', adminCount, Shield, 'purple'],
-              ['Housekeepers', housekeeperCount, UserCheck, 'blue']].map(([label, count, Icon, color]) => (
-              <div key={label} className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} rounded-xl p-4 md:p-6 shadow-sm border transition-colors duration-300`}>
-                <div className="flex items-center gap-4">
-                  <div className={`w-12 h-12 bg-${color}-100 rounded-lg flex items-center justify-center`}>
-                    <Icon className={`w-6 h-6 text-${color}-600`} />
-                  </div>
-                  <div>
-                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{label}</p>
-                    <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>{count}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+          {/* Replace the old stats section with the new component */}
+          <HousekeeperStats 
+            housekeeperCount={housekeeperCount}
+            adminCount={adminCount}
+            filteredMembers={filteredMembers}
+            darkMode={darkMode}
+          />
 
           {/* Table */}
           <div className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} rounded-xl shadow-sm border transition-colors duration-300`}>
@@ -554,7 +593,7 @@ const handleSignout = async () => {
                   </tr>
                 </thead>
                 <tbody className={`${darkMode ? 'bg-gray-800' : 'bg-white'} divide-y ${darkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
-                  {members.map((m) => (
+                  {adminmem.map((m) => (
                     <tr key={m._id} className={darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}>
                       <td className="px-6 py-4">
                         <input
@@ -591,7 +630,7 @@ const handleSignout = async () => {
               </table>
             </div>
 
-            {filteredMembers.length === 0 && (
+            {adminmem.length === 0 && (
               <div className="text-center py-12">
                 <Shield className={`mx-auto w-12 h-12 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`} />
                 <p className={`mt-2 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>No admins found</p>
@@ -600,7 +639,7 @@ const handleSignout = async () => {
 
             <div className={`px-4 md:px-6 py-4 border-t ${darkMode ? 'border-gray-700 bg-gray-700' : 'border-gray-100 bg-gray-50'} transition-colors duration-300`}>
               <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                {filteredMembers.length} of {adminCount} results
+                Updated Real-Time
               </p>
             </div>
           </div>
