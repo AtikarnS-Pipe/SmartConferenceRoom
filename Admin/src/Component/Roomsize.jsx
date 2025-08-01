@@ -84,20 +84,6 @@ function RoomSize() {
         return () => clearInterval(timer);
     }, []);
 
-    const dateString = currentTime.toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      timeZone: 'Asia/Bangkok'
-    });
-    const timeString = currentTime.toLocaleTimeString('th-TH', {
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: false,
-      timeZone: 'Asia/Bangkok'
-    });
     
 
   // กรอง icons ที่ตรงกับจำนวนคน
@@ -129,7 +115,7 @@ function RoomSize() {
     <div className={`font-display min-h-screen transition-colors duration-300 ${
       darkMode ? 'bg-gray-700' : 'bg-white'
     }`}>
-        <Roomdata rooms={rooms} currentTime={new Date()} icons={icons}/>
+        <Roomdata rooms={filteredRooms} currentTime={new Date()} icons={icons}/>
       <div className={`p-4 mx-2 rounded-3xl shadow-xl transition-colors duration-300 ${
         darkMode ? 'bg-gray-800' : 'bg-[#f8f7f1]'
       }`}>

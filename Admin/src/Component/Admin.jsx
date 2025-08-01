@@ -56,6 +56,11 @@ function RoomPage() {
     eventSource.close();
   };
 }, []);
+const handleRoomFilter = (rooms, type) => {
+  setFilteredRoom(rooms);
+  setFilterType(type);
+};
+
 
   const iconClass = [
     {id:1, room: "1501", icons: 1, people: 4},
@@ -74,7 +79,7 @@ function RoomPage() {
     <div className={`font-display min-h-screen transition-colors duration-300 ${
       darkMode ? 'bg-gray-700' : 'bg-white'
     }`}>
-        <Roomdata rooms={events} currentTime={new Date()} icons={iconClass} />
+        <Roomdata rooms={events} currentTime={new Date()} icons={iconClass} onFilter={handleRoomFilter} />
         <div className={`p-4 mx-2 rounded-3xl shadow-xl transition-colors duration-300 ${
           darkMode ? 'bg-gray-800' : 'bg-[#f8f7f1]'
         }`}>

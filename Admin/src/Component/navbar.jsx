@@ -1,6 +1,7 @@
 import RefreshButton from "../utils/refreshToken";
 import { useDarkMode } from "./Context/DarkModeContext";
 import { Sun, Moon } from "lucide-react";
+import { useRoomFilter } from './Layout'; // ✅ import hook จาก Layout
 
 function Navbar({
   navigate,
@@ -11,18 +12,19 @@ function Navbar({
   timeString,
   dateString,
   showSizeRoom = true, // Add prop to control size room visibility
-  onResetFilter,
 }) {
   const { darkMode, toggleDarkMode } = useDarkMode();
+
+  const { filteredRoom, onResetFilter, filterType } = useRoomFilter();
 
   return (
     <div className="font-display">
     <nav className={`shadow-md p-6 items-center md:flex justify-between text-white sticky top-0 z-40 transition-colors duration-300 ${
       darkMode ? 'bg-gray-900' : 'bg-slate-800'
     }`}>
-      <div className="md:text-2xl text-xl underline underline-offset-10">Conference Room</div>
+      <div className="md:text-2xl text-xl ">Conference Room</div>
       <ul className='flex items-center text-center md:ml-5 max-md:mb-10 max-md:mt-10'>
-        <RefreshButton className='mr-5 cursor-pointer hover:text-gray-300' onClick={() => navigate('/admin/api')}>Home</RefreshButton>
+        <RefreshButton className='mr-5 cursor-pointer hover:text-gray-300' onClick={()=>{onResetFilter();navigate('/admin/api');}}>Home</RefreshButton>
         {showSizeRoom && (
           <li
             className="md:mr-5 lg:mx-5 cursor-pointer hover:text-gray-300"
