@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import RefreshButton from "../utils/refreshToken"; // Assuming you have a RefreshButton component
 import { useDarkMode } from './Context/DarkModeContext';
 
-function Roomdata({ rooms, currentTime,icons }) {
+function Roomdata({ rooms, currentTime, icons, onFilter  }) {
   const { darkMode } = useDarkMode();
   // console.log("Roomdata - icons:", icons); 
   let availableCount = 0;
@@ -31,40 +31,41 @@ function Roomdata({ rooms, currentTime,icons }) {
     { id: 2, Name: "Room Unavailable", count: unavailableCount, total: rooms.length }
   ];
   const navigate = useNavigate();
-  const handleClickAvailable = () => {
-    const availableRooms = rooms
-      .map(room => {
-        const isBusy = room.events.some(ev => {
-          const start = new Date(ev.start.dateTime);
-          const end = new Date(ev.end.dateTime);
-          start.setHours(start.getHours() + 7);
-          end.setHours(end.getHours() + 7);
-          return currentTime >= start && currentTime <= end;
-        });
-        return { ...room, isAvailable: !isBusy };
-      })
-      .filter(room => room.isAvailable);
+    const handleClickAvailable = () => {
+      const availableRooms = rooms
+        .map(room => {
+          const isBusy = room.events.some(ev => {
+            const start = new Date(ev.start.dateTime);
+            const end = new Date(ev.end.dateTime);
+            start.setHours(start.getHours() + 7);
+            end.setHours(end.getHours() + 7);
+            return currentTime >= start && currentTime <= end;
+          });
+          return { ...room, isAvailable: !isBusy };
+        })
+        .filter(room => room.isAvailable);
 
-    navigate("/Available", { state: { rooms: availableRooms, allRooms: rooms, icons: icons } ,replace: true});
-  };
+      // ส่งกลับไปที่ Admin
+      onFilter(availableRooms, "available");
+    };
 
-  const handleClickUnavailable = () => {
-    filterEvent();
-    const unavailableRooms = rooms
-      .map(room => {
-        const isBusy = room.events.some(ev => {
-          const start = new Date(ev.start.dateTime);
-          const end = new Date(ev.end.dateTime);
-          start.setHours(start.getHours() + 7);
-          end.setHours(end.getHours() + 7);
-          return currentTime >= start && currentTime <= end;
-        });
-        return { ...room, isAvailable: isBusy };
-      })
-      .filter(room => room.isAvailable); // คือห้องไม่ว่าง
+    const handleClickUnavailable = () => {
+      const unavailableRooms = rooms
+        .map(room => {
+          const isBusy = room.events.some(ev => {
+            const start = new Date(ev.start.dateTime);
+            const end = new Date(ev.end.dateTime);
+            start.setHours(start.getHours() + 7);
+            end.setHours(end.getHours() + 7);
+            return currentTime >= start && currentTime <= end;
+          });
+          return { ...room, isAvailable: isBusy };
+        })
+        .filter(room => room.isAvailable);
 
-    navigate("/Unavailable", { state: { rooms: unavailableRooms, allRooms: rooms, icons: icons } ,replace: true });
-  };
+      // ส่งกลับไปที่ Admin
+      onFilter(unavailableRooms, "unavailable");
+    };
   return (
     <div className={`p-10 flex items-center justify-center px-4 transition-colors duration-300 ${
       darkMode ? 'bg-gray-700' : ''

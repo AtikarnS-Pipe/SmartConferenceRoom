@@ -9,6 +9,8 @@ function RoomPage() {
     const [loading, setLoading] = useState(true);
     const location = useLocation();
     const [events, setEvents] = useState([]);
+    const [filteredRoom, setFilteredRoom] = useState([]);
+    const [filterType, setFilterType] = useState(null); // "available" | "unavailable" | null
     const { darkMode } = useDarkMode();
     useEffect(() => {
   const code = new URLSearchParams(location.search).get("code");
@@ -54,16 +56,21 @@ function RoomPage() {
     eventSource.close();
   };
 }, []);
+const handleRoomFilter = (rooms, type) => {
+  setFilteredRoom(rooms);
+  setFilterType(type);
+};
+
 
   const iconClass = [
     {id:1, room: "1501", icons: 1, people: 4},
     {id:2, room: "1502", icons: 1, people: 4},
     {id:3, room: "1503", icons: 1, people: 4},
     {id:4, room: "1504", icons: 1, people: 4},
-    {id:5, room: "1505", icons: 2, people: 6},
-    {id:6, room: "1506", icons: 2, people: 6},
-    {id:7, room: "1514", icons: 3, people: 10},
-    {id:8, room: "1515", icons: 3, people: 10},
+    {id:5, room: "1505", icons: 1, people: 6},
+    {id:6, room: "1506", icons: 1, people: 6},
+    {id:7, room: "1514", icons: 1, people: 10},
+    {id:8, room: "1515", icons: 1, people: 10},
     {id:9, room: "1519", icons: 1, people: 4},
     {id:10, room: "1520", icons: 1,people: 4},
   ];
@@ -72,7 +79,7 @@ function RoomPage() {
     <div className={`font-display min-h-screen transition-colors duration-300 ${
       darkMode ? 'bg-gray-700' : 'bg-white'
     }`}>
-        <Roomdata rooms={events} currentTime={new Date()} icons={iconClass} />
+        <Roomdata rooms={events} currentTime={new Date()} icons={iconClass} onFilter={handleRoomFilter} />
         <div className={`p-4 mx-2 rounded-3xl shadow-xl transition-colors duration-300 ${
           darkMode ? 'bg-gray-800' : 'bg-[#f8f7f1]'
         }`}>
@@ -84,7 +91,7 @@ function RoomPage() {
             <CircularProgress size="25px"/>
           </div>
             ) : (
-              <Roomcard data={events} icons={iconClass} />
+              <Roomcard data={filteredRoom.length > 0 ? filteredRoom : events} icons={iconClass} filterType={filterType} />
             )}
         </div>
   </div>

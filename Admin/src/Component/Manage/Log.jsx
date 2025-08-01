@@ -273,7 +273,7 @@ const handleSignout = async () => {
 
 
   return (
-    <div className={`min-h-screen ${darkMode ? 'bg-gray-900' : 'bg-gray-50'} flex flex-col md:flex-row font-display transition-colors duration-300`}>
+    <div className={`min-h-screen ${darkMode ? 'bg-gray-900' : 'bg-gray-50'} font-display transition-colors duration-300`}>
       {showPasswordModal && (
         <div className="fixed inset-0 z-50 backdrop-blur-sm bg-gray-300/30 flex items-center justify-center">
           <div className={`${darkMode ? 'bg-gray-800 text-white' : 'bg-white'} p-6 rounded-xl shadow-lg w-96`}>
@@ -360,7 +360,7 @@ const handleSignout = async () => {
         </div>
       )}
               {signoutsuccess && (
-              <div className="fixed top-6 right-115 z-50">
+              <div className="fixed top-6 right-6 z-50">
                 <div className="bg-green-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-2 animate-slide-in">
                   <CheckCircle className="w-5 h-5" />
                   <span className="font-medium">Signout Successful! Redirecting...</span>
@@ -368,46 +368,8 @@ const handleSignout = async () => {
               </div>
             )}
 
-      {/* Sidebar */}
-      <div className={`w-full md:w-64 ${darkMode ? 'bg-gray-800' : 'bg-slate-800'} text-white flex flex-row md:flex-col sticky top-0 h-screen transition-colors duration-300`}>
-        <div className={`p-4 md:p-6 border-b ${darkMode ? 'border-gray-700' : 'border-slate-700'} w-full`}>
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-              <Users className="w-5 h-5 text-white" />
-            </div>
-            <span className="font-semibold text-lg">Conference Room</span>
-          </div>
-        </div>
-        <div className="flex-1 p-2 md:p-4">
-          <div className="space-y-2">
-            <RefreshButton className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left hover:${darkMode ? 'bg-gray-700' : 'bg-slate-700'} cursor-pointer`} onClick={() => navigate('/admin/api')}>
-              <Home className="w-4 h-4" />
-              <span className="text-sm">Home</span>
-            </RefreshButton>
-          </div>
-          <div className="mt-4 md:mt-6">
-            <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-slate-400'} uppercase tracking-wider mb-3 px-3`}>ROLE FILTER</p>
-            <div className="space-y-1">
-              <RefreshButton className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-300 hover:${darkMode ? 'bg-gray-700' : 'bg-slate-700'} text-left cursor-pointer`} onClick={handleNavigateByRole}>
-                <Shield className="w-4 h-4 text-white" />
-                <span className="text-sm text-white">Admin</span>
-              </RefreshButton>
-              <RefreshButton className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-300 hover:${darkMode ? 'bg-gray-700' : 'bg-slate-700'} text-left cursor-pointer`} onClick={() => navigate('/account/housekeeper')}>
-                <UserCheck className="w-4 h-4 text-white" />
-                <span className="text-sm text-white">Housekeeper</span>
-              </RefreshButton>
-              <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-slate-400'} uppercase tracking-wider mb-3 px-3 mt-5`}>MONITORING</p>
-              <RefreshButton className="w-full flex items-center gap-3 px-3 py-2 rounded-lg bg-white text-blue-600 text-left">
-                <LayoutDashboard className="w-4 h-4" />
-                <span className="text-sm">Dashboard</span>
-              </RefreshButton>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Main Content */}
-      <div className="flex-1 overflow-auto">
+      <div className="w-full">
         {/* Header */}
         <div className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border-b px-4 md:px-6 py-4 transition-colors duration-300`}>
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-2">
