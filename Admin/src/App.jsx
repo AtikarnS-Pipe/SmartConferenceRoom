@@ -1,8 +1,6 @@
 import React, { useState } from 'react'
 import  RoomPage  from './Component/Admin'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
-import Available from './Component/Available'
-import Unavailable from './Component/Unavailable'
 import './App.css'
 import RoomPages from './Component/Roompages'
 import { Verify } from './Component/Authen/Frontend/Login'
@@ -34,8 +32,6 @@ function App() {
           />
         <Route path='/room/:Room/:startdate/:enddate' element={
           <Protect><RoomPages /></Protect>} />
-        <Route path='/Available' element={<Protect><Available key={location.key}/></Protect>} />
-        <Route path='/Unavailable' element={<Protect><Unavailable /></Protect>} />
         <Route path='/roomsize/:size' element={<Protect><RoomSize /></Protect>} />
         <Route path='/forgot-password' element={<Protect><ForgotPasswordFlow /></Protect>} />
 

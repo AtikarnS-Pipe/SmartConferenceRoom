@@ -13,12 +13,18 @@ function RoomSize() {
   const { size } = useParams();          // size มาจาก URL เช่น /roomsize/4
   const peopleSize = Number(size);       // แปลงเป็น number ถ้าจำเป็น
   const [profile, setProfile] = useState(null);
-  const { rooms = [], icons = [] } = location.state || {};
+  const { rooms = [], icons = []  } = location.state || {};
+  const [filteredRoom, setFilteredRoom] = useState([]);
+  const [filterType, setFilterType] = useState(null); // "available" | "unavailable" | null
   const [currentTime, setCurrentTime] = useState(new Date());
   const navigate = useNavigate(); 
   const [openMenu1, setOpenMenu1] = useState(false); 
   const [selectedSize, setSelectedSize] = useState(peopleSize);
   const { darkMode } = useDarkMode();
+
+  const handleGoHome = () => {
+  navigate('/admin/api');
+};
   const handleSizeNavigate = (size) => {
         navigate(`/roomsize/${size}`, {
           state: {
@@ -66,6 +72,10 @@ function RoomSize() {
       navigate('/'); // สำรองเผื่อ role อื่นหรือไม่มี role
     }
   };
+    const handleRoomFilter = (rooms, type) => {
+      setFilteredRoom(rooms);
+      setFilterType(type);
+    };
 
   useEffect(() => {
         const timer = setInterval(() => {
@@ -116,6 +126,7 @@ function RoomSize() {
           handleNavigateByRole={handleNavigateByRole}
           timeString={timeString}
           dateString={dateString}
+          onResetFilter={handleGoHome}
         />
         <div className={`p-10 text-xl transition-colors duration-300 ${
           darkMode ? 'text-white' : 'text-black'
@@ -136,12 +147,14 @@ function RoomSize() {
           handleNavigateByRole={handleNavigateByRole}
           timeString={timeString}
           dateString={dateString}
+          onResetFilter={handleGoHome}
         />
-        <Roomdata rooms={rooms} currentTime={new Date()} icons={icons}/>
+        <Roomdata rooms={rooms} currentTime={new Date()} icons={icons} filterType={filterType}  onFilter={handleRoomFilter}/>
       <div className={`p-4 mx-2 rounded-3xl shadow-xl transition-colors duration-300 ${
         darkMode ? 'bg-gray-800' : 'bg-[#f8f7f1]'
       }`}>
-        <Roomcard data={filteredRooms} icons={filteredIcons} />
+        {/* <Roomcard data={filteredRoom.length > 0 ? filteredRoom : filteredRooms} icons={filteredIcons} filterType={filterType} /> */}
+        <Roomcard data={filteredRooms} icons={filteredIcons} filterType={filterType} />
       </div>
     </div>
   );

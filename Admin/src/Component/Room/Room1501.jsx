@@ -45,6 +45,10 @@ const Room1501 = () => {
   
   const toggleDropdown1 = () => setOpenMenu1(!openMenu1);
   
+  const handleGoHome = () => {
+  navigate('/admin/api');
+};
+
   const handleSizeNavigate = (size) => {
     navigate('/admin/api', { state: { size } });
     setOpenMenu1(false);
@@ -401,6 +405,7 @@ const Room1501 = () => {
         timeString={timeString}
         dateString={dateString}
         showSizeRoom={false}
+        onResetFilter={handleGoHome}
       />
       
       <div className="p-4 sm:p-6 max-w-[1800px] mx-auto">

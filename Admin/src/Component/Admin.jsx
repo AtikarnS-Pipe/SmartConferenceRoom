@@ -17,6 +17,8 @@ function RoomPage() {
     const navigate = useNavigate(); 
     const [openMenu1, setOpenMenu1] = useState(false); 
     const [events, setEvents] = useState([]);
+    const [filteredRoom, setFilteredRoom] = useState([]);
+    const [filterType, setFilterType] = useState(null); // "available" | "unavailable" | null
     const { darkMode } = useDarkMode();
 
     useEffect(() => {
@@ -64,7 +66,12 @@ function RoomPage() {
   };
 }, []);
 
+    const handleRoomFilter = (rooms, type) => {
+      setFilteredRoom(rooms);
+      setFilterType(type);
+    };
   
+    
       useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) return;
@@ -96,6 +103,10 @@ function RoomPage() {
     navigate('/'); // สำรองเผื่อ role อื่นหรือไม่มี role
   }
 };
+    const handleResetFilter = () => {
+      setFilteredRoom([]);
+      setFilterType(null);
+    };
     useEffect(() => {
         const timer = setInterval(() => {
           setCurrentTime(new Date());
@@ -139,10 +150,10 @@ function RoomPage() {
     {id:2, room: "1502", icons: 1, people: 4},
     {id:3, room: "1503", icons: 1, people: 4},
     {id:4, room: "1504", icons: 1, people: 4},
-    {id:5, room: "1505", icons: 2, people: 6},
-    {id:6, room: "1506", icons: 2, people: 6},
-    {id:7, room: "1514", icons: 3, people: 10},
-    {id:8, room: "1515", icons: 3, people: 10},
+    {id:5, room: "1505", icons: 1, people: 6},
+    {id:6, room: "1506", icons: 1, people: 6},
+    {id:7, room: "1514", icons: 1, people: 10},
+    {id:8, room: "1515", icons: 1, people: 10},
     {id:9, room: "1519", icons: 1, people: 4},
     {id:10, room: "1520", icons: 1,people: 4},
   ];
@@ -151,7 +162,7 @@ function RoomPage() {
           state: {
             icons: iconClass,     // ส่งทั้งหมดไปเลย
             peopleSize: peopleSize,  // ส่งตัวแปร filter ไปใช้ในหน้าถัดไป
-            rooms: events 
+            rooms: events,
           }
         });
       };
@@ -169,8 +180,9 @@ function RoomPage() {
           handleNavigateByRole={handleNavigateByRole}
           timeString={timeString}
           dateString={dateString}
+          onResetFilter={handleResetFilter}
         />
-        <Roomdata rooms={events} currentTime={new Date()} icons={iconClass}/>
+        <Roomdata rooms={events} currentTime={new Date()} icons={iconClass} onFilter={handleRoomFilter}/>
         <div className={`p-4 mx-2 rounded-3xl shadow-xl transition-colors duration-300 ${
           darkMode ? 'bg-gray-800' : 'bg-[#f8f7f1]'
         }`}>
@@ -183,7 +195,7 @@ function RoomPage() {
 
           </div>
             ) : (
-              <Roomcard data={events} icons={iconClass} />
+              <Roomcard data={filteredRoom.length > 0 ? filteredRoom : events} icons={iconClass} filterType={filterType} />
             )}
         </div>
   </div>
