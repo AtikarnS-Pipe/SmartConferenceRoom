@@ -82,10 +82,10 @@ function Navbar({
         </RefreshButton>
         <div className="h-[30px] w-[1px] bg-white"></div>
         <div className=" max-md:flex">
-          <h2 className="md:text-xs max-md:mr-5 flex justify-end">
+          <h2 className="md:text-sm max-md:mr-5 flex justify-end">
             {timeString}
           </h2>
-          <h4 className="md:text-xs">{dateString}</h4>
+          <h4 className="md:text-sm">{dateString}</h4>
         </div>
       </div>
     </nav>
