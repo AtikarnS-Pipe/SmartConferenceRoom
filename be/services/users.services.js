@@ -1,7 +1,7 @@
 require('dotenv').config({ path: './config/.env'});
 const getGraphClient = require("../utils/graph");
 const tokenCache = require('../utils/tokenCache');
-const getTodaydatetime = require('../utils/getTodaydatetime');
+const {getTodaydatetime} = require('../utils/getTodaydatetime');
 const { roomobject } = require('../utils/tokenCache');
 
 async function getuserdatabyroom(res, RoomNumber) {
@@ -9,7 +9,7 @@ async function getuserdatabyroom(res, RoomNumber) {
         if(!(RoomNumber in roomobject)){
             throw new Error(`Invalid room number: ${RoomNumber}`)
         }
-        const {startDateTime, endDateTime} = getTodaydatetime();
+        const {startDateTime, endDateTime} = await getTodaydatetime();
         const accesstoken = tokenCache.getAccessToken();
         if(!accesstoken){
             throw new Error("No access token in Users")
@@ -22,15 +22,18 @@ async function getuserdatabyroom(res, RoomNumber) {
                 endDateTime: endDateTime,
                 "$orderby": "start/dateTime",
                 "$top": 100,
-                "$select": "id,subject,organizer,start,end,locations,isAllDay",
+                "$select": "id,subject,organizer,start,end,locations,isAllDay,responseStatus",
                 "$filter": "isCancelled eq false" 
             })
             .get();
         if (!graphResponse || !graphResponse.value) {
             throw new Error(`No value in graphResponse for room ${RoomNumber}: ${JSON.stringify(graphResponse)}`);
         }
-        const results = graphResponse.value
-        // if(process.env.DEBUG_MODE) console.log("usersdate => ",results)
+        const acceptedEvents = graphResponse.value.filter(event => // กรองเอาอันที่ไม่ถูก decline
+            event.responseStatus?.response === "accepted"
+        );
+        const results = acceptedEvents
+        console.log("usersdate => ",results)
         res.write(`data: ${JSON.stringify({ results })}\n\n`);
         
     } catch (error) {
@@ -122,7 +125,7 @@ const createMSEvent = async (AccessToken, createroomdata) => {
     }
 }
 
-async function waitUntil(conditionFn, timeout = 10000, interval = 1000) {
+async function waitUntil(conditionFn, timeout = 15000, interval = 1000) {
     const start = Date.now();
     return new Promise(async (resolve, reject) => {
         const check = async () => {

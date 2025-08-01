@@ -1,22 +1,35 @@
-// const mongoose = require('mongoose');
+// models/RoomAccessLog.js
+const mongoose = require('mongoose');
 
-// const RoomAccessLogSchema = new mongoose.Schema({
-//   user_id: {
-//     type: mongoose.Schema.Types.ObjectId,
-//     ref: 'User',
-//     required: true,
-//   },
-//   // room_id: {
-//   //   type: mongoose.Schema.Types.ObjectId,
-//   //   ref: 'Room',
-//   //   required: true,
-//   // },
-//   room_number: {
-//     type: String,
-//     required: true,
-//   },
-// }, {
-//   timestamps: { createdAt: 'access_time', updatedAt: false }
-// });
+const pinStatsSchema = new mongoose.Schema({
+    organizerMail: {
+        type: String,
+        required: true,
+        unique: true,
+        index: true
+    },
+    pinMissCount: { 
+        type: Number,
+        default: 0 
+    },
+    EventId: [{ 
+        eventId: {
+            type: String,
+            required: false
+        },
+        missedAt: {
+            type: Date,
+            required: false
+        },
+        RoomNumber: {
+            type: Number,
+            required: false
+        }
+    }],
+    isBanned: { 
+        type: Boolean, 
+        default: false 
+    },
+}, { timestamps: true });
 
-// module.exports = mongoose.model('RoomAccessLog', RoomAccessLogSchema, 'Room_access_logs');
+module.exports = mongoose.model('pinstats', pinStatsSchema, 'RoomAccessLog');

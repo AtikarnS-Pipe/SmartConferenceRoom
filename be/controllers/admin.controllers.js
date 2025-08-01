@@ -11,6 +11,7 @@ const {
 
 const getAllusers = async (req, res) => {
     const code = req.query.code;
+    console.log("Code received:", code);
     let tokenResponse, intervalId, accessToken;
 
     res.set({
@@ -39,7 +40,6 @@ const getAllusers = async (req, res) => {
                 return;
             }
 
-            console.log(`✅ Authorized user: ${userProfile.mail}`);
 
             // เข้ารหัสและบันทึก token
             const encryptedRefreshToken = encryptToken(tokenResponse.refresh_token);

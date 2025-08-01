@@ -1,13 +1,14 @@
 const getGraphClient = require("../utils/graph"); 
 const Token = require('../models/token');
 const tokenCache = require('../utils/tokenCache')
-const getTodaydatetime  = require('../utils/getTodaydatetime');
+const {getTodaydatetime}  = require('../utils/getTodaydatetime');
 const userModel = require('../models/User');
 const sendMailAsync = require('../services/sendmail.services')
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const RESET_SECRET = process.env.JWT_RESET_SECRET || "jwt-reset-secret";
 const { roomobject } = require('../utils/tokenCache');
+require('dotenv').config({path: '../config/.env'});
 
 async function GetScheduleData(actoken, Room, start, end){  
     try {
@@ -36,7 +37,7 @@ async function GetScheduleData(actoken, Room, start, end){
             throw new Error("No access token in schedule Page.")
         }
         const graphResponse = await getGraphClient(actoken)
-            .api(`https://graph.microsoft.com/v1.0/me/calendars/${roomobject[Room]}/calendarView?`)
+            .api(`https://graph.microsoft.com/v1.0/users/${Room}@tcc-technology.com/calendarView?`)
             .query({
                 startDateTime: startDateTime,
                 endDateTime: endDateTime,
@@ -86,7 +87,7 @@ async function sendscheduledata(req, res){
 async function getUserProfile(accessToken) {
     try {
         const profile = await getGraphClient(accessToken).api('https://graph.microsoft.com/v1.0/me').get();
-        console.log("getUserProfile profile:", profile.mail);
+        if(process.env.DEBUG_MODE) console.log("getUserProfile profile:", profile.mail);
         return profile;
     } catch (error) {
         console.error('Error fetching user profile:', error);
@@ -99,10 +100,10 @@ async function addCacheandDB(tokenObject) {
     try {
         // อัปเดต token ที่มีอยู่
         tokenCache.setToken(tokenObject)
-        console.log(`✅ Token updated in Cache. Access Token: ${tokenObject.accessToken}`);
+        // console.log(`✅ Token updated in Cache. Access Token: ${tokenObject.accessToken}`);
 
         const newToken = await Token.create(tokenObject);
-        console.log(`✅ New token created in DB. ID: ${newToken._id}`);
+        // console.log(`✅ New token created in DB. ID: ${newToken._id}`);
         return newToken;
 
     } catch (error) {
@@ -113,7 +114,7 @@ async function addCacheandDB(tokenObject) {
 
 async function fetchAllRoom(res, accessToken) {
     try {
-        const {startDateTime, endDateTime} = getTodaydatetime();
+        const {startDateTime, endDateTime} = await getTodaydatetime();
         if (!accessToken) {
             throw new Error("No accessToken");
         }

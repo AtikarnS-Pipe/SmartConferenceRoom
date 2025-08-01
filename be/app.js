@@ -4,7 +4,7 @@ const syncAllRooms = require('./services/roomsync.services');
 const {connectToDatabase} = require("./database/mongodb");
 const { monitorToken } = require('./utils/tokenCache');
 const express = require("express");
-
+const axios = require('axios');
 // Import routes
 const SuperAdminRouter = require('./routes/superadmin_manage.routes')
 const Adminrouter = require("./routes/admin_ms.routes");
@@ -36,7 +36,7 @@ app.get('/', (req, res) => {
 // Sync all rooms for mail sending every 10 s
 const sintervalId = setInterval(() => {
   syncAllRooms();
-}, 6000);
+}, 8000);
 
 app.listen(process.env.PORT, async () => {
   console.log(`Server running at http://localhost:${process.env.PORT}`);

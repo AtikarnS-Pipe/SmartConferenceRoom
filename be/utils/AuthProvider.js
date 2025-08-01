@@ -46,6 +46,7 @@ async function refreshAccessToken(refresh_token) {
     } else {
       console.error("Error Message:", error.message);
     }
+    return null;
   }
 }
 

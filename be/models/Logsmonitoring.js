@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 
+
 const logschema = new mongoose.Schema({ 
     user_Id:{ // foremost
         type: mongoose.Schema.Types.ObjectId,
@@ -25,7 +26,6 @@ const logschema = new mongoose.Schema({
     },
     L_createdAt:{
         type: Date,
-        default: () => new Date(),
         index: { expires: '90d'} // TTL index to auto delete logs
     },
     // createdBy:{

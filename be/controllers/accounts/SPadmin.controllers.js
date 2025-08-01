@@ -1,9 +1,9 @@
 const User = require('../../models/User');
 const {AddLogmonitoring} = require('../../utils/AddLogmonitoring');
-const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
-const GetDateTimeTH = require('../../utils/GetTodayDateTime');
+const GetDateTimeTH = require('../../utils/getTodaydatetime');
 require('dotenv').config();
+// const { GetTimeAPI } = require('../../utils/getTodaydatetime');
 
 const createadmin = async (req, res) => {
   const SuperAdmin = req.user;
@@ -48,17 +48,29 @@ const createadmin = async (req, res) => {
       pin
     });
 
-    const datalogs = {
-      user_Id: newAdmin._id,
-      L_status: 'Admin was created',
-      role: newAdmin.role,
-      Details: `Admin name: ${newAdmin.name}`,
-      L_createdAt: await GetDateTimeTH(),
+    // logsmonitoring function
+    const datalogs = {  
+      user_Id: newAdmin._id, 
+      L_status: 'Admin was created', 
+      role: newAdmin.role, 
+      Details: `Admin name: ${newAdmin.name}`, 
+      L_createdAt: new Date(), //await GetTimeAPI('Asia/Bangkok'),
     };
+    const log = await AddLogmonitoring(datalogs);
+  
+    const token = jwt.sign({ userId: newAdmin._id }, process.env.JWT_SECRET, {
+      expiresIn: process.env.JWT_EXPIRES_IN,
+    });
+    const refreshtoken = jwt.sign({ userId: newAdmin._id }, process.env.JWT_SECRET, {
+      expiresIn: process.env.JWT_REFRESH_EXPIRES_IN,
+    });
 
-    await AddLogmonitoring(datalogs);
-
-    console.log(`Create Admin successfully: ${newAdmin._id}`);
+    res.cookie("refreshtoken", refreshtoken, { // จนกว่าจะปิด browser cookie จึงจะหมดอายุ
+      httpOnly: true,
+      secure: false,  // เปลี่ยนเป็น true ถ้าใช้ HTTPS
+      sameSite: 'lax', // ป้องกัน CSRF
+      path: '/account/refreshtoken', // จำกัด route ที่ใช้ cookie ได้
+    });
 
     res.status(201).json({
       success: true,
@@ -104,7 +116,7 @@ const deleteadmin = async (req, res) => {
       L_status: 'Admin was deleted',
       role: 'Admin',
       Details: `Admin name: ${ThisAdmin.name}`,
-      L_createdAt: new Date(),
+      L_createdAt: new Date(), //await GetTimeAPI('Asia/Bangkok'),
     };
 
     const log = await AddLogmonitoring(datalogs);
