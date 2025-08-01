@@ -65,10 +65,9 @@ function Navbar({
             )}
           </li>
         )}
-        <RefreshButton className="mr-5">
+        <RefreshButton className="mr-5" onClick={handleNavigateByRole}>
           <h1
             className="cursor-pointer hover:text-gray-300"
-            onClick={handleNavigateByRole}
           >
             Management
           </h1>

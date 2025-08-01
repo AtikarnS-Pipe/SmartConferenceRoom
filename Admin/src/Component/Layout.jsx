@@ -108,6 +108,7 @@ const Layout = () => {
 
   const handleNavigateByRole = () => {
     const role = localStorage.getItem('role');
+    console.log("Navigating based on role:", role);
     if (role === 'Superadmin') {
       navigate('/account/superadmin');
     } else if (role === 'Admin') {
