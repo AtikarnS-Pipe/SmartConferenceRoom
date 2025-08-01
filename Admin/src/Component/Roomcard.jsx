@@ -5,6 +5,8 @@ import { IoPerson } from "react-icons/io5";
 import { useNavigate } from 'react-router-dom';
 import RefreshButton from "../utils/refreshToken"; // Assuming you have a RefreshButton component
 import { useDarkMode } from './Context/DarkModeContext';
+import Myicons from '../assets/board-meeting 1.svg'; // Assuming you have a MyIcons context or file
+import Icons from '../assets/meeting 1.svg'; // Assuming you have a JSON file with icons data
 
 function Roomcard(props) {
   const { data, icons } = props
@@ -48,24 +50,31 @@ function Roomcard(props) {
         const statusColor = isAvailable ? "bg-green-500" : "bg-red-500";
 
         const renderIcons = (count) => {
-          if (count === 1) {
-            return <MdPeople className='mx-auto' size={40} />;
-          } else if (count === 2) {
-            return (
-              <div className='flex justify-center space-x-2'>
-                <MdPeople size={40} /><MdPeople size={40} />
-              </div>
-            );
-          } else if (count === 3) {
-            return (
-              <div className='flex justify-center space-x-2'>
-                <MdPeople size={40} /><MdPeople size={40} /><MdPeople size={40} />
-              </div>
-            );
-          } else {
-            return null;
-          }
-        };
+        const iconStyle = darkMode
+          ? { filter: 'brightness(0) invert(1)' } // ทำให้เป็นสีขาว
+          : { filter: 'none' }; // สีปกติ
+
+        if (count === 1) {
+          return <img src={Icons} alt="icon" className='w-10 h-10' style={iconStyle} />;
+        } else if (count === 2) {
+          return (
+            <div className='flex justify-center space-x-2'>
+              <img src={Myicons} alt="icon" className='w-10 h-10' style={iconStyle} />
+            </div>
+          );
+        } else if (count === 3) {
+          const iconColor = darkMode ? 'white' : 'black';
+          return (
+            <div className='flex justify-center space-x-2'>
+              <MdPeople size={40} color={iconColor} />
+              <MdPeople size={40} color={iconColor} />
+              <MdPeople size={40} color={iconColor} />
+            </div>
+          );
+        } else {
+          return null;
+        }
+      };
 
         const handleScheduleClick = () => {
           const roomPath = d.room;
@@ -91,7 +100,7 @@ function Roomcard(props) {
         return (
           <div
             key={index}
-            className={`rounded-[25px] pt-5 pb-10 px-4 shadow-xl flex flex-col justify-between min-h-[250px] max-w-full
+            className={`rounded-[25px] pt-5 pb-10 px-4 shadow-xl flex flex-col justify-between min-h-[250px] max-w-full min-w-0
               transition-all duration-200 font-medium ${
                 darkMode ? 'bg-gray-600' : 'bg-white'
               }`}
@@ -108,7 +117,7 @@ function Roomcard(props) {
             <div className={`flex-1 flex flex-col justify-center items-center rounded-[25px] mt-2 transition-colors duration-300 ${
               darkMode ? 'bg-gray-700' : 'bg-gray-200'
             }`}>
-              <div className='w-full flex justify-center items-center mb-6'>{iconClass}</div>
+              <div className={`w-full flex justify-center items-center mb-6`}>{iconClass}</div>
               <div className='flex items-center justify-center space-x-3'>
                 <FaClock size={20} className={darkMode ? 'text-white' : 'text-black'} />
                 <RefreshButton

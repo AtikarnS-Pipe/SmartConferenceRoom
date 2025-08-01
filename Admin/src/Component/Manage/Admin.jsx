@@ -309,7 +309,11 @@ const adminmem = allUsers.filter(user => user.role === 'Admin');
 
             <div className="flex justify-end gap-2">
               <RefreshButton
-                onClick={() => setShowPasswordModal(false)}
+                onClick={() => {
+                  setNewPassword('');
+                  setConfirmPassword('');
+                  setShowPasswordModal(false)
+                }}
                 className={`px-4 py-2 rounded-md ${
                   darkMode ? 'bg-gray-600 text-gray-300 hover:bg-gray-500' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                 }`}
@@ -542,22 +546,21 @@ const adminmem = allUsers.filter(user => user.role === 'Admin');
         </div>
 
         <div className="p-2 md:p-6">
-          {/* Replace the old stats section with the new component */}
+          {/* Stats */}
           <HousekeeperStats 
             housekeeperCount={housekeeperCount}
             adminCount={adminCount}
             filteredMembers={filteredMembers}
             darkMode={darkMode}
           />
-
           {/* Table */}
           <div className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} rounded-xl shadow-sm border transition-colors duration-300`}>
             <div className={`p-4 md:p-6 border-b ${darkMode ? 'border-gray-700' : 'border-gray-100'} flex flex-col sm:flex-row sm:justify-between gap-4 flex-wrap`}>
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <Users className="w-5 h-5 text-blue-600" />
+                  <Shield className="w-5 h-5 text-blue-600" />
                 </div>
-                <h2 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>Member</h2>
+                <h2 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>Admin</h2>
               </div>
               <div className="flex flex-col sm:flex-row gap-3">
                 <div className="relative">

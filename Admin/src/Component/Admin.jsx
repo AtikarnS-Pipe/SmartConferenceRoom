@@ -56,8 +56,8 @@ function RoomPage() {
 }, []);
 
   const iconClass = [
-    {id:1, room: "1501", icons: 2, people: 4},
-    {id:2, room: "1502", icons: 2, people: 4},
+    {id:1, room: "1501", icons: 1, people: 4},
+    {id:2, room: "1502", icons: 1, people: 4},
     {id:3, room: "1503", icons: 1, people: 4},
     {id:4, room: "1504", icons: 1, people: 4},
     {id:5, room: "1505", icons: 2, people: 6},
