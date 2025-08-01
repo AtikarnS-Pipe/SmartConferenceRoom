@@ -6,19 +6,18 @@ import axios from 'axios';
 
 
 //constant
-const COUNTDOWN_TIME = 60; //เวลาปิดอัตโนมัติ 30 วินาที
-
-const BookingModal = ({ isOpen, onClose, onSubmit, onPinModalClose }) => {
+const COUNTDOWN_TIME = 60;// Booking Modal countdown time in 60 seconds
+const BookingModal = ({ isOpen, onClose, onSubmit }) => {
   const [formData, setFormData] = useState({
     subject: '',
     startTime: '',
     duration: 15,
     bookedBy: ''
   });
-  const [loading, setLoading] = useState(false);
+  const [loadingCreate, setLoadingCreate] = useState(false);
   const [errors, setErrors] = useState({});
   const [subjectEnabled, setSubjectEnabled] = useState(false);
-  const [bookedByEnabled, setBookedByEnabled] = useState(false);
+  const [bookedByEnabled, setBookedByEnabled] = useState(false);//ถ้าไม่ได้ใช้ลบออกด้วย
   const [showPinModal, setShowPinModal] = useState(false);
   const [bookingPin, setBookingPin] = useState('');
   const [waitingEvent, setWaitingEvent] = useState(false);
@@ -27,7 +26,7 @@ const BookingModal = ({ isOpen, onClose, onSubmit, onPinModalClose }) => {
   const [countdown, setCountdown] = useState(COUNTDOWN_TIME);
   const [isModalInitialized, setIsModalInitialized] = useState(false);
   const { floor, room } = useRoomData();
-  const { events } = useEvents(floor, room);
+  const { events, loading: loadingEvents } = useEvents(floor, room);
   const roomId = `${floor}${room}`; // สร้าง roomId จาก floor และ room
 
   //ปิด pinmodal หลัง 30 วินาที
@@ -38,9 +37,9 @@ const BookingModal = ({ isOpen, onClose, onSubmit, onPinModalClose }) => {
     }, 30000);
 
     return () => clearTimeout(timeoutId);
-  }, [showPinModal]); // run effect only when showPinModal changes
+  }, [showPinModal]);
 
-  // Reset countdown when modal opens
+  // Reset countdown เมื่อ modal เปิด
   useEffect(() => {
     if (isOpen) {
       setCountdown(COUNTDOWN_TIME);
@@ -57,7 +56,7 @@ const BookingModal = ({ isOpen, onClose, onSubmit, onPinModalClose }) => {
     // console.log('Timer useEffect:', { isOpen, showPinModal, countdown });
     
     if (isOpen && !showPinModal) {
-      console.log('Starting/continuing countdown timer');
+      // console.log('Starting/continuing countdown timer');
       
       // สร้าง interval สำหรับ countdown
       countdownInterval = setInterval(() => {
@@ -69,7 +68,7 @@ const BookingModal = ({ isOpen, onClose, onSubmit, onPinModalClose }) => {
       }, 1000);
 
     } else {
-      console.log('Timer not started:', { isOpen, showPinModal });
+      // console.log('Timer not started:', { isOpen, showPinModal });
       // หยุด countdown เมื่อมี PIN modal
       setCountdown(0);
     }
@@ -77,7 +76,7 @@ const BookingModal = ({ isOpen, onClose, onSubmit, onPinModalClose }) => {
     // Cleanup timer เมื่อ modal ปิดหรือ component unmount
     return () => {
       if (countdownInterval) {
-        // console.log('Clearing countdown interval');
+        console.log('Clearing countdown interval');
         clearInterval(countdownInterval);
       }
     };
@@ -85,15 +84,15 @@ const BookingModal = ({ isOpen, onClose, onSubmit, onPinModalClose }) => {
 
   // แยก useEffect สำหรับตรวจสอบ countdown และปิด modal
   useEffect(() => {
-    if (countdown === 0 && isOpen && !showPinModal && !loading && !waitingEvent) {
-      console.log('Countdown reached 0, closing modal');
+    if (countdown === 0 && isOpen && !showPinModal && !loadingCreate && !waitingEvent) {
+      // console.log('Countdown reached 0, closing modal');
       onClose();
     }
-  }, [countdown, isOpen, showPinModal, onClose, loading, waitingEvent]);
+  }, [countdown, isOpen, showPinModal, onClose, loadingCreate, waitingEvent]);
 
   // fn เมื่อ users กดปุ่มใดๆ ใน modalจะรีเซ็ต countdown
   const handleUserInteraction = () => {
-    console.log('User interaction detected - restarting countdown');
+    // console.log('User interaction detected - restarting countdown');
     setCountdown(COUNTDOWN_TIME); // รีเซ็ต countdown กลับไปที่ 30 วินาที
   };
 
@@ -123,10 +122,10 @@ const BookingModal = ({ isOpen, onClose, onSubmit, onPinModalClose }) => {
 
   // ฟังก์ชันหาเวลาว่างถัดไป (รองรับทั้งไปข้างหน้าและย้อนหลัง)
   const findNextAvailableTime = (startTime, duration, direction = 'forward') => { 
-    console.log('🔍 findNextAvailableTime called:', { startTime, duration, direction, eventsCount: events?.length });
+    // console.log('🔍 findNextAvailableTime called:', { startTime, duration, direction, eventsCount: events?.length });
     
     if (!startTime) {
-      console.log('❌ No startTime provided');
+      // console.log('❌ No startTime provided');
       return '';
     }
 
@@ -142,29 +141,29 @@ const BookingModal = ({ isOpen, onClose, onSubmit, onPinModalClose }) => {
     const endOfDay = new Date(today);
     endOfDay.setHours(19, 0, 0, 0); // จบที่ 19:00 ของวันนี้
     
-    console.log('📅 Time boundaries:', { 
-      startOfDay: startOfDay.toLocaleTimeString(), 
-      endOfDay: endOfDay.toLocaleTimeString(), 
-      checkTime: checkTime.toLocaleTimeString() 
-    });
+    // console.log('📅 Time boundaries:', { 
+    //   startOfDay: startOfDay.toLocaleTimeString(), 
+    //   endOfDay: endOfDay.toLocaleTimeString(), 
+    //   checkTime: checkTime.toLocaleTimeString() 
+    // });
     
     // If no events, check if current time is within business hours
     if (!events || events.length === 0) {
-      console.log('📋 No events to check against');
+      // console.log('📋 No events to check against');
       if (checkTime >= startOfDay && checkTime < endOfDay) {
         const checkEnd = new Date(checkTime);
         checkEnd.setMinutes(checkEnd.getMinutes() + duration);
         if (checkEnd <= endOfDay) {
-          console.log('✅ Current time is valid with no events');
+          // console.log('✅ Current time is valid with no events');
           return startTime;
         }
       }
       // If current time is outside business hours, find next valid time
       if (checkTime < startOfDay) {
-        console.log('⏰ Before business hours, moving to 8:00 AM');
+        // console.log('⏰ Before business hours, moving to 8:00 AM');
         checkTime = new Date(startOfDay);
       } else if (checkTime >= endOfDay) {
-        console.log('⏰ After business hours, moving to 8:00 AM next day');
+        // console.log('⏰ After business hours, moving to 8:00 AM next day');
         checkTime = new Date(startOfDay);
       }
     }
@@ -179,11 +178,11 @@ const BookingModal = ({ isOpen, onClose, onSubmit, onPinModalClose }) => {
     let maxIterations = 44; // 11 hours * 4 (15-min slots per hour)
     let iterations = 0;
     
-    console.log(`🔄 Starting search loop (${direction}), max iterations: ${maxIterations}`);
+    // console.log(`🔄 Starting search loop (${direction}), max iterations: ${maxIterations}`);
     
     while (comparison(checkTime, boundary) && iterations < maxIterations) {
       iterations++;
-      console.log(`🔄 Iteration ${iterations}: checking ${checkTime.toLocaleTimeString()}`);
+      // console.log(`🔄 Iteration ${iterations}: checking ${checkTime.toLocaleTimeString()}`);
       
       // ตรวจสอบว่าเวลานี้ว่างไหม
       const checkEnd = new Date(checkTime);
@@ -191,11 +190,11 @@ const BookingModal = ({ isOpen, onClose, onSubmit, onPinModalClose }) => {
       
       // ตรวจสอบว่าไม่เกินขอบเขตเวลาทำการ
       if (direction === 'forward' && checkEnd > endOfDay) {
-        console.log('🚫 Would exceed end of day, stopping search');
+        // console.log('🚫 Would exceed end of day, stopping search');
         break;
       }
       if (direction === 'backward' && checkTime < startOfDay) {
-        console.log('🚫 Would go before start of day, stopping search');
+        // console.log('🚫 Would go before start of day, stopping search');
         break;
       }
       
@@ -211,14 +210,14 @@ const BookingModal = ({ isOpen, onClose, onSubmit, onPinModalClose }) => {
           const conflicts = checkTime < eventEnd && checkEnd > eventStart;
           
           if (conflicts) {
-            console.log(`⚡ Conflict with event: ${eventStart.toLocaleTimeString()} - ${eventEnd.toLocaleTimeString()}`);
+            // console.log(`⚡ Conflict with event: ${eventStart.toLocaleTimeString()} - ${eventEnd.toLocaleTimeString()}`);
           }
           return conflicts;
         });
       }
       
       if (!hasConflict) {
-        console.log(`✅ Found available time: ${checkTime.toLocaleTimeString()}`);
+        // console.log(`✅ Found available time: ${checkTime.toLocaleTimeString()}`);
         // เจอเวลาว่างแล้ว
         const year = checkTime.getFullYear();
         const month = String(checkTime.getMonth() + 1).padStart(2, '0');
@@ -227,58 +226,58 @@ const BookingModal = ({ isOpen, onClose, onSubmit, onPinModalClose }) => {
         const mins = String(checkTime.getMinutes()).padStart(2, '0');
         
         const result = `${year}-${month}-${day}T${hours}:${mins}`;
-        console.log(`🎯 Returning: ${result}`);
+        // console.log(`🎯 Returning: ${result}`);
         return result;
       }
       
-      console.log('❌ Time slot occupied, moving to next slot');
+      // console.log('❌ Time slot occupied, moving to next slot');
       // เลื่อนไปตามทิศทางที่กำหนด
       checkTime.setMinutes(checkTime.getMinutes() + increment);
     }
     
-    console.log('No available time found in forward direction, trying backward...');
+    // console.log('No available time found in forward direction, trying backward...');
     
     // ถ้าหาไม่เจอ และเป็นการค้นหาข้างหน้า ให้ลองค้นหาย้อนหลัง
     if (direction === 'forward') {
       const backwardResult = findNextAvailableTime(startTime, duration, 'backward');
       if (backwardResult !== startTime) {
-        console.log('Found available time in backward direction:', backwardResult);
+        // console.log('Found available time in backward direction:', backwardResult);
         return backwardResult;
       }
     }
     
-    console.log('No available time found, returning original time:', startTime);
+    // console.log('No available time found, returning original time:', startTime);
     // ถ้าหาไม่เจอ ให้คืนค่าเดิม
     return startTime;
   };
 
   // Initialize startTime when modal opens
   useEffect(() => {
-    console.log('useEffect triggered:', { isOpen, isModalInitialized, eventsLength: events?.length });
+    // console.log('useEffect triggered:', { isOpen, isModalInitialized, eventsLength: events?.length });
     
     // Only initialize when modal first opens, not on subsequent events updates
     if (isOpen && !isModalInitialized) {
-      console.log('🚀 Modal opened for first time, finding next available time...');
-      console.log('📅 Events available:', events?.length || 0);
+      // console.log('🚀 Modal opened for first time, finding next available time...');
+      // console.log('📅 Events available:', events?.length || 0);
       
       const currentTime = getCurrentTime();
-      console.log('⏰ Current time:', currentTime);
+      // console.log('⏰ Current time:', currentTime);
       
       // Always try to find next available time, even if no events
-      console.log('🔍 Searching for available time...');
+      // console.log('🔍 Searching for available time...');
       const availableTime = findNextAvailableTime(currentTime, 15, 'forward');
-      console.log('✅ Available time result:', availableTime);
+      // console.log('✅ Available time result:', availableTime);
       
       if (availableTime && availableTime !== currentTime) {
-        console.log('🎯 Setting available time:', availableTime);
+        // console.log('🎯 Setting available time:', availableTime);
         setFormData(prev => ({ ...prev, startTime: availableTime }));
       } else {
-        console.log('⚠️ No better time found, using current time:', currentTime);
+        // console.log('⚠️ No better time found, using current time:', currentTime);
         setFormData(prev => ({ ...prev, startTime: currentTime }));
       }
     } else if (!isOpen) {
       // Reset when modal closes
-      console.log('🔄 Modal closed, resetting startTime');
+      // console.log('🔄 Modal closed, resetting startTime');
       setFormData(prev => ({ ...prev, startTime: '' }));
     }
   }, [isOpen, isModalInitialized]);
@@ -286,21 +285,21 @@ const BookingModal = ({ isOpen, onClose, onSubmit, onPinModalClose }) => {
   // Handle events updates after modal is initialized
   useEffect(() => {
     if (isOpen && isModalInitialized && events && events.length > 0 && formData.startTime) {
-      console.log('📋 Events updated, checking if current time needs adjustment...');
-      console.log('🔍 Current startTime:', formData.startTime);
-      console.log('🎯 Events count:', events.length);
+      // console.log('📋 Events updated, checking if current time needs adjustment...');
+      // console.log('🔍 Current startTime:', formData.startTime);
+      // console.log('🎯 Events count:', events.length);
       
       // Check if current time has conflict
       const hasConflict = checkTimeConflict(formData.startTime, formData.duration);
-      console.log('⚡ Has conflict:', hasConflict);
+      // console.log('⚡ Has conflict:', hasConflict);
       
       if (hasConflict) {
-        console.log('🚨 Current time has conflict, finding better time...');
+        // console.log('🚨 Current time has conflict, finding better time...');
         const availableTime = findNextAvailableTime(formData.startTime, formData.duration, 'forward');
-        console.log('🎯 New available time:', availableTime);
+        // console.log('🎯 New available time:', availableTime);
         
         if (availableTime !== formData.startTime) {
-          console.log('✅ Updating to conflict-free time:', availableTime);
+          // console.log('✅ Updating to conflict-free time:', availableTime);
           setFormData(prev => ({ ...prev, startTime: availableTime }));
         }
       }
@@ -372,7 +371,9 @@ const BookingModal = ({ isOpen, onClose, onSubmit, onPinModalClose }) => {
 
   // ฟังก์ชันสำหรับกำหนดข้อความปุ่ม
   const getBookingButtonText = () => {
-    if (loading) return 'Booking...';
+    if (loadingEvents) return 'Loading events...';
+    if (loadingCreate) return 'Booking...';
+    if (waitingEvent) return 'Waiting for confirmation...';
     if (isPastTime()) return 'Past Time - Cannot Book';
     if (!canBook) return 'Time Conflict';
     return 'Book Now';
@@ -535,7 +536,7 @@ const BookingModal = ({ isOpen, onClose, onSubmit, onPinModalClose }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (validateForm()) {
-      setLoading(true);
+      setLoadingCreate(true);
       try {
         let startDate, endDate;
 
@@ -566,11 +567,11 @@ const BookingModal = ({ isOpen, onClose, onSubmit, onPinModalClose }) => {
           enddatetime,
         };
 
-        console.log("Submitting booking:", payload);
+        // console.log("Submitting booking:", payload);
         
         // Step 1: Create the event
         const response = await axios.post('/user/ms/create', { createroomdata: payload })
-        console.log("Booking created successfully, waiting for events to update...");
+        // console.log("Booking created successfully, waiting for events to update...");
 
         // Step 2: ตั้ง flag เพื่อรอ event จาก SSE
         setTargetStart(startDate);
@@ -581,7 +582,7 @@ const BookingModal = ({ isOpen, onClose, onSubmit, onPinModalClose }) => {
         setErrors({
           submit: error.response?.data?.error || "Failed to book the room. Please try again."
         });
-        setLoading(false);
+        setLoadingCreate(false);
       }
     }
   };
@@ -594,7 +595,7 @@ const BookingModal = ({ isOpen, onClose, onSubmit, onPinModalClose }) => {
   const getPin = async (matchevent) => {
     try {
       const Pin = randomPin();
-      console.log("Generated PIN:", Pin);
+      // console.log("Generated PIN:", Pin);
       const pinResponse = await axios.post('/user/search-pin', {
         pindata: {
           eventId: matchevent.id,
@@ -624,7 +625,7 @@ const BookingModal = ({ isOpen, onClose, onSubmit, onPinModalClose }) => {
         submit: error.response?.data?.error || "Failed to retrieve PIN. Please try again."
       });
     } finally {
-      setLoading(false);
+      setLoadingCreate(false);
     }
   };
 
@@ -641,7 +642,7 @@ const BookingModal = ({ isOpen, onClose, onSubmit, onPinModalClose }) => {
     });
 
     if (matchedEvent) {
-      console.log("Found matching event from SSE:", matchedEvent.id);
+      // console.log("Found matching event from SSE:", matchedEvent.id);
       getPin(matchedEvent);
       setWaitingEvent(false);
       setTargetStart(null);
@@ -662,7 +663,7 @@ const BookingModal = ({ isOpen, onClose, onSubmit, onPinModalClose }) => {
         const availableTime = findNextAvailableTime(newStartTime, newDuration);
         if (availableTime !== newStartTime && field === 'startTime') {
           // แจ้งผู้ใช้ว่าเวลาถูกเลื่อน
-          console.log(`Time adjusted from ${formatDisplayTime(newStartTime)} to ${formatDisplayTime(availableTime)} due to conflict`);
+          // console.log(`Time adjusted from ${formatDisplayTime(newStartTime)} to ${formatDisplayTime(availableTime)} due to conflict`);
           setFormData(prev => ({ ...prev, startTime: availableTime }));
           return;
         } else if (field === 'duration') {
@@ -906,8 +907,8 @@ const BookingModal = ({ isOpen, onClose, onSubmit, onPinModalClose }) => {
 
   // แสดง warning ถ้ามีการทับซ้อน
   const renderTimeConflictWarning = () => {
-    // ไม่แสดง warning เมื่อกำลัง loading หรือ waiting เพื่อไม่ให้ user งง
-    if (loading || waitingEvent) {
+    // ไม่แสดง warning เมื่อกำลัง loadingCreate, waiting หรือ loading events เพื่อไม่ให้ user งง
+    if (loadingCreate || waitingEvent || loadingEvents) {
       return null;
     }
     
@@ -964,8 +965,8 @@ const BookingModal = ({ isOpen, onClose, onSubmit, onPinModalClose }) => {
         <div 
           className="modal-overlay"
           onClick={(e) => {
-            // ป้องกันการปิด modal เมื่อคลิกที่ overlay ขณะกำลัง loading หรือ waiting
-            if (e.target === e.currentTarget && !loading && !waitingEvent) {
+            // ป้องกันการปิด modal เมื่อคลิกที่ overlay ขณะกำลัง loadingCreate หรือ waiting หรือ loading events
+            if (e.target === e.currentTarget && !loadingCreate && !waitingEvent && !loadingEvents) {
               onClose();
             }
           }}
@@ -973,13 +974,13 @@ const BookingModal = ({ isOpen, onClose, onSubmit, onPinModalClose }) => {
           <div className="modal-container">
             <div className="modal-header">
               <button 
-                onClick={(loading || waitingEvent) ? undefined : onClose} 
+                onClick={(loadingCreate || waitingEvent || loadingEvents) ? undefined : onClose} 
                 className="close-button"
-                disabled={loading || waitingEvent}
+                disabled={loadingCreate || waitingEvent || loadingEvents}
                 style={{
-                  opacity: (loading || waitingEvent) ? 0.3 : 1,
-                  cursor: (loading || waitingEvent) ? 'not-allowed' : 'pointer',
-                  pointerEvents: (loading || waitingEvent) ? 'none' : 'auto'
+                  opacity: (loadingCreate || waitingEvent || loadingEvents) ? 0.3 : 1,
+                  cursor: (loadingCreate || waitingEvent || loadingEvents) ? 'not-allowed' : 'pointer',
+                  pointerEvents: (loadingCreate || waitingEvent || loadingEvents) ? 'none' : 'auto'
                 }}
               >
                 <X size={25} />
@@ -987,14 +988,14 @@ const BookingModal = ({ isOpen, onClose, onSubmit, onPinModalClose }) => {
               <div className="header-info">
                 <div className="date-text">{getCurrentDate()}</div>
                 <div className="modal-title">
-                  New Booking{countdown > 0 ? ` (${countdown}s)` : ''}
+                  New Booking
                 </div>
               </div>
             </div>
 
             <div className="modal-body" style={{ position: 'relative' }}>
               {/* Loading Overlay for Modal Body Only */}
-              {(loading || waitingEvent) && (
+              {(loadingCreate || waitingEvent) && (
                 <div style={{
                   position: 'absolute',
                   top: 0,
@@ -1016,7 +1017,7 @@ const BookingModal = ({ isOpen, onClose, onSubmit, onPinModalClose }) => {
                     marginBottom: '1rem',
                     animation: 'fadeInOut 1.5s infinite'
                   }}>
-                    {loading ? 'Booking...' : 'Waiting...'}
+                    {loadingCreate ? 'Booking...' : 'Waiting...'}
                   </div>
                   <div style={{
                     width: '40px',
@@ -1051,11 +1052,11 @@ const BookingModal = ({ isOpen, onClose, onSubmit, onPinModalClose }) => {
                       handleUserInteraction(); // หยุด timer เมื่อผู้ใช้เปิด/ปิด checkbox
                       setSubjectEnabled(e.target.checked);
                     }}
-                    disabled={loading || waitingEvent}
+                    disabled={loadingCreate || waitingEvent || loadingEvents}
                     style={{
-                      opacity: (loading || waitingEvent) ? 0.3 : 1,
-                      cursor: (loading || waitingEvent) ? 'not-allowed' : 'pointer',
-                      pointerEvents: (loading || waitingEvent) ? 'none' : 'auto'
+                      opacity: (loadingCreate || waitingEvent || loadingEvents) ? 0.3 : 1,
+                      cursor: (loadingCreate || waitingEvent || loadingEvents) ? 'not-allowed' : 'pointer',
+                      pointerEvents: (loadingCreate || waitingEvent || loadingEvents) ? 'none' : 'auto'
                     }}
                   />
                 </div>
@@ -1069,11 +1070,11 @@ const BookingModal = ({ isOpen, onClose, onSubmit, onPinModalClose }) => {
                   onFocus={handleUserInteraction} // หยุด timer เมื่อผู้ใช้คลิกที่ input
                   className={errors.subject ? 'input-error' : ''}
                   placeholder="Enter meeting subject"
-                  disabled={!subjectEnabled || loading || waitingEvent}
+                  disabled={!subjectEnabled || loadingCreate || waitingEvent || loadingEvents}
                   style={{
-                    opacity: (!subjectEnabled || loading || waitingEvent) ? 0.3 : 1,
-                    cursor: (!subjectEnabled || loading || waitingEvent) ? 'not-allowed' : 'text',
-                    pointerEvents: (!subjectEnabled || loading || waitingEvent) ? 'none' : 'auto'
+                    opacity: (!subjectEnabled || loadingCreate || waitingEvent || loadingEvents) ? 0.3 : 1,
+                    cursor: (!subjectEnabled || loadingCreate || waitingEvent || loadingEvents) ? 'not-allowed' : 'text',
+                    pointerEvents: (!subjectEnabled || loadingCreate || waitingEvent || loadingEvents) ? 'none' : 'auto'
                   }}
                 />
                 {errors.subject && <p className="error-text">{errors.subject}</p>}
@@ -1249,11 +1250,11 @@ const BookingModal = ({ isOpen, onClose, onSubmit, onPinModalClose }) => {
                 <div className="adjust-group">
                   <button 
                     onClick={() => adjustTime(false)}
-                    disabled={loading || waitingEvent}
+                    disabled={loadingCreate || waitingEvent || loadingEvents}
                     style={{
-                      opacity: (loading || waitingEvent) ? 0.3 : 1,
-                      cursor: (loading || waitingEvent) ? 'not-allowed' : 'pointer',
-                      pointerEvents: (loading || waitingEvent) ? 'none' : 'auto'
+                      opacity: (loadingCreate || waitingEvent || loadingEvents) ? 0.3 : 1,
+                      cursor: (loadingCreate || waitingEvent || loadingEvents) ? 'not-allowed' : 'pointer',
+                      pointerEvents: (loadingCreate || waitingEvent || loadingEvents) ? 'none' : 'auto'
                     }}
                   >
                     <Minus size={16} />
@@ -1261,11 +1262,11 @@ const BookingModal = ({ isOpen, onClose, onSubmit, onPinModalClose }) => {
                   <div className="display-time">{formatDisplayTime(formData.startTime)}</div>
                   <button 
                     onClick={() => adjustTime(true)}
-                    disabled={loading || waitingEvent}
+                    disabled={loadingCreate || waitingEvent || loadingEvents}
                     style={{
-                      opacity: (loading || waitingEvent) ? 0.3 : 1,
-                      cursor: (loading || waitingEvent) ? 'not-allowed' : 'pointer',
-                      pointerEvents: (loading || waitingEvent) ? 'none' : 'auto'
+                      opacity: (loadingCreate || waitingEvent || loadingEvents) ? 0.3 : 1,
+                      cursor: (loadingCreate || waitingEvent || loadingEvents) ? 'not-allowed' : 'pointer',
+                      pointerEvents: (loadingCreate || waitingEvent || loadingEvents) ? 'none' : 'auto'
                     }}
                   >
                     <Plus size={16} />
@@ -1279,11 +1280,11 @@ const BookingModal = ({ isOpen, onClose, onSubmit, onPinModalClose }) => {
                 <div className="adjust-group">
                   <button 
                     onClick={() => adjustDuration(false)}
-                    disabled={loading || waitingEvent}
+                    disabled={loadingCreate || waitingEvent || loadingEvents}
                     style={{
-                      opacity: (loading || waitingEvent) ? 0.3 : 1,
-                      cursor: (loading || waitingEvent) ? 'not-allowed' : 'pointer',
-                      pointerEvents: (loading || waitingEvent) ? 'none' : 'auto'
+                      opacity: (loadingCreate || waitingEvent || loadingEvents) ? 0.3 : 1,
+                      cursor: (loadingCreate || waitingEvent || loadingEvents) ? 'not-allowed' : 'pointer',
+                      pointerEvents: (loadingCreate || waitingEvent || loadingEvents) ? 'none' : 'auto'
                     }}
                   >
                     <Minus size={16} />
@@ -1291,11 +1292,11 @@ const BookingModal = ({ isOpen, onClose, onSubmit, onPinModalClose }) => {
                   <div className="display-time">{getEndTime()}</div>
                   <button 
                     onClick={() => adjustDuration(true)}
-                    disabled={loading || waitingEvent}
+                    disabled={loadingCreate || waitingEvent || loadingEvents}
                     style={{
-                      opacity: (loading || waitingEvent) ? 0.3 : 1,
-                      cursor: (loading || waitingEvent) ? 'not-allowed' : 'pointer',
-                      pointerEvents: (loading || waitingEvent) ? 'none' : 'auto'
+                      opacity: (loadingCreate || waitingEvent || loadingEvents) ? 0.3 : 1,
+                      cursor: (loadingCreate || waitingEvent || loadingEvents) ? 'not-allowed' : 'pointer',
+                      pointerEvents: (loadingCreate || waitingEvent || loadingEvents) ? 'none' : 'auto'
                     }}
                   >
                     <Plus size={16} />
@@ -1310,11 +1311,11 @@ const BookingModal = ({ isOpen, onClose, onSubmit, onPinModalClose }) => {
                       type="button"
                       onClick={() => setQuickDuration(15)}
                       className={`quick-duration-btn ${formData.duration === 15 ? 'active' : ''}`}
-                      disabled={loading || waitingEvent}
+                      disabled={loadingCreate || waitingEvent || loadingEvents}
                       style={{
-                        opacity: (loading || waitingEvent) ? 0.3 : 1,
-                        cursor: (loading || waitingEvent) ? 'not-allowed' : 'pointer',
-                        pointerEvents: (loading || waitingEvent) ? 'none' : 'auto'
+                        opacity: (loadingCreate || waitingEvent || loadingEvents) ? 0.3 : 1,
+                        cursor: (loadingCreate || waitingEvent || loadingEvents) ? 'not-allowed' : 'pointer',
+                        pointerEvents: (loadingCreate || waitingEvent || loadingEvents) ? 'none' : 'auto'
                       }}
                     >
                       15min
@@ -1323,11 +1324,11 @@ const BookingModal = ({ isOpen, onClose, onSubmit, onPinModalClose }) => {
                       type="button"
                       onClick={() => setQuickDuration(30)}
                       className={`quick-duration-btn ${formData.duration === 30 ? 'active' : ''}`}
-                      disabled={loading || waitingEvent}
+                      disabled={loadingCreate || waitingEvent || loadingEvents}
                       style={{
-                        opacity: (loading || waitingEvent) ? 0.3 : 1,
-                        cursor: (loading || waitingEvent) ? 'not-allowed' : 'pointer',
-                        pointerEvents: (loading || waitingEvent) ? 'none' : 'auto'
+                        opacity: (loadingCreate || waitingEvent || loadingEvents) ? 0.3 : 1,
+                        cursor: (loadingCreate || waitingEvent || loadingEvents) ? 'not-allowed' : 'pointer',
+                        pointerEvents: (loadingCreate || waitingEvent || loadingEvents) ? 'none' : 'auto'
                       }}
                     >
                       30min
@@ -1336,11 +1337,11 @@ const BookingModal = ({ isOpen, onClose, onSubmit, onPinModalClose }) => {
                       type="button"
                       onClick={() => setQuickDuration(60)}
                       className={`quick-duration-btn ${formData.duration === 60 ? 'active' : ''}`}
-                      disabled={loading || waitingEvent}
+                      disabled={loadingCreate || waitingEvent || loadingEvents}
                       style={{
-                        opacity: (loading || waitingEvent) ? 0.3 : 1,
-                        cursor: (loading || waitingEvent) ? 'not-allowed' : 'pointer',
-                        pointerEvents: (loading || waitingEvent) ? 'none' : 'auto'
+                        opacity: (loadingCreate || waitingEvent || loadingEvents) ? 0.3 : 1,
+                        cursor: (loadingCreate || waitingEvent || loadingEvents) ? 'not-allowed' : 'pointer',
+                        pointerEvents: (loadingCreate || waitingEvent || loadingEvents) ? 'none' : 'auto'
                       }}
                     >
                       1hr
@@ -1349,11 +1350,11 @@ const BookingModal = ({ isOpen, onClose, onSubmit, onPinModalClose }) => {
                       type="button"
                       onClick={() => setQuickDuration(120)}
                       className={`quick-duration-btn ${formData.duration === 120 ? 'active' : ''}`}
-                      disabled={loading || waitingEvent}
+                      disabled={loadingCreate || waitingEvent || loadingEvents}
                       style={{
-                        opacity: (loading || waitingEvent) ? 0.3 : 1,
-                        cursor: (loading || waitingEvent) ? 'not-allowed' : 'pointer',
-                        pointerEvents: (loading || waitingEvent) ? 'none' : 'auto'
+                        opacity: (loadingCreate || waitingEvent || loadingEvents) ? 0.3 : 1,
+                        cursor: (loadingCreate || waitingEvent || loadingEvents) ? 'not-allowed' : 'pointer',
+                        pointerEvents: (loadingCreate || waitingEvent || loadingEvents) ? 'none' : 'auto'
                       }}
                     >
                       2hr
@@ -1362,22 +1363,15 @@ const BookingModal = ({ isOpen, onClose, onSubmit, onPinModalClose }) => {
                       type="button"
                       onClick={() => setQuickDuration(660)}
                       className={`quick-duration-btn ${formData.duration === 660 ? 'active' : ''}`}
-                      disabled={loading || waitingEvent}
+                      disabled={loadingCreate || waitingEvent || loadingEvents}
                       style={{
-                        opacity: (loading || waitingEvent) ? 0.3 : 1,
-                        cursor: (loading || waitingEvent) ? 'not-allowed' : 'pointer',
-                        pointerEvents: (loading || waitingEvent) ? 'none' : 'auto'
+                        opacity: (loadingCreate || waitingEvent || loadingEvents) ? 0.3 : 1,
+                        cursor: (loadingCreate || waitingEvent || loadingEvents) ? 'not-allowed' : 'pointer',
+                        pointerEvents: (loadingCreate || waitingEvent || loadingEvents) ? 'none' : 'auto'
                       }}
                     >
                       All day
                     </button>
-                    {/* <button 
-                      type="button"
-                      onClick={() => setQuickDuration(180)}
-                      className={`quick-duration-btn ${formData.duration === 180 ? 'active' : ''}`}
-                    >
-                      3hr
-                    </button> */}
                   </div>
                 </div>
               </div>
@@ -1385,14 +1379,14 @@ const BookingModal = ({ isOpen, onClose, onSubmit, onPinModalClose }) => {
               <div className="submit-btn-wrapper">
                 <button 
                   onClick={(e) => {
-                    handleUserInteraction(); // หยุด timer เมื่อผู้ใช้คลิก Book Now
+                    handleUserInteraction();
                     handleSubmit(e);
                   }} 
                   className="submit-btn"
-                  disabled={loading || !canBook || waitingEvent || isPastTime()}
+                  disabled={loadingEvents || loadingCreate || !canBook || waitingEvent || isPastTime()}
                   style={{
-                    opacity: (!canBook || loading || waitingEvent || isPastTime()) ? 0.5 : 1,
-                    cursor: (!canBook || loading || waitingEvent || isPastTime()) ? 'not-allowed' : 'pointer'
+                    opacity: (loadingEvents || loadingCreate || !canBook || waitingEvent || isPastTime()) ? 0.5 : 1,
+                    cursor: (loadingEvents || loadingCreate || !canBook || waitingEvent || isPastTime()) ? 'not-allowed' : 'pointer'
                   }}
                 >
                   {getBookingButtonText()}
@@ -1400,11 +1394,6 @@ const BookingModal = ({ isOpen, onClose, onSubmit, onPinModalClose }) => {
                 {errors.submit && <p className="error-text">{errors.submit}</p>}
                 {errors.timeConflict && <p className="error-text">{errors.timeConflict}</p>}
               </div>
-
-              {/* <div className="footer-nav">
-                <button onClick={onClose}><Home size={16} /> <span>Home</span></button>
-                <button onClick={onClose}><span>All Meetings</span> <Calendar size={16} /></button>
-              </div> */}
             </div>
           </div>
         </div>
