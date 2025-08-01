@@ -391,17 +391,6 @@ const Room1501 = () => {
         ? 'bg-gradient-to-br from-gray-700 to-gray-800' 
         : 'bg-gradient-to-br from-slate-50 to-slate-100'
     }`}>
-      {/* Navbar */}
-      <Navbar 
-        navigate={navigate}
-        toggleDropdown1={toggleDropdown1}
-        openMenu1={openMenu1}
-        handleSizeNavigate={handleSizeNavigate}
-        handleNavigateByRole={handleNavigateByRole}
-        timeString={timeString}
-        dateString={dateString}
-        showSizeRoom={false}
-      />
       
       <div className="p-4 sm:p-6 max-w-[1800px] mx-auto">
         {/* Header */}

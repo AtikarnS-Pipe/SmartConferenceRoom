@@ -49,6 +49,7 @@ function Roomdata({ rooms, currentTime,icons }) {
   };
 
   const handleClickUnavailable = () => {
+    filterEvent();
     const unavailableRooms = rooms
       .map(room => {
         const isBusy = room.events.some(ev => {
@@ -65,10 +66,10 @@ function Roomdata({ rooms, currentTime,icons }) {
     navigate("/Unavailable", { state: { rooms: unavailableRooms, allRooms: rooms, icons: icons } ,replace: true });
   };
   return (
-    <div className={`m-10 flex items-center justify-center px-4 transition-colors duration-300 ${
+    <div className={`p-10 flex items-center justify-center px-4 transition-colors duration-300 ${
       darkMode ? 'bg-gray-700' : ''
     }`}>
-      <div className='grid grid-cols-1 lg:grid-cols-2 gap-6 justify-items-center w-full max-w-6xl'>
+      <div className='grid grid-cols-1 sm:grid-cols-2 gap-6 justify-items-center w-full max-w-6xl'>
       {total.map((t, index) => {
         const isAvailable = t.Name === "Room Available";
         const mainColor = isAvailable ? "bg-[#00c21b]" : "bg-red-600";

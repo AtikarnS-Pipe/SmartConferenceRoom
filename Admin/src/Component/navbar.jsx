@@ -15,6 +15,7 @@ function Navbar({
   const { darkMode, toggleDarkMode } = useDarkMode();
 
   return (
+    <div className="font-display">
     <nav className={`shadow-md p-6 items-center md:flex justify-between text-white sticky top-0 z-40 transition-colors duration-300 ${
       darkMode ? 'bg-gray-900' : 'bg-slate-800'
     }`}>
@@ -55,38 +56,40 @@ function Navbar({
             )}
           </li>
         )}
-        <RefreshButton className='mr-5'>
-          <h1 className='cursor-pointer hover:text-gray-300' onClick={handleNavigateByRole}>Management</h1>
+        <RefreshButton className="mr-5">
+          <h1
+            className="cursor-pointer hover:text-gray-300"
+            onClick={handleNavigateByRole}
+          >
+            Management
+          </h1>
         </RefreshButton>
         <li>
-          <RefreshButton
-            onClick={toggleDarkMode}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-              darkMode 
-                ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
-                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-            }`}
-            title={darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-          >
-            {darkMode ? (
-              <>
-                <Sun className="w-4 h-4" />
-                <span className="text-sm">Light</span>
-              </>
-            ) : (
-              <>
-                <Moon className="w-4 h-4" />
-                <span className="text-sm">Dark</span>
-              </>
-            )}
-          </RefreshButton>
         </li>
       </ul>
-      <div className=' max-md:flex'>
-        <h2 className='md:text-2xl max-md:mr-5'>{timeString}</h2>
-        <h4 className=''>{dateString}</h4> 
+      <div className="flex justify-center items-center gap-5">
+        <RefreshButton title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}>
+
+           {darkMode ? (
+              <div onClick={toggleDarkMode}   className="bg-blue-600 p-2 rounded-full">
+                <Sun className="w-4 h-4" />
+              </div>
+            ) : (
+              <div onClick={toggleDarkMode} className="bg-blue-400 p-2 rounded-full">
+                <Moon className="w-4 h-4" />
+              </div>
+            )}
+        </RefreshButton>
+        <div className="h-[30px] w-[1px] bg-white"></div>
+        <div className=" max-md:flex">
+          <h2 className="md:text-xs max-md:mr-5 flex justify-end">
+            {timeString}
+          </h2>
+          <h4 className="md:text-xs">{dateString}</h4>
+        </div>
       </div>
     </nav>
+    </div>  
   );
 }
 

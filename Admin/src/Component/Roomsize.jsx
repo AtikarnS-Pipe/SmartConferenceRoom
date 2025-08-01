@@ -106,17 +106,8 @@ function RoomSize() {
   if (filteredRooms.length === 0) {
     return (
       <div className={`font-display min-h-screen transition-colors duration-300 ${
-        darkMode ? 'bg-gray-900' : 'bg-white'
+        darkMode ? 'bg-gray-90' : 'bg-white'
       }`}>
-        <Navbar 
-          navigate={navigate}
-          toggleDropdown1={toggleDropdown1}
-          openMenu1={openMenu1}
-          handleSizeNavigate={handleSizeNavigate}
-          handleNavigateByRole={handleNavigateByRole}
-          timeString={timeString}
-          dateString={dateString}
-        />
         <div className={`p-10 text-xl transition-colors duration-300 ${
           darkMode ? 'text-white' : 'text-black'
         }`}>ไม่พบห้องสำหรับ {peopleSize} คน</div>
@@ -128,15 +119,6 @@ function RoomSize() {
     <div className={`font-display min-h-screen transition-colors duration-300 ${
       darkMode ? 'bg-gray-700' : 'bg-white'
     }`}>
-       <Navbar 
-          navigate={navigate}
-          toggleDropdown1={toggleDropdown1}
-          openMenu1={openMenu1}
-          handleSizeNavigate={handleSizeNavigate}
-          handleNavigateByRole={handleNavigateByRole}
-          timeString={timeString}
-          dateString={dateString}
-        />
         <Roomdata rooms={rooms} currentTime={new Date()} icons={icons}/>
       <div className={`p-4 mx-2 rounded-3xl shadow-xl transition-colors duration-300 ${
         darkMode ? 'bg-gray-800' : 'bg-[#f8f7f1]'
