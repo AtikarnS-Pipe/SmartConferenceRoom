@@ -16,21 +16,13 @@ function Navbar({
   const { darkMode, toggleDarkMode } = useDarkMode();
 
   return (
-    <nav
-      className={`shadow-md px-6 py-4 items-center md:flex justify-between text-white sticky top-0 z-40 transition-colors duration-300 ${
-        darkMode ? "bg-gray-900" : "bg-slate-800"
-      }`}
-    >
-      <div className="md:text-xl text-xl ">
-        Conference Room
-      </div>
-      <ul className="flex items-center text-center md:ml-5 max-md:mb-10 max-md:mt-10">
-        <RefreshButton
-          className="mr-5 cursor-pointer hover:text-gray-300"
-          onClick={onResetFilter}
-        >
-          Home
-        </RefreshButton>
+    <div className="font-display">
+    <nav className={`shadow-md p-6 items-center md:flex justify-between text-white sticky top-0 z-40 transition-colors duration-300 ${
+      darkMode ? 'bg-gray-900' : 'bg-slate-800'
+    }`}>
+      <div className="md:text-2xl text-xl underline underline-offset-10">Conference Room</div>
+      <ul className='flex items-center text-center md:ml-5 max-md:mb-10 max-md:mt-10'>
+        <RefreshButton className='mr-5 cursor-pointer hover:text-gray-300' onClick={() => navigate('/admin/api')}>Home</RefreshButton>
         {showSizeRoom && (
           <li
             className="md:mr-5 lg:mx-5 cursor-pointer hover:text-gray-300"
@@ -84,7 +76,6 @@ function Navbar({
       </ul>
       <div className="flex justify-center items-center gap-5">
         <RefreshButton title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}>
-          
            {darkMode ? (
               <div onClick={toggleDarkMode}   className="bg-blue-600 p-2 rounded-full">
                 <Sun className="w-4 h-4" />
@@ -104,6 +95,7 @@ function Navbar({
         </div>
       </div>
     </nav>
+    </div>  
   );
 }
 

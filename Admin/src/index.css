@@ -2,14 +2,14 @@
 @import "tailwindcss";
 
 /* Dark mode global styles */
-.dark {
+/* .dark {
   color-scheme: dark;
-}
+} */
 
-.dark body {
+/* .dark body {
   background-color: #111827;
   color: #f9fafb;
-}
+} */
 
 @media (max-width: 568px) {
   .custom-class {

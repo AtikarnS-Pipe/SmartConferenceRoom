@@ -14,6 +14,7 @@ import Housekeeper from './Component/Manage/Housekeeper'
 import Log from './Component/Manage/Log'
 import RoleGuard from './Component/Authen/Frontend/Roleguard'
 import { ThemeProvider } from './Component/Context/DarkModeContext';
+import Layout from './Component/Layout';
 
 function App() {
   const [isAuthenticated, setAuth] = useState(!!localStorage.getItem('token'));
@@ -24,15 +25,15 @@ function App() {
       <Routes>
         <Route path='/' element={<Verify setAuth={setAuth} />} />
         <Route path='/login/ms' element={<Protect><LoginPage /></Protect>} />
-        <Route path='/admin/api' element={
-          <Protect>
-          <RoomPage />
-        </Protect>
-        } 
-          />
-        <Route path='/room/:Room/:startdate/:enddate' element={
-          <Protect><RoomPages /></Protect>} />
-        <Route path='/roomsize/:size' element={<Protect><RoomSize /></Protect>} />
+
+        <Route element={<Protect><Layout /></Protect>}>
+          <Route path='/admin/api' element={<RoomPage />} />
+          <Route path='/room/:Room/:startdate/:enddate' element={<RoomPages />} />
+          <Route path='/roomsize/:size' element={<RoomSize />} />
+        </Route>
+
+        
+       
         <Route path='/forgot-password' element={<Protect><ForgotPasswordFlow /></Protect>} />
 
         <Route path='/account/admin' element={
