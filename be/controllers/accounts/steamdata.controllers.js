@@ -1,4 +1,4 @@
-const {GetAdminListFromDB, GetHousekeeperFromDB, LogsFromDB} = require('../../services/steaming.services');
+const { GetAdminListFromDB, GetHousekeeperFromDB, LogsFromDB } = require('../../services/steaming.services');
 const urladmin = process.env.FRONTEND_ADMIN;
 const AdminListSchedule = async (req, res) => {
     let intervalId;
@@ -10,7 +10,7 @@ const AdminListSchedule = async (req, res) => {
         'Access-Control-Allow-Origin': urladmin
     });
 
-    try{
+    try {
         await GetAdminListFromDB(res);
         intervalId = setInterval(async () => {
             await GetAdminListFromDB(res);
@@ -31,13 +31,14 @@ const AdminListSchedule = async (req, res) => {
             clearInterval(intervalId);
             console.log(`Response finished for admin`);
         });
-        
-    } catch(error){
+
+    } catch (error) {
         console.error("Error steaming admin lists:", error)
         if (!res.writableEnded) {
-            res.write(`data: ${JSON.stringify({ 
-            error: `AdminListSchedule is error.`})}\n\n`); //****** */
-        }        
+            res.write(`data: ${JSON.stringify({
+                error: `AdminListSchedule is error.`
+            })}\n\n`); //****** */
+        }
         return;
     }
 }
@@ -52,7 +53,7 @@ const HousekeeperListSchedule = async (req, res) => {
         'Access-Control-Allow-Origin': urladmin
     });
 
-    try{
+    try {
         await GetHousekeeperFromDB(res);
         intervalId = setInterval(async () => {
             await GetHousekeeperFromDB(res);
@@ -73,13 +74,14 @@ const HousekeeperListSchedule = async (req, res) => {
             clearInterval(intervalId);
             console.log(`Response finished for housekeeper`);
         });
-        
-    } catch(error){
+
+    } catch (error) {
         console.error("Error steaming Housekeeper lists:", error)
         if (!res.writableEnded) {
-            res.write(`data: ${JSON.stringify({ 
-            error: `HousekeeperListSchedule is error.`})}\n\n`); //****** */
-        }    
+            res.write(`data: ${JSON.stringify({
+                error: `HousekeeperListSchedule is error.`
+            })}\n\n`); //****** */
+        }
         return;
     }
 }
@@ -94,7 +96,7 @@ const LogsListSchedule = async (req, res) => {
         'Access-Control-Allow-Origin': urladmin
     });
 
-    try{
+    try {
         await LogsFromDB(res);
         intervalId = setInterval(async () => {
             await LogsFromDB(res);
@@ -115,13 +117,14 @@ const LogsListSchedule = async (req, res) => {
             clearInterval(intervalId);
             console.log(`Response finished for logs page`);
         });
-        
-    } catch(error){
+
+    } catch (error) {
         console.error("Error steaming Logs lists:", error)
         if (!res.writableEnded) {
-            res.write(`data: ${JSON.stringify({ 
-            error: `LogsListSchedule is error.`})}\n\n`); //****** */
-        }    
+            res.write(`data: ${JSON.stringify({
+                error: `LogsListSchedule is error.`
+            })}\n\n`); //****** */
+        }
         return;
     }
 }

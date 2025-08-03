@@ -9,6 +9,7 @@ const { AddLogmonitoring } = require('../../utils/AddLogmonitoring');
 // const { GetTimeAPI } = require('../../utils/getTodaydatetime');
 
 const Auth = async (req, res) => { // admin sign-in
+    console.log(`${req.ip} ${req.method} ${req.originalUrl}`)
     const { email, password } = req.body;
     if(process.env.DEBUG_MODE) console.log("ready to auth", email, password);
     try{

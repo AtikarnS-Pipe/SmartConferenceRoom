@@ -144,7 +144,7 @@ async function fetchAllRoom(res, accessToken) {
             })
         );
 
-        console.log("admin GET API success!!");
+        console.log("admin GET API success!!", results);
         res.write(`data: ${JSON.stringify({ results })}\n\n`);
     } catch (error) {
         console.error(error);
