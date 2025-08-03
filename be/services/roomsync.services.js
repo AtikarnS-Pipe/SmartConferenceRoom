@@ -72,13 +72,14 @@ async function syncAllRooms() {
                                 organizerMail: event.organizer?.emailAddress?.address,
                                 pin: key, // save pin for user
                                 startDateTime: new Date(event.start?.dateTime + "Z"),
-                                endDateTime: new Date(event.end?.dateTime + "Z")
+                                endDateTime: new Date(event.end?.dateTime + "Z"),
+                                B_createdAt: new Date(),
                             });
                             // console.log('mail send:', key);
                             RoomStr = roomData.room.toString();
                             const mailcontent = getMailContent(RoomStr, key);
-                            
-                            const mail = process.env.DEBUG_MODE ? process.env.CENTERLIZED_MAIL : event.organizer?.emailAddress?.address;
+
+                            const mail = process.env.DEBUG_MODE === "true" ? process.env.CENTERLIZED_MAIL : event.organizer?.emailAddress?.address;
                             await sendMailAsync(mailcontent.subject, mailcontent.body, mail, tokenCache.getAccessToken()); //หัวข้ออีเมล, รหัสผ่าน, หมายเลขห้องที่จะส่งไป
                         }
                     }

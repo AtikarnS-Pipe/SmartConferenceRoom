@@ -3,7 +3,6 @@ const { compareKey, adminCompareKey } = require('../services/pin.services');
 require('dotenv').config({ path: './config/.env' });
 const tokenCache = require("../utils/tokenCache");
 const { getuserdatabyroom, waitUntil } = require('../services/users.services');
-const mailData = require('../templates/mailcontent_warning');
 // crud microsoft
 const { GeteventId, createMSEvent } = require('../services/users.services');
 const getGraphClient = require("../utils/graph");
@@ -100,7 +99,7 @@ const adminKeyPin = async (req, res) => {
 
 // รับ eventId ของการประชุมที่ต้องการลบ
 const deleteroom = async (req, res) => {
-    if (!process.env.DEBUG_MODE) {
+    if (process.env.DEBUG_MODE === "false") {
         const { eventId } = req.body; // , eventId
         const AccessToken = tokenCache.getAccessToken();
         if (!AccessToken) {
@@ -119,7 +118,7 @@ const deleteroom = async (req, res) => {
                     { isPinVerified: 'not access' },
                     { new: true }
                 );
-
+                console.log("[WaitUntil] result:", result);
                 // ถ้ามี organizerMail แล้วถึงจะ return
                 if (result?.organizerMail) return result;
                 return null;
@@ -157,7 +156,7 @@ const deleteroom = async (req, res) => {
                     );
 
                     try {
-                        mailData = getMailData(organizerEmail, countbacklist);
+                        const mailData = getMailData(organizerEmail, countbacklist);
                         await sendMailAsync(mailData.subject, mailData.body, organizerEmail, AccessToken);
                         console.log(`📧 Warning email sent to ${organizerEmail} (${countbacklist.pinMissCount} misses)`);
                     } catch (emailError) {
