@@ -189,7 +189,7 @@ const handleSubmitPasswordChange = async () => {
 
     setTimeout(() => {
       setStatusPopup(null);
-      setShowPasswordModal(false);
+      setShowPasswordModal(true);
       setNewPassword('');
       setConfirmPassword('');
     }, 3000);
@@ -222,7 +222,8 @@ const handleSignout = async () => {
     alert('Failed to sign out.');
   }
 };
-const handleAddAdmin = async () => {
+const handleAddAdmin = async (e) => {
+  e.preventDefault();
   console.log('Sending data:', newMember);
 
   if (!newMember.name || !newMember.pin || !newMember.email || !newMember.password) {
@@ -259,6 +260,7 @@ const handleAddAdmin = async () => {
       setShowPin(false);
       setMessage(response.data.message || 'Admin created successfully');
       setAdminStatus('success');  
+
       setShowAddAdminModal(false);
       setTimeout(() => {
         setAdminStatus(null);
@@ -279,10 +281,8 @@ const handleAddAdmin = async () => {
     setAdminStatus('error');
 
     // ✅ ล้างฟอร์ม
-    setNewMember({ email: '', password: '', name: '', pin: '' });
     setShowPassword(false);
     setShowPin(false);
-    setShowAddAdminModal(false);
     setTimeout(() => {
       setAdminStatus(null);
       setShowAdminStatus(false);
@@ -467,6 +467,7 @@ const performDeleteAdmins = async () => {
 
       {/* Add Admin Modal */}
       {showAddAdminModal && (
+        <form onSubmit={handleAddAdmin}>
        <div className="fixed inset-0 z-50 backdrop-blur-sm bg-white/20 flex items-center justify-center shadow-xl/30">
           <div className={`${darkMode ? 'bg-gray-800 text-white' : 'bg-white'} p-6 rounded-xl shadow-lg w-96 max-h-[90vh] overflow-y-auto`}>
             <h2 className={`text-lg font-semibold mb-4 ${darkMode ? 'text-white' : 'text-gray-800'}`}>Add New Admin</h2>
@@ -474,7 +475,9 @@ const performDeleteAdmins = async () => {
             <div className="mb-4">
               <label className={`block text-sm mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>Email</label>
               <input
+                name='email'
                 type="email"
+                required
                 value={newMember.email}
                 onChange={(e) => setNewMember({...newMember, email: e.target.value})}
                 className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring focus:ring-blue-200 ${
@@ -555,7 +558,7 @@ const performDeleteAdmins = async () => {
                 Cancel
               </RefreshButton>
               <RefreshButton
-                onClick={handleAddAdmin}
+                type="submit"
                 className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center gap-2"
               >
                 Confirm
@@ -563,6 +566,7 @@ const performDeleteAdmins = async () => {
             </div>
           </div>
         </div>
+        </form>
       )}
 
       {statusPopup === 'success' && (
@@ -650,43 +654,7 @@ const performDeleteAdmins = async () => {
         </div>
       )}
 
-      {/* Sidebar */}
-      {/* <div className={`w-full md:w-64 ${darkMode ? 'bg-gray-800' : 'bg-slate-800'} text-white flex flex-row md:flex-col sticky top-0 h-screen transition-colors duration-300`}>
-        <div className={`p-4 md:p-6 border-b ${darkMode ? 'border-gray-700' : 'border-slate-700'} w-full`}>
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-              <Users className="w-5 h-5 text-white" />
-            </div>
-            <span className="font-semibold text-lg">Conference Room</span>
-          </div>
-        </div>
-        <div className="flex-1 p-2 md:p-4">
-          <div className="space-y-2">
-            <RefreshButton className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left hover:${darkMode ? 'bg-gray-700' : 'bg-slate-700'} cursor-pointer`} onClick={() => navigate('/admin/api')}>
-              <Home className="w-4 h-4" />
-              <span className="text-sm">Home</span>
-            </RefreshButton>
-          </div>
-          <div className="mt-4 md:mt-6">
-            <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-slate-400'} uppercase tracking-wider mb-3 px-3`}>Role Filter</p>
-            <div className="space-y-1">
-              <RefreshButton className="w-full flex items-center gap-3 px-3 py-2 rounded-lg bg-white text-blue-600 text-left">
-                <Shield className="w-4 h-4" />
-                <span className="text-sm">Admin</span>
-              </RefreshButton>
-              <RefreshButton className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-300 hover:${darkMode ? 'bg-gray-700' : 'bg-slate-700'} text-left cursor-pointer`} onClick={() => navigate('/account/housekeeper')}>
-                <UserCheck className="w-4 h-4 text-white" />
-                <span className="text-sm text-white">Housekeeper</span>
-              </RefreshButton>
-              <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-slate-400'} uppercase tracking-wider mb-3 px-3 mt-5`}>MONITORING</p>
-              <RefreshButton className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-300 hover:${darkMode ? 'bg-gray-700' : 'bg-slate-700'} text-left cursor-pointer`} onClick={() => navigate('/account/dashboard')}>
-                <LayoutDashboard className="w-4 h-4 text-white" />
-                <span className="text-sm text-white">Dashboard</span>
-              </RefreshButton>
-            </div>
-          </div>
-        </div>
-      </div> */}
+
 
       {/* Main Content */}
       <div className="w-full">
