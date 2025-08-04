@@ -847,11 +847,11 @@ function Superadmin() {
               {/* Dark Mode Toggle */}
               <RefreshButton title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}>
                 {darkMode ? (
-                    <div onClick={toggleDarkMode}   className="bg-gray-200 p-2 rounded-full">
-                      <Sun className="w-4 h-4" />
+                    <div onClick={toggleDarkMode}   className="bg-gray-700 p-2 rounded-full">
+                      <Sun className="w-4 h-4 text-white" />
                     </div>
                   ) : (
-                    <div onClick={toggleDarkMode} className="bg-gray-400 p-2 rounded-full">
+                    <div onClick={toggleDarkMode} className="bg-gray-200 p-2 rounded-full">
                       <Moon className="w-4 h-4 text-gray" />
                     </div>
                   )}
@@ -940,16 +940,13 @@ function Superadmin() {
                       : "opacity-0 invisible pointer-events-none"
                   }`}
                 >
-                  <ul className="py-1 text-sm">
-                    <li
-                      className={`px-3 py-2 ${
-                        darkMode ? "hover:bg-gray-600" : "hover:bg-gray-300"
-                      } cursor-pointer flex`}
-                      onClick={() => {
-                        setOpen(false); // ปิด dropdown ก่อน
-                        setTimeout(() => setShowPasswordModal(true), 0); // เปิด modal หลังจาก dropdown ปิด
-                      }}
-                    >
+                 <ul className={`py-1 text-sm ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                    <li className={`px-3 py-2 cursor-pointer flex ${
+                      darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-300'
+                    }`} onClick={() => {
+                      setOpen(false);
+                      setTimeout(() => setShowPasswordModal(true), 0);
+                    }}>
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
                         className="mr-3"
@@ -968,12 +965,9 @@ function Superadmin() {
                       </svg>
                       Change PIN
                     </li>
-                    <li
-                      className={`px-3 py-2 ${
-                        darkMode ? "hover:bg-gray-600" : "hover:bg-gray-300"
-                      } cursor-pointer flex`}
-                      onClick={handleSignout}
-                    >
+                    <li className={`px-3 py-2 cursor-pointer flex ${
+                      darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-300'
+                    }`} onClick={handleSignout}>
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
                         className="mr-3"
