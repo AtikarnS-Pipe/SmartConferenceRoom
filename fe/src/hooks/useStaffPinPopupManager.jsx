@@ -11,7 +11,7 @@ const StaffPinPopupManager = ({ showTestButton, closeUserPinPopup }) => {
   const [pendingError, setPendingError] = useState('');
   const { floor, room } = useRoomData(); 
   const roomId = `${floor}${room}`; // สร้าง roomId จาก floor และ room
-  // console.log(roomId)
+
 
   // Track triple touch toggle
   useTouchDetection({
@@ -84,14 +84,14 @@ const StaffPinPopupManager = ({ showTestButton, closeUserPinPopup }) => {
   return (
     <>
       {/* ปุ่มทดสอบสำหรับ staff pin */}
-      {/* {showTestButton && (
+      {showTestButton && (
         <button style={{position:'fixed',bottom:20,right:20,zIndex:99999,padding:'1rem',fontSize:'1.2rem'}} onClick={()=>{
           setVisible(true);
           if (typeof closeUserPinPopup === 'function') closeUserPinPopup(true); // true = close user popup
         }}>
           TEST STAFF PIN
         </button>
-      )} */}
+      )}
       {visible && (
         <PinPopup
           onSubmit={handlePinSubmit}
