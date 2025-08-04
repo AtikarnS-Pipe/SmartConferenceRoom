@@ -172,7 +172,7 @@ const deleteroom = async (req, res) => {
     }
 }
 
-const createroom = async (req, res) => {
+	const createroom = async (req, res) => {
     const { createroomdata } = req.body;
 
     if (!createroomdata ||
