@@ -215,9 +215,7 @@ const handleSelectHousekeeper = (housekeeper) => {
 
     setTimeout(() => {
       setStatusPopup(null);
-      setShowPasswordModal(false);
-      setNewPassword('');
-      setConfirmPassword('');
+
     }, 3000);
   }
 };
@@ -302,7 +300,7 @@ const handleAddMember = async () => {
         lastLogin: "N/A"
       }
     ]);
-
+    setMessage(response.data.message);
     setCreatehousekeeper('success');
     
     setTimeout(() => {
@@ -313,13 +311,11 @@ const handleAddMember = async () => {
 
   } catch (error) {
     console.error("Error creating housekeeper:", error.response?.data || error.message);
-
+    setMessage(error.response?.data?.message);
     setCreatehousekeeper('error');
 
     setTimeout(() => {
       setCreatehousekeeper(null);
-      setShowModal(false);
-      setNewMember({ name: "", pin: "", role: "Housekeeper" });
     }, 2000);
   }
 };
@@ -647,7 +643,7 @@ const handleSignout = async () => {
           <div className="fixed top-6 right-6 z-[9999]">
             <div className="bg-green-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-2 animate-slide-in">
               <CheckCircle className="w-5 h-5" />
-              <span className="font-medium">Create Housekeeper Successful.</span>
+              <span className="font-medium">{message}.</span>
             </div>
           </div>
         )}
@@ -655,7 +651,7 @@ const handleSignout = async () => {
         <div className="fixed top-6 right-6 z-[9999]">
           <div className="bg-red-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-2 animate-slide-in">
             <XCircle className="w-5 h-5" />
-            <span className="font-medium">Create Housekeeper Failed, Please Try Again.</span>
+            <span className="font-medium">{message}</span>
           </div>
         </div>
       )}
