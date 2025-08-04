@@ -11,6 +11,7 @@ function RoomPage() {
     const [events, setEvents] = useState([]);
     const [filteredRoom, setFilteredRoom] = useState([]);
     const [filterType, setFilterType] = useState(null); // "available" | "unavailable" | null
+    const [filterStatus, setFilterStatus] = useState("all");
     const { darkMode } = useDarkMode();
     useEffect(() => {
   const code = new URLSearchParams(location.search).get("code");
@@ -79,7 +80,7 @@ const handleRoomFilter = (rooms, type) => {
     <div className={`font-display min-h-screen transition-colors duration-300 ${
       darkMode ? 'bg-gray-700' : 'bg-white'
     }`}>
-        <Roomdata rooms={events} currentTime={new Date()} icons={iconClass} onFilter={handleRoomFilter} />
+        <Roomdata rooms={events} currentTime={new Date()} icons={iconClass} onFilter={handleRoomFilter}  />
         <div className={`p-4 mx-2 rounded-3xl shadow-xl transition-colors duration-300 ${
           darkMode ? 'bg-gray-800' : 'bg-[#f8f7f1]'
         }`}>

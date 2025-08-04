@@ -132,6 +132,14 @@ const adminmem = allUsers.filter(user => user.role === 'Admin');
   }, []);
 
   const handleSubmitPasswordChange = async () => {
+    if (newPassword.length !== 4 || confirmPassword.length !== 4) {
+    setStatusPopup('error');
+    setMessage('Please enter a 4-digit PIN');
+    setTimeout(() => {
+      setStatusPopup(null);
+    }, 3000);
+    return;
+  }
   if (newPassword !== confirmPassword) {
     setStatusPopup('error');
     setMessage('Passwords do not match');
@@ -371,8 +379,8 @@ const handleSignout = async () => {
         <div className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border-b px-4 md:px-6 py-4 transition-colors duration-300`}>
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-2">
             <div>
-              <h1 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>Account Management</h1>
-              <p className={`${darkMode ? 'text-gray-400' : 'text-gray-600'} mt-1`}>Manage users and permission</p>
+              <h1 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>Admin Management</h1>
+              <p className={`${darkMode ? 'text-gray-400' : 'text-gray-600'} mt-1`}>Manage administrator accounts and access</p>
             </div>
 
             <div className="flex items-center gap-3">
@@ -425,7 +433,7 @@ const handleSignout = async () => {
               {/* User Dropdown */}
               <div className="relative" ref={dropdownRef}>
                 <div
-                  className={`flex items-center gap-2 rounded-lg px-4 py-2 cursor-pointer ${
+                  className={`flex items-center gap-2 rounded-lg px-5 py-2 cursor-pointer whitespace-nowrap ${
                     darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'
                   }`}
                   onClick={() => setOpen((prev) => !prev)}
@@ -440,18 +448,18 @@ const handleSignout = async () => {
                     strokeWidth="2"
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    className="lucide lucide-circle-user-icon lucide-circle-user"
+                    className="lucide lucide-circle-user-icon lucide-circle-user flex-shrink-0"
                   >
                     <circle cx="12" cy="12" r="10" />
                     <circle cx="12" cy="10" r="3" />
                     <path d="M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662" />
                   </svg>
                   <span className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-700'}`} >{profile?.name || 'Guest'}</span>
-                  <ChevronDown className={`w-4 h-4 ${darkMode ? 'text-white' : 'text-gray-500'}`} />
+                  <ChevronDown className={`w-4 h-4 flex-shrink-0 ${darkMode ? 'text-white' : 'text-gray-500'}`} />
                 </div>
 
                 <div
-                  className={`absolute right-0 mt-2 w-35 border rounded-lg shadow-xl z-50 transition-all duration-200 ease-in-out ${
+                  className={`absolute right-0 mt-2 min-w-full border rounded-lg shadow-xl z-50 transition-all duration-200 ease-in-out ${
                     darkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-100 border-gray-200'
                   } ${
                     open ? "opacity-100 visible" : "opacity-0 invisible pointer-events-none"

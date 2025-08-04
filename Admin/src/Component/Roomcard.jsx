@@ -89,6 +89,7 @@ function Roomcard(props) {
                 darkMode ? 'bg-gray-600' : 'bg-white'
               }`}
           >
+            
             <div className="flex justify-between items-center mb-3">
               <div className={`font-semibold flex items-center text-base sm:text-lg transition-colors duration-300 ${
                 darkMode ? 'text-white' : 'text-black'

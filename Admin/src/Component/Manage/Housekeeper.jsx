@@ -168,6 +168,14 @@ const handleSelectHousekeeper = (housekeeper) => {
 };
 
   const handleSubmitPasswordChange = async () => {
+    if (newPassword.length !== 4 || confirmPassword.length !== 4) {
+    setStatusPopup('error');
+    setMessage('Please enter a 4-digit PIN');
+    setTimeout(() => {
+      setStatusPopup(null);
+    }, 3000);
+    return;
+  }
   if (newPassword !== confirmPassword) {
     setStatusPopup('error');
     setMessage('Passwords do not match');
@@ -193,7 +201,7 @@ const handleSelectHousekeeper = (housekeeper) => {
       }
     );
 
-    setMessage(res.data.message || 'Housekeeper PIN changed successfully');
+    setMessage(res.data.message || 'PIN Admin Update Successfully');
     setStatusPopup('success');
 
     setTimeout(() => {
@@ -519,6 +527,7 @@ const handleSignout = async () => {
                 <input
                   type={showNewPassword ? "text" : "password"}
                   value={newPassword}
+                  maxLength={4}
                   onChange={(e) => setNewPassword(e.target.value)}
                   className={`w-full px-3 py-2 pr-10 border rounded-md shadow-sm focus:ring focus:ring-blue-200 ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'}`}
                 />
@@ -551,6 +560,7 @@ const handleSignout = async () => {
               <div className="relative">
                 <input
                   type={showConfirmPassword ? "text" : "password"}
+                  maxLength={4}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   className={`w-full px-3 py-2 pr-10 border rounded-md shadow-sm focus:ring focus:ring-blue-200 ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'}`}
@@ -586,7 +596,6 @@ const handleSignout = async () => {
               </RefreshButton>
               <RefreshButton
                 onClick={() => {
-                  setShowPasswordModal(false);
                   handleSubmitPasswordChange();
                 }}
                 className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
@@ -632,7 +641,7 @@ const handleSignout = async () => {
       )}
 
         {signoutsuccess && (
-        <div className="fixed top-6 right-115 z-50">
+        <div className="fixed top-6 right-6 z-50">
           <div className="bg-green-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-2 animate-slide-in">
             <CheckCircle className="w-5 h-5" />
             <span className="font-medium">Signout Successful! Redirecting...</span>
@@ -739,8 +748,8 @@ const handleSignout = async () => {
         <div className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} px-4 md:px-6 py-4 border-b transition-colors duration-300`}>
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-2">
             <div>
-              <h1 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>Account Management</h1>
-              <p className={`mt-1 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>Manage users and permission</p>
+              <h1 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>Housekeeper Management</h1>
+              <p className={`mt-1 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>Manage housekeepers and access levels</p>
             </div>
             <div className="flex items-center gap-3">
               <div className={`flex px-4 py-1.5 gap-2 rounded-lg text-white ${getRoleColor(profile?.role)}`}>
@@ -786,7 +795,7 @@ const handleSignout = async () => {
               </div>
                           <div className="relative" ref={dropdownRef}>
                             <div
-                              className={`flex items-center gap-2 ${darkMode ? 'bg-gray-700 text-white' : 'bg-gray-100'} rounded-lg px-4 py-2 cursor-pointer`}
+                              className={`flex items-center gap-2 ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'} rounded-lg px-5 py-2 cursor-pointer whitespace-nowrap`}
                               onClick={() => setOpen((prev) => !prev)}
                             >
                               <svg
@@ -799,18 +808,18 @@ const handleSignout = async () => {
                                 strokeWidth="2"
                                 strokeLinecap="round"
                                 strokeLinejoin="round"
-                                className="lucide lucide-circle-user-icon lucide-circle-user"
+                                className="lucide lucide-circle-user-icon lucide-circle-user flex-shrink-0"
                               >
                                 <circle cx="12" cy="12" r="10" />
                                 <circle cx="12" cy="10" r="3" />
                                 <path d="M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662" />
                               </svg>
                               <span className="text-sm font-medium">{profile?.name || 'Guest'}</span>
-                              <ChevronDown className={`w-4 h-4 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`} />
+                              <ChevronDown className={`w-4 h-4 flex-shrink-0 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`} />
                             </div>
               
                             <div
-                              className={`absolute right-0 mt-2 w-35 ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-100 border-gray-200 text-gray-700'} border rounded-lg shadow-xl z-50 transition-all duration-200 ease-in-out ${
+                              className={`absolute right-0 mt-2 min-w-full ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-100 border-gray-200 text-gray-700'} border rounded-lg shadow-xl z-50 transition-all duration-200 ease-in-out ${
                                 open ? "opacity-100 visible" : "opacity-0 invisible pointer-events-none"
                               }`}
                             >
