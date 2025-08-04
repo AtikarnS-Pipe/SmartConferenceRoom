@@ -1,4 +1,4 @@
-import { useState, useEffect,useContext  } from "react";
+import { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { Mail, Lock, Eye, EyeOff, LogIn, CheckCircle, XCircle } from 'lucide-react';
@@ -13,7 +13,7 @@ function Verify({ setAuth }) {
   const [showErrorToast, setShowErrorToast] = useState(false);
   const navigate = useNavigate();
 
-          useEffect(() => {
+  useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) return;
 

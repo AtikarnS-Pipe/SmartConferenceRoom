@@ -34,6 +34,7 @@ function RoomPage() {
     try {
       const data = JSON.parse(e.data);
       setEvents(data.results);
+      console.log("SSE data received:", data.results);
       setLoading(false);
     } catch (err) {
       console.error("Error parsing SSE data:", err);

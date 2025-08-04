@@ -22,7 +22,7 @@ function App() {
 
   return (
     <ThemeProvider>
-     <Router>
+     <Router basename="/admin/">
       <Routes>
         <Route path='/' element={<Verify setAuth={setAuth} />} />
         <Route path='/login/ms' element={<Protect><LoginPage /></Protect>} />
