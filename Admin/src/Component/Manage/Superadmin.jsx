@@ -852,34 +852,23 @@ function Superadmin() {
               </p>
             </div>
             <div className="flex items-center gap-3">
-              <div className="flex px-4 py-1.5 gap-2 rounded-lg bg-yellow-600 text-white">
-                <Crown className="w-4 h-6" />
-                <h1>{profile?.role}</h1>
-              </div>
               {/* Dark Mode Toggle */}
-              <RefreshButton
-                onClick={toggleDarkMode}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-                  darkMode
-                    ? "bg-gray-700 text-gray-300 hover:bg-gray-600"
-                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                }`}
-                title={
-                  darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"
-                }
-              >
+              <RefreshButton title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}>
                 {darkMode ? (
-                  <>
-                    <Sun className="w-4 h-4" />
-                    <span className="text-sm">Light</span>
-                  </>
-                ) : (
-                  <>
-                    <Moon className="w-4 h-4" />
-                    <span className="text-sm">Dark</span>
-                  </>
-                )}
+                    <div onClick={toggleDarkMode}   className="bg-gray-200 p-2 rounded-full">
+                      <Sun className="w-4 h-4" />
+                    </div>
+                  ) : (
+                    <div onClick={toggleDarkMode} className="bg-gray-400 p-2 rounded-full">
+                      <Moon className="w-4 h-4 text-gray" />
+                    </div>
+                  )}
               </RefreshButton>
+                <div className='flex px-4 py-1.5 gap-2 rounded-lg bg-yellow-600 text-white'>
+                    <Crown  className="w-4 h-6" />
+                   <h1>{profile?.role}</h1>
+                </div>
+              
 
               {/* PIN Display */}
               <div
