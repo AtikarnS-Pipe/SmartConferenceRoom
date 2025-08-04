@@ -44,6 +44,7 @@ function Log() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [open, setOpen] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState('connecting');
+  const [message, setMessage] = useState('');
   const { darkMode, toggleDarkMode } = useContext(DarkModeContext);
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
@@ -157,6 +158,14 @@ function Log() {
 
 
   const handleSubmitPasswordChange = async () => {
+    if (newPassword.length !== 4 || confirmPassword.length !== 4) {
+    setStatusPopup('error');
+    setMessage('Please enter a 4-digit PIN');
+    setTimeout(() => {
+      setStatusPopup(null);
+    }, 3000);
+    return;
+  }
   if (newPassword !== confirmPassword) {
     setStatusPopup('error');
     setMessage('Passwords do not match');
@@ -171,7 +180,7 @@ function Log() {
 
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.post(
+      const res = await axios.patch(
         '/account/changeadminpw',
         { newpin: newPassword },
         {
@@ -181,20 +190,20 @@ function Log() {
         }
       );
       if (res.status === 200) {
+        setMessage(res.data.message || 'PIN Admin Update Successfully');
         setStatusPopup('success');
         setTimeout(() => {
-          setPinChanged(res.data.newPinPlaintext);
           setStatusPopup(null);
           setShowPasswordModal(false);
           setNewPassword('');
           setConfirmPassword('');
         }, 3000);
-      } else {
-        setStatusPopup('error');
-        setTimeout(() => setStatusPopup(null), 3000);
-      }
+      } 
     } catch (error) {
+      const messageFromBackend =
+      error.res?.data?.message || 'Failed to update PIN. Please try again.';
       console.error(error);
+      setMessage(messageFromBackend)
       setStatusPopup('error');
       setTimeout(() => setStatusPopup(null), 3000);
     }
@@ -285,6 +294,7 @@ const handleSignout = async () => {
                 <input
                   type={showNewPassword ? "text" : "password"}
                   value={newPassword}
+                  maxLength={4}
                   onChange={(e) => setNewPassword(e.target.value)}
                   className={`w-full px-3 py-2 pr-10 border rounded-md shadow-sm focus:ring focus:ring-blue-200 ${
                     darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'
@@ -306,6 +316,7 @@ const handleSignout = async () => {
                 <input
                   type={showConfirmPassword ? "text" : "password"}
                   value={confirmPassword}
+                  maxLength={4}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   className={`w-full px-3 py-2 pr-10 border rounded-md shadow-sm focus:ring focus:ring-blue-200 ${
                     darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'
@@ -332,7 +343,6 @@ const handleSignout = async () => {
               </RefreshButton>
               <RefreshButton
                 onClick={() => {
-                  setShowPasswordModal(false);
                   handleSubmitPasswordChange();
                 }}
                 className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
@@ -345,28 +355,30 @@ const handleSignout = async () => {
       )}
 
       {statusPopup === 'success' && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-          <div className="bg-green-100 border border-green-400 text-green-700 px-6 py-4 rounded-xl shadow-lg text-lg">
-            ✅ Password updated successfully!
+        <div className="fixed top-6 right-6 z-[9999]">
+            <div className="bg-green-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-2 animate-slide-in">
+              <CheckCircle className="w-5 h-5" />
+              <span className="font-medium">{message}</span>
+            </div>
           </div>
-        </div>
       )}
 
       {statusPopup === 'error' && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-          <div className="bg-red-100 border border-red-400 text-red-700 px-6 py-4 rounded-xl shadow-lg text-lg">
-            ❌ Failed to update password!
+        <div className="fixed top-6 right-6 z-[9999]">
+          <div className="bg-red-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-2 animate-slide-in">
+            <XCircle className="w-5 h-5" />
+            <span className="font-medium">{message}</span>
+          </div>
+        </div>
+      )}  
+        {signoutsuccess && (
+        <div className="fixed top-6 right-6 z-50">
+          <div className="bg-green-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-2 animate-slide-in">
+            <CheckCircle className="w-5 h-5" />
+            <span className="font-medium">Signout Successful! Redirecting...</span>
           </div>
         </div>
       )}
-              {signoutsuccess && (
-              <div className="fixed top-6 right-6 z-50">
-                <div className="bg-green-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-2 animate-slide-in">
-                  <CheckCircle className="w-5 h-5" />
-                  <span className="font-medium">Signout Successful! Redirecting...</span>
-                </div>
-              </div>
-            )}
 
       {/* Main Content */}
       <div className="w-full">
@@ -435,7 +447,7 @@ const handleSignout = async () => {
               {/* User Dropdown */}
               <div className="relative" ref={dropdownRef}>
                 <div
-                  className={`flex items-center gap-2 rounded-lg px-4 py-2 cursor-pointer ${
+                  className={`flex items-center gap-2 rounded-lg px-5 py-2 cursor-pointer whitespace-nowrap ${
                     darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'
                   }`}
                   onClick={() => setOpen((prev) => !prev)}
@@ -450,18 +462,18 @@ const handleSignout = async () => {
                     strokeWidth="2"
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    className={`lucide lucide-circle-user-icon lucide-circle-user ${darkMode ? 'text-gray-300' : 'text-gray-800'}`}
+                    className={`lucide lucide-circle-user-icon lucide-circle-user flex-shrink-0 ${darkMode ? 'text-gray-300' : 'text-gray-800'}`}
                   >
                     <circle cx="12" cy="12" r="10" />
                     <circle cx="12" cy="10" r="3" />
                     <path d="M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662" />
                   </svg>
                   <span className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>{profile?.name || 'quest'}</span>
-                  <ChevronDown className={`w-4 h-4 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`} />
+                  <ChevronDown className={`w-4 h-4 flex-shrink-0 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`} />
                 </div>
 
                 <div
-                  className={`absolute right-0 mt-2 w-35 border rounded-lg shadow-xl z-50 transition-all duration-200 ease-in-out ${
+                  className={`absolute right-0 mt-2 min-w-full border rounded-lg shadow-xl z-50 transition-all duration-200 ease-in-out ${
                     darkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-100 border-gray-200'
                   } ${
                     open ? "opacity-100 visible" : "opacity-0 invisible pointer-events-none"

@@ -96,3 +96,19 @@
 .animate-slide-in {
   animation: slide-in 0.3s ease-out;
 }
+
+/* Animation for navigation indicators */
+@keyframes slide-up {
+  from {
+    transform: scaleX(0);
+    opacity: 0;
+  }
+  to {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+}
+
+.nav-indicator {
+  animation: slide-up 0.3s ease-out;
+}

@@ -13,7 +13,7 @@ function HousekeeperStats({ housekeeperCount, adminCount, filteredMembers, darkM
         <div className="relative z-10">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <p className="text-blue-100 text-sm font-medium uppercase tracking-wider">Total Housekeepers</p>
+              <p className="text-blue-100 text-sm font-medium uppercase tracking-wider">Total Housekeeper</p>
               <p className="text-white text-4xl font-bold mt-1">{housekeeperCount}</p>
             </div>
             <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">

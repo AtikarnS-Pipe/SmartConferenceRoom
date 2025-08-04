@@ -38,6 +38,9 @@ function RoomSize() {
   useEffect(() => {
   if (peopleSize !== selectedSize) {
     setSelectedSize(peopleSize);
+    // Reset filter state when size changes
+    setFilteredRoom([]);
+    setFilterType(null);
   }
 }, [peopleSize]);
 
@@ -115,12 +118,11 @@ function RoomSize() {
     <div className={`font-display min-h-screen transition-colors duration-300 ${
       darkMode ? 'bg-gray-700' : 'bg-white'
     }`}>
-        <Roomdata rooms={filteredRooms} currentTime={new Date()} icons={icons}/>
+        <Roomdata rooms={filteredRooms} currentTime={new Date()} icons={icons} onFilter={handleRoomFilter} />
       <div className={`p-4 mx-2 rounded-3xl shadow-xl transition-colors duration-300 ${
         darkMode ? 'bg-gray-800' : 'bg-[#f8f7f1]'
       }`}>
-        {/* <Roomcard data={filteredRoom.length > 0 ? filteredRoom : filteredRooms} icons={filteredIcons} filterType={filterType} /> */}
-        <Roomcard data={filteredRooms} icons={filteredIcons} filterType={filterType} />
+        <Roomcard data={filteredRoom.length > 0 ? filteredRoom : filteredRooms} icons={filteredIcons} filterType={filterType} />
       </div>
     </div>
   );
