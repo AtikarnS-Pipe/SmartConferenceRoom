@@ -230,11 +230,14 @@ const handleSelectHousekeeper = (housekeeper) => {
 
 
  const handleChangePin = async () => {
-  // if (newPin !== confirmPin) {
-  //   setStatusPopup('error');
-  //   setTimeout(() => setStatusPopup(null), 3000);
-  //   return;
-  // }
+    if (newPin.length !== 4) {
+    setStatusPopup('error');
+    setMessage('Please enter a 4-digit PIN');
+    setTimeout(() => {
+      setStatusPopup(null);
+    }, 3000);
+    return;
+  }
 
   try {
     const token = localStorage.getItem('token');
@@ -274,6 +277,14 @@ const handleSelectHousekeeper = (housekeeper) => {
 };
 
 const handleAddMember = async () => {
+    if (newMember.pin.length !== 4) {
+    setStatusPopup('error');
+    setMessage('Please enter a 4-digit PIN');
+    setTimeout(() => {
+      setStatusPopup(null);
+    }, 3000);
+    return;
+  }
   if (!newMember.name?.trim() || !newMember.pin?.trim()) {
     alert("Please fill in all fields.");
     return;

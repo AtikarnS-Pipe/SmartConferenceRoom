@@ -249,6 +249,14 @@ function Superadmin() {
   const handleAddAdmin = async (e) => {
     e.preventDefault();
     console.log("Sending data:", newMember);
+    if (newMember.pin.length !== 4) {
+    setStatusPopup('error');
+    setMessage('Please enter a 4-digit PIN');
+    setTimeout(() => {
+      setStatusPopup(null);
+    }, 3000);
+    return;
+  }
 
     if (
       !newMember.name ||
