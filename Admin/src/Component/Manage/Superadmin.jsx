@@ -603,7 +603,7 @@ const performDeleteAdmins = async () => {
           <div className="fixed top-6 right-6 z-[9999]">
             <div className="bg-green-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-2 animate-slide-in">
               <CheckCircle className="w-5 h-5" />
-              <span className="font-medium">Delete Housekeeper Successful.</span>
+              <span className="font-medium">Delete Admin Successful.</span>
             </div>
           </div>
         )}
@@ -611,7 +611,7 @@ const performDeleteAdmins = async () => {
           <div className="fixed top-6 right-6 z-[9999]">
           <div className="bg-red-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-2 animate-slide-in">
             <XCircle className="w-5 h-5" />
-            <span className="font-medium">Delete Housekeeper Failed..</span>
+            <span className="font-medium">Delete Admin Failed..</span>
           </div>
         </div>
         )}
@@ -703,26 +703,16 @@ const performDeleteAdmins = async () => {
                    <h1>{profile?.role}</h1>
                 </div>
               {/* Dark Mode Toggle */}
-              <RefreshButton
-                onClick={toggleDarkMode}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-                  darkMode 
-                    ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                }`}
-                title={darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-              >
+              <RefreshButton title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}>
                 {darkMode ? (
-                  <>
-                    <Sun className="w-4 h-4" />
-                    <span className="text-sm">Light</span>
-                  </>
-                ) : (
-                  <>
-                    <Moon className="w-4 h-4" />
-                    <span className="text-sm">Dark</span>
-                  </>
-                )}
+                    <div onClick={toggleDarkMode}   className="bg-blue-600 p-2 rounded-full">
+                      <Sun className="w-4 h-4" />
+                    </div>
+                  ) : (
+                    <div onClick={toggleDarkMode} className="bg-blue-400 p-2 rounded-full">
+                      <Moon className="w-4 h-4" />
+                    </div>
+                  )}
               </RefreshButton>
 
               {/* PIN Display */}
@@ -777,7 +767,7 @@ const performDeleteAdmins = async () => {
                     open ? "opacity-100 visible" : "opacity-0 invisible pointer-events-none"
                   }`}
                 >
-                  <ul className={`py-1 text-sm ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                  <ul className={`py-1 text-sm  ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                     <li className={`px-3 py-2 cursor-pointer flex ${
                       darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-300'
                     }`} onClick={() => {

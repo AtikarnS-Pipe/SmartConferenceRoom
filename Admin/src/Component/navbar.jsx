@@ -34,12 +34,12 @@ function Navbar({
             {openMenu1 && (
               <ul
                 className={`absolute mt-2 w-25 rounded-md shadow-lg z-10 transition-colors duration-300 ${
-                  darkMode ? "bg-gray-800" : "bg-blue-700"
+                  darkMode ? "bg-blue-700" : "bg-gray-700"
                 }`}
               >
                 <RefreshButton
                   className={`px-6.5 py-2 rounded-md cursor-pointer transition-colors duration-300 ${
-                    darkMode ? "hover:bg-gray-700" : "hover:bg-blue-400"
+                    darkMode ? "hover:bg-blue-600" : "hover:bg-gray-600"
                   }`}
                   onClick={() => handleSizeNavigate(4)}
                 >
@@ -47,7 +47,7 @@ function Navbar({
                 </RefreshButton>
                 <RefreshButton
                   className={`px-6 py-2 rounded-md cursor-pointer transition-colors duration-300 ${
-                    darkMode ? "hover:bg-gray-700" : "hover:bg-blue-400"
+                    darkMode ? "hover:bg-blue-600" : "hover:bg-gray-600"
                   }`}
                   onClick={() => handleSizeNavigate(6)}
                 >
@@ -55,7 +55,7 @@ function Navbar({
                 </RefreshButton>
                 <RefreshButton
                   className={`px-6.5 py-2 rounded-md cursor-pointer transition-colors duration-300 ${
-                    darkMode ? "hover:bg-gray-700" : "hover:bg-blue-400"
+                    darkMode ? "hover:bg-blue-600" : "hover:bg-gray-600"
                   }`}
                   onClick={() => handleSizeNavigate(10)}
                 >
