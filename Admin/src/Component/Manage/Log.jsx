@@ -45,6 +45,7 @@ function Log() {
   const [open, setOpen] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState('connecting');
   const [message, setMessage] = useState('');
+  const [autoRefresh, setAutoRefresh] = useState(false);
   const { darkMode, toggleDarkMode } = useContext(DarkModeContext);
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
@@ -370,8 +371,9 @@ const handleSignout = async () => {
             <span className="font-medium">{message}</span>
           </div>
         </div>
-      )}  
-        {signoutsuccess && (
+      )}
+
+      {signoutsuccess && (
         <div className="fixed top-6 right-6 z-50">
           <div className="bg-green-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-2 animate-slide-in">
             <CheckCircle className="w-5 h-5" />
@@ -384,10 +386,10 @@ const handleSignout = async () => {
       <div className="w-full">
         {/* Header */}
         <div className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border-b px-4 md:px-6 py-4 transition-colors duration-300`}>
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-2">
+          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
             <div>
-              <h1 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>Dashboard</h1>
-              <p className={`${darkMode ? 'text-gray-400' : 'text-gray-600'} mt-1`}>Real-time system logs and monitoring</p>
+              <h1 className={`text-xl md:text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>Dashboard</h1>
+              <p className={`${darkMode ? 'text-gray-400' : 'text-gray-600'} mt-1 text-sm md:text-base`}>Real-time system logs and monitoring</p>
               <div className="flex items-center gap-2 mt-1">
                 <div className={`w-2 h-2 rounded-full ${
                   connectionStatus === 'connected' ? 'bg-green-500' : 
@@ -399,39 +401,45 @@ const handleSignout = async () => {
                 </span>
               </div>
             </div>
-            <div className="flex items-center gap-3">
-              <RefreshButton title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}>
-                  {darkMode ? (
-                      <div onClick={toggleDarkMode}   className="bg-gray-700 p-2 rounded-full">
-                        <Sun className="w-4 h-4 text-white" />
-                      </div>
-                    ) : (
-                      <div onClick={toggleDarkMode} className="bg-gray-200 p-2 rounded-full">
-                        <Moon className="w-4 h-4 text-gray" />
-                      </div>
-                    )}
-                </RefreshButton>
-              <div className={`flex px-4 py-1.5 gap-2 rounded-lg text-white ${getRoleColor(profile?.role)}`}>
-                  {icon()}
-                  <h1>{profile?.role}</h1>
+
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full lg:w-auto">
+              {/* First Row - Dark Mode Toggle and Role Badge */}
+              <div className="flex items-center gap-3 w-full sm:w-auto">
+                <RefreshButton title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}>
+                    {darkMode ? (
+                        <div onClick={toggleDarkMode} className="bg-gray-700 p-2 rounded-full">
+                          <Sun className="w-4 h-4 text-white" />
+                        </div>
+                      ) : (
+                        <div onClick={toggleDarkMode} className="bg-gray-200 p-2 rounded-full">
+                          <Moon className="w-4 h-4 text-gray" />
+                        </div>
+                      )}
+                  </RefreshButton>
+                <div className={`flex px-3 py-1.5 gap-2 rounded-lg text-white ${getRoleColor(profile?.role)}`}>
+                    {icon()}
+                    <h1 className="text-sm font-medium">{profile?.role}</h1>
+                </div>
               </div>
 
-              {/* PIN Display */}
-              <div className={`flex items-center gap-2 px-4 py-1.5 rounded-lg w-fit ${
-                darkMode ? 'bg-gray-700' : 'bg-gray-200'
-              }`}>
-                <div className={`text-lg tracking-widest ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                 {show ? profile?.pin || '0000' : '●'.repeat(profile?.pin?.length || 4)}
-                </div>
-                <RefreshButton
-                  type="button"
-                  onClick={() => setShow(!show)}
-                  className={`focus:outline-none ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}
-                  title={show ? "Hide PIN" : "Show PIN"}
+              {/* Second Row - PIN Display and User Dropdown */}
+              <div className="flex items-center gap-3 w-full sm:w-auto">
+                {/* PIN Display */}
+                <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg w-fit ${
+                  darkMode ? 'bg-gray-700' : 'bg-gray-200'
+                }`}>
+                  <div className={`text-sm tracking-widest ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                   {show ? profile?.pin || '0000' : '●'.repeat(profile?.pin?.length || 4)}
+                  </div>
+                  <RefreshButton
+                    type="button"
+                    onClick={() => setShow(!show)}
+                    className={`focus:outline-none ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}
+                    title={show ? "Hide PIN" : "Show PIN"}
                 >
                   {show ? <EyeOff size={20} /> : <Eye size={20} />}
                 </RefreshButton>
-              </div>
+                </div>
 
               {/* User Dropdown */}
               <div className="relative" ref={dropdownRef}>
@@ -517,6 +525,7 @@ const handleSignout = async () => {
                   </ul>
                 </div>
               </div>
+              </div>
             </div>
           </div>
         </div>
@@ -537,7 +546,7 @@ const handleSignout = async () => {
                   </div>
                 </div>
                 
-                {/* <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3">
                   <RefreshButton
                     onClick={() => setAutoRefresh(!autoRefresh)}
                     className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
@@ -555,7 +564,7 @@ const handleSignout = async () => {
                     <Download className="w-4 h-4" />
                     Export
                   </RefreshButton>
-                </div> */}
+                </div>
               </div>
             </div>
 
@@ -653,7 +662,7 @@ const handleSignout = async () => {
             </div>
 
             {/* Footer */}
-            <div className={`px-4 md:px-6 py-4 border-t ${darkMode ? 'border-gray-700 bg-gray-700' : 'border-gray-100 bg-gray-50'} transition-colors duration-300`}>
+            <div className={`max-sm:flex justify-center items-center px-4 md:px-6 py-4 border-t ${darkMode ? 'border-gray-700 bg-gray-700' : 'border-gray-100 bg-gray-50'} transition-colors duration-300`}>
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                 <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                   Showing {filteredLogs.length} of {logs.length} log entries

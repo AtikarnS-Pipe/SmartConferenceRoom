@@ -34,6 +34,10 @@ function Navbar({
       darkMode ? 'bg-gray-900' : 'bg-slate-800'
     }`}>
       <div className="md:text-2xl text-xl ">Conference Room</div>
+      
+      
+      
+      
       <ul className='flex items-center text-center md:ml-5 max-md:mb-10 max-md:mt-10'>
         <RefreshButton   className={`mr-5 cursor-pointer transition-colors duration-300 ${
           isActive("/admin/api") ? "text-yellow-400 border-b-2 border-yellow-400" : "hover:text-gray-300"
@@ -45,11 +49,11 @@ function Navbar({
           >
             Home
           </RefreshButton>
-          {showSizeRoom && (
-  <li className="md:mr-5 lg:mx-5 relative flex items-center gap-1">
+  {showSizeRoom && (
+  <li className="mr-5 md:mr-5 lg:mx-5 relative flex items-center gap-1">
     {/* Dropdown Button */}
     <div
-      className={`cursor-pointer transition-colors duration-300 ${
+      className={`cursor-pointer transition-colors duration-300 whitespace-nowrap ${
         selectedSize !== "Room" ? "text-yellow-400 border-b-2 border-yellow-400" : "hover:text-gray-300"
       }`}
       onClick={toggleDropdown1}
@@ -112,7 +116,10 @@ function Navbar({
         <li>
         </li>
       </ul>
-      <div className="flex justify-center items-center gap-5">
+
+
+      {/*right side of navbar*/}
+      <div className="flex justify-start items-center gap-5">
         <RefreshButton title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}>
            {darkMode ? (
               <div onClick={toggleDarkMode}   className="bg-blue-600 p-2 rounded-full">
