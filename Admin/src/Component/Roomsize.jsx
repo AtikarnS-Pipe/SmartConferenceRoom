@@ -8,21 +8,60 @@ import axios from 'axios';
 import Header from './Header.jsx';
 import Navbar from './navbar.jsx';
 import { useDarkMode } from './Context/DarkModeContext';
+import { CircularProgress } from '@mui/material';
 
 function RoomSize() {
   const location = useLocation();
   const { size } = useParams();
   const peopleSize = Number(size);
   const [profile, setProfile] = useState(null);
+  
+  // ✅ Fix: รับข้อมูลจาก location.state แล้วใช้ข้อมูลสดจาก SSE
   const { rooms = [], icons = [], resetFilter = false } = location.state || {};
+  
   const [filteredRoom, setFilteredRoom] = useState([]);
   const [filterType, setFilterType] = useState(null);
-  const [emptyMessage, setEmptyMessage] = useState(""); // ✅ เพิ่ม state สำหรับข้อความว่าง
+  const [emptyMessage, setEmptyMessage] = useState("");
   const [currentTime, setCurrentTime] = useState(new Date());
   const navigate = useNavigate(); 
   const [openMenu1, setOpenMenu1] = useState(false); 
   const [selectedSize, setSelectedSize] = useState(location.state?.selectedSize || "Room");
   const { darkMode } = useDarkMode();
+  
+  // ✅ Add: state สำหรับข้อมูลสด
+  const [liveEvents, setLiveEvents] = useState(rooms);
+  const [loading, setLoading] = useState(false);
+
+  // ✅ Add: ดึงข้อมูลสดจาก SSE เมื่อเข้าหน้า
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    setLoading(true);
+    const eventSource = new EventSource(`/admin/sse?token=${token}`);
+
+    eventSource.onmessage = (e) => {
+      try {
+        const data = JSON.parse(e.data);
+        console.log("Live data received in RoomSize:", data.results?.length);
+        setLiveEvents(data.results || []);
+        setLoading(false);
+      } catch (err) {
+        console.error("Error parsing SSE data:", err);
+        setLoading(false);
+      }
+    };
+
+    eventSource.onerror = (err) => {
+      console.error("SSE error:", err);
+      setLoading(false);
+      eventSource.close();
+    };
+
+    return () => {
+      eventSource.close();
+    };
+  }, []);
 
   // ✅ Fix: Reset filter เมื่อมี resetFilter flag
   useEffect(() => {
@@ -30,7 +69,7 @@ function RoomSize() {
       console.log("Resetting filters due to resetFilter flag");
       setFilteredRoom([]);
       setFilterType(null);
-      setEmptyMessage(""); // ✅ รีเซ็ตข้อความว่างด้วย
+      setEmptyMessage("");
     }
   }, [resetFilter]);
 
@@ -43,7 +82,7 @@ function RoomSize() {
     navigate(`/roomsize/${size}`, {
       state: {
         icons: icons,
-        rooms: rooms,
+        rooms: liveEvents, // ✅ ใช้ข้อมูลสด
         peopleSize: size,
         selectedSize: label
       }
@@ -60,7 +99,7 @@ function RoomSize() {
       // Reset filter state when size changes
       setFilteredRoom([]);
       setFilterType(null);
-      setEmptyMessage(""); // ✅ รีเซ็ตข้อความว่างด้วย
+      setEmptyMessage("");
     }
   }, [peopleSize, selectedSize]);
 
@@ -78,12 +117,6 @@ function RoomSize() {
       .catch(err => console.error(err));
   }, []);
 
-  useEffect(() => {
-    if (profile) {
-      console.log("Profile state updated:", profile);
-    }
-  }, [profile]);
-
   const handleNavigateByRole = () => {
     const role = localStorage.getItem('role');
     console.log("Navigating based on role:", role);
@@ -100,7 +133,19 @@ function RoomSize() {
   const handleRoomFilter = (rooms, type, message = "") => {
     setFilteredRoom(rooms);
     setFilterType(type);
-    setEmptyMessage(message); // ตั้งค่าข้อความว่าง
+    setEmptyMessage(message);
+  };
+
+  // ✅ FIX: ปรับปรุงฟังก์ชัน clearAllFilters ให้กลับไปหน้าหลัก
+  const clearAllFilters = () => {
+    console.log("Clear all filters called from RoomSize");
+    // Navigate กลับไปหน้าหลัก (Admin.jsx) พร้อมรีเซ็ต state
+    navigate('/admin/api', {
+      state: {
+        selectedSize: "Room",
+        clearFilters: true
+      }
+    });
   };
 
   useEffect(() => {
@@ -110,21 +155,63 @@ function RoomSize() {
     return () => clearInterval(timer);
   }, []);
 
-  // ✅ Fix: ใช้ peopleSize แทน selectedSize ในการกรอง
+  // ✅ Fix: ใช้ peopleSize แทน selectedSize ในการกรอง และใช้ข้อมูลสด
   const filteredIcons = icons.filter(icon => icon.people === peopleSize);
 
-  // map rooms ที่ match กับ icons
+  // ✅ Fix: ปรับปรุงการจับคู่ข้อมูล - ใช้ข้อมูลสดแทน
   const filteredRooms = filteredIcons.map(icon => {
-    const matchingRoom = rooms.find(room => String(room.room).trim() === String(icon.room).trim());
+    const matchingRoom = liveEvents.find(room => {
+      // ✅ เช็คทั้ง room property และ room number
+      const roomNumber = String(room.room || '').trim();
+      const iconRoom = String(icon.room || '').trim();
+      return roomNumber === iconRoom;
+    });
+
+    console.log(`Matching room for icon ${icon.room}:`, matchingRoom ? 'Found' : 'Not found');
 
     return {
       ...icon,
+      // ✅ ส่งข้อมูล events ที่ถูกต้อง
       events: matchingRoom?.events || [],
+      room: icon.room // ให้แน่ใจว่า room number ถูกต้อง
     };
   });
 
-  console.log("Filtered rooms:", filteredRooms.length, "for size:", peopleSize);
-  console.log("Selected size state:", selectedSize);
+  console.log("=== RoomSize Debug Info ===");
+  console.log("People size:", peopleSize);
+  console.log("Selected size:", selectedSize);
+  console.log("Icons:", icons.length);
+  console.log("Live events:", liveEvents.length);
+  console.log("Filtered icons:", filteredIcons.length);
+  console.log("Filtered rooms:", filteredRooms.length);
+  console.log("Filtered rooms data:", filteredRooms.map(r => ({
+    room: r.room,
+    people: r.people,
+    hasEvents: r.events?.length > 0
+  })));
+
+  if (loading) {
+    return (
+      <div className={`font-display min-h-screen transition-colors duration-300 ${
+        darkMode ? 'bg-gray-700' : 'bg-white'
+      }`}>
+        <Header 
+          selectedSize={selectedSize} 
+          setSelectedSize={setSelectedSize}
+          events={liveEvents}
+          clearAllFilters={clearAllFilters}
+        />
+        <div className="flex justify-center items-center py-20">
+          <div className="text-center">
+            <CircularProgress size="40px"/>
+            <p className={`mt-4 ${darkMode ? 'text-white' : 'text-black'}`}>
+              Loading room data...
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (filteredRooms.length === 0) {
     return (
@@ -134,7 +221,8 @@ function RoomSize() {
         <Header 
           selectedSize={selectedSize} 
           setSelectedSize={setSelectedSize}
-          events={rooms}
+          events={liveEvents}
+          clearAllFilters={clearAllFilters}
         />
         <div className={`p-10 text-xl transition-colors duration-300 ${
           darkMode ? 'text-white' : 'text-black'
@@ -152,7 +240,8 @@ function RoomSize() {
       <Header 
         selectedSize={selectedSize} 
         setSelectedSize={setSelectedSize}
-        events={rooms}
+        events={liveEvents} // ✅ ใช้ข้อมูลสด
+        clearAllFilters={clearAllFilters}
       />
       <Roomdata 
         rooms={filteredRooms} 
@@ -167,7 +256,11 @@ function RoomSize() {
           data={filteredRoom.length > 0 ? filteredRoom : filteredRooms} 
           icons={filteredIcons} 
           filterType={filterType}
-          emptyMessage={emptyMessage} // ✅ ส่ง emptyMessage ไปด้วย
+          emptyMessage={emptyMessage}
+          selectedSize={selectedSize} 
+          setSelectedSize={setSelectedSize} 
+          events={liveEvents} // ✅ ใช้ข้อมูลสด
+          clearAllFilters={clearAllFilters}
         />
       </div>
     </div>

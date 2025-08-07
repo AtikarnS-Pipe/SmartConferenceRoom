@@ -51,17 +51,19 @@ function Header({ selectedSize, setSelectedSize, events, clearAllFilters }) {
       { id: 10, room: "1520", icons: 1, people: 4 },
     ];
 
-    // ✅ Fix: ไม่ reload เมื่อกด Size เดิม แต่จะ reset filter แทน
-    if (window.location.pathname === `/roomsize/${peopleSize}`) {
-      // ถ้าอยู่หน้าเดิม ให้ reset filter โดยการ navigate ใหม่
+    // ✅ Fix: ปรับปรุงการส่งข้อมูลให้ถูกต้อง - ไม่ส่งข้อมูลเก่า
+    const currentPath = window.location.pathname;
+    
+    if (currentPath === `/roomsize/${peopleSize}`) {
+      // ถ้าอยู่หน้าเดิม ให้ reset filter
       console.log("Same page - resetting filters");
       navigate(`/roomsize/${peopleSize}`, {
         state: {
           icons: iconClass,
           peopleSize: peopleSize,
-          rooms: events,
+          rooms: [], // ✅ ส่งเป็น array ว่าง ให้ RoomSize ดึงข้อมูลสดเอง
           selectedSize: label,
-          resetFilter: true, // ✅ เพิ่ม flag สำหรับ reset filter
+          resetFilter: true,
         },
         replace: true,
       });
@@ -71,8 +73,9 @@ function Header({ selectedSize, setSelectedSize, events, clearAllFilters }) {
         state: {
           icons: iconClass,
           peopleSize: peopleSize,
-          rooms: events,
+          rooms: [], // ✅ ส่งเป็น array ว่าง ให้ RoomSize ดึงข้อมูลสดเอง
           selectedSize: label,
+          resetFilter: false,
         },
         replace: true,
       });
@@ -85,7 +88,7 @@ function Header({ selectedSize, setSelectedSize, events, clearAllFilters }) {
       size === 4 ? "S" : size === 6 ? "M" : size === 10 ? "L" : "Room";
     setSelectedSize(label); // ✅ อัพเดท state ทันที
     handleSizeNavigate(size, label);
-    console.log("Size clicked:", size, "Label:", label);
+    console.log("Size clicked:", size, "Label:", label, "Events:", events?.length || 0);
   };
 
   // Time
@@ -111,6 +114,13 @@ function Header({ selectedSize, setSelectedSize, events, clearAllFilters }) {
     hour12: false,
     timeZone: "Asia/Bangkok",
   });
+
+  // ✅ เพิ่มการตรวจสอบและ log ข้อมูล events
+  useEffect(() => {
+    console.log("Header - Events data:", events?.length || 0);
+    console.log("Header - Selected size:", selectedSize);
+    console.log("Header - Current path:", location.pathname);
+  }, [events, selectedSize, location.pathname]);
 
 return (
   <div
@@ -178,13 +188,18 @@ return (
       )}
 
       <RefreshButton
-        className={`text-sm md:text-base ${
+        className={`text-sm md:text-base cursor-pointer ${
           darkMode ? "text-white hover:text-blue-400" : "text-black hover:text-blue-400"
         }`}
         onClick={() => {
           setSelectedSize("Room");
           setOpenMenu1(false);
-          clearAllFilters ? clearAllFilters() : navigate("/admin/api");
+          // ✅ Fix: เรียกใช้ clearAllFilters ถ้ามี หรือ navigate กลับหน้าหลัก
+          if (clearAllFilters) {
+            clearAllFilters();
+          } else {
+            navigate("/admin/api");
+          }
         }}
       >
         Clear filter

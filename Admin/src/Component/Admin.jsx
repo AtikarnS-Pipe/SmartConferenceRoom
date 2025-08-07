@@ -62,6 +62,26 @@ function RoomPage() {
         };
     }, []);
 
+    // ✅ FIX: เพิ่ม useEffect เพื่อจัดการกับการกลับมาจาก RoomSize
+    useEffect(() => {
+        // เช็คว่ามี clearFilters flag จาก navigation
+        if (location.state?.clearFilters) {
+            console.log("Clearing filters from navigation state");
+            setFilteredRoom([]);
+            setFilterType(null);
+            setEmptyMessage("");
+            setSelectedSize("Room");
+            
+            // Clear the state to prevent repeated clearing
+            window.history.replaceState({}, '', location.pathname + location.search);
+        }
+        
+        // จัดการ selectedSize จาก state
+        if (location.state?.selectedSize) {
+            setSelectedSize(location.state.selectedSize);
+        }
+    }, [location.state]);
+
     // ✅ อัพเดทฟังก์ชัน handleRoomFilter เพื่อรับ message
     const handleRoomFilter = (rooms, type, message = "") => {
         setFilteredRoom(rooms);
@@ -71,6 +91,7 @@ function RoomPage() {
 
     // ✅ ฟังก์ชันสำหรับเคลียร์ filter
     const clearAllFilters = () => {
+        console.log("Clear all filters called from Admin");
         setFilteredRoom([]);
         setFilterType(null);
         setEmptyMessage("");
@@ -90,18 +111,16 @@ function RoomPage() {
         {id:10, room: "1520", icons: 1, people: 4},
     ];
 
+    // ✅ FIX: ลดความซับซ้อนของ useEffect นี้
     useEffect(() => {
-        if (location.state?.selectedSize) {
-            setSelectedSize(location.state.selectedSize);
-        }
-        // ✅ รีเซ็ต filter เมื่อกลับมาหน้าหลัก
-        else {
+        // รีเซ็ต filter เฉพาะเมื่อไม่มี selectedSize จาก state และไม่มี clearFilters flag
+        if (!location.state?.selectedSize && !location.state?.clearFilters) {
             setFilteredRoom([]);
             setFilterType(null);
             setEmptyMessage("");
             setSelectedSize("Room");
         }
-    }, [location.state?.selectedSize]);
+    }, [location.pathname]); // เปลี่ยนจาก location.state เป็น location.pathname
         
     return (
         <div className={`font-display min-h-screen transition-colors duration-300 ${
@@ -135,6 +154,10 @@ function RoomPage() {
                         icons={iconClass} 
                         filterType={filterType}
                         emptyMessage={emptyMessage} // ✅ ส่ง emptyMessage ไปด้วย
+                        selectedSize={selectedSize} 
+                        setSelectedSize={setSelectedSize} 
+                        events={events} 
+                        clearAllFilters={clearAllFilters}
                     />
                 )}
             </div>

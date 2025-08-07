@@ -8,7 +8,7 @@ import { useDarkMode } from './Context/DarkModeContext';
 import Icons from '../assets/discussion.png';
 
 function Roomcard(props) {
-  const { data, icons, filterType, emptyMessage } = props; // ✅ เพิ่ม emptyMessage prop
+  const { data, icons, filterType, emptyMessage,selectedSize,setSelectedSize,events,clearAllFilters } = props; // ✅ เพิ่ม emptyMessage prop
   const [currentTime, setCurrentTime] = useState(new Date());
   const navigate = useNavigate();
   const { darkMode } = useDarkMode();
@@ -100,7 +100,13 @@ function Roomcard(props) {
           const start = formatBuddhistDate(today);
           const end = formatBuddhistDate(endDate);
           const url = `/room/${roomPath}/${start}/${end}`;
-          navigate(url);
+          navigate(url ,{
+            state: { 
+              selectedSize, 
+              events: d.events, // ✅ ส่ง events ของห้องเดียว
+              allEvents: events // ✅ ส่ง events ของทุกห้อง
+             }
+          });
         };
 
         const matchedRoom = icons.find(i => String(i.room).trim() === String(d.room).trim());

@@ -89,6 +89,7 @@ function Roomdata({ rooms, currentTime, icons, onFilter }) {
         {total.map((t, index) => {
           const isAvailable = t.Name === "Room Available";
           const mainColor = isAvailable ? "bg-[#00c21b]" : "bg-red-600";
+          const bgcolor = isAvailable ? "bg-[#00c21b]" : "bg-red-600";
           const textColor = isAvailable ? "text-[#00c21b]" : "text-red-600";
           const bgCircle = isAvailable ? "bg-[#d0e2b4]" : "bg-red-100";
           
