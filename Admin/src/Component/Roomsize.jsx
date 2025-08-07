@@ -1,100 +1,121 @@
 import React from 'react';
-import { useLocation,useNavigate,useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import Roomdata from './Roomdata';
 import Roomcard from './Roomcard';
-import RefreshButton from "../utils/refreshToken"; // Assuming you have a RefreshButton component
+import RefreshButton from "../utils/refreshToken";
 import axios from 'axios';
+import Header from './Header.jsx';
 import Navbar from './navbar.jsx';
 import { useDarkMode } from './Context/DarkModeContext';
 
 function RoomSize() {
   const location = useLocation();
-  const { size } = useParams();          // size มาจาก URL เช่น /roomsize/4
-  const peopleSize = Number(size);       // แปลงเป็น number ถ้าจำเป็น
+  const { size } = useParams();
+  const peopleSize = Number(size);
   const [profile, setProfile] = useState(null);
-  const { rooms = [], icons = []  } = location.state || {};
+  const { rooms = [], icons = [], resetFilter = false } = location.state || {};
   const [filteredRoom, setFilteredRoom] = useState([]);
-  const [filterType, setFilterType] = useState(null); // "available" | "unavailable" | null
+  const [filterType, setFilterType] = useState(null);
+  const [emptyMessage, setEmptyMessage] = useState(""); // ✅ เพิ่ม state สำหรับข้อความว่าง
   const [currentTime, setCurrentTime] = useState(new Date());
   const navigate = useNavigate(); 
   const [openMenu1, setOpenMenu1] = useState(false); 
-  const [selectedSize, setSelectedSize] = useState(peopleSize);
+  const [selectedSize, setSelectedSize] = useState(location.state?.selectedSize || "Room");
   const { darkMode } = useDarkMode();
 
-  const handleGoHome = () => {
-  navigate('/admin/api');
-};
-  const handleSizeNavigate = (size) => {
-        navigate(`/roomsize/${size}`, {
-          state: {
-            icons: icons,     // ส่งทั้งหมดไปเลย
-            rooms: rooms,  // ส่งตัวแปร filter ไปใช้ในหน้าถัดไป
-            peopleSize: size
-          }
-        });
-      };
-  const toggleDropdown1 = () => setOpenMenu1(prev => !prev);
+  // ✅ Fix: Reset filter เมื่อมี resetFilter flag
   useEffect(() => {
-  if (peopleSize !== selectedSize) {
-    setSelectedSize(peopleSize);
-    // Reset filter state when size changes
-    setFilteredRoom([]);
-    setFilterType(null);
-  }
-}, [peopleSize]);
+    if (resetFilter) {
+      console.log("Resetting filters due to resetFilter flag");
+      setFilteredRoom([]);
+      setFilterType(null);
+      setEmptyMessage(""); // ✅ รีเซ็ตข้อความว่างด้วย
+    }
+  }, [resetFilter]);
+
+  const handleGoHome = () => {
+    navigate('/admin/api');
+  };
+
+  const handleSizeNavigate = (size) => {
+    const label = size === 4 ? 'S' : size === 6 ? 'M' : size === 10 ? 'L' : 'Room';
+    navigate(`/roomsize/${size}`, {
+      state: {
+        icons: icons,
+        rooms: rooms,
+        peopleSize: size,
+        selectedSize: label
+      }
+    });
+  };
+
+  const toggleDropdown1 = () => setOpenMenu1(prev => !prev);
+  
+  useEffect(() => {
+    // ✅ Fix: อัพเดท selectedSize ให้ตรงกับ peopleSize
+    const label = peopleSize === 4 ? 'S' : peopleSize === 6 ? 'M' : peopleSize === 10 ? 'L' : 'Room';
+    if (selectedSize !== label) {
+      setSelectedSize(label);
+      // Reset filter state when size changes
+      setFilteredRoom([]);
+      setFilterType(null);
+      setEmptyMessage(""); // ✅ รีเซ็ตข้อความว่างด้วย
+    }
+  }, [peopleSize, selectedSize]);
 
   useEffect(() => {
-      const token = localStorage.getItem('token');
-      if (!token) return;
-  
-      axios.get('/account/me', {
-        headers: { Authorization: `Bearer ${token}` }
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    axios.get('/account/me', {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+      .then(res => {
+        setProfile(res.data);
+        console.log("Profile data fetched:", res.data);
       })
-        .then(res => {
-          setProfile(res.data);
-          console.log("Profile data fetched:", res.data);
-        })
-        .catch(err => console.error(err));
-    }, []);
-  
-    useEffect(() => {
-      if (profile) {
-        console.log("Profile state updated:", profile);
-      }
-    }, [profile]);
-  
-    const handleNavigateByRole = () => {
-    const role = localStorage.getItem('role'); // ดึง role จาก localStorage
-      console.log("Navigating based on role:", role);
+      .catch(err => console.error(err));
+  }, []);
+
+  useEffect(() => {
+    if (profile) {
+      console.log("Profile state updated:", profile);
+    }
+  }, [profile]);
+
+  const handleNavigateByRole = () => {
+    const role = localStorage.getItem('role');
+    console.log("Navigating based on role:", role);
     if (role === 'Superadmin') {
       navigate('/account/superadmin');
     } else if (role === 'Admin') {
       navigate('/account/admin');
     } else {
-      navigate('/'); // สำรองเผื่อ role อื่นหรือไม่มี role
+      navigate('/');
     }
   };
-    const handleRoomFilter = (rooms, type) => {
-      setFilteredRoom(rooms);
-      setFilterType(type);
-    };
+
+  // ✅ อัพเดทฟังก์ชัน handleRoomFilter เพื่อรับ message
+  const handleRoomFilter = (rooms, type, message = "") => {
+    setFilteredRoom(rooms);
+    setFilterType(type);
+    setEmptyMessage(message); // ตั้งค่าข้อความว่าง
+  };
 
   useEffect(() => {
-        const timer = setInterval(() => {
-          setCurrentTime(new Date());
-        }, 1000);
-        return () => clearInterval(timer);
-    }, []);
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
-    
-
-  // กรอง icons ที่ตรงกับจำนวนคน
- const filteredIcons = icons.filter(icon => icon.people === selectedSize);
+  // ✅ Fix: ใช้ peopleSize แทน selectedSize ในการกรอง
+  const filteredIcons = icons.filter(icon => icon.people === peopleSize);
 
   // map rooms ที่ match กับ icons
   const filteredRooms = filteredIcons.map(icon => {
-  const matchingRoom = rooms.find(room => String(room.room).trim() === String(icon.room).trim());
+    const matchingRoom = rooms.find(room => String(room.room).trim() === String(icon.room).trim());
 
     return {
       ...icon,
@@ -102,14 +123,24 @@ function RoomSize() {
     };
   });
 
+  console.log("Filtered rooms:", filteredRooms.length, "for size:", peopleSize);
+  console.log("Selected size state:", selectedSize);
+
   if (filteredRooms.length === 0) {
     return (
       <div className={`font-display min-h-screen transition-colors duration-300 ${
-        darkMode ? 'bg-gray-90' : 'bg-white'
+        darkMode ? 'bg-gray-900' : 'bg-white'
       }`}>
+        <Header 
+          selectedSize={selectedSize} 
+          setSelectedSize={setSelectedSize}
+          events={rooms}
+        />
         <div className={`p-10 text-xl transition-colors duration-300 ${
           darkMode ? 'text-white' : 'text-black'
-        }`}>ไม่พบห้องสำหรับ {peopleSize} คน</div>
+        }`}>
+          ไม่พบห้องสำหรับ {peopleSize} คน
+        </div>
       </div>
     );
   }
@@ -118,11 +149,26 @@ function RoomSize() {
     <div className={`font-display min-h-screen transition-colors duration-300 ${
       darkMode ? 'bg-gray-700' : 'bg-white'
     }`}>
-        <Roomdata rooms={filteredRooms} currentTime={new Date()} icons={icons} onFilter={handleRoomFilter} />
+      <Header 
+        selectedSize={selectedSize} 
+        setSelectedSize={setSelectedSize}
+        events={rooms}
+      />
+      <Roomdata 
+        rooms={filteredRooms} 
+        currentTime={new Date()} 
+        icons={icons} 
+        onFilter={handleRoomFilter} 
+      />
       <div className={`p-4 mx-2 rounded-3xl shadow-xl transition-colors duration-300 ${
         darkMode ? 'bg-gray-800' : 'bg-[#f8f7f1]'
       }`}>
-        <Roomcard data={filteredRoom.length > 0 ? filteredRoom : filteredRooms} icons={filteredIcons} filterType={filterType} />
+        <Roomcard 
+          data={filteredRoom.length > 0 ? filteredRoom : filteredRooms} 
+          icons={filteredIcons} 
+          filterType={filterType}
+          emptyMessage={emptyMessage} // ✅ ส่ง emptyMessage ไปด้วย
+        />
       </div>
     </div>
   );

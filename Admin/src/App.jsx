@@ -44,7 +44,7 @@ function App() {
           >
             {/* <Route path="/admin/api" element={<RoomPage />} /> */}
             {/* <Route path="/room/:Room/:startdate/:enddate" element={<RoomPages />}/> */}
-            <Route path="/roomsize/:size" element={<RoomSize />} />
+            {/* <Route path="/roomsize/:size" element={<RoomSize />} /> */}
           </Route>
 
           <Route
@@ -55,9 +55,10 @@ function App() {
               </Protect>
             }
           />
-          <Route element={<AccountLayout darkMode={darkMode} />}>
+          <Route element={<AccountLayout darkMode={darkMode} />}> 
             <Route path="/room/:Room/:startdate/:enddate" element={<RoomPages />}/>
             <Route path="/admin/api" element={<RoomPage />} />
+            <Route path="/roomsize/:size" element={<RoomSize />} />
             <Route
               path="/account/admin"
               element={
