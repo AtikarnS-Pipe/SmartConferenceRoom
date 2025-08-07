@@ -6,7 +6,7 @@ import { useState } from "react";
 import { useLocation } from "react-router-dom";
 
 function Navbar({
-  navigate,
+  navigate,       
   toggleDropdown1,
   openMenu1,
   handleSizeNavigate,

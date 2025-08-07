@@ -8,7 +8,8 @@ const RoomFilterContext = createContext();
 export const useRoomFilter = () => useContext(RoomFilterContext);
 
 const Layout = () => {
-  const [currentTime, setCurrentTime] = useState(new Date());
+  
+   const [currentTime, setCurrentTime] = useState(new Date());
   const [openMenu1, setOpenMenu1] = useState(false);
   const [events, setEvents] = useState([]);
   const [filteredRoom, setFilteredRoom] = useState([]);

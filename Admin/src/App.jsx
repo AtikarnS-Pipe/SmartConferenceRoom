@@ -42,11 +42,8 @@ function App() {
               </Protect>
             }
           >
-            <Route path="/admin/api" element={<RoomPage />} />
-            <Route
-              path="/room/:Room/:startdate/:enddate"
-              element={<RoomPages />}
-            />
+            {/* <Route path="/admin/api" element={<RoomPage />} /> */}
+            {/* <Route path="/room/:Room/:startdate/:enddate" element={<RoomPages />}/> */}
             <Route path="/roomsize/:size" element={<RoomSize />} />
           </Route>
 
@@ -59,6 +56,8 @@ function App() {
             }
           />
           <Route element={<AccountLayout darkMode={darkMode} />}>
+            <Route path="/room/:Room/:startdate/:enddate" element={<RoomPages />}/>
+            <Route path="/admin/api" element={<RoomPage />} />
             <Route
               path="/account/admin"
               element={

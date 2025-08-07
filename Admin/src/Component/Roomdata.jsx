@@ -80,7 +80,7 @@ function Roomdata({ rooms, currentTime, icons, onFilter  }) {
         return (
           <div
             key={index}
-            className={`flex items-center rounded-[20px] shadow-xl/30 overflow-hidden w-full max-w-[550px] mx-auto transition-colors duration-300 ${
+            className={`flex items-center rounded-3xl shadow-xl/30 overflow-hidden w-full max-w-[550px] mx-auto transition-colors duration-300 ${
               darkMode ? 'bg-gray-800' : 'bg-[#f8f7f1]'
             }`}
             >
