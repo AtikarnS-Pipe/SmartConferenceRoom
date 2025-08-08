@@ -35,51 +35,69 @@ function Roomdata({ rooms, currentTime, icons, onFilter }) {
     <div className={`p-10 flex items-center justify-center px-4 transition-colors duration-300 ${
       darkMode ? 'bg-gray-700' : ''
     }`}>
-      <div className='grid grid-cols-1 sm:grid-cols-2 gap-6 justify-items-center w-full max-w-6xl'>
+      <div className='grid grid-cols-1 sm:grid-cols-2 gap-6 justify-items-center w-full'>
         {total.map((t, index) => {
           const isAvailable = t.Name === "Room Available";
-          const mainColor = isAvailable ? "bg-[#00c21b]" : "bg-red-600";
-          const textColor = isAvailable ? "text-[#00c21b]" : "text-red-600";
-          const bgCircle = isAvailable ? "bg-[#d0e2b4]" : "bg-red-100";
-
+          // ใช้ gradient เต็มการ์ด
+         const cardGradient = (() => {
+            if (isAvailable) {
+              return darkMode 
+                ? "bg-gradient-to-br from-green-600 via-green-800 to-green-950"
+                : "bg-gradient-to-br from-green-500 via-green-600 to-green-800";
+            } else {
+              return darkMode 
+                ? "bg-gradient-to-br from-red-600 via-red-800 to-red-950"
+                : "bg-gradient-to-br from-red-500 via-red-600 to-red-800";
+            }
+          })();
+          
           return (
             <div
               key={index}
-              className={`flex items-center rounded-3xl shadow-xl/30 overflow-hidden w-full max-w-[550px] mx-auto transition-colors duration-300 ${
-                darkMode ? 'bg-gray-800' : 'bg-[#f8f7f1]'
-              }`}
+              className={`flex items-center rounded-3xl shadow-xl overflow-hidden w-full mx-auto transition-all duration-300 ${cardGradient}`}
             >
-              <div className={`w-14 sm:w-16 rounded-l-3xl ${mainColor} h-full`}></div>
-
-              <div className="flex-grow flex flex-col justify-between px-5 py-5 sm:px-7 sm:py-10">
-                <div className={`font-semibold text-2xl transition-colors duration-300 ${
-                  darkMode ? 'text-white' : 'text-black'
-                }`}>{t.Name}</div>
-                <div className={`${textColor} text-5xl font-bold`}>
+              <div className="flex-grow flex flex-col justify-between px-5 py-6 sm:px-12 sm:py-6">
+                <div className="font-semibold text-2xl text-white">
+                  {t.Name}
+                </div>
+                <div className="text-white text-5xl font-bold">
                   {t.count}
                   <span className="text-xl font-medium"> / {t.total}</span>
                 </div>
+                <RefreshButton 
+                  onClick={() => {
+                    if (t.Name === "Room Available") {
+                      handleClickAvailable();
+                    } else {
+                      handleClickUnavailable();
+                    }
+                  }}
+                  className="mt-2 px-4 py-3 rounded-xl text-sm font-medium w-max cursor-pointer transition-all duration-300 bg-white/40 text-white hover:bg-white/30 backdrop-blur-sm"
+                >
+                  View Details
+                </RefreshButton>
               </div>
 
-              <div className={`flex items-center justify-center w-12 h-12 relative right-5 sm:right-10 rounded-full ${bgCircle}`}>
+              <div className="flex items-center justify-center w-12 h-12 relative right-5 sm:right-10 rounded-full bg-white/20 backdrop-blur-sm">
                 {isAvailable ? (
-                  <div className="w-16 h-12 rounded-full bg-[#d1e2a4] flex items-center justify-center">
-                    <div className="w-12 h-12 rounded-full border-4 border-[#6e9448] flex items-center justify-center">
-                      <svg className="w-6 h-6 text-[#6e9448]" fill="none" stroke="currentColor" strokeWidth={5} viewBox="0 0 24 24">
+                  <div className="w-16 h-12 rounded-full bg-white/30 flex items-center justify-center backdrop-blur-sm">
+                    <div className="w-12 h-12 rounded-full border-4 border-white flex items-center justify-center">
+                      <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" strokeWidth={5} viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                       </svg>
                     </div>
                   </div>
                 ) : (
-                  <div className="w-16 h-12 rounded-full bg-[#e2a4a4] flex items-center justify-center">
-                    <div className="w-12 h-12 rounded-full border-4 border-[#944848] flex items-center justify-center">
-                      <svg className="w-6 h-6 text-[#a05252]" fill="none" stroke="currentColor" strokeWidth={5} viewBox="0 0 24 24">
+                  <div className="w-16 h-12 rounded-full bg-white/30 flex items-center justify-center backdrop-blur-sm">
+                    <div className="w-12 h-12 rounded-full border-4 border-white flex items-center justify-center">
+                      <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" strokeWidth={5} viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                       </svg>
                     </div>
                   </div>
                 )}
               </div>
+              
             </div>
           );
         })}

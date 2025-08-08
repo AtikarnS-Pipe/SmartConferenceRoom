@@ -166,7 +166,7 @@ function RoomPage() {
                         data={filteredRoom.length > 0 ? filteredRoom : events} 
                         icons={iconClass} 
                         filterType={filterType}
-                        emptyMessage={emptyMessage} // ✅ ส่ง emptyMessage ไปด้วย
+                        emptyMessage={emptyMessage}
                         selectedSize={selectedSize} 
                         setSelectedSize={setSelectedSize} 
                         events={events} 
