@@ -123,45 +123,51 @@ function RoomPage() {
     }, [location.pathname]); // เปลี่ยนจาก location.state เป็น location.pathname
         
     return (
-        <div className={`font-display min-h-screen transition-colors duration-300 ${
-            darkMode ? 'bg-gray-700' : 'bg-gray-50'
-        }`}>
-            <Header 
-                selectedSize={selectedSize} 
-                setSelectedSize={setSelectedSize} 
-                events={events} 
-                clearAllFilters={clearAllFilters}
-            />
-            <Roomdata 
-                rooms={events} 
-                currentTime={new Date()} 
-                icons={iconClass} 
-                onFilter={handleRoomFilter} 
-            />
-            <div className={`p-4 mx-2 rounded-3xl shadow-xl transition-colors duration-300 ${
-                darkMode ? 'bg-gray-800' : 'bg-[#f8f7f1]'
-            }`}>
-                {loading ? (
-                    <div className={`flex justify-center py-20 gap-[5px] transition-colors duration-300 ${
-                        darkMode ? 'text-white' : 'text-black'
-                    }`}>
-                        <span>loading</span>
-                        <CircularProgress size="25px"/>
-                    </div>
-                ) : (
-                    <Roomcard 
-                        data={filteredRoom.length > 0 ? filteredRoom : events} 
-                        icons={iconClass} 
-                        filterType={filterType}
-                        emptyMessage={emptyMessage} // ✅ ส่ง emptyMessage ไปด้วย
-                        selectedSize={selectedSize} 
-                        setSelectedSize={setSelectedSize} 
-                        events={events} 
-                        clearAllFilters={clearAllFilters}
-                    />
-                )}
+      <div
+        className={`font-display min-h-screen transition-colors duration-300 ${
+          darkMode ? "bg-gray-700" : "bg-gray-50"
+        }`}
+      >
+        <Header
+          selectedSize={selectedSize}
+          setSelectedSize={setSelectedSize}
+          events={events}
+          clearAllFilters={clearAllFilters}
+        />
+        <Roomdata
+          rooms={events}
+          currentTime={new Date()}
+          icons={iconClass}
+          onFilter={handleRoomFilter}
+        />
+        <div
+          className={`p-4 mx-2 rounded-3xl shadow-xl transition-colors duration-300 ${
+            darkMode ? "bg-gray-800" : "bg-[#f8f7f1]"
+          }`}
+        >
+          {loading ? (
+            <div
+              className={`flex justify-center py-20 gap-[5px] transition-colors duration-300 ${
+                darkMode ? "text-white" : "text-black"
+              }`}
+            >
+              <span>loading</span>
+              <CircularProgress size="25px" />
             </div>
+          ) : (
+            <Roomcard
+              data={filteredRoom.length > 0 ? filteredRoom : events}
+              icons={iconClass}
+              filterType={filterType}
+              emptyMessage={emptyMessage} // ✅ ส่ง emptyMessage ไปด้วย
+              selectedSize={selectedSize}
+              setSelectedSize={setSelectedSize}
+              events={events}
+              clearAllFilters={clearAllFilters}
+            />
+          )}
         </div>
+      </div>
     );
 }
 
