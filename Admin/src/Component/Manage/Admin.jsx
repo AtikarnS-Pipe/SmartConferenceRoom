@@ -21,7 +21,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { DarkModeContext } from '../Context/DarkModeContext';
 import RefreshButton from '../../utils/refreshToken'; // Adjust the import path as necessary
-import HousekeeperStats from '../Housekeeperstats';
+import Statscard from '../Statscard';
 
 function Admin() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -516,7 +516,7 @@ const handleSignout = async () => {
 
         <div className="p-2 md:p-6">
           {/* Stats */}
-          <HousekeeperStats 
+          <Statscard 
             housekeeperCount={housekeeperCount}
             adminCount={adminCount}
             filteredMembers={filteredMembers}

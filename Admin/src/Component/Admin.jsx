@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import Roomcard from './Roomcard';
 import Roomdata from './Roomdata';
+import Statscard from './Statscard';
 import { useLocation } from 'react-router-dom';
 import { useDarkMode } from './Context/DarkModeContext';
 import { CircularProgress } from '@mui/material';
@@ -16,6 +17,10 @@ function RoomPage() {
     const [filterStatus, setFilterStatus] = useState("all");
     const [emptyMessage, setEmptyMessage] = useState(""); // ✅ เพิ่ม state สำหรับข้อความว่าง
     const { darkMode } = useDarkMode();
+
+    // ✅ เพิ่ม state สำหรับจำนวน housekeeper และ admin (ตัวอย่าง)
+    const [housekeeperCount, setHousekeeperCount] = useState(0);
+    const [adminCount, setAdminCount] = useState(0);
 
     useEffect(() => {
         const code = new URLSearchParams(location.search).get("code");
@@ -33,6 +38,15 @@ function RoomPage() {
                 const data = JSON.parse(e.data);
                 setEvents(data.results);
                 setLoading(false);
+                
+                // ✅ ถ้ามีข้อมูล housekeeper/admin จาก API ให้ update ตรงนี้
+                // ตัวอย่าง:
+                // setHousekeeperCount(data.housekeeperCount || 5);
+                // setAdminCount(data.adminCount || 2);
+                
+                // หรือ hardcode ไว้ก่อนสำหรับทดสอบ
+                setHousekeeperCount(5);
+                setAdminCount(2);
             } catch (err) {
                 console.error("Error parsing SSE data:", err);
                 setLoading(false);
@@ -134,14 +148,22 @@ function RoomPage() {
           events={events}
           clearAllFilters={clearAllFilters}
         />
-        <Roomdata
-          rooms={events}
-          currentTime={new Date()}
-          icons={iconClass}
-          onFilter={handleRoomFilter}
-        />
+        
+        {/* ✅ แก้ไข HousekeeperStats ให้ส่ง props ครบถ้วน */}
+          <Statscard 
+            darkMode={darkMode}
+            rooms={events}
+            currentTime={new Date()}
+            onFilter={handleRoomFilter}
+            
+            // ปิดการแสดง Housekeeper และ Admin cards
+            showHousekeeper={false}
+            showAdmin={false}
+            showRoomStatus={true}  // แสดงเฉพาะ Room Status
+          />
+        
         <div
-          className={`p-4 mx-2 rounded-3xl shadow-xl transition-colors duration-300 ${
+          className={`p-4 mx-2 rounded-3xl shadow-xl/30 transition-colors duration-300 ${
             darkMode ? "bg-gray-800" : "bg-[#f8f7f1]"
           }`}
         >

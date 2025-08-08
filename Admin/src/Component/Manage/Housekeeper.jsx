@@ -21,7 +21,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { DarkModeContext } from '../Context/DarkModeContext'; // Adjust the import path as necessary
 import RefreshButton from '../../utils/refreshToken'; // Adjust the import path as necessary
-import HousekeeperStats from '../Housekeeperstats';
+import Statscard from '../Statscard';
 
 function Housekeeper() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -716,43 +716,6 @@ const handleSignout = async () => {
             </div>
           </div>
         )}
-      {/* Sidebar */}
-      {/* <div className={`w-full md:w-64 ${darkMode ? 'bg-gray-800' : 'bg-slate-800'} text-white flex flex-row md:flex-col sticky top-0 h-screen`}>
-        <div className={`p-4 md:p-6 border-b ${darkMode ? 'border-gray-700' : 'border-slate-700'} w-full`}>
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-              <Users className="w-5 h-5 text-white" />
-            </div>
-            <span className="font-semibold text-lg">Conference Room</span>
-          </div>
-        </div>
-        <div className="flex-1 p-2 md:p-4">
-          <div className="space-y-2">
-            <RefreshButton className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left hover:bg-slate-700  cursor-pointer"  onClick={()=>navigate('/admin/api')}>
-              <Home className="w-4 h-4" />
-              <span className="text-sm">Home</span>
-            </RefreshButton>
-          </div>
-          <div className="mt-4 md:mt-6">
-            <p className="text-xs text-slate-400 uppercase tracking-wider mb-3 px-3">Role Filter</p>
-            <div className="space-y-1">
-              <RefreshButton className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-700 text-left  cursor-pointer" onClick={handleNavigateByRole}>
-                <Shield className="w-4 h-4 text-white" />
-                <span className="text-sm text-white">Admin</span>
-              </RefreshButton>
-              <RefreshButton className="w-full flex items-center gap-3 px-3 py-2 rounded-lg bg-white text-blue-600 text-left">
-                <UserCheck className="w-4 h-4" />
-                <span className="text-sm">Housekeeper</span>
-              </RefreshButton>
-              <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-slate-400'} uppercase tracking-wider mb-3 px-3 mt-5`}>MONITORING</p>
-              <RefreshButton className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-700 text-left cursor-pointer" onClick={()=>navigate('/account/dashboard')}>
-                <LayoutDashboard className="w-4 h-4 text-white" />
-                <span className="text-sm text-white">Dashboard</span>
-              </RefreshButton>
-            </div>
-          </div>
-        </div>
-      </div> */}
 
       {/* Main Content */}
       <div className="flex-1 overflow-auto">
@@ -885,7 +848,7 @@ const handleSignout = async () => {
 
         <div className="p-2 md:p-6">
           {/* Stats */}
-          <HousekeeperStats 
+          <Statscard 
             housekeeperCount={housekeeperCount}
             adminCount={adminCount}
             filteredMembers={filteredMembers}

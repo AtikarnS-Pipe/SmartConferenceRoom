@@ -23,7 +23,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { DarkModeContext } from "../Context/DarkModeContext";
 import RefreshButton from "../../utils/refreshToken";
-import HousekeeperStats from "../Housekeeperstats";
+import Statscard from "../Statscard";
 
 function Superadmin() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -1008,7 +1008,7 @@ function Superadmin() {
 
         <div className="p-2 md:p-6">
           {/* Stats */}
-          <HousekeeperStats
+          <Statscard
             housekeeperCount={housekeeperCount}
             adminCount={adminCount}
             filteredMembers={filteredMembers}
