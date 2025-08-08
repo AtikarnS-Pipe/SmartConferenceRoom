@@ -137,8 +137,31 @@ function RoomPage() {
                 rooms={events} 
                 currentTime={new Date()} 
                 icons={iconClass} 
-                onFilter={handleRoomFilter} 
+                onFilter={handleRoomFilter}
+                selectedSize={selectedSize}
             />
+            {/* <ButtonFilter 
+                onFilter={handleRoomFilter} 
+                events={events}
+                currentTime={new Date()}
+                selectedSize={selectedSize}
+                setSelectedSize={setSelectedSize}
+                clearAllFilters={clearAllFilters}
+                icons={iconClass}
+            /> */}
+
+
+
+
+            <div className={`p-4 mx-2 rounded-3xl shadow-xl transition-colors duration-300 ${
+                darkMode ? 'bg-gray-800' : 'bg-gray-200'
+            }`}>
+            <div className='flex justify-between px-8 pb-4'>
+            <h1 className={`text-xl font-semibold transition-colors duration-300 ${
+                darkMode ? 'text-white' : 'text-black'
+            }`}>
+                Meeting Room Status
+            </h1>
             <ButtonFilter 
                 onFilter={handleRoomFilter} 
                 events={events}
@@ -146,14 +169,10 @@ function RoomPage() {
                 selectedSize={selectedSize}
                 setSelectedSize={setSelectedSize}
                 clearAllFilters={clearAllFilters}
+                icons={iconClass}
             />
-
-
-
-
-            <div className={`p-4 mx-2 rounded-3xl shadow-xl transition-colors duration-300 ${
-                darkMode ? 'bg-gray-800' : 'bg-[#f8f7f1]'
-            }`}>
+            </div>
+            
                 {loading ? (
                     <div className={`flex justify-center py-20 gap-[5px] transition-colors duration-300 ${
                         darkMode ? 'text-white' : 'text-black'

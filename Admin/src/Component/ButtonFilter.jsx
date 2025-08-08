@@ -6,11 +6,16 @@ import { useLocation, useNavigate } from "react-router-dom";
 function ButtonFilter ({selectedSize, setSelectedSize, clearAllFilters, events, onFilter, rooms, currentTime}){
 const [openMenu1, setOpenMenu1] = useState(false);
 const [openAvailabilityMenu, setOpenAvailabilityMenu] = useState(false);
+const [selectedAvailability, setSelectedAvailability] = useState("Availability"); // เพิ่ม state สำหรับ availability
 const { darkMode, toggleDarkMode } = useDarkMode();
 const showSizeRoom = true;
 const toggleDropdown1 = () => setOpenMenu1((prev) => !prev);
 const toggleAvailabilityDropdown = () => setOpenAvailabilityMenu((prev) => !prev);
 const navigate = useNavigate();
+const location = useLocation();
+
+// เช็คว่ามีการ filter อะไรไหม (ไม่อิงจาก path)
+const hasActiveFilters = selectedSize !== "Room" || selectedAvailability !== "Availability";
 
 // คำนวณจำนวนห้องว่างและไม่ว่าง
 let availableCount = 0;
@@ -38,6 +43,8 @@ const handleClickAvailable = () => {
   if (availableCount === 0) {
     // ส่งข้อมูลว่างพร้อมกับ message
     onFilter([], "available", "There are no rooms available.");
+    setSelectedAvailability("Available"); // เปลี่ยนข้อความปุ่ม
+    setOpenAvailabilityMenu(false);
     return;
   }
 
@@ -55,6 +62,7 @@ const handleClickAvailable = () => {
     .filter(room => room.isAvailable);
 
   onFilter(availableRooms, "available");
+  setSelectedAvailability("Available"); // เปลี่ยนข้อความปุ่ม
   setOpenAvailabilityMenu(false);
 };
 
@@ -63,6 +71,8 @@ const handleClickUnavailable = () => {
   if (unavailableCount === 0) {
     // ส่งข้อมูลว่างพร้อมกับ message
     onFilter([], "unavailable", "There are no rooms unavailable.");
+    setSelectedAvailability("Occupied"); // เปลี่ยนข้อความปุ่ม
+    setOpenAvailabilityMenu(false);
     return;
   }
 
@@ -80,6 +90,7 @@ const handleClickUnavailable = () => {
     .filter(room => room.isAvailable);
 
   onFilter(unavailableRooms, "unavailable");
+  setSelectedAvailability("Occupied"); // เปลี่ยนข้อความปุ่ม
   setOpenAvailabilityMenu(false);
 };
 
@@ -139,18 +150,18 @@ const handleSizeChange = (size) => {
   };
 
     return(
-        <div className="flex items-center justify-end gap-4 pr-10 mb-3">
+        <div className="flex items-center justify-end gap-4">
             {/* Availability Dropdown */}
             <div className="relative">
               <RefreshButton
                 className={`rounded-md px-3 py-1 cursor-pointer text-sm md:text-base border-b-2 ${
                   darkMode
-                    ? "text-white hover:text-blue-400 border-transparent hover:border-blue-400"
-                    : "text-black hover:text-blue-400 border-transparent hover:border-blue-400"
+                    ? "text-white hover:text-blue-400 border-transparent hover:border-blue-400 bg-gray-600"
+                    : "text-black hover:text-blue-400 border-transparent hover:border-blue-400 bg-gray-300"
                 }`}
                 onClick={toggleAvailabilityDropdown}
               >
-                Availability {openAvailabilityMenu ? "▴" : "▾"}
+                {selectedAvailability} {openAvailabilityMenu ? "▴" : "▾"}
               </RefreshButton>
 
               {openAvailabilityMenu && (
@@ -162,11 +173,11 @@ const handleSizeChange = (size) => {
                   <li>
                     <RefreshButton
                       className={`block w-full text-left px-4 py-2 text-white ${
-                        darkMode ? "hover:bg-gray-600" : "hover:bg-gray-700"
+                        darkMode ? "hover:bg-gray-600" : "hover:bg-gray-700 "
                       }`}
                       onClick={handleClickAvailable}
                     >
-                      Available ({availableCount})
+                      Available 
                     </RefreshButton>
                   </li>
                   <li>
@@ -176,7 +187,7 @@ const handleSizeChange = (size) => {
                       }`}
                       onClick={handleClickUnavailable}
                     >
-                      Occupied ({unavailableCount})
+                      Occupied
                     </RefreshButton>
                   </li>
                 </ul>
@@ -187,13 +198,10 @@ const handleSizeChange = (size) => {
             {showSizeRoom && (
                     <div className="relative">
                       <div
-                        className={`rounded-md px-1 cursor-pointer text-sm md:text-base border-b-2
-                        ${
-                        selectedSize !== "Room"
-                            ? "text-blue-400 border-blue-400"
-                            : darkMode
-                            ? "text-white hover:text-blue-400 border-transparent hover:border-blue-400"
-                            : "text-black hover:text-blue-400 border-transparent hover:border-blue-400"
+                        className={` rounded-md px-3 py-1 cursor-pointer text-sm md:text-base border-b-2
+                        ${  darkMode
+                            ? "text-white hover:text-blue-400 border-transparent hover:border-blue-400 bg-gray-600"
+                            : "text-black hover:text-blue-400 border-transparent hover:border-blue-400 bg-gray-300"
                         }`}
                         onClick={toggleDropdown1}
                       >
@@ -214,7 +222,7 @@ const handleSizeChange = (size) => {
                                 }`}
                                 onClick={() => handleSizeChange(size)}
                               >
-                                Size {size === 4 ? "S" : size === 6 ? "M" : "L"}
+                                {size === 4 ? "Small" : size === 6 ? "Meduim" : "Large"}
                               </RefreshButton>
                             </li>
                           ))}
@@ -225,11 +233,20 @@ const handleSizeChange = (size) => {
 
             {/* Clear Filter Button */}
             <RefreshButton
-                    className={`text-sm md:text-base cursor-pointer ${
-                    darkMode ? "text-white hover:text-blue-400" : "text-black hover:text-blue-400"
+                    className={` rounded-md px-3 py-1 text-sm md:text-base cursor-pointer  ${
+                    !hasActiveFilters 
+                        ? darkMode 
+                            ? "text-gray-500 cursor-not-allowed opacity-90 bg-gray-600" 
+                            : "text-gray-400 cursor-not-allowed opacity-90 bg-gray-100"
+                        : darkMode 
+                            ? "text-white hover:text-blue-400 bg-gray-600 " 
+                            : "text-black hover:text-blue-400 bg-gray-300"
                     }`}
                     onClick={() => {
+                    if (!hasActiveFilters) return; // ไม่ให้กดได้เมื่อไม่มี filter ใดๆ
+                    
                     setSelectedSize("Room");
+                    setSelectedAvailability("Availability"); // รีเซ็ต availability ปุ่ม
                     setOpenMenu1(false);
                     setOpenAvailabilityMenu(false);
                     // ✅ Fix: เรียกใช้ clearAllFilters ถ้ามี หรือ navigate กลับหน้าหลัก
