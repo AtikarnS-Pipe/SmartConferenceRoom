@@ -31,56 +31,6 @@ function Roomdata({ rooms, currentTime, icons, onFilter }) {
     { id: 2, Name: "Room Unavailable", count: unavailableCount, total: rooms.length }
   ];
 
-  const navigate = useNavigate();
-
-  const handleClickAvailable = () => {
-    // ✅ เช็คว่ามีห้องว่างไหม
-    if (availableCount === 0) {
-      // ส่งข้อมูลว่างพร้อมกับ message
-      onFilter([], "available", "There are no rooms available.");
-      return;
-    }
-
-    const availableRooms = rooms
-      .map(room => {
-        const isBusy = room.events.some(ev => {
-          const start = new Date(ev.start.dateTime);
-          const end = new Date(ev.end.dateTime);
-          start.setHours(start.getHours() + 7);
-          end.setHours(end.getHours() + 7);
-          return currentTime >= start && currentTime <= end;
-        });
-        return { ...room, isAvailable: !isBusy };
-      })
-      .filter(room => room.isAvailable);
-
-    onFilter(availableRooms, "available");
-  };
-
-  const handleClickUnavailable = () => {
-    // ✅ เช็คว่ามีห้องไม่ว่างไหม
-    if (unavailableCount === 0) {
-      // ส่งข้อมูลว่างพร้อมกับ message
-      onFilter([], "unavailable", "There are no rooms unavailable.");
-      return;
-    }
-
-    const unavailableRooms = rooms
-      .map(room => {
-        const isBusy = room.events.some(ev => {
-          const start = new Date(ev.start.dateTime);
-          const end = new Date(ev.end.dateTime);
-          start.setHours(start.getHours() + 7);
-          end.setHours(end.getHours() + 7);
-          return currentTime >= start && currentTime <= end;
-        });
-        return { ...room, isAvailable: isBusy };
-      })
-      .filter(room => room.isAvailable);
-
-    onFilter(unavailableRooms, "unavailable");
-  };
-
   return (
     <div className={`p-10 flex items-center justify-center px-4 transition-colors duration-300 ${
       darkMode ? 'bg-gray-700' : ''
@@ -89,12 +39,8 @@ function Roomdata({ rooms, currentTime, icons, onFilter }) {
         {total.map((t, index) => {
           const isAvailable = t.Name === "Room Available";
           const mainColor = isAvailable ? "bg-[#00c21b]" : "bg-red-600";
-          const bgcolor = isAvailable ? "bg-[#00c21b]" : "bg-red-600";
           const textColor = isAvailable ? "text-[#00c21b]" : "text-red-600";
           const bgCircle = isAvailable ? "bg-[#d0e2b4]" : "bg-red-100";
-          
-          // ✅ เช็คว่าสามารถกดได้หรือไม่ (เอาออกเพราะต้องให้กดได้เสมอ)
-          // const canClick = isAvailable ? availableCount > 0 : unavailableCount > 0;
 
           return (
             <div
@@ -105,7 +51,7 @@ function Roomdata({ rooms, currentTime, icons, onFilter }) {
             >
               <div className={`w-14 sm:w-16 rounded-l-3xl ${mainColor} h-full`}></div>
 
-              <div className="flex-grow flex flex-col justify-between px-5 py-5 sm:px-7 sm:py-5">
+              <div className="flex-grow flex flex-col justify-between px-5 py-5 sm:px-7 sm:py-10">
                 <div className={`font-semibold text-2xl transition-colors duration-300 ${
                   darkMode ? 'text-white' : 'text-black'
                 }`}>{t.Name}</div>
@@ -113,22 +59,6 @@ function Roomdata({ rooms, currentTime, icons, onFilter }) {
                   {t.count}
                   <span className="text-xl font-medium"> / {t.total}</span>
                 </div>
-                <RefreshButton 
-                  onClick={() => {
-                    if (t.Name === "Room Available") {
-                      handleClickAvailable();
-                    } else {
-                      handleClickUnavailable();
-                    }
-                  }}
-                  className={`mt-2 px-4 py-3 rounded-xl text-sm font-medium w-max cursor-pointer transition-colors duration-300 ${
-                    darkMode 
-                      ? 'bg-gray-700 text-white hover:bg-gray-600' 
-                      : 'bg-gray-200 text-black hover:bg-gray-300'
-                  }`}
-                >
-                  View Details
-                </RefreshButton>
               </div>
 
               <div className={`flex items-center justify-center w-12 h-12 relative right-5 sm:right-10 rounded-full ${bgCircle}`}>

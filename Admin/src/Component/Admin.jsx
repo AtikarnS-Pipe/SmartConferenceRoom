@@ -5,6 +5,7 @@ import { useLocation } from 'react-router-dom';
 import { useDarkMode } from './Context/DarkModeContext';
 import { CircularProgress } from '@mui/material';
 import Header from './Header';
+import ButtonFilter from './ButtonFilter'; 
 
 function RoomPage() {
     const [loading, setLoading] = useState(true);
@@ -138,6 +139,18 @@ function RoomPage() {
                 icons={iconClass} 
                 onFilter={handleRoomFilter} 
             />
+            <ButtonFilter 
+                onFilter={handleRoomFilter} 
+                events={events}
+                currentTime={new Date()}
+                selectedSize={selectedSize}
+                setSelectedSize={setSelectedSize}
+                clearAllFilters={clearAllFilters}
+            />
+
+
+
+
             <div className={`p-4 mx-2 rounded-3xl shadow-xl transition-colors duration-300 ${
                 darkMode ? 'bg-gray-800' : 'bg-[#f8f7f1]'
             }`}>

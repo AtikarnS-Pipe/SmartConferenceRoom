@@ -9,6 +9,7 @@ import Header from './Header.jsx';
 import Navbar from './navbar.jsx';
 import { useDarkMode } from './Context/DarkModeContext';
 import { CircularProgress } from '@mui/material';
+import ButtonFilter from './ButtonFilter'; 
 
 function RoomSize() {
   const location = useLocation();
@@ -249,6 +250,12 @@ function RoomSize() {
         icons={icons} 
         onFilter={handleRoomFilter} 
       />
+      
+      <ButtonFilter
+        selectedSize={selectedSize}
+        setSelectedSize={setSelectedSize}
+        clearAllFilters={clearAllFilters}
+      />    
       <div className={`p-4 mx-2 rounded-3xl shadow-xl transition-colors duration-300 ${
         darkMode ? 'bg-gray-800' : 'bg-[#f8f7f1]'
       }`}>
