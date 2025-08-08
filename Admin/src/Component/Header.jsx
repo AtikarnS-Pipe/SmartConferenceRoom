@@ -125,10 +125,11 @@ function Header({ selectedSize, setSelectedSize, events, clearAllFilters }) {
 return (
   <div
   className={`w-full h-auto py-4 ${
-    darkMode ? "bg-gray-800" : "bg-white"
-  } transition-colors duration-300 border-b border-gray-200`}
+    darkMode ? "bg-gray-800 border-gray-700" 
+             : "bg-white  border-gray-200"
+  } transition-colors duration-300 border-b`}
 >
-  <div className="grid grid-cols-3 items-center px-4 md:px-6 gap-4">
+  <div className="flex items-center justify-between items-center px-4 md:px-6 gap-4">
     {/* ซ้าย */}
     <div className="flex flex-col">
       <h1
@@ -148,7 +149,7 @@ return (
     </div>
 
     {/* กลาง */}
-    <div className="flex justify-center items-center gap-4">
+    {/* <div className="flex justify-center items-center gap-4">
       {showSizeRoom && (
         <div className="relative">
           <div
@@ -204,7 +205,7 @@ return (
       >
         Clear filter
       </RefreshButton>
-    </div>
+    </div> */}
 
     {/* ขวา */}
     <div className="flex justify-end items-center gap-4">

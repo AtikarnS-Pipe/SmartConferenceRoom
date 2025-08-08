@@ -9,6 +9,7 @@ import Header from './Header.jsx';
 import Navbar from './navbar.jsx';
 import { useDarkMode } from './Context/DarkModeContext';
 import { CircularProgress } from '@mui/material';
+import ButtonFilter from './ButtonFilter'; 
 
 function RoomSize() {
   const location = useLocation();
@@ -190,28 +191,28 @@ function RoomSize() {
     hasEvents: r.events?.length > 0
   })));
 
-  if (loading) {
-    return (
-      <div className={`font-display min-h-screen transition-colors duration-300 ${
-        darkMode ? 'bg-gray-700' : 'bg-white'
-      }`}>
-        <Header 
-          selectedSize={selectedSize} 
-          setSelectedSize={setSelectedSize}
-          events={liveEvents}
-          clearAllFilters={clearAllFilters}
-        />
-        <div className="flex justify-center items-center py-20">
-          <div className="text-center">
-            <CircularProgress size="40px"/>
-            <p className={`mt-4 ${darkMode ? 'text-white' : 'text-black'}`}>
-              Loading room data...
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // if (loading) {
+  //   return (
+  //     <div className={`font-display min-h-screen transition-colors duration-300 ${
+  //       darkMode ? 'bg-gray-700' : 'bg-white'
+  //     }`}>
+  //       <Header 
+  //         selectedSize={selectedSize} 
+  //         setSelectedSize={setSelectedSize}
+  //         events={liveEvents}
+  //         clearAllFilters={clearAllFilters}
+  //       />
+  //       <div className="flex justify-center items-center py-20">
+  //         <div className="text-center">
+  //           <CircularProgress size="40px"/>
+  //           <p className={`mt-4 ${darkMode ? 'text-white' : 'text-black'}`}>
+  //             Loading room data...
+  //           </p>
+  //         </div>
+  //       </div>
+  //     </div>
+  //   );
+  // }
 
   if (filteredRooms.length === 0) {
     return (
@@ -249,19 +250,46 @@ function RoomSize() {
         icons={icons} 
         onFilter={handleRoomFilter} 
       />
+      
+         
+      
       <div className={`p-4 mx-2 rounded-3xl shadow-xl transition-colors duration-300 ${
-        darkMode ? 'bg-gray-800' : 'bg-[#f8f7f1]'
+        darkMode ? 'bg-gray-800' : 'bg-gray-200'
       }`}>
-        <Roomcard 
-          data={filteredRoom.length > 0 ? filteredRoom : filteredRooms} 
-          icons={filteredIcons} 
-          filterType={filterType}
-          emptyMessage={emptyMessage}
-          selectedSize={selectedSize} 
-          setSelectedSize={setSelectedSize} 
-          events={liveEvents} // ✅ ใช้ข้อมูลสด
-          clearAllFilters={clearAllFilters}
-        />
+        <div className='sm:flex items-center justify-between px-8 pb-4'>
+            <h1 className={`text-xl font-semibold transition-colors duration-300 ${
+                darkMode ? 'text-white' : 'text-black'
+            }`}>
+                Meeting Room Status
+            </h1>
+        <ButtonFilter
+        selectedSize={selectedSize}
+        setSelectedSize={setSelectedSize}
+        clearAllFilters={clearAllFilters}
+        events={filteredRooms}
+        onFilter={handleRoomFilter}
+        currentTime={currentTime}
+      /> 
+      </div>
+        {loading ? (
+          <div className={`flex justify-center py-20 gap-[5px] transition-colors duration-300 ${
+            darkMode ? 'text-white' : 'text-black'
+          }`}>
+            <span>Loading room data...</span>
+            <CircularProgress size="25px"/>
+          </div>
+        ) : (
+          <Roomcard 
+            data={filteredRoom.length > 0 ? filteredRoom : filteredRooms} 
+            icons={icons} 
+            filterType={filterType}
+            emptyMessage={emptyMessage}
+            selectedSize={selectedSize} 
+            setSelectedSize={setSelectedSize} 
+            events={filteredRooms} 
+            clearAllFilters={clearAllFilters}
+          />
+        )}
       </div>
     </div>
   );
