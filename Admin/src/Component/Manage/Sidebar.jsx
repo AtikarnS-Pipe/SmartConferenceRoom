@@ -249,25 +249,24 @@ export default function Sidebar({ darkMode }) {
 
   const role = localStorage.getItem("role");
 
-
-    const getRoleIcon = () => {
-      switch (role) {
-        case 'Superadmin':
-          return (
-            <div className="p-1 rounded-full bg-yellow-400">
-              <Crown className="w-6 h-6 text-gray-500" />
-            </div>
-          );
-        case 'Admin':
-          return (
-            <div className="p-1 rounded-full bg-blue-500">
-              <Shield className="w-6 h-6 text-gray-500" />
-            </div>
-          );
-        default:
-          return null;
-      }
-    };
+  const getRoleIcon = () => {
+    switch (role) {
+      case 'Superadmin':
+        return (
+          <div className="p-1 rounded-full bg-yellow-600">
+            <Crown className="w-6 h-6 text-white-100" />
+          </div>
+        );
+      case 'Admin':
+        return (
+          <div className="p-1 rounded-full bg-blue-600">
+            <Shield className="w-6 h-6 text-gray-100" />
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
 
   return (
     <>
@@ -290,9 +289,12 @@ export default function Sidebar({ darkMode }) {
         </div>
       )}
 
+
       {/* Change PIN Modal */}
       {showPasswordModal && (
-        <div className="fixed inset-0 z-50 backdrop-blur-sm bg-gray-300/30 flex items-center justify-center">
+        <div className={`fixed inset-0 z-50 backdrop-blur-sm ${
+          darkMode ? "bg-gray-300/30" : "bg-white/30"
+        } flex items-center justify-center font-display`}>
           <div
             className={`${
               darkMode ? "bg-gray-800 text-white" : "bg-white"
@@ -319,13 +321,25 @@ export default function Sidebar({ darkMode }) {
                   type={showNewPassword ? "text" : "password"}
                   value={newPassword}
                   maxLength="4"
-                  onChange={(e) => setNewPassword(e.target.value)}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    // อนุญาตเฉพาะตัวเลข
+                    if (/^\d*$/.test(value)) {
+                      setNewPassword(value);
+                    } else {
+                      setStatusPopup("error");
+                      setMessage("Please enter numbers only (0-9)");
+                      setTimeout(() => {
+                        setStatusPopup(null);
+                      }, 2000);
+                    }
+                  }}
                   className={`w-full px-3 py-2 pr-10 border rounded-md shadow-sm focus:ring focus:ring-blue-200 ${
                     darkMode
                       ? "bg-gray-700 border-gray-600 text-white"
                       : "border-gray-300"
                   }`}
-                  placeholder="Enter 4-digit PIN"
+                  placeholder="Enter New Pin"
                 />
                 <RefreshButton
                   type="button"
@@ -356,13 +370,25 @@ export default function Sidebar({ darkMode }) {
                   type={showConfirmPassword ? "text" : "password"}
                   value={confirmPassword}
                   maxLength="4"
-                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    // อนุญาตเฉพาะตัวเลข
+                    if (/^\d*$/.test(value)) {
+                      setConfirmPassword(value);
+                    } else {
+                      setStatusPopup("error");
+                      setMessage("Please enter numbers only (0-9)");
+                      setTimeout(() => {
+                        setStatusPopup(null);
+                      }, 2000);
+                    }
+                  }}
                   className={`w-full px-3 py-2 pr-10 border rounded-md shadow-sm focus:ring focus:ring-blue-200 ${
                     darkMode
                       ? "bg-gray-700 border-gray-600 text-white"
                       : "border-gray-300"
                   }`}
-                  placeholder="Confirm 4-digit PIN"
+                  placeholder="Enter Confirm New Pin"
                 />
                 <RefreshButton
                   type="button"
@@ -608,45 +634,33 @@ export default function Sidebar({ darkMode }) {
                     </div>
                   </RefreshButton>
 
-                  {/* Collapsed Dropdown */}
+                  {/* Collapsed Dropdown - Icons Only */}
                   {userDropdownOpen && (
                     <div
-                      className={`absolute bottom-full right-0 mb-2 w-48 ${
+                      className={`absolute bottom-full right-0 mb-2 ${
                         darkMode ? "bg-gray-700" : "bg-slate-700"
                       } rounded-lg shadow-lg border ${
                         darkMode ? "border-gray-600" : "border-slate-600"
                       } z-50`}
                     >
-                      <div className="p-3 border-b border-slate-600">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-medium">
-                            {getUserInitials(displayName)}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-white truncate">
-                              {displayName}
-                            </p>
-                            <p className="text-xs text-slate-400">
-                              {displayRole}
-                            </p>
-                          </div>
+                      {/* Icon-only buttons */}
+                      <div className="py-2 px-1">
+                        <div className="flex flex-col justify-center gap-2">
+                          <RefreshButton
+                            onClick={handleChangePIN}
+                            className="p-3 rounded-lg text-slate-300 hover:bg-slate-600 hover:text-white transition-colors flex items-center justify-center"
+                            title="Change PIN"
+                          >
+                            <Key className="w-5 h-5" />
+                          </RefreshButton>
+                          <RefreshButton
+                            onClick={handleSignOut}
+                            className="p-3 rounded-lg text-slate-300 hover:bg-red-600 hover:text-white transition-colors flex items-center justify-center"
+                            title="Sign Out"
+                          >
+                            <LogOut className="w-5 h-5" />
+                          </RefreshButton>
                         </div>
-                      </div>
-                      <div className="py-2">
-                        <RefreshButton
-                          onClick={handleChangePIN}
-                          className="w-full px-3 py-2 text-left text-sm text-slate-300 hover:bg-slate-600 hover:text-white flex items-center gap-2 transition-colors"
-                        >
-                          <Key className="w-4 h-4" />
-                          Change PIN
-                        </RefreshButton>
-                        <RefreshButton
-                          onClick={handleSignOut}
-                          className="w-full px-3 py-2 text-left text-sm text-slate-300 hover:bg-red-600 hover:text-white flex items-center gap-2 transition-colors"
-                        >
-                          <LogOut className="w-4 h-4" />
-                          Sign Out
-                        </RefreshButton>
                       </div>
                     </div>
                   )}
@@ -673,7 +687,7 @@ export default function Sidebar({ darkMode }) {
                     )}
                   </RefreshButton>
 
-                  {/* Expanded Dropdown */}
+                  {/* Expanded Dropdown - Full Text */}
                   {userDropdownOpen && (
                     <div
                       className={`absolute bottom-full left-0 right-0 mb-2 ${
