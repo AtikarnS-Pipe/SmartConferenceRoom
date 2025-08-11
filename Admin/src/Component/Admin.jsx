@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import Roomcard from './Roomcard';
-import Roomdata from './Roomdata';
 import Statscard from './Statscard';
 import { useLocation } from 'react-router-dom';
 import { useDarkMode } from './Context/DarkModeContext';
