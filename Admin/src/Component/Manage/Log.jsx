@@ -27,6 +27,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { DarkModeContext } from '../Context/DarkModeContext';
 import RefreshButton from '../../utils/refreshToken';
+import Header from '../Header';
 
 function Log() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -385,150 +386,13 @@ const handleSignout = async () => {
       {/* Main Content */}
       <div className="w-full">
         {/* Header */}
-        <div className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border-b px-4 md:px-6 py-4 transition-colors duration-300`}>
-          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
-            <div>
-              <h1 className={`text-xl md:text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>Dashboard</h1>
-              <p className={`${darkMode ? 'text-gray-400' : 'text-gray-600'} mt-1 text-sm md:text-base`}>Real-time system logs and monitoring</p>
-              <div className="flex items-center gap-2 mt-1">
-                <div className={`w-2 h-2 rounded-full ${
-                  connectionStatus === 'connected' ? 'bg-green-500' : 
-                  connectionStatus === 'connecting' || connectionStatus === 'reconnecting' ? 'bg-yellow-500' : 
-                  'bg-red-500'
-                }`}></div>
-                <span className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                  SSE: {connectionStatus} 
-                </span>
-              </div>
-            </div>
-
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full lg:w-auto">
-              {/* First Row - Dark Mode Toggle and Role Badge */}
-              <div className="flex items-center gap-3 w-full sm:w-auto">
-                <RefreshButton title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}>
-                    {darkMode ? (
-                        <div onClick={toggleDarkMode} className="bg-gray-700 p-2 rounded-full">
-                          <Sun className="w-4 h-4 text-white" />
-                        </div>
-                      ) : (
-                        <div onClick={toggleDarkMode} className="bg-gray-200 p-2 rounded-full">
-                          <Moon className="w-4 h-4 text-gray" />
-                        </div>
-                      )}
-                  </RefreshButton>
-                <div className={`flex px-3 py-1.5 gap-2 rounded-lg text-white ${getRoleColor(profile?.role)}`}>
-                    {icon()}
-                    <h1 className="text-sm font-medium">{profile?.role}</h1>
-                </div>
-              </div>
-
-              {/* Second Row - PIN Display and User Dropdown */}
-              <div className="flex items-center gap-3 w-full sm:w-auto">
-                {/* PIN Display */}
-                <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg w-fit ${
-                  darkMode ? 'bg-gray-700' : 'bg-gray-200'
-                }`}>
-                  <div className={`text-sm tracking-widest ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                   {show ? profile?.pin || '0000' : '●'.repeat(profile?.pin?.length || 4)}
-                  </div>
-                  <RefreshButton
-                    type="button"
-                    onClick={() => setShow(!show)}
-                    className={`focus:outline-none ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}
-                    title={show ? "Hide PIN" : "Show PIN"}
-                >
-                  {show ? <EyeOff size={20} /> : <Eye size={20} />}
-                </RefreshButton>
-                </div>
-
-              {/* User Dropdown */}
-              <div className="relative" ref={dropdownRef}>
-                <div
-                  className={`flex items-center gap-2 rounded-lg px-5 py-2 cursor-pointer whitespace-nowrap ${
-                    darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'
-                  }`}
-                  onClick={() => setOpen((prev) => !prev)}
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className={`lucide lucide-circle-user-icon lucide-circle-user flex-shrink-0 ${darkMode ? 'text-gray-300' : 'text-gray-800'}`}
-                  >
-                    <circle cx="12" cy="12" r="10" />
-                    <circle cx="12" cy="10" r="3" />
-                    <path d="M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662" />
-                  </svg>
-                  <span className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>{profile?.name || 'quest'}</span>
-                  <ChevronDown className={`w-4 h-4 flex-shrink-0 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`} />
-                </div>
-
-                <div
-                  className={`absolute right-0 mt-2 min-w-full border rounded-lg shadow-xl z-50 transition-all duration-200 ease-in-out ${
-                    darkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-100 border-gray-200'
-                  } ${
-                    open ? "opacity-100 visible" : "opacity-0 invisible pointer-events-none"
-                  }`}
-                >
-                  <ul className={`py-1 text-sm ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                    <li className={`px-3 py-2 cursor-pointer flex ${
-                      darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-300'
-                    }`} onClick={() => {
-                        setOpen(false);
-                        setTimeout(() => setShowPasswordModal(true), 0);
-                      }}>
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="mr-3"
-                        width="18"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <circle cx="12" cy="16" r="1" />
-                        <rect width="18" height="12" x="3" y="10" rx="2" />
-                        <path d="M7 10V7a5 5 0 0 1 9.33-2.5" />
-                      </svg>
-                      Change PIN
-                    </li>
-                    <li className={`px-3 py-2 cursor-pointer flex ${
-                      darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-300'
-                    }`} onClick={handleSignout}>
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="mr-3"
-                        width="18"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <path d="m16 17 5-5-5-5" />
-                        <path d="M21 12H9" />
-                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                      </svg>
-                      Signout
-                    </li>
-                  </ul>
-                </div>
-              </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <Header 
+        title="Dashboard" 
+        subtitle="Real-time system logs and monitoring"
+        profile={profile}
+        show={show}
+        setShow={setShow}
+      />
 
         <div className="p-2 md:p-6">
           {/* Log Monitoring Panel */}
@@ -543,6 +407,16 @@ const handleSignout = async () => {
                   <div>
                     <h2 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>System Logs</h2>
                     <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Real-time application monitoring</p>
+                     <div className="flex items-center gap-2 mt-1">
+                <div className={`w-2 h-2 rounded-full ${
+                  connectionStatus === 'connected' ? 'bg-green-500' : 
+                  connectionStatus === 'connecting' || connectionStatus === 'reconnecting' ? 'bg-yellow-500' : 
+                  'bg-red-500'
+                }`}></div>
+                <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                  Live Data : {connectionStatus} 
+                </span>
+              </div>
                   </div>
                 </div>
               </div>

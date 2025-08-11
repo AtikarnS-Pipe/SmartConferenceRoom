@@ -23,7 +23,8 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { DarkModeContext } from "../Context/DarkModeContext";
 import RefreshButton from "../../utils/refreshToken";
-import HousekeeperStats from "../Housekeeperstats";
+import Statscard from "../Statscard";
+import Header from "../Header";
 
 function Superadmin() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -436,122 +437,7 @@ function Superadmin() {
       className={`min-h-screen ${
         darkMode ? "bg-gray-900" : "bg-gray-50"
       } font-display transition-colors duration-300`}
-    >
-      {showPasswordModal && (
-        <div className="fixed inset-0 z-50 backdrop-blur-sm bg-gray-300/30 flex items-center justify-center">
-          <div
-            className={`${
-              darkMode ? "bg-gray-800 text-white" : "bg-white"
-            } p-6 rounded-xl shadow-lg w-full max-w-md mx-4`}
-          >
-            <h2
-              className={`text-lg font-semibold mb-4 ${
-                darkMode ? "text-white" : "text-gray-800"
-              }`}
-            >
-              Change Pin
-            </h2>
-
-            <div className="mb-4">
-              <label
-                className={`block text-sm mb-1 ${
-                  darkMode ? "text-gray-300" : "text-gray-600"
-                }`}
-              >
-                New PIN
-              </label>
-              <div className="relative">
-                <input
-                  type={showNewPassword ? "text" : "password"}
-                  value={newPassword}
-                  maxLength="4"
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  className={`w-full px-3 py-2 pr-10 border rounded-md shadow-sm focus:ring focus:ring-blue-200 ${
-                    darkMode
-                      ? "bg-gray-700 border-gray-600 text-white"
-                      : "border-gray-300"
-                  }`}
-                />
-                <RefreshButton
-                  type="button"
-                  onClick={() => setShowNewPassword(!showNewPassword)}
-                  className={`absolute inset-y-0 right-0 flex items-center px-3 ${
-                    darkMode ? "text-gray-400" : "text-gray-500"
-                  }`}
-                >
-                  {showNewPassword ? (
-                    <Eye className="h-5 w-5" />
-                  ) : (
-                    <EyeOff className="h-5 w-5" />
-                  )}
-                </RefreshButton>
-              </div>
-            </div>
-
-            <div className="mb-6">
-              <label
-                className={`block text-sm mb-1 ${
-                  darkMode ? "text-gray-300" : "text-gray-600"
-                }`}
-              >
-                Confirm New PIN
-              </label>
-              <div className="relative">
-                <input
-                  type={showConfirmPassword ? "text" : "password"}
-                  value={confirmPassword}
-                  maxLength="4"
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className={`w-full px-3 py-2 pr-10 border rounded-md shadow-sm focus:ring focus:ring-blue-200 ${
-                    darkMode
-                      ? "bg-gray-700 border-gray-600 text-white"
-                      : "border-gray-300"
-                  }`}
-                />
-                <RefreshButton
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className={`absolute inset-y-0 right-0 flex items-center px-3 ${
-                    darkMode ? "text-gray-400" : "text-gray-500"
-                  }`}
-                >
-                  {showConfirmPassword ? (
-                    <Eye className="h-5 w-5" />
-                  ) : (
-                    <EyeOff className="h-5 w-5" />
-                  )}
-                </RefreshButton>
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-2">
-              <RefreshButton
-                onClick={() => {
-                  setNewPassword("");
-                  setConfirmPassword("");
-                  setShowPasswordModal(false);
-                }}
-                className={`px-4 py-2 rounded-md ${
-                  darkMode
-                    ? "bg-gray-600 text-gray-300 hover:bg-gray-500"
-                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                }`}
-              >
-                Cancel
-              </RefreshButton>
-              <RefreshButton
-                onClick={() => {
-                  setShowPasswordModal(false);
-                  handleSubmitPasswordChange();
-                }}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-              >
-                Update Pin
-              </RefreshButton>
-            </div>
-          </div>
-        </div>
-      )}
+    > 
 
       {/* Add Admin Modal */}
       {showAddAdminModal && (
@@ -668,10 +554,21 @@ function Superadmin() {
                 </label>
                 <input
                   type={showPin ? "text" : "password"}
+                  inputMode="numeric"
                   value={newMember.pin}
-                  onChange={(e) =>
-                    setNewMember({ ...newMember, pin: e.target.value })
-                  }
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    // อนุญาตเฉพาะตัวเลข
+                    if (/^\d*$/.test(value)) {
+                      setNewMember({ ...newMember, pin: value });
+                    } else {
+                      setStatusPopup("error");
+                      setMessage("Please enter numbers only");
+                      setTimeout(() => {
+                        setStatusPopup(null);
+                      }, 2000);
+                    }
+                  }}
                   className={`w-full px-3 py-2 pr-10 border rounded-md shadow-sm focus:ring focus:ring-blue-200 ${
                     darkMode
                       ? "bg-gray-700 border-gray-600 text-white"
@@ -827,188 +724,17 @@ function Superadmin() {
       {/* Main Content */}
       <div className="w-full">
         {/* Header */}
-        <div
-          className={`${
-            darkMode
-              ? "bg-gray-800 border-gray-700"
-              : "bg-white border-gray-200"
-          } border-b px-4 md:px-6 py-4 transition-colors duration-300`}
-        >
-          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
-            <div>
-              <h1
-                className={`text-xl md:text-2xl font-bold ${
-                  darkMode ? "text-white" : "text-gray-900"
-                }`}
-              >
-                Admin Management
-              </h1>
-              <p
-                className={`${
-                  darkMode ? "text-gray-400" : "text-gray-600"
-                } mt-1 text-sm md:text-base`}
-              >
-                Manage administrator accounts and access
-              </p>
-            </div>
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full lg:w-auto">
-              {/* First Row - Dark Mode Toggle and Role Badge */}
-              <div className="flex items-center gap-3 w-full sm:w-auto">
-                {/* Dark Mode Toggle */}
-                <RefreshButton title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}>
-                  {darkMode ? (
-                      <div onClick={toggleDarkMode} className="bg-gray-700 p-2 rounded-full">
-                        <Sun className="w-4 h-4 text-white" />
-                      </div>
-                    ) : (
-                      <div onClick={toggleDarkMode} className="bg-gray-200 p-2 rounded-full">
-                        <Moon className="w-4 h-4 text-gray" />
-                      </div>
-                    )}
-                </RefreshButton>
-                <div className='flex px-3 py-1.5 gap-2 rounded-lg bg-yellow-600 text-white'>
-                    <Crown className="w-4 h-4" />
-                   <h1 className="text-sm font-medium">{profile?.role}</h1>
-                </div>
-              </div>
-              
-              {/* Second Row - PIN Display and User Dropdown */}
-              <div className="flex items-center gap-3 w-full sm:w-auto">
-                {/* PIN Display */}
-                <div
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg w-fit ${
-                    darkMode ? "bg-gray-700" : "bg-gray-200"
-                  }`}
-                >
-                  <div
-                    className={`text-sm tracking-widest ${
-                      darkMode ? "text-gray-300" : "text-gray-700"
-                    }`}
-                  >
-                    {show ? profile?.pin : "●".repeat(profile?.pin?.length || 4)}
-                  </div>
-                  <RefreshButton
-                    type="button"
-                    onClick={() => setShow(!show)}
-                    className={`focus:outline-none ${
-                      darkMode ? "text-gray-300" : "text-gray-700"
-                    }`}
-                    title={show ? "Hide PIN" : "Show PIN"}
-                  >
-                    {show ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </RefreshButton>
-                </div>
-
-                {/* User Dropdown */}
-                <div className="relative" ref={dropdownRef}>
-                  <div
-                    className={`flex items-center gap-2 rounded-lg px-4 py-2 cursor-pointer whitespace-nowrap ${
-                      darkMode
-                        ? "bg-gray-700 hover:bg-gray-600"
-                        : "bg-gray-200 hover:bg-gray-300"
-                    }`}
-                    onClick={() => setOpen((prev) => !prev)}
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="20"
-                      height="20"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className={`lucide lucide-circle-user-icon lucide-circle-user flex-shrink-0 ${
-                        darkMode ? "text-gray-300" : "text-gray-800"
-                      }`}
-                    >
-                      <circle cx="12" cy="12" r="10" />
-                      <circle cx="12" cy="10" r="3" />
-                      <path d="M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662" />
-                    </svg>
-                    <span
-                      className={`text-sm font-medium hidden sm:inline ${
-                        darkMode ? "text-gray-300" : "text-gray-700"
-                      }`}
-                    >
-                      {profile?.name || "Guest"}
-                    </span>
-                    <ChevronDown
-                      className={`w-4 h-4 flex-shrink-0 ${
-                        darkMode ? "text-gray-300" : "text-gray-500"
-                      }`}
-                    />
-                  </div>
-
-                  <div
-                    className={`absolute right-0 mt-2 min-w-full border rounded-lg shadow-xl z-50 transition-all duration-200 ease-in-out ${
-                      darkMode
-                        ? "bg-gray-800 border-gray-700"
-                        : "bg-gray-100 border-gray-200"
-                    } ${
-                      open
-                        ? "opacity-100 visible"
-                        : "opacity-0 invisible pointer-events-none"
-                    }`}
-                  >
-                   <ul className={`py-1 text-sm ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                      <li className={`px-3 py-2 cursor-pointer flex ${
-                        darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-300'
-                      }`} onClick={() => {
-                        setOpen(false);
-                        setTimeout(() => setShowPasswordModal(true), 0);
-                      }}>
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="mr-3"
-                          width="18"
-                          height="20"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <circle cx="12" cy="16" r="1" />
-                          <rect width="18" height="12" x="3" y="10" rx="2" />
-                          <path d="M7 10V7a5 5 0 0 1 9.33-2.5" />
-                        </svg>
-                        Change PIN
-                      </li>
-                      <li className={`px-3 py-2 cursor-pointer flex ${
-                        darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-300'
-                      }`} onClick={handleSignout}>
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="mr-3"
-                          width="18"
-                          height="20"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <path d="m16 17 5-5-5-5" />
-                          <path d="M21 12H9" />
-                          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                        </svg>
-                        Signout
-                      </li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <Header 
+        title="Admin Management" 
+        subtitle="Manage administrator accounts and access"
+        profile={profile}
+        show={show}
+        setShow={setShow}
+      />
 
         <div className="p-2 md:p-6">
           {/* Stats */}
-          <HousekeeperStats
+          <Statscard
             housekeeperCount={housekeeperCount}
             adminCount={adminCount}
             filteredMembers={filteredMembers}

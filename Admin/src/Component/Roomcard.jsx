@@ -63,7 +63,7 @@ function Roomcard(props) {
 
   // ✅ แสดงข้อมูลห้องปกติ
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 px-2 sm:px-4 md:px-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 px-2 sm:px-4 md:px-6 ">
       
       {data.map((d, index) => {
         const isAvailable = !d.events.some((event) => {
