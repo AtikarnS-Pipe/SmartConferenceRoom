@@ -117,19 +117,21 @@ const handleSizeChange = (size) => {
       { id: 10, room: "1520", icons: 1, people: 4 },
     ];
 
-    // ✅ Fix: ปรับปรุงการส่งข้อมูลให้ถูกต้อง - ไม่ส่งข้อมูลเก่า
+    // ✅ Fix: ส่ง availability filter state ไปด้วย
     const currentPath = window.location.pathname;
     
     if (currentPath === `/roomsize/${peopleSize}`) {
       // ถ้าอยู่หน้าเดิม ให้ reset filter
-      console.log("Same page - resetting filters");
+      console.log("Same page - preserving availability filter");
       navigate(`/roomsize/${peopleSize}`, {
         state: {
           icons: iconClass,
           peopleSize: peopleSize,
           rooms: [], // ✅ ส่งเป็น array ว่าง ให้ RoomSize ดึงข้อมูลสดเอง
           selectedSize: label,
-          resetFilter: true,
+          resetFilter: false, // ✅ เปลี่ยนเป็น false เพื่อไม่ให้ reset filter
+          // ✅ เพิ่ม: ส่ง availability filter state ไปด้วย
+          preserveAvailabilityFilter: selectedAvailability,
         },
         replace: true,
       });
@@ -142,6 +144,8 @@ const handleSizeChange = (size) => {
           rooms: [], // ✅ ส่งเป็น array ว่าง ให้ RoomSize ดึงข้อมูลสดเอง
           selectedSize: label,
           resetFilter: false,
+          // ✅ เพิ่ม: ส่ง availability filter state ไปด้วย
+          preserveAvailabilityFilter: selectedAvailability,
         },
         replace: true,
       });

@@ -1,7 +1,6 @@
 import React from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import Roomdata from './Roomdata';
 import Roomcard from './Roomcard';
 import RefreshButton from "../utils/refreshToken";
 import axios from 'axios';
@@ -19,7 +18,12 @@ function RoomSize() {
   const [profile, setProfile] = useState(null);
   
   // ✅ Fix: รับข้อมูลจาก location.state แล้วใช้ข้อมูลสดจาก SSE
-  const { rooms = [], icons = [], resetFilter = false } = location.state || {};
+  const { 
+    rooms = [], 
+    icons = [], 
+    resetFilter = false,
+    preserveAvailabilityFilter = "Availability" // ✅ เพิ่ม: รับค่า availability filter
+  } = location.state || {};
   
   const [filteredRoom, setFilteredRoom] = useState([]);
   const [filterType, setFilterType] = useState(null);
@@ -75,6 +79,49 @@ function RoomSize() {
     }
   }, [resetFilter]);
 
+  // ✅ Add: ฟังก์ชันสำหรับ apply availability filter อัตโนมัติ
+  const applyAvailabilityFilter = (rooms, filterType) => {
+    if (filterType === "Available") {
+      const availableRooms = rooms
+        .map(room => {
+          const isBusy = room.events.some(ev => {
+            const start = new Date(ev.start.dateTime);
+            const end = new Date(ev.end.dateTime);
+            start.setHours(start.getHours() + 7);
+            end.setHours(end.getHours() + 7);
+            return currentTime >= start && currentTime <= end;
+          });
+          return { ...room, isAvailable: !isBusy };
+        })
+        .filter(room => room.isAvailable);
+      
+      if (availableRooms.length === 0) {
+        handleRoomFilter([], "available", "There are no rooms available.");
+      } else {
+        handleRoomFilter(availableRooms, "available");
+      }
+    } else if (filterType === "Occupied") {
+      const unavailableRooms = rooms
+        .map(room => {
+          const isBusy = room.events.some(ev => {
+            const start = new Date(ev.start.dateTime);
+            const end = new Date(ev.end.dateTime);
+            start.setHours(start.getHours() + 7);
+            end.setHours(end.getHours() + 7);
+            return currentTime >= start && currentTime <= end;
+          });
+          return { ...room, isAvailable: isBusy };
+        })
+        .filter(room => room.isAvailable);
+      
+      if (unavailableRooms.length === 0) {
+        handleRoomFilter([], "unavailable", "There are no rooms unavailable.");
+      } else {
+        handleRoomFilter(unavailableRooms, "unavailable");
+      }
+    }
+  };
+
   const handleGoHome = () => {
     navigate('/admin/api');
   };
@@ -98,12 +145,15 @@ function RoomSize() {
     const label = peopleSize === 4 ? 'S' : peopleSize === 6 ? 'M' : peopleSize === 10 ? 'L' : 'Room';
     if (selectedSize !== label) {
       setSelectedSize(label);
-      // Reset filter state when size changes
+    }
+
+    // ✅ เฉพาะเมื่อ resetFilter = false ถึงจะไม่ reset filter
+    if (resetFilter) {
       setFilteredRoom([]);
       setFilterType(null);
       setEmptyMessage("");
     }
-  }, [peopleSize, selectedSize]);
+  }, [peopleSize, selectedSize, resetFilter]);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -179,19 +229,14 @@ function RoomSize() {
     };
   });
 
-  console.log("=== RoomSize Debug Info ===");
-  console.log("People size:", peopleSize);
-  console.log("Selected size:", selectedSize);
-  console.log("Icons:", icons.length);
-  console.log("Live events:", liveEvents.length);
-  console.log("Filtered icons:", filteredIcons.length);
-  console.log("Filtered rooms:", filteredRooms.length);
-  console.log("Filtered rooms data:", filteredRooms.map(r => ({
-    room: r.room,
-    people: r.people,
-    hasEvents: r.events?.length > 0
-  })));
-  
+  // ✅ Add: Apply availability filter อัตโนมัติเมื่อข้อมูลพร้อม
+  useEffect(() => {
+    if (filteredRooms.length > 0 && preserveAvailabilityFilter && preserveAvailabilityFilter !== "Availability") {
+      console.log("Auto-applying availability filter:", preserveAvailabilityFilter);
+      applyAvailabilityFilter(filteredRooms, preserveAvailabilityFilter);
+    }
+  }, [filteredRooms.length, preserveAvailabilityFilter, currentTime]);
+
   if (filteredRooms.length === 0) {
     return (
       <div className={`font-display min-h-screen transition-colors duration-300 ${
