@@ -93,29 +93,25 @@ function Log() {
     console.log('Number of logs:', logs.length);
   }, [logs]);
 
-  const logStats = {
-    total: logs.length,
-    info: logs.filter(log => log.level === 'info' || log.L_status === 'info').length,
-    warning: logs.filter(log => log.level === 'warning' || log.L_status === 'warning').length,
-    error: logs.filter(log => log.level === 'error' || log.L_status === 'error').length,
-    debug: logs.filter(log => log.level === 'debug' || log.L_status === 'debug').length
-  };
 
   const ITEMS_PER_PAGE = 10;
 
-  const filteredLogs = logs.filter(log => {
-    const message = log.message || log.Details || '';
-    const source = log.source || log.role || '';
-    const level = log.level || log.L_status || '';
+const filteredLogs = logs.filter(log => {
+  const message = log.message || log.Details || '';
+  const source = log.source || log.role || '';
+  const level = log.level || log.L_status || '';
+  const id = log.user_Id ? log.user_Id.toString() : ''; // แปลง ObjectId เป็น string
 
-    const matchesSearch = message.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          source.toLowerCase().includes(searchTerm.toLowerCase());
+  const matchesSearch = message.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        source.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        id.includes(searchTerm); // เพิ่มตรงนี้
 
-    const matchesLevel = selectedLevel === 'all' || level === selectedLevel;
-    const matchesSource = selectedSource === 'all' || source === selectedSource;
+  const matchesLevel = selectedLevel === 'all' || level === selectedLevel;
+  const matchesSource = selectedSource === 'all' || source === selectedSource;
 
-    return matchesSearch && matchesLevel && matchesSource;
-  });
+  return matchesSearch && matchesLevel && matchesSource;
+});
+
 
   // Sort filteredLogs by timestamp (latest first) before paginating
   const sortedFilteredLogs = [...filteredLogs].sort(
@@ -211,32 +207,7 @@ function Log() {
     }
   };
 
-const handleSignout = async () => {
-  try {
-    const token = localStorage.getItem('token');
-    const res = await axios.post(
-      '/account/signout',
-      {}, // ไม่มี body ในการ signout (เว้นเปล่า)
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        withCredentials: true,
-      }
-    );
 
-    if (res.data.success) {
-      setSignoutsuccess(true);
-      setTimeout(() => {
-        window.location.href = '/';
-      }, 3000); // แสดงข้อความสำเร็จ 3 วินาทีแล้ว redirect
-    }
-
-  } catch (error) {
-    console.error('Signout error:', error);
-    alert('Failed to sign out.');
-  }
-};
     useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) return;
@@ -256,32 +227,6 @@ const handleSignout = async () => {
       console.log("Profile state updated:", profile);
     }
   }, [profile]);
-    const handleNavigateByRole = () => {
-  const role = localStorage.getItem('role'); // ดึง role จาก localStorage
-    console.log("Navigating based on role:", role);
-  if (role === 'Superadmin') {
-    navigate('/account/superadmin');
-  } else if (role === 'Admin') {
-    navigate('/account/admin');
-  } else {
-    navigate('/'); // สำรองเผื่อ role อื่นหรือไม่มี role
-  }
-};
-  const icon = () => {
-    const role = profile?.role; // ดึง role จาก localStorage
-    if (role === 'Superadmin') {
-      return <Crown className="w-4 h-6" />;
-    }
-    else if (role === 'Admin') {
-      return <Shield className="w-4 h-6" />;
-    }
-  };
-  const getRoleColor = (role) => {
-  if (role === 'Superadmin') return 'bg-yellow-600';
-  if (role === 'Admin') return 'bg-blue-600';
-};
-
-
 
   return (
     <div className={`min-h-screen ${darkMode ? 'bg-gray-900' : 'bg-gray-50'} font-display transition-colors duration-300`}>
@@ -453,12 +398,31 @@ const handleSignout = async () => {
                         darkMode ? 'bg-gray-800 border-gray-600 text-white' : 'bg-white border-gray-300'
                       }`}
                     >
-                      <option value="all">All Sources</option>
+                      <option value="all">Filter Role</option>
                       {uniqueSources.map(source => (
                         <option key={source} value={source}>{source}</option>
                       ))}
                     </select>
                   </div>
+                                    <RefreshButton
+                    onClick={() => {
+                      setSelectedSource('all');
+                      setSearchTerm('');
+                      setCurrentPage(1);
+                    }}
+                    disabled={selectedSource === 'all' && searchTerm === ''}
+                    className={`px-7 py-2 border rounded-lg transition-colors duration-300 ${
+                      selectedSource === 'all' && searchTerm === ''
+                        ? `cursor-not-allowed ${
+                            darkMode ? 'bg-gray-600 border-gray-500 text-gray-400' : 'bg-gray-200 border-gray-300 text-gray-400'
+                          }`
+                        : `hover:bg-red-600 ${
+                            darkMode ? 'bg-red-500 border-red-500 text-white' : 'bg-red-500 border-red-500 text-white'
+                          }`
+                    }`}
+                  >
+                    Clear
+                  </RefreshButton>
                   <div className={`rounded-lg pl-10 pr-10 py-2 text-white ${
                     darkMode ? 'bg-gray-600' : 'bg-black'
                   }`}>
