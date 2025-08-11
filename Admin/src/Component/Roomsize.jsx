@@ -9,7 +9,8 @@ import Header from './Header.jsx';
 import Navbar from './navbar.jsx';
 import { useDarkMode } from './Context/DarkModeContext';
 import { CircularProgress } from '@mui/material';
-import ButtonFilter from './ButtonFilter'; 
+import ButtonFilter from './ButtonFilter';
+import Statscard from './Statscard';
 
 function RoomSize() {
   const location = useLocation();
@@ -244,11 +245,16 @@ function RoomSize() {
         events={liveEvents} // ✅ ใช้ข้อมูลสด
         clearAllFilters={clearAllFilters}
       />
-      <Roomdata 
-        rooms={filteredRooms} 
-        currentTime={new Date()} 
-        icons={icons} 
-        onFilter={handleRoomFilter} 
+      <Statscard 
+            darkMode={darkMode}
+            rooms={filteredRooms}
+            currentTime={new Date()}
+            onFilter={handleRoomFilter}
+            
+            // ปิดการแสดง Housekeeper และ Admin cards
+            showHousekeeper={false}
+            showAdmin={false}
+            showRoomStatus={true}  // แสดงเฉพาะ Room Status
       />
       
          
