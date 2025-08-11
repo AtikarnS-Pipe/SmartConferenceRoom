@@ -39,7 +39,7 @@ function Statscard({
   // ฟังก์ชันจัดการ click สำหรับ Available rooms
   const handleClickAvailable = () => {
     if (availableCount === 0) {
-      onFilter && onFilter([], "available", "There are no rooms available.");
+      onFilter && onFilter([], "available", "No Available Meeting Rooms.");
       return;
     }
 
@@ -62,7 +62,7 @@ function Statscard({
   // ฟังก์ชันจัดการ click สำหรับ Unavailable rooms
   const handleClickUnavailable = () => {
     if (unavailableCount === 0) {
-      onFilter && onFilter([], "unavailable", "There are no rooms unavailable.");
+      onFilter && onFilter([], "unavailable", "All Meeting Rooms Available.");
       return;
     }
 
@@ -137,7 +137,7 @@ function Statscard({
       {/* Room Available Card */}
       {showRoomStatus && rooms && (
         <div 
-          className={`md:col-span-1 my-7 ml-5 relative overflow-hidden rounded-2xl py-6 px-7 shadow-lg border-2 transition-all duration-300 ${
+          className={`md:col-span-1  relative overflow-hidden rounded-2xl py-6 px-7 shadow-lg border-2 transition-all duration-300  mt-[8px] max-md:mx-[8px] md:ml-[24px] md:mt-[24px] ${
             darkMode 
               ? 'bg-gradient-to-br from-green-900 via-green-800 to-green-950 border-green-700' 
               : 'bg-gradient-to-br from-green-500 via-green-600 to-green-800 border-green-300'
@@ -167,7 +167,7 @@ function Statscard({
       {/* Room Unavailable Card */}
       {showRoomStatus && rooms && (
         <div 
-          className={`md:col-span-1 relative my-7 mr-5 overflow-hidden rounded-2xl py-6 px-7 shadow-lg border-2 transition-all duration-300 ${
+          className={`md:col-span-1 relative overflow-hidden rounded-2xl py-6 px-7 shadow-lg border-2 transition-all duration-300   max-md:mx-[8px] md:mr-[24px] md:mt-[24px]  ${
             darkMode 
               ? 'bg-gradient-to-br from-red-900 via-red-800 to-red-950 border-red-700' 
               : 'bg-gradient-to-br from-red-500 via-red-600 to-red-800 border-red-300'

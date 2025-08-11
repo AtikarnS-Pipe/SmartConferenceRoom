@@ -117,7 +117,7 @@ function Roomcard(props) {
         return (
           <div
             key={index}
-            className={`rounded-[25px] pt-5 pb-10 px-4 shadow-xl flex flex-col justify-between min-h-[250px] max-w-full min-w-0
+            className={`rounded-[25px] pt-5 pb-10 px-4 shadow-top flex flex-col justify-between min-h-[250px] max-w-full min-w-0
               transition-all duration-200 font-medium ${
                 darkMode ? 'bg-gray-600' : 'bg-white'
               }`}

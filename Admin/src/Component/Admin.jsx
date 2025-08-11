@@ -3,9 +3,10 @@ import Roomcard from './Roomcard';
 import Statscard from './Statscard';
 import { useLocation } from 'react-router-dom';
 import { useDarkMode } from './Context/DarkModeContext';
-import { CircularProgress } from '@mui/material';
+import { CircularProgress,  } from '@mui/material';
 import Header from './Header';
 import ButtonFilter from './ButtonFilter'; 
+import { Users } from 'lucide-react';
 
 function RoomPage() {
     const [loading, setLoading] = useState(true);
@@ -157,15 +158,23 @@ function RoomPage() {
             showRoomStatus={true}  // แสดงเฉพาะ Room Status
           />
         
-        <div className={`p-4 mx-2 rounded-3xl shadow-xl transition-colors duration-300 ${
-                darkMode ? 'bg-gray-800' : 'bg-gray-200'
+        <div className={`pb-4 mx-[8px] md:mx-[24px] rounded-xl shadow-sm transition-colors duration-300 ${
+                darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'
             }`}>
-            <div className='flex justify-between px-8 pb-4'>
-            <h1 className={`text-xl font-semibold transition-colors duration-300 ${
-                darkMode ? 'text-white' : 'text-black'
-            }`}>
-                Meeting Room Status
-            </h1>
+            <div className='flex gap-2 flex-col items-start md:flex-row md:items-center md:justify-between p-[24px]'>
+              {/* โลโก้ + ชื่อ */}
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <Users className="w-5 h-5 text-blue-600" />
+                </div>
+                <h1
+                  className={`text-lg font-medium transition-colors duration-300 ${
+                    darkMode ? 'text-white' : 'text-black'
+                  }`}
+                >
+                  Meeting Room
+                </h1>
+              </div>
             <ButtonFilter 
                 onFilter={handleRoomFilter} 
                 events={events}
@@ -176,6 +185,7 @@ function RoomPage() {
                 icons={iconClass}
             />
             </div>
+
           {loading ? (
             <div
               className={`flex justify-center py-20 gap-[5px] transition-colors duration-300 ${

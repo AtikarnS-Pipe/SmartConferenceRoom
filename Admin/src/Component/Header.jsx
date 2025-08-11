@@ -10,10 +10,6 @@ function Header({
   profile,
   show,
   setShow,
-  selectedSize, 
-  setSelectedSize, 
-  events, 
-  clearAllFilters 
 }) {
   const { darkMode, toggleDarkMode } = useDarkMode();
   const location = useLocation();
@@ -50,7 +46,7 @@ function Header({
                  : "bg-white  border-gray-200"
       } transition-colors duration-300 border-b`}
     >
-      <div className="flex items-center justify-between px-4 md:px-6 gap-4">
+     <div className="flex flex-col items-start sm:flex-row sm:items-center sm:justify-between px-4 md:px-6 gap-4">
         {/* ซ้าย - Title */}
         <div className="flex flex-col">
           <h1
