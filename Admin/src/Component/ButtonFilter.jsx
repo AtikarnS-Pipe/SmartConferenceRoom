@@ -3,16 +3,31 @@ import { useDarkMode } from "./Context/DarkModeContext";
 import RefreshButton from '../utils/refreshToken';
 import { useLocation, useNavigate } from "react-router-dom";
 
-function ButtonFilter ({selectedSize, setSelectedSize, clearAllFilters, events, onFilter, rooms, currentTime}){
+function ButtonFilter ({selectedSize, setSelectedSize, clearAllFilters, events, onFilter, rooms, currentTime, preserveAvailabilityFilter}){
 const [openMenu1, setOpenMenu1] = useState(false);
 const [openAvailabilityMenu, setOpenAvailabilityMenu] = useState(false);
-const [selectedAvailability, setSelectedAvailability] = useState("Availability"); // เพิ่ม state สำหรับ availability
+const [selectedAvailability, setSelectedAvailability] = useState(preserveAvailabilityFilter || "Availability"); // ✅ ใช้ค่าจาก props
 const { darkMode, toggleDarkMode } = useDarkMode();
+const location = useLocation();
+
+// ✅ Add: useEffect เพื่อ sync กับ navigation state
+useEffect(() => {
+  // ดึงค่าจาก location.state ถ้ามี
+  if (location.state?.preserveAvailabilityFilter && location.state.preserveAvailabilityFilter !== "Availability") {
+    setSelectedAvailability(location.state.preserveAvailabilityFilter);
+  }
+}, [location.state]);
+
+// ✅ Add: อัพเดท selectedAvailability เมื่อได้รับค่าใหม่จาก props
+useEffect(() => {
+  if (preserveAvailabilityFilter && preserveAvailabilityFilter !== "Availability") {
+    setSelectedAvailability(preserveAvailabilityFilter);
+  }
+}, [preserveAvailabilityFilter]);
 const showSizeRoom = true;
 const toggleDropdown1 = () => setOpenMenu1((prev) => !prev);
 const toggleAvailabilityDropdown = () => setOpenAvailabilityMenu((prev) => !prev);
 const navigate = useNavigate();
-const location = useLocation();
 
 // เช็คว่ามีการ filter อะไรไหม (ไม่อิงจาก path)
 const hasActiveFilters = selectedSize !== "Room" || selectedAvailability !== "Availability";

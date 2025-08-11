@@ -38,6 +38,14 @@ function RoomSize() {
   const [liveEvents, setLiveEvents] = useState(rooms);
   const [loading, setLoading] = useState(false);
 
+  // ✅ Add: state สำหรับ preserve availability filter
+  const [currentAvailabilityFilter, setCurrentAvailabilityFilter] = useState(preserveAvailabilityFilter);
+
+  // ✅ Add: อัพเดท current availability filter เมื่อมีการเปลี่ยนแปลง
+  useEffect(() => {
+    setCurrentAvailabilityFilter(preserveAvailabilityFilter);
+  }, [preserveAvailabilityFilter]);
+
   // ✅ Add: ดึงข้อมูลสดจาก SSE เมื่อเข้าหน้า
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -237,6 +245,20 @@ function RoomSize() {
     }
   }, [filteredRooms.length, preserveAvailabilityFilter, currentTime]);
 
+  console.log("=== RoomSize Debug Info ===");
+  console.log("People size:", peopleSize);
+  console.log("Selected size:", selectedSize);
+  console.log("Preserve availability filter:", preserveAvailabilityFilter);
+  console.log("Icons:", icons.length);
+  console.log("Live events:", liveEvents.length);
+  console.log("Filtered icons:", filteredIcons.length);
+  console.log("Filtered rooms:", filteredRooms.length);
+  console.log("Filtered rooms data:", filteredRooms.map(r => ({
+    room: r.room,
+    people: r.people,
+    hasEvents: r.events?.length > 0
+  })));
+
   if (filteredRooms.length === 0) {
     return (
       <div className={`font-display min-h-screen transition-colors duration-300 ${
@@ -297,6 +319,7 @@ function RoomSize() {
         events={filteredRooms}
         onFilter={handleRoomFilter}
         currentTime={currentTime}
+        preserveAvailabilityFilter={currentAvailabilityFilter} // ✅ ใช้ state แทน prop ตรงๆ
       /> 
       </div>
         {loading ? (
