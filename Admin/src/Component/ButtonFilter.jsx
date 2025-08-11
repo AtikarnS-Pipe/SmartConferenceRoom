@@ -166,13 +166,13 @@ const handleSizeChange = (size) => {
 
               {openAvailabilityMenu && (
                 <ul
-                  className={`absolute left-0 top-full mt-2 w-32 rounded-md shadow-lg z-20 ${
+                  className={`absolute left-0 top-full mt-2 w-26 rounded-md shadow-lg z-20 ${
                     darkMode ? "bg-blue-700" : "bg-gray-800"
                   }`}
                 >
                   <li>
                     <RefreshButton
-                      className={`block w-full text-left px-4 py-2 text-white ${
+                      className={`block w-full text-center px-4 py-2 text-white ${
                         darkMode ? "hover:bg-gray-600" : "hover:bg-gray-700 "
                       }`}
                       onClick={handleClickAvailable}
@@ -182,7 +182,7 @@ const handleSizeChange = (size) => {
                   </li>
                   <li>
                     <RefreshButton
-                      className={`block w-full text-left px-4 py-2 text-white ${
+                      className={`block w-full text-center px-4 py-2 text-white ${
                         darkMode ? "hover:bg-gray-600" : "hover:bg-gray-700"
                       }`}
                       onClick={handleClickUnavailable}
@@ -210,7 +210,7 @@ const handleSizeChange = (size) => {
             
                       {openMenu1 && (
                         <ul
-                          className={`absolute left-0 top-full mt-2 w-24 rounded-md shadow-lg z-20 ${
+                          className={`absolute left-0 top-full mt-2 w-25 rounded-md shadow-lg z-20 ${
                             darkMode ? "bg-blue-700" : "bg-gray-800"
                           }`}
                         >
