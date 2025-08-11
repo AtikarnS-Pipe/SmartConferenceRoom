@@ -143,12 +143,7 @@ function RoomPage() {
           darkMode ? "bg-gray-700" : "bg-gray-50"
         }`}
       >
-        <Header
-          selectedSize={selectedSize}
-          setSelectedSize={setSelectedSize}
-          events={events}
-          clearAllFilters={clearAllFilters}
-        />
+        <Header/>
         
         {/* ✅ แก้ไข HousekeeperStats ให้ส่ง props ครบถ้วน */}
           <Statscard 

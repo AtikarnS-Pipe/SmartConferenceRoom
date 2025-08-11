@@ -453,10 +453,8 @@ const Room1501 = () => {
       
       {/* Header Component */}
       <Header 
-        selectedSize={selectedSize}
-        setSelectedSize={setSelectedSize}
-        events={events}
-        clearAllFilters={clearAllFilters}
+        title="Schedule" 
+        subtitle="Room booking schedule view"
       />
       
       <div className="p-4 sm:p-6 max-w-[1800px] mx-auto">

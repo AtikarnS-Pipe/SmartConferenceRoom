@@ -191,30 +191,7 @@ function RoomSize() {
     people: r.people,
     hasEvents: r.events?.length > 0
   })));
-
-  // if (loading) {
-  //   return (
-  //     <div className={`font-display min-h-screen transition-colors duration-300 ${
-  //       darkMode ? 'bg-gray-700' : 'bg-white'
-  //     }`}>
-  //       <Header 
-  //         selectedSize={selectedSize} 
-  //         setSelectedSize={setSelectedSize}
-  //         events={liveEvents}
-  //         clearAllFilters={clearAllFilters}
-  //       />
-  //       <div className="flex justify-center items-center py-20">
-  //         <div className="text-center">
-  //           <CircularProgress size="40px"/>
-  //           <p className={`mt-4 ${darkMode ? 'text-white' : 'text-black'}`}>
-  //             Loading room data...
-  //           </p>
-  //         </div>
-  //       </div>
-  //     </div>
-  //   );
-  // }
-
+  
   if (filteredRooms.length === 0) {
     return (
       <div className={`font-display min-h-screen transition-colors duration-300 ${
