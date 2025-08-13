@@ -30,7 +30,7 @@ const toggleDropdown1 = () => setOpenMenu1((prev) => !prev);
 const toggleAvailabilityDropdown = () => setOpenAvailabilityMenu((prev) => !prev);
 const navigate = useNavigate();
 
-// เช็คว่ามีการ filter อะไรไหม (ไม่อิงจาก path)
+// เช็คว่ามีการ filter อะไรไหมอยู่ไหม
 const hasActiveFilters = selectedSize !== "Room" || selectedAvailability !== "Availability";
 
 // คำนวณจำนวนห้องว่างและไม่ว่าง
@@ -174,7 +174,7 @@ const handleSizeChange = (size) => {
           {/* Availability Dropdown */}
           <div className="relative w-full sm:w-auto">
             <RefreshButton 
-              className={`w-full sm:w-auto rounded-md px-3 py-2 cursor-pointer text-sm md:text-base border-b-2 ${
+              className={`w-full sm:w-auto rounded-lg px-3 py-2 cursor-pointer text-sm md:text-base border-b-2 ${
                 darkMode
                   ? "text-white hover:text-blue-400 border-transparent hover:border-blue-400 bg-gray-600"
                   : "text-black hover:text-blue-400 border-transparent hover:border-blue-400 bg-gray-300"
@@ -186,23 +186,23 @@ const handleSizeChange = (size) => {
 
             {openAvailabilityMenu && (
               <ul
-                className={`absolute left-0 top-full mt-2 rounded-md shadow-lg z-20 min-w-[8rem] ${
+                className={`absolute left-0 top-full mt-2 rounded-md shadow-lg z-20 min-w-[7.5rem] overflow-hidden ${
                   darkMode ? "bg-blue-700" : "bg-gray-800"
                 }`}
               >
                 <li>
                   <RefreshButton
-                    className={`block w-full text-center px-4 py-2 text-white ${
-                      darkMode ? "hover:bg-gray-600" : "hover:bg-gray-700 "
+                    className={`block w-full text-center px-4 py-2 text-white rounded-t-md ${
+                      darkMode ? "hover:bg-gray-600" : "hover:bg-gray-700"
                     }`}
                     onClick={handleClickAvailable}
                   >
-                    Available 
+                    Available
                   </RefreshButton>
                 </li>
                 <li>
                   <RefreshButton
-                    className={`block w-full text-center px-4 py-2 text-white ${
+                    className={`block w-full text-center px-4 py-2 text-white rounded-b-md ${
                       darkMode ? "hover:bg-gray-600" : "hover:bg-gray-700"
                     }`}
                     onClick={handleClickUnavailable}
@@ -218,7 +218,7 @@ const handleSizeChange = (size) => {
           {showSizeRoom && (
             <div className="relative w-full sm:w-auto">
               <div
-                className={`w-full sm:w-auto rounded-md px-3 py-2 cursor-pointer text-sm md:text-base border-b-2
+                className={`w-full sm:w-auto rounded-lg px-3 py-2 cursor-pointer text-sm md:text-base border-b-2
                 ${  darkMode
                     ? "text-white hover:text-blue-400 border-transparent hover:border-blue-400 bg-gray-600"
                     : "text-black hover:text-blue-400 border-transparent hover:border-blue-400 bg-gray-300"
@@ -230,7 +230,7 @@ const handleSizeChange = (size) => {
 
               {openMenu1 && (
                 <ul
-                  className={`absolute left-0 top-full mt-2 rounded-md shadow-lg z-20 min-w-[8rem] ${
+                  className={`absolute left-0 top-full mt-2 rounded-md shadow-lg z-20 min-w-[6rem]  overflow-hidden ${
                     darkMode ? "bg-blue-700" : "bg-gray-800"
                   }`}
                 >
@@ -253,14 +253,14 @@ const handleSizeChange = (size) => {
 
           {/* Clear Filter Button */}
           <RefreshButton
-            className={`w-full sm:w-auto rounded-md px-3 py-2 text-sm md:text-base cursor-pointer ${
+            className={`w-full sm:w-auto rounded-lg px-3 py-2 text-sm md:text-base ${
               !hasActiveFilters 
                 ? darkMode 
                     ? "text-gray-500 cursor-not-allowed opacity-90 bg-gray-600" 
                     : "text-gray-400 cursor-not-allowed opacity-90 bg-gray-100"
                 : darkMode 
-                    ? "text-white hover:text-blue-400 bg-gray-600 " 
-                    : "text-black hover:text-blue-400 bg-gray-300"
+                    ? "text-white cursor-pointer hover:text-blue-400 bg-gray-600 " 
+                    : "text-black cursor-pointer hover:text-blue-400 bg-gray-300"
             }`}
             onClick={() => {
               if (!hasActiveFilters) return;
