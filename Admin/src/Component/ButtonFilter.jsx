@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useDarkMode } from "./Context/DarkModeContext";
 import RefreshButton from '../utils/refreshToken';
 import { useLocation, useNavigate } from "react-router-dom";
+import { X } from 'lucide-react';
 
 function ButtonFilter ({selectedSize, setSelectedSize, clearAllFilters, events, onFilter, rooms, currentTime, preserveAvailabilityFilter}){
 const [openMenu1, setOpenMenu1] = useState(false);
@@ -29,7 +30,7 @@ const toggleDropdown1 = () => setOpenMenu1((prev) => !prev);
 const toggleAvailabilityDropdown = () => setOpenAvailabilityMenu((prev) => !prev);
 const navigate = useNavigate();
 
-// เช็คว่ามีการ filter อะไรไหม (ไม่อิงจาก path)
+// เช็คว่ามีการ filter อะไรไหมอยู่ไหม
 const hasActiveFilters = selectedSize !== "Room" || selectedAvailability !== "Availability";
 
 // คำนวณจำนวนห้องว่างและไม่ว่าง
@@ -169,116 +170,117 @@ const handleSizeChange = (size) => {
   };
 
     return(
-        <div className="flex items-center justify-end gap-4">
-            {/* Availability Dropdown */}
-            <div className="relative">
-              <RefreshButton
-                className={`rounded-md px-3 py-1 cursor-pointer text-sm md:text-base border-b-2 ${
-                  darkMode
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-stretch sm:justify-end gap-3">
+          {/* Availability Dropdown */}
+          <div className="relative w-full sm:w-auto">
+            <RefreshButton 
+              className={`w-full sm:w-auto rounded-lg px-3 py-2 cursor-pointer text-sm md:text-base border-b-2 ${
+                darkMode
+                  ? "text-white hover:text-blue-400 border-transparent hover:border-blue-400 bg-gray-600"
+                  : "text-black hover:text-blue-400 border-transparent hover:border-blue-400 bg-gray-300"
+              }`}
+              onClick={toggleAvailabilityDropdown}
+            >
+              {selectedAvailability} {openAvailabilityMenu ? "▴" : "▾"}
+            </RefreshButton>
+
+            {openAvailabilityMenu && (
+              <ul
+                className={`absolute left-0 top-full mt-2 rounded-md shadow-lg z-20 min-w-[7.5rem] overflow-hidden ${
+                  darkMode ? "bg-blue-700" : "bg-gray-800"
+                }`}
+              >
+                <li>
+                  <RefreshButton
+                    className={`block w-full text-center px-4 py-2 text-white rounded-t-md ${
+                      darkMode ? "hover:bg-gray-600" : "hover:bg-gray-700"
+                    }`}
+                    onClick={handleClickAvailable}
+                  >
+                    Available
+                  </RefreshButton>
+                </li>
+                <li>
+                  <RefreshButton
+                    className={`block w-full text-center px-4 py-2 text-white rounded-b-md ${
+                      darkMode ? "hover:bg-gray-600" : "hover:bg-gray-700"
+                    }`}
+                    onClick={handleClickUnavailable}
+                  >
+                    Occupied
+                  </RefreshButton>
+                </li>
+              </ul>
+            )}
+          </div>
+
+          {/* Size Room Dropdown */}
+          {showSizeRoom && (
+            <div className="relative w-full sm:w-auto">
+              <div
+                className={`w-full sm:w-auto rounded-lg px-3 py-2 cursor-pointer text-sm md:text-base border-b-2
+                ${  darkMode
                     ? "text-white hover:text-blue-400 border-transparent hover:border-blue-400 bg-gray-600"
                     : "text-black hover:text-blue-400 border-transparent hover:border-blue-400 bg-gray-300"
                 }`}
-                onClick={toggleAvailabilityDropdown}
+                onClick={toggleDropdown1}
               >
-                {selectedAvailability} {openAvailabilityMenu ? "▴" : "▾"}
-              </RefreshButton>
+                {selectedSize === "Room" ? `${selectedSize} Size` : `Size ${selectedSize}`} {openMenu1 ? "▴" : "▾"}
+              </div>
 
-              {openAvailabilityMenu && (
+              {openMenu1 && (
                 <ul
-                  className={`absolute left-0 top-full mt-2 w-26 rounded-md shadow-lg z-20 ${
+                  className={`absolute left-0 top-full mt-2 rounded-md shadow-lg z-20 min-w-[6rem]  overflow-hidden ${
                     darkMode ? "bg-blue-700" : "bg-gray-800"
                   }`}
                 >
-                  <li>
-                    <RefreshButton
-                      className={`block w-full text-center px-4 py-2 text-white ${
-                        darkMode ? "hover:bg-gray-600" : "hover:bg-gray-700 "
-                      }`}
-                      onClick={handleClickAvailable}
-                    >
-                      Available 
-                    </RefreshButton>
-                  </li>
-                  <li>
-                    <RefreshButton
-                      className={`block w-full text-center px-4 py-2 text-white ${
-                        darkMode ? "hover:bg-gray-600" : "hover:bg-gray-700"
-                      }`}
-                      onClick={handleClickUnavailable}
-                    >
-                      Occupied
-                    </RefreshButton>
-                  </li>
+                  {[4, 6, 10].map((size) => (
+                    <li key={size}>
+                      <RefreshButton
+                        className={`block w-full text-center px-4 py-2 text-white ${
+                          darkMode ? "hover:bg-gray-600" : "hover:bg-gray-700"
+                        }`}
+                        onClick={() => handleSizeChange(size)}
+                      >
+                        {size === 4 ? "Small" : size === 6 ? "Medium" : "Large"}
+                      </RefreshButton>
+                    </li>
+                  ))}
                 </ul>
               )}
             </div>
+          )}
 
-            {/* Size Room Dropdown */}
-            {showSizeRoom && (
-                    <div className="relative">
-                      <div
-                        className={` rounded-md px-3 py-1 cursor-pointer text-sm md:text-base border-b-2
-                        ${  darkMode
-                            ? "text-white hover:text-blue-400 border-transparent hover:border-blue-400 bg-gray-600"
-                            : "text-black hover:text-blue-400 border-transparent hover:border-blue-400 bg-gray-300"
-                        }`}
-                        onClick={toggleDropdown1}
-                      >
-                         Size {selectedSize} {openMenu1 ? "▴" : "▾"}
-                      </div>
-            
-                      {openMenu1 && (
-                        <ul
-                          className={`absolute left-0 top-full mt-2 w-25 rounded-md shadow-lg z-20 ${
-                            darkMode ? "bg-blue-700" : "bg-gray-800"
-                          }`}
-                        >
-                          {[4, 6, 10].map((size) => (
-                            <li key={size}>
-                              <RefreshButton
-                                className={`block w-full text-center px-4 py-2 text-white ${
-                                  darkMode ? "hover:bg-gray-600" : "hover:bg-gray-700"
-                                }`}
-                                onClick={() => handleSizeChange(size)}
-                              >
-                                {size === 4 ? "Small" : size === 6 ? "Meduim" : "Large"}
-                              </RefreshButton>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </div>
-                  )}
-
-            {/* Clear Filter Button */}
-            <RefreshButton
-                    className={` rounded-md px-3 py-1 text-sm md:text-base cursor-pointer  ${
-                    !hasActiveFilters 
-                        ? darkMode 
-                            ? "text-gray-500 cursor-not-allowed opacity-90 bg-gray-600" 
-                            : "text-gray-400 cursor-not-allowed opacity-90 bg-gray-100"
-                        : darkMode 
-                            ? "text-white hover:text-blue-400 bg-gray-600 " 
-                            : "text-black hover:text-blue-400 bg-gray-300"
-                    }`}
-                    onClick={() => {
-                    if (!hasActiveFilters) return; // ไม่ให้กดได้เมื่อไม่มี filter ใดๆ
-                    
-                    setSelectedSize("Room");
-                    setSelectedAvailability("Availability"); // รีเซ็ต availability ปุ่ม
-                    setOpenMenu1(false);
-                    setOpenAvailabilityMenu(false);
-                    // ✅ Fix: เรียกใช้ clearAllFilters ถ้ามี หรือ navigate กลับหน้าหลัก
-                    if (clearAllFilters) {
-                        clearAllFilters();
-                    } else {
-                        navigate("/admin/api");
-                    }
-                    }}
-                >
-                    Clear filter
-                </RefreshButton>
+          {/* Clear Filter Button */}
+          <RefreshButton
+            className={`w-full sm:w-auto rounded-lg px-3 py-2 text-sm md:text-base ${
+              !hasActiveFilters 
+                ? darkMode 
+                    ? "text-gray-500 cursor-not-allowed opacity-90 bg-gray-600" 
+                    : "text-gray-400 cursor-not-allowed opacity-90 bg-gray-100"
+                : darkMode 
+                    ? "text-white cursor-pointer hover:text-blue-400 bg-gray-600 " 
+                    : "text-black cursor-pointer hover:text-blue-400 bg-gray-300"
+            }`}
+            onClick={() => {
+              if (!hasActiveFilters) return;
+              setSelectedSize("Room");
+              setSelectedAvailability("Availability");
+              setOpenMenu1(false);
+              setOpenAvailabilityMenu(false);
+              if (clearAllFilters) {
+                clearAllFilters();
+              } else {
+                navigate("/admin/api");
+              }
+            }}
+          >
+            <div className="flex items-center justify-center gap-1">
+              <X className="w-4 h-4" />
+              Clear filter
+            </div>
+          </RefreshButton>
         </div>
-    )
-}
+          );
+        }
 export default ButtonFilter;

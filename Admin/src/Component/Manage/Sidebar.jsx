@@ -20,12 +20,14 @@ import {
 } from "lucide-react";
 import RefreshButton from "../../utils/refreshToken";
 import axios from "axios";
+import { useDarkMode } from '../Context/DarkModeContext';
 
-export default function Sidebar({ darkMode }) {
+export default function Sidebar() {
   const navigate = useNavigate();
   const location = useLocation();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+  const { darkMode } = useDarkMode();
 
   // User profile states
   const [profile, setProfile] = useState(null);
