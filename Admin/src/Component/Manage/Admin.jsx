@@ -223,7 +223,7 @@ function Admin() {
     if (selectedMembers.length === filteredMembers.length) {
       setSelectedMembers([]);
     } else {
-      setSelectedMembers(filteredMembers.map((m) => m.id));
+      setSelectedMembers(filteredMembers.map((m) => m._id));
     }
   };
 
@@ -437,8 +437,8 @@ function Admin() {
                     <td className="px-6 py-4">
                       <input
                         type="checkbox"
-                        checked={selectedMembers.includes(m.id)}
-                        onChange={() => handleMemberSelect(m.id)}
+                        checked={selectedMembers.includes(m._id)}
+                        onChange={() => handleMemberSelect(m._id)}
                         className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                       />
                     </td>
