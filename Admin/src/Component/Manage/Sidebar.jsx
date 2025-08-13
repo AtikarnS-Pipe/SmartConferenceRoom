@@ -677,10 +677,10 @@ export default function Sidebar() {
                       {getRoleIcon()}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-white truncate">
+                      <p className="text-sm text-start font-medium text-white truncate">
                         {displayName}
                       </p>
-                      <p className="text-xs text-slate-400">{displayRole}</p>
+                      <p className="text-xs text-start text-slate-400">{displayRole}</p>
                     </div>
                     {userDropdownOpen ? (
                       <ChevronUp className="w-4 h-4 text-slate-400 flex-shrink-0" />
