@@ -460,19 +460,25 @@ function Admin() {
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
-                        m.login_status === 'online' 
-                          ? 'text-green-800' 
-                          : 'text-red-800'
-                      }`}>
-                          <div className={`w-2 h-2 rounded-full ${
-                          m.login_status === 'online' 
-                            ? 'bg-green-500' 
-                            : 'bg-red-500'
-                        }`}></div>
-                        {m.login_status || 'offline'}
-                      </span>
-                    </td>
+                        <div className="flex items-center gap-2">
+                          <div
+                            className={`w-2 h-2 rounded-full ${
+                              m.login_status === "online"
+                                ? "bg-green-500"
+                                : "bg-red-500"
+                            }`}
+                          />
+                          <span
+                            className={`text-sm ${
+                              m.login_status === "online"
+                                ? "text-green-500"
+                                : "text-red-500"
+                            }`}
+                          >
+                            {m.login_status}
+                          </span>
+                        </div>
+                      </td>
                     <td className={`px-6 py-4 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                       <div className="flex items-center gap-2">
                         <Clock className="w-4 h-4" />
