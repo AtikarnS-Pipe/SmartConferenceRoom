@@ -50,10 +50,6 @@ const Room1501 = () => {
   const [openMenu1, setOpenMenu1] = useState(false);
   
   const toggleDropdown1 = () => setOpenMenu1(!openMenu1);
-  
-  const handleGoHome = () => {
-    navigate('/admin/api');
-  };
 
   const handleBack = () => navigate(-1);
 
@@ -467,11 +463,11 @@ const Room1501 = () => {
           {/* ✅ Back Button */}
           <RefreshButton
             onClick={handleBack}
-            className={`px-3 py-2 mb-3 rounded-xl font-medium transition-all duration-200 shadow-md hover:shadow-lg flex items-center gap-2 ${
-              darkMode 
-                ? 'bg-gray-800 text-white hover:bg-gray-600' 
-                : 'bg-slate-800 text-white hover:bg-slate-700'
-            }`}
+            className={`px-3 py-2 mb-3 rounded-xl font-medium transition-all duration-200 shadow-md hover:shadow-xl flex items-center gap-2
+              ${darkMode 
+                ? 'bg-gray-800 text-white hover:bg-gray-600 ' 
+                : 'bg-white text-gray-800 hover:bg-gray-100 border border-gray-100'
+              }`}
           >
             <ArrowLeft className="h-5 w-5" />
             Back
