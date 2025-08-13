@@ -288,7 +288,7 @@ function ButtonFilter ({
               {[4, 6, 10].map((size) => (
                 <li key={size}>
                   <RefreshButton
-                    className={`block w-full text-center px-4 py-2 text-white ${
+                    className={`flex justify-center items-center w-full text-center px-4 py-2 text-white whitespace-nowrap ${
                       darkMode ? "hover:bg-gray-600" : "hover:bg-gray-700"
                     }`}
                     onClick={() => handleSizeChange(size)}
