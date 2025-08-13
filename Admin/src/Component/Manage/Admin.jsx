@@ -431,12 +431,59 @@ function Admin() {
                   ))}
                 </tr>
               </thead>
-              <tbody className={`${darkMode ? 'bg-gray-800' : 'bg-white'} divide-y ${darkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
+             <tbody className={`${darkMode ? 'bg-gray-800' : 'bg-white'} divide-y ${darkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
                 {filteredMembers.map((m) => (
                   <tr key={m._id} className={darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}>
-                    <td className={`px-6 py-4 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'} flex items-center gap-2 mt-3`}>
-                      <Clock className="w-4 h-4" />
-                      {formatDate(m.updatedAt)}
+                    <td className="px-6 py-4">
+                      <input
+                        type="checkbox"
+                        checked={selectedMembers.includes(m.id)}
+                        onChange={() => handleMemberSelect(m.id)}
+                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      />
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div>
+                          <p className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>{m.name}</p>
+                          <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>{m.email}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
+                        m.role === 'Admin' 
+                          ? 'bg-purple-100 text-purple-800' 
+                          : 'bg-blue-100 text-blue-800'
+                      }`}>
+                        {m.role}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          <div
+                            className={`w-2 h-2 rounded-full ${
+                              m.login_status === "online"
+                                ? "bg-green-500"
+                                : "bg-red-500"
+                            }`}
+                          />
+                          <span
+                            className={`text-sm ${
+                              m.login_status === "online"
+                                ? "text-green-500"
+                                : "text-red-500"
+                            }`}
+                          >
+                            {m.login_status}
+                          </span>
+                        </div>
+                      </td>
+                    <td className={`px-6 py-4 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                      <div className="flex items-center gap-2">
+                        <Clock className="w-4 h-4" />
+                        {formatDate(m.updatedAt)}
+                      </div>
                     </td>
                   </tr>
                 ))}
