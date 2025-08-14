@@ -32,6 +32,7 @@ function RoomPage() {
             return;
         }
 
+
         const eventSource = new EventSource(`/admin/sse?code=${code}&token=${token}`);
 
         eventSource.onmessage = (e) => {

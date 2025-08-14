@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useDarkMode } from "./Context/DarkModeContext";
 import RefreshButton from '../utils/refreshToken';
 import { useLocation, useNavigate } from "react-router-dom";
@@ -20,6 +20,10 @@ function ButtonFilter ({
   const { darkMode } = useDarkMode();
   const location = useLocation();
   const navigate = useNavigate();
+
+  // refs สำหรับตรวจคลิกนอก dropdown
+  const availabilityRef = useRef(null);
+  const sizeRef = useRef(null);
 
   // ---------- helpers ----------
   const getPeopleSizeFromPath = () => {
@@ -50,7 +54,6 @@ function ButtonFilter ({
       { id: 10, room: "1520", icons: 1, people: 4 },
     ];
 
-    // อัปเดต state ที่ route เดิม เพื่อให้หน้า RoomSize อ่าน preserveAvailabilityFilter ใหม่และรีเฟรชทันที
     navigate(`/roomsize/${peopleSize}`, {
       state: {
         icons: iconClass,
@@ -78,6 +81,35 @@ function ButtonFilter ({
       setSelectedAvailability(preserveAvailabilityFilter);
     }
   }, [preserveAvailabilityFilter]);
+
+  // ปิด dropdown เมื่อคลิกนอกกรอบ/กด Esc
+  useEffect(() => {
+    const handlePointerDown = (e) => {
+      if (!openAvailabilityMenu && !openMenu1) return;
+      const inAvailability = availabilityRef.current?.contains(e.target);
+      const inSize = sizeRef.current?.contains(e.target);
+      if (!inAvailability && !inSize) {
+        setOpenAvailabilityMenu(false);
+        setOpenMenu1(false);
+      }
+    };
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setOpenAvailabilityMenu(false);
+        setOpenMenu1(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handlePointerDown);
+    document.addEventListener('touchstart', handlePointerDown, { passive: true });
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown);
+      document.removeEventListener('touchstart', handlePointerDown);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [openAvailabilityMenu, openMenu1]);
 
   const showSizeRoom = true;
 
@@ -146,7 +178,6 @@ function ButtonFilter ({
 
     onFilter(availableRooms, "available");
     setSelectedAvailability("Available");
-    // 👉 สำคัญ: อัปเดต route state เพื่อกระตุ้น RoomSize ให้รีเฟรชตาม availability ทันที
     pushAvailabilityStateToRoute("Available");
     setOpenAvailabilityMenu(false);
   };
@@ -175,7 +206,6 @@ function ButtonFilter ({
 
     onFilter(unavailableRooms, "unavailable");
     setSelectedAvailability("Occupied");
-    // 👉 สำคัญ: อัปเดต route state เพื่อกระตุ้น RoomSize ให้รีเฟรชตาม availability ทันที
     pushAvailabilityStateToRoute("Occupied");
     setOpenAvailabilityMenu(false);
   };
@@ -223,26 +253,31 @@ function ButtonFilter ({
   return (
     <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-stretch sm:justify-end gap-3">
       {/* Availability Dropdown */}
-      <div className="relative w-full sm:w-auto">
+      <div className="relative w-full sm:w-auto" ref={availabilityRef}>
         <RefreshButton
+          type="button"
           className={`w-full sm:w-auto rounded-lg px-3 py-2 cursor-pointer text-sm md:text-base border-b-2 ${
             darkMode
               ? "text-white hover:text-blue-400 border-transparent hover:border-blue-400 bg-gray-600"
               : "text-black hover:text-blue-400 border-transparent hover:border-blue-400 bg-gray-300"
           }`}
           onClick={toggleAvailabilityDropdown}
+          aria-haspopup="menu"
+          aria-expanded={openAvailabilityMenu}
         >
           {selectedAvailability} {openAvailabilityMenu ? "▴" : "▾"}
         </RefreshButton>
 
         {openAvailabilityMenu && (
           <ul
+            role="menu"
             className={`absolute left-0 top-full mt-2 rounded-md shadow-lg z-20 w-full overflow-hidden ${
               darkMode ? "bg-blue-600" : "bg-gray-800"
             }`}
           >
-            <li>
+            <li role="none">
               <RefreshButton
+                role="menuitem"
                 className={`block w-full text-center px-4 py-2 text-white rounded-t-md ${
                   darkMode ? "hover:bg-blue-700" : "hover:bg-gray-700"
                 }`}
@@ -251,8 +286,9 @@ function ButtonFilter ({
                 Available
               </RefreshButton>
             </li>
-            <li>
+            <li role="none">
               <RefreshButton
+                role="menuitem"
                 className={`block w-full text-center px-4 py-2 text-white rounded-b-md ${
                   darkMode ? "hover:bg-blue-700" : "hover:bg-gray-700"
                 }`}
@@ -267,8 +303,11 @@ function ButtonFilter ({
 
       {/* Size Room Dropdown */}
       {showSizeRoom && (
-        <div className="relative w-full sm:w-auto">
+        <div className="relative w-full sm:w-auto" ref={sizeRef}>
           <div
+            role="button"
+            aria-haspopup="menu"
+            aria-expanded={openMenu1}
             className={`w-full sm:w-auto rounded-lg px-3 py-2 cursor-pointer text-sm md:text-base border-b-2 ${
               darkMode
                 ? "text-white hover:text-blue-400 border-transparent hover:border-blue-400 bg-gray-600"
@@ -281,13 +320,15 @@ function ButtonFilter ({
 
           {openMenu1 && (
             <ul
+              role="menu"
               className={`absolute left-0 top-full mt-2 rounded-md shadow-lg z-20 w-full overflow-hidden ${
                 darkMode ? "bg-blue-600" : "bg-gray-800"
               }`}
             >
               {[4, 6, 10].map((size) => (
-                <li key={size}>
+                <li key={size} role="none">
                   <RefreshButton
+                    role="menuitem"
                     className={`flex justify-center items-center w-full text-center px-4 py-2 text-white whitespace-nowrap ${
                       darkMode ? "hover:bg-blue-700" : "hover:bg-gray-700"
                     }`}
