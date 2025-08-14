@@ -3,72 +3,99 @@ import Roomcard from './Roomcard';
 import Statscard from './Statscard';
 import { useLocation } from 'react-router-dom';
 import { useDarkMode } from './Context/DarkModeContext';
-import { CircularProgress,  } from '@mui/material';
+import { CircularProgress } from '@mui/material';
 import Header from './Header';
 import ButtonFilter from './ButtonFilter'; 
 import { Users } from 'lucide-react';
 
 function RoomPage() {
     const [loading, setLoading] = useState(true);
+    const [authChecking, setAuthChecking] = useState(true);
+    const [authStatus, setAuthStatus] = useState('checking'); // 'checking', 'authorized', 'unauthorized'
+    const [isRedirecting, setIsRedirecting] = useState(false); // เพิ่ม state สำหรับ redirect
     const location = useLocation();
     const [selectedSize, setSelectedSize] = useState("Room");
     const [events, setEvents] = useState([]);
     const [filteredRoom, setFilteredRoom] = useState([]);
-    const [filterType, setFilterType] = useState(null); // "available" | "unavailable" | null
+    const [filterType, setFilterType] = useState(null);
     const [filterStatus, setFilterStatus] = useState("all");
-    const [emptyMessage, setEmptyMessage] = useState(""); // ✅ เพิ่ม state สำหรับข้อความว่าง
+    const [emptyMessage, setEmptyMessage] = useState("");
     const { darkMode } = useDarkMode();
-
-    // ✅ เพิ่ม state สำหรับจำนวน housekeeper และ admin (ตัวอย่าง)
-    const [housekeeperCount, setHousekeeperCount] = useState(0);
-    const [adminCount, setAdminCount] = useState(0);
 
     useEffect(() => {
         const code = new URLSearchParams(location.search).get("code");
         const token = localStorage.getItem("token");
 
         if (!token) {
+            setIsRedirecting(true);
             window.location.href = "/admin/login";
             return;
         }
 
+        // เริ่มเชื่อมต่อ SSE
         const eventSource = new EventSource(`/admin/sse?code=${code}&token=${token}`);
+
+        eventSource.onopen = () => {
+            console.log("SSE connection opened");
+            // ยังไม่ set authChecking เป็น false ทันที รอให้ได้ข้อมูลก่อน
+        };
 
         eventSource.onmessage = (e) => {
             try {
                 const data = JSON.parse(e.data);
                 setEvents(data.results);
+                setAuthStatus('authorized'); // ได้ข้อมูลแสดงว่า authorized
+                setAuthChecking(false);
                 setLoading(false);
-                
-                // ✅ ถ้ามีข้อมูล housekeeper/admin จาก API ให้ update ตรงนี้
-                // ตัวอย่าง:
-                // setHousekeeperCount(data.housekeeperCount || 5);
-                // setAdminCount(data.adminCount || 2);
-                
-                // หรือ hardcode ไว้ก่อนสำหรับทดสอบ
-                setHousekeeperCount(5);
-                setAdminCount(2);
             } catch (err) {
                 console.error("Error parsing SSE data:", err);
                 setLoading(false);
+                setAuthChecking(false);
             }
         };
 
-        // ✅ ดัก forceLogout
+        // จัดการ forceLogout
         eventSource.addEventListener("forceLogout", (event) => {
             try {
                 const data = JSON.parse(event.data);
-                alert(data.error);
-                window.location.href = "/admin/login";
+                console.log("Force logout received:", data.error);
+                
+                setAuthStatus('unauthorized');
+                setIsRedirecting(true);
+                
+                // Redirect to unauthorized page
+                setTimeout(() => {
+                    window.location.href = "/unauthorized";
+                }, 100); // หน่วงเวลาเล็กน้อยเพื่อให้ state update
             } catch (err) {
                 console.error("Error in forceLogout:", err);
+                setAuthStatus('unauthorized');
+                setIsRedirecting(true);
+                setTimeout(() => {
+                    window.location.href = "/unauthorized";
+                }, 100);
             }
         });
 
         eventSource.onerror = (err) => {
             console.error("SSE error:", err);
+            
+            if (err.target.readyState === EventSource.CLOSED) {
+                const errorResponse = err.target.status;
+                if (errorResponse === 401 || errorResponse === 403) {
+                    setAuthStatus('unauthorized');
+                    setIsRedirecting(true);
+                    setTimeout(() => {
+                        window.location.href = "/unauthorized";
+                    }, 100);
+                    return;
+                }
+            }
+            
             setLoading(false);
+            setAuthChecking(false);
             eventSource.close();
+            setIsRedirecting(true);
             window.location.href = "/admin/login";
         };
 
@@ -77,34 +104,12 @@ function RoomPage() {
         };
     }, []);
 
-    // ✅ FIX: เพิ่ม useEffect เพื่อจัดการกับการกลับมาจาก RoomSize
-    useEffect(() => {
-        // เช็คว่ามี clearFilters flag จาก navigation
-        if (location.state?.clearFilters) {
-            console.log("Clearing filters from navigation state");
-            setFilteredRoom([]);
-            setFilterType(null);
-            setEmptyMessage("");
-            setSelectedSize("Room");
-            
-            // Clear the state to prevent repeated clearing
-            window.history.replaceState({}, '', location.pathname + location.search);
-        }
-        
-        // จัดการ selectedSize จาก state
-        if (location.state?.selectedSize) {
-            setSelectedSize(location.state.selectedSize);
-        }
-    }, [location.state]);
-
-    // ✅ อัพเดทฟังก์ชัน handleRoomFilter เพื่อรับ message
     const handleRoomFilter = (rooms, type, message = "") => {
         setFilteredRoom(rooms);
         setFilterType(type);
-        setEmptyMessage(message); // ตั้งค่าข้อความว่าง
+        setEmptyMessage(message);
     };
 
-    // ✅ ฟังก์ชันสำหรับเคลียร์ filter
     const clearAllFilters = () => {
         console.log("Clear all filters called from Admin");
         setFilteredRoom([]);
@@ -126,16 +131,43 @@ function RoomPage() {
         {id:10, room: "1520", icons: 1, people: 4},
     ];
 
-    // ✅ FIX: ลดความซับซ้อนของ useEffect นี้
-    useEffect(() => {
-        // รีเซ็ต filter เฉพาะเมื่อไม่มี selectedSize จาก state และไม่มี clearFilters flag
-        if (!location.state?.selectedSize && !location.state?.clearFilters) {
-            setFilteredRoom([]);
-            setFilterType(null);
-            setEmptyMessage("");
-            setSelectedSize("Room");
-        }
-    }, [location.pathname]); // เปลี่ยนจาก location.state เป็น location.pathname
+    // แสดง loading หรือ redirecting screen
+    if (authChecking || isRedirecting || authStatus === 'unauthorized') {
+        return (
+            <div className={`min-h-screen flex items-center justify-center transition-colors duration-300 ${
+                darkMode ? "bg-gray-900" : "bg-gray-50"
+            }`}>
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                    <p className={`transition-colors duration-300 ${
+                        darkMode ? "text-white" : "text-gray-600"
+                    }`}>
+                        {isRedirecting ? "Redirecting..." : 
+                         authStatus === 'unauthorized' ? "Access denied..." :
+                         "Checking permissions..."}
+                    </p>
+                </div>
+            </div>
+        );
+    }
+
+    // แสดงหน้าหลักเฉพาะเมื่อ authorized แล้วเท่านั้น
+    if (authStatus !== 'authorized') {
+        return (
+            <div className={`min-h-screen flex items-center justify-center transition-colors duration-300 ${
+                darkMode ? "bg-gray-900" : "bg-gray-50"
+            }`}>
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                    <p className={`transition-colors duration-300 ${
+                        darkMode ? "text-white" : "text-gray-600"
+                    }`}>
+                        Loading...
+                    </p>
+                </div>
+            </div>
+        );
+    }
         
     return (
       <div
@@ -145,24 +177,20 @@ function RoomPage() {
       >
         <Header/>
         
-        {/* ✅ แก้ไข HousekeeperStats ให้ส่ง props ครบถ้วน */}
-          <Statscard 
+        <Statscard 
             darkMode={darkMode}
             rooms={events}
             currentTime={new Date()}
             onFilter={handleRoomFilter}
-            
-            // ปิดการแสดง Housekeeper และ Admin cards
             showHousekeeper={false}
             showAdmin={false}
-            showRoomStatus={true}  // แสดงเฉพาะ Room Status
-          />
+            showRoomStatus={true}
+        />
         
         <div className={`pb-4 mx-[8px] md:mx-[24px] rounded-xl shadow-sm transition-colors duration-300 ${
                 darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'
             }`}>
             <div className='flex gap-2 flex-col items-start md:flex-row md:items-center md:justify-between p-[24px]'>
-              {/* โลโก้ + ชื่อ */}
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
                   <Users className="w-5 h-5 text-blue-600" />
@@ -200,7 +228,7 @@ function RoomPage() {
               data={filteredRoom.length > 0 ? filteredRoom : events}
               icons={iconClass}
               filterType={filterType}
-              emptyMessage={emptyMessage} // ✅ ส่ง emptyMessage ไปด้วย
+              emptyMessage={emptyMessage}
               selectedSize={selectedSize}
               setSelectedSize={setSelectedSize}
               events={events}

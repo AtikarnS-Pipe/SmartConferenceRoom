@@ -12,7 +12,8 @@ function ButtonFilter ({
   onFilter,
   rooms,
   currentTime,
-  preserveAvailabilityFilter
+  preserveAvailabilityFilter,
+  icons // เพิ่ม icons prop สำหรับการ filter
 }) {
   const [openMenu1, setOpenMenu1] = useState(false);
   const [openAvailabilityMenu, setOpenAvailabilityMenu] = useState(false);
@@ -21,50 +22,6 @@ function ButtonFilter ({
   const location = useLocation();
   const navigate = useNavigate();
 
-  // ---------- helpers ----------
-  const getPeopleSizeFromPath = () => {
-    const path = window.location.pathname || "";
-    if (path.startsWith("/roomsize/")) {
-      const last = path.split("/").pop();
-      const n = parseInt(last, 10);
-      return Number.isNaN(n) ? null : n;
-    }
-    return null;
-  };
-
-  // push state ซ้ำไปหน้าเดิมเมื่อเปลี่ยน availability (เพื่อให้ RoomSize sync ทันที)
-  const pushAvailabilityStateToRoute = (availabilityLabel) => {
-    const peopleSize = getPeopleSizeFromPath();
-    if (!peopleSize) return;
-
-    const iconClass = [
-      { id: 1, room: "1501", icons: 1, people: 4 },
-      { id: 2, room: "1502", icons: 1, people: 4 },
-      { id: 3, room: "1503", icons: 1, people: 4 },
-      { id: 4, room: "1504", icons: 1, people: 4 },
-      { id: 5, room: "1505", icons: 1, people: 6 },
-      { id: 6, room: "1506", icons: 1, people: 6 },
-      { id: 7, room: "1514", icons: 1, people: 10 },
-      { id: 8, room: "1515", icons: 1, people: 10 },
-      { id: 9, room: "1519", icons: 1, people: 4 },
-      { id: 10, room: "1520", icons: 1, people: 4 },
-    ];
-
-    // อัปเดต state ที่ route เดิม เพื่อให้หน้า RoomSize อ่าน preserveAvailabilityFilter ใหม่และรีเฟรชทันที
-    navigate(`/roomsize/${peopleSize}`, {
-      state: {
-        icons: iconClass,
-        peopleSize,
-        rooms: [],
-        selectedSize,
-        resetFilter: false,
-        preserveAvailabilityFilter: availabilityLabel,
-      },
-      replace: true,
-    });
-  };
-
-  // ---------- effects ----------
   // sync จาก navigation state -> local state
   useEffect(() => {
     if (location.state?.preserveAvailabilityFilter && location.state.preserveAvailabilityFilter !== "Availability") {
@@ -100,13 +57,13 @@ function ButtonFilter ({
   // มีการ filter อะไรอยู่ไหม
   const hasActiveFilters = selectedSize !== "Room" || selectedAvailability !== "Availability";
 
-  // คำนวณจำนวนห้องว่าง/ไม่ว่างจาก events
+  // คำนวดจำนวนห้องว่าง/ไม่ว่างจาก events
   let availableCount = 0;
   let unavailableCount = 0;
 
   if (events && Array.isArray(events)) {
     events.forEach(room => {
-      const isBusy = room.events.some(ev => {
+      const isBusy = room.events && room.events.some(ev => {
         const start = new Date(ev.start.dateTime);
         const end = new Date(ev.end.dateTime);
         start.setHours(start.getHours() + 7);
@@ -121,62 +78,111 @@ function ButtonFilter ({
     });
   }
 
+  // ฟังก์ชันสำหรับ filter ตาม room size
+  const filterByRoomSize = (size, currentRooms = events) => {
+    if (!icons || !Array.isArray(icons)) return [];
+    
+    // หาห้องที่มี people = size
+    const filteredIcons = icons.filter(icon => icon.people === size);
+    
+    // จับคู่กับข้อมูล events
+    const filteredRooms = filteredIcons.map(icon => {
+      const matchingRoom = currentRooms.find(room => {
+        const roomNumber = String(room.room || '').trim();
+        const iconRoom = String(icon.room || '').trim();
+        return roomNumber === iconRoom;
+      });
+
+      return {
+        ...icon,
+        events: matchingRoom?.events || [],
+        room: icon.room
+      };
+    });
+
+    return filteredRooms;
+  };
+
+  // ฟังก์ชันสำหรับ apply availability filter
+  const applyAvailabilityFilter = (rooms, filterType) => {
+    if (filterType === "Available") {
+      const availableRooms = rooms
+        .map(room => {
+          const isBusy = room.events && room.events.some(ev => {
+            const start = new Date(ev.start.dateTime);
+            const end = new Date(ev.end.dateTime);
+            start.setHours(start.getHours() + 7);
+            end.setHours(end.getHours() + 7);
+            return currentTime >= start && currentTime <= end;
+          });
+          return { ...room, isAvailable: !isBusy };
+        })
+        .filter(room => room.isAvailable);
+      
+      return availableRooms;
+    } else if (filterType === "Occupied") {
+      const unavailableRooms = rooms
+        .map(room => {
+          const isBusy = room.events && room.events.some(ev => {
+            const start = new Date(ev.start.dateTime);
+            const end = new Date(ev.end.dateTime);
+            start.setHours(start.getHours() + 7);
+            end.setHours(end.getHours() + 7);
+            return currentTime >= start && currentTime <= end;
+          });
+          return { ...room, isAvailable: isBusy };
+        })
+        .filter(room => room.isAvailable);
+      
+      return unavailableRooms;
+    }
+    return rooms;
+  };
+
   // ---------- availability handlers ----------
   const handleClickAvailable = () => {
-    if (availableCount === 0) {
-      onFilter([], "available", "There are no rooms available.");
-      setSelectedAvailability("Available");
-      pushAvailabilityStateToRoute("Available");
-      setOpenAvailabilityMenu(false);
-      return;
+    let roomsToFilter = events;
+    
+    // ถ้ามี size filter อยู่แล้ว ใช้ห้องที่ถูก filter แล้ว
+    if (selectedSize !== "Room") {
+      const size = selectedSize === "S" ? 4 : selectedSize === "M" ? 6 : selectedSize === "L" ? 10 : null;
+      if (size) {
+        roomsToFilter = filterByRoomSize(size);
+      }
     }
 
-    const availableRooms = events
-      .map(room => {
-        const isBusy = room.events.some(ev => {
-          const start = new Date(ev.start.dateTime);
-          const end = new Date(ev.end.dateTime);
-          start.setHours(start.getHours() + 7);
-          end.setHours(end.getHours() + 7);
-          return currentTime >= start && currentTime <= end;
-        });
-        return { ...room, isAvailable: !isBusy };
-      })
-      .filter(room => room.isAvailable);
-
-    onFilter(availableRooms, "available");
+    const filteredRooms = applyAvailabilityFilter(roomsToFilter, "Available");
+    
+    if (filteredRooms.length === 0) {
+      onFilter([], "available", "There are no rooms available.");
+    } else {
+      onFilter(filteredRooms, "available");
+    }
+    
     setSelectedAvailability("Available");
-    // 👉 สำคัญ: อัปเดต route state เพื่อกระตุ้น RoomSize ให้รีเฟรชตาม availability ทันที
-    pushAvailabilityStateToRoute("Available");
     setOpenAvailabilityMenu(false);
   };
 
   const handleClickUnavailable = () => {
-    if (unavailableCount === 0) {
-      onFilter([], "unavailable", "There are no rooms unavailable.");
-      setSelectedAvailability("Occupied");
-      pushAvailabilityStateToRoute("Occupied");
-      setOpenAvailabilityMenu(false);
-      return;
+    let roomsToFilter = events;
+    
+    // ถ้ามี size filter อยู่แล้ว ใช้ห้องที่ถูก filter แล้ว
+    if (selectedSize !== "Room") {
+      const size = selectedSize === "S" ? 4 : selectedSize === "M" ? 6 : selectedSize === "L" ? 10 : null;
+      if (size) {
+        roomsToFilter = filterByRoomSize(size);
+      }
     }
 
-    const unavailableRooms = events
-      .map(room => {
-        const isBusy = room.events.some(ev => {
-          const start = new Date(ev.start.dateTime);
-          const end = new Date(ev.end.dateTime);
-          start.setHours(start.getHours() + 7);
-          end.setHours(end.getHours() + 7);
-          return currentTime >= start && currentTime <= end;
-        });
-        return { ...room, isAvailable: isBusy };
-      })
-      .filter(room => room.isAvailable);
-
-    onFilter(unavailableRooms, "unavailable");
+    const filteredRooms = applyAvailabilityFilter(roomsToFilter, "Occupied");
+    
+    if (filteredRooms.length === 0) {
+      onFilter([], "unavailable", "There are no rooms unavailable.");
+    } else {
+      onFilter(filteredRooms, "unavailable");
+    }
+    
     setSelectedAvailability("Occupied");
-    // 👉 สำคัญ: อัปเดต route state เพื่อกระตุ้น RoomSize ให้รีเฟรชตาม availability ทันที
-    pushAvailabilityStateToRoute("Occupied");
     setOpenAvailabilityMenu(false);
   };
 
@@ -184,40 +190,27 @@ function ButtonFilter ({
   const handleSizeChange = (size) => {
     const label = size === 4 ? "S" : size === 6 ? "M" : size === 10 ? "L" : "Room";
     setSelectedSize(label);
-    handleSizeNavigate(size, label);
-    console.log("Size clicked:", size, "Label:", label, "Events:", events?.length || 0);
-  };
-
-  const handleSizeNavigate = (peopleSize, label) => {
-    const iconClass = [
-      { id: 1, room: "1501", icons: 1, people: 4 },
-      { id: 2, room: "1502", icons: 1, people: 4 },
-      { id: 3, room: "1503", icons: 1, people: 4 },
-      { id: 4, room: "1504", icons: 1, people: 4 },
-      { id: 5, room: "1505", icons: 1, people: 6 },
-      { id: 6, room: "1506", icons: 1, people: 6 },
-      { id: 7, room: "1514", icons: 1, people: 10 },
-      { id: 8, room: "1515", icons: 1, people: 10 },
-      { id: 9, room: "1519", icons: 1, people: 4 },
-      { id: 10, room: "1520", icons: 1, people: 4 },
-    ];
-
-    const currentPath = window.location.pathname;
-    const statePayload = {
-      icons: iconClass,
-      peopleSize,
-      rooms: [],
-      selectedSize: label,
-      resetFilter: false,
-      preserveAvailabilityFilter: selectedAvailability, // ส่งค่าปัจจุบันไปด้วย
-    };
-
-    if (currentPath === `/roomsize/${peopleSize}`) {
-      navigate(`/roomsize/${peopleSize}`, { state: statePayload, replace: true });
-    } else {
-      navigate(`/roomsize/${peopleSize}`, { state: statePayload, replace: true });
+    
+    // Filter ตาม room size
+    const filteredRooms = filterByRoomSize(size);
+    
+    // ถ้ามี availability filter อยู่ด้วย ให้ apply ด้วย
+    let finalRooms = filteredRooms;
+    if (selectedAvailability === "Available") {
+      finalRooms = applyAvailabilityFilter(filteredRooms, "Available");
+    } else if (selectedAvailability === "Occupied") {
+      finalRooms = applyAvailabilityFilter(filteredRooms, "Occupied");
     }
+    
+    if (finalRooms.length === 0) {
+      const sizeLabel = size === 4 ? "Small" : size === 6 ? "Medium" : "Large";
+      onFilter([], "size", `No ${sizeLabel} rooms found.`);
+    } else {
+      onFilter(finalRooms, "size");
+    }
+    
     setOpenMenu1(false);
+    console.log("Size filtered:", size, "Label:", label, "Rooms found:", finalRooms.length);
   };
 
   return (
@@ -321,8 +314,6 @@ function ButtonFilter ({
           setOpenAvailabilityMenu(false);
           if (clearAllFilters) {
             clearAllFilters();
-          } else {
-            navigate("/admin/api");
           }
         }}
       >
