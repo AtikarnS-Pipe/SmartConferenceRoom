@@ -227,10 +227,10 @@ export default function Sidebar() {
       if (res.data.success) {
         setStatusPopup("success");
         setMessage("Sign out successful! Redirecting...");
-        localStorage.clear();
         setTimeout(() => {
+          localStorage.clear();
           navigate("/");
-        }, 2000);
+        }, 1000);
       }
     } catch (error) {
       console.error("Signout error:", error);
@@ -238,7 +238,7 @@ export default function Sidebar() {
       setMessage("Failed to sign out. Please try again.");
       setTimeout(() => {
         setStatusPopup(null);
-      }, 3000);
+      }, 1000);
     }
   };
 

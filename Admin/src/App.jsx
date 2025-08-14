@@ -3,6 +3,7 @@ import RoomPage from "./Component/Admin";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import "./App.css";
 import RoomPages from "./Component/Roompages";
+import { AuthProvider } from "./Component/Context/Authcontext";
 import { Verify } from "./Component/Authen/Frontend/Login";
 import ForgotPasswordFlow from "./Component/Authen/Frontend/ForgetPasswordFlow";
 import RoomSize from "./Component/Roomsize";
@@ -24,6 +25,7 @@ function App() {
 
   return (
     <ThemeProvider>
+       <AuthProvider>
       <Router>
         <Routes>
           <Route path="/" element={<Verify setAuth={setAuth} />} />
@@ -43,9 +45,6 @@ function App() {
               </Protect>
             }
           >
-            {/* <Route path="/admin/api" element={<RoomPage />} /> */}
-            {/* <Route path="/room/:Room/:startdate/:enddate" element={<RoomPages />}/> */}
-            {/* <Route path="/roomsize/:size" element={<RoomSize />} /> */}
           </Route>
 
           <Route
@@ -102,6 +101,7 @@ function App() {
           </Route>
         </Routes>
       </Router>
+      </AuthProvider>
     </ThemeProvider>
   );
 }

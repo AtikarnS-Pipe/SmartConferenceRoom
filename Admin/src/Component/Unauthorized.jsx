@@ -50,30 +50,13 @@ function UnauthorizedAccess() {
         }`}>
           <div className="flex items-center justify-center gap-2 mb-4">
             <UserX className="w-5 h-5 text-red-500" />
-            <span className="font-medium text-red-500">Unauthorized User</span>
+            <span className="font-medium text-red-500">Unauthorized Email</span>
           </div>
           
           <p className="text-sm">
-            You don't have permission to access the Meeting Room Booking System.
+            You don't have permission to access the Conference Room System.
           </p>
           
-          <div className={`bg-yellow-50 border border-yellow-200 rounded-lg p-3 mt-4 ${
-            darkMode ? 'bg-yellow-900/20 border-yellow-800' : ''
-          }`}>
-            <div className="flex items-center gap-2 mb-2">
-              <AlertTriangle className="w-4 h-4 text-yellow-600" />
-              <span className={`text-sm font-medium ${
-                darkMode ? 'text-yellow-400' : 'text-yellow-800'
-              }`}>
-                Need Access?
-              </span>
-            </div>
-            <p className={`text-xs ${
-              darkMode ? 'text-yellow-300' : 'text-yellow-700'
-            }`}>
-              Please contact your system administrator to request access permissions.
-            </p>
-          </div>
         </div>
 
         {/* Action Buttons */}
@@ -90,25 +73,13 @@ function UnauthorizedAccess() {
             <ArrowLeft className="w-4 h-4" />
             Back to Login
           </button>
-
-          {/* Contact Admin Button */}
-          <button
-            onClick={handleContactAdmin}
-            className={`w-full px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 border ${
-              darkMode 
-                ? 'border-gray-600 text-gray-300 hover:bg-gray-700' 
-                : 'border-gray-300 text-gray-700 hover:bg-gray-50'
-            } hover:shadow-sm active:transform active:scale-95`}
-          >
-            Contact Administrator
-          </button>
         </div>
 
         {/* Footer Info */}
         <div className={`mt-6 pt-4 border-t text-xs ${
           darkMode ? 'border-gray-700 text-gray-500' : 'border-gray-200 text-gray-500'
         }`}>
-          <p>Meeting Room Booking System</p>
+          <p>Conference Room System</p>
           <p className="mt-1">© 2025 Your Organization</p>
         </div>
       </div>
