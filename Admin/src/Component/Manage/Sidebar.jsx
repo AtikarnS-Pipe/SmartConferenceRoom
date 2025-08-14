@@ -66,6 +66,13 @@ export default function Sidebar() {
 
   // Helper function to check if a path is active
   const isActive = (path) => {
+    // Highlight Home for /admin/api and /room/:Room/:startdate/:enddate
+    if (path === "/admin/api") {
+      if (location.pathname === "/admin/api") return true;
+      // Match /room/1501/01012025/01012025 etc.
+      const roomRegex = /^\/room\/[^/]+\/\d{8}\/\d{8}$/;
+      if (roomRegex.test(location.pathname)) return true;
+    }
     return location.pathname === path;
   };
 

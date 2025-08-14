@@ -88,7 +88,7 @@ function Statscard({
       {showHousekeeper && (
         <div className={`md:col-span-1 relative overflow-hidden rounded-2xl py-6 px-7 shadow-lg border-2 ${
           darkMode 
-            ? 'bg-gradient-to-br from-blue-900 via-blue-800 to-indigo-900 border-blue-700' 
+            ? 'bg-gradient-to-br from-blue-800 via-blue-700 to-indigo-800 border-blue-600' 
             : 'bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-700 border-blue-300'
         }`}>
           <div className="relative z-10">
@@ -113,7 +113,7 @@ function Statscard({
       {showAdmin && (
         <div className={`md:col-span-1 relative overflow-hidden rounded-2xl py-6 px-7 shadow-lg border-2 ${
           darkMode 
-              ? 'bg-gradient-to-br from-rose-900 via-amber-800 to-yellow-900 border-amber-700'
+              ? 'bg-gradient-to-br from-rose-800 via-amber-700 to-yellow-800 border-amber-600'
               : 'bg-gradient-to-br from-rose-500 via-amber-600 to-yellow-600 border-amber-300'
         }`}>
           <div className="relative z-10">
@@ -139,7 +139,7 @@ function Statscard({
         <div 
           className={`md:col-span-1  relative overflow-hidden rounded-2xl py-6 px-7 shadow-lg border-2 transition-all duration-300  mt-[8px] max-md:mx-[8px] md:ml-[24px] md:mt-[24px] ${
             darkMode 
-              ? 'bg-gradient-to-br from-green-900 via-green-800 to-green-950 border-green-700' 
+              ? 'bg-gradient-to-br from-green-800 via-green-700 to-green-850 border-green-600' 
               : 'bg-gradient-to-br from-green-500 via-green-600 to-green-800 border-green-300'
           }`}
         >
@@ -169,7 +169,7 @@ function Statscard({
         <div 
           className={`md:col-span-1 relative overflow-hidden rounded-2xl py-6 px-7 shadow-lg border-2 transition-all duration-300   max-md:mx-[8px] md:mr-[24px] md:mt-[24px]  ${
             darkMode 
-              ? 'bg-gradient-to-br from-red-900 via-red-800 to-red-950 border-red-700' 
+              ? 'bg-gradient-to-br from-red-800 via-red-700 to-red-850 border-red-600' 
               : 'bg-gradient-to-br from-red-500 via-red-600 to-red-800 border-red-300'
           }`}
         >

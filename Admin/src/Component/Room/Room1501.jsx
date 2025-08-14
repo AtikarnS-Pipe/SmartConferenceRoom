@@ -8,6 +8,7 @@ import { useDarkMode } from '../Context/DarkModeContext';
 import Header from '../Header';
 import axios from 'axios'
 import {CircularProgress,} from '@mui/material'; 
+import {ArrowLeft}  from 'lucide-react';
 
 dayjs.extend(isBetween);
 
@@ -49,10 +50,8 @@ const Room1501 = () => {
   const [openMenu1, setOpenMenu1] = useState(false);
   
   const toggleDropdown1 = () => setOpenMenu1(!openMenu1);
-  
-  const handleGoHome = () => {
-    navigate('/admin/api');
-  };
+
+  const handleBack = () => navigate(-1);
 
   // ✅ Fix: แก้ไข handleSizeNavigate เพื่อส่งข้อมูลที่ถูกต้อง
   const handleSizeNavigate = (size) => {
@@ -460,6 +459,20 @@ const Room1501 = () => {
       <div className="p-4 sm:p-6 max-w-[1800px] mx-auto">
         {/* Page Header */}
         <div className="mb-8">
+          
+          {/* ✅ Back Button */}
+          <RefreshButton
+            onClick={handleBack}
+            className={`px-3 py-2 mb-3 rounded-xl font-medium transition-all duration-200 shadow-md hover:shadow-xl flex items-center gap-2
+              ${darkMode 
+                ? 'bg-gray-800 text-white hover:bg-gray-600 ' 
+                : 'bg-white text-gray-800 hover:bg-gray-100 border border-gray-100'
+              }`}
+          >
+            <ArrowLeft className="h-5 w-5" />
+            Back
+          </RefreshButton>
+          
           <div className="flex flex-col sm:flex-row items-center justify-center sm:justify-between gap-4 md:gap-6">
             {/* Left Section */}
             <div className="flex flex-col gap-4 items-center sm:items-start">
@@ -471,7 +484,7 @@ const Room1501 = () => {
                 }`}>
                   <div className="flex items-center gap-2">
                     <MapPin className="h-5 w-5" />
-                    <span className="text-xl font-bold">
+                    <span className="text-xl font-bold whitespace-nowrap">
                       Room {Room?.replace(/(\d{2})(\d{2})/, '$1/$2')}
                     </span>
                   </div>

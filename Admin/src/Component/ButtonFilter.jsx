@@ -231,13 +231,13 @@ function ButtonFilter ({
         {openAvailabilityMenu && (
           <ul
             className={`absolute left-0 top-full mt-2 rounded-md shadow-lg z-20 w-full overflow-hidden ${
-              darkMode ? "bg-blue-700" : "bg-gray-800"
+              darkMode ? "bg-blue-600" : "bg-gray-800"
             }`}
           >
             <li>
               <RefreshButton
                 className={`block w-full text-center px-4 py-2 text-white rounded-t-md ${
-                  darkMode ? "hover:bg-gray-600" : "hover:bg-gray-700"
+                  darkMode ? "hover:bg-blue-700" : "hover:bg-gray-700"
                 }`}
                 onClick={handleClickAvailable}
               >
@@ -247,7 +247,7 @@ function ButtonFilter ({
             <li>
               <RefreshButton
                 className={`block w-full text-center px-4 py-2 text-white rounded-b-md ${
-                  darkMode ? "hover:bg-gray-600" : "hover:bg-gray-700"
+                  darkMode ? "hover:bg-blue-700" : "hover:bg-gray-700"
                 }`}
                 onClick={handleClickUnavailable}
               >
@@ -275,14 +275,14 @@ function ButtonFilter ({
           {openMenu1 && (
             <ul
               className={`absolute left-0 top-full mt-2 rounded-md shadow-lg z-20 w-full overflow-hidden ${
-                darkMode ? "bg-blue-700" : "bg-gray-800"
+                darkMode ? "bg-blue-600" : "bg-gray-800"
               }`}
             >
               {[4, 6, 10].map((size) => (
                 <li key={size}>
                   <RefreshButton
-                    className={`block w-full text-center px-4 py-2 text-white ${
-                      darkMode ? "hover:bg-gray-600" : "hover:bg-gray-700"
+                    className={`flex justify-center items-center w-full text-center px-4 py-2 text-white whitespace-nowrap ${
+                      darkMode ? "hover:bg-blue-700" : "hover:bg-gray-700"
                     }`}
                     onClick={() => handleSizeChange(size)}
                   >
