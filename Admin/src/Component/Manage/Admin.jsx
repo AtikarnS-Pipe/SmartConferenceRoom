@@ -22,9 +22,10 @@ import axios from 'axios';
 import { DarkModeContext } from '../Context/DarkModeContext';
 import RefreshButton from '../../utils/refreshToken';
 import Statscard from '../Statscard';
-import Header from '../Header'; // 🔥 เพิ่ม import Header
+import Header from '../Header';
 
 function Admin() {
+  const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [members, setMembers] = useState([]);
   const [signoutsuccess, setSignoutsuccess] = useState(false);
@@ -46,6 +47,15 @@ function Admin() {
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
 
+  // Loading effect
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 2000); // 2 seconds loading
+
+    return () => clearTimeout(timer);
+  }, []);
+
   useEffect(() => {
     const housekeeperSource = new EventSource('/account/housekeepers', {
       withCredentials: true,
@@ -64,7 +74,7 @@ function Admin() {
   
     const handleAdminList = (event) => {
       const data = JSON.parse(event.data);
-      console.log("📥 AdminList SSE data received:", data);
+      console.log("🔥 AdminList SSE data received:", data);
       if (Array.isArray(data)) {
         setAdmins(data);
       }
@@ -265,9 +275,23 @@ function Admin() {
     }).replace(',', '');
   };
 
+  // Loading Screen Component
+  if (isLoading) {
+    return (
+      <div className={`min-h-screen flex items-center justify-center ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className={`text-lg font-medium ${darkMode ? 'text-white' : 'text-gray-700'}`}>
+            Loading...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={`min-h-screen ${darkMode ? 'bg-gray-900' : 'bg-gray-50'} font-display transition-colors duration-300`}>
-      {/* 🔥 ใช้ Header component แทน */}
+      {/* Header */}
       <Header 
         title="Admin Management" 
         subtitle="Manage administrator accounts and access"

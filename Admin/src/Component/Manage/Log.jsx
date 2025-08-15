@@ -18,10 +18,11 @@ import {
   Home,
   Users,
   Shield,
-  UserCheck,
+  X,
   LayoutDashboard,
   Sun,
   Moon,
+  Loader2,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -41,11 +42,21 @@ function Log() {
   const [open, setOpen] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState("disconnected");
   const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(true); // เพิ่ม loading state
   const { darkMode, toggleDarkMode } = useContext(DarkModeContext);
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
 
   const [currentPage, setCurrentPage] = useState(1);
+
+  // เพิ่ม useEffect สำหรับจัดการ loading
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 1500); // แสดง loading 1.5 วินาที
+
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     const eventSource = new EventSource("/account/logsmonitoring", {
@@ -178,6 +189,39 @@ function Log() {
     }
   }, [profile]);
 
+  // Loading Screen Component
+  if (loading) {
+    return (
+      <div
+        className={`min-h-screen flex items-center justify-center ${
+          darkMode ? "bg-gray-900" : "bg-gray-50"
+        } transition-colors duration-300`}
+      >
+        <div className="text-center">
+          <Loader2
+            className={`w-12 h-12 animate-spin mx-auto mb-4 ${
+              darkMode ? "text-blue-400" : "text-blue-600"
+            }`}
+          />
+          <h2
+            className={`text-lg font-semibold mb-2 ${
+              darkMode ? "text-white" : "text-gray-800"
+            }`}
+          >
+            Loading...
+          </h2>
+          <p
+            className={`text-sm ${
+              darkMode ? "text-gray-400" : "text-gray-600"
+            }`}
+          >
+            Please wait while we prepare your logs
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       className={`min-h-screen ${
@@ -232,12 +276,16 @@ function Log() {
                 <div className="flex items-center gap-3">
                   <div
                     className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                      connectionStatus == 'connected' ? "bg-green-100" : "bg-red-100"
+                      connectionStatus == "connected"
+                        ? "bg-green-100"
+                        : "bg-red-100"
                     }`}
                   >
                     <Activity
                       className={`w-5 h-5 ${
-                        connectionStatus == 'connected' ? "text-green-600" : "text-red-600"
+                        connectionStatus == "connected"
+                          ? "text-green-600"
+                          : "text-red-600"
                       }`}
                     />
                   </div>
@@ -363,7 +411,10 @@ function Log() {
                           }`
                     }`}
                   >
-                    Clear
+                    <div className="flex items-center justify-center gap-1">
+                      <X className="w-4 h-4" />
+                      Clear filter
+                    </div>
                   </RefreshButton>
                   <div
                     className={`rounded-lg pl-10 pr-10 py-2 text-white ${
@@ -496,7 +547,7 @@ function Log() {
               } transition-colors duration-300`}
             >
               <div className="flex flex-col sm:flex-row justify-center items-center gap-2">
-                <div className="flex justify-center mt-4">
+                <div className="flex justify-center">
                   <RefreshButton
                     disabled={currentPage === 1}
                     onClick={() => setCurrentPage((prev) => prev - 1)}

@@ -389,7 +389,7 @@ function ButtonFilter ({
         className={`w-full sm:w-auto rounded-lg px-3 py-2 text-sm md:text-base ${
           !hasActiveFilters
             ? darkMode
-              ? "text-gray-500 cursor-not-allowed opacity-90 bg-gray-600 pointer-events-none"
+              ? "text-gray-400 cursor-not-allowed opacity-90 bg-gray-600 pointer-events-none"
               : "text-gray-400 cursor-not-allowed opacity-90 bg-gray-100 pointer-events-none"
             : darkMode
               ? "text-white cursor-pointer hover:text-blue-400 bg-gray-600"

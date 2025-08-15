@@ -57,9 +57,9 @@ function App() {
           />
           <Route path="/unauthorized" element={<UnauthorizedAccess />} /> 
           <Route element={<AccountLayout darkMode={darkMode} />}> 
-            <Route path="/room/:Room/:startdate/:enddate" element={<RoomPages />}/>
-            <Route path="/admin/api" element={<RoomPage />} />
-            <Route path="/roomsize/:size" element={<RoomSize />} />
+            <Route path="/room/:Room/:startdate/:enddate" element={ <Protect><RoomPages /></Protect>}/>
+            <Route path="/admin/api" element={<Protect><RoomPage /></Protect>} />
+            <Route path="/roomsize/:size" element={<Protect><RoomSize /></Protect>} />
             <Route
               path="/account/admin"
               element={

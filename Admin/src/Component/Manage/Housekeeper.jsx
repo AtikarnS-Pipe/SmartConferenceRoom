@@ -12,7 +12,7 @@ import {
   Eye,
   EyeOff,
   Home,
-  LayoutDashboard,
+  Loader2,
   Sun,
   Moon,
   XCircle,
@@ -37,17 +37,11 @@ function Housekeeper() {
   const [allUsers, setAllUsers] = useState([]); // รวมทั้งหมด
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [pendingDelete, setPendingDelete] = useState(null); // ใช้เก็บ callback ลบจริง
-  const [signoutsuccess, setSignoutsuccess] = useState(false);
-  const [pinadmin, setPinadmin] = useState(null);
   const [pinTargetName, setPinTargetName] = useState("");
   const [show, setShow] = useState(false);
   const [showPinModal, setShowPinModal] = useState(false);
   const [showPin, setShowPin] = useState(false);
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [statusPopup, setStatusPopup] = useState(null);
-  const [showNewPassword, setShowNewPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [housekeeper, setHousekeeper] = useState([]);
   const [message, setMessage] = useState("");
   const [housekeepers, setHousekeepers] = useState([]);
@@ -61,13 +55,20 @@ function Housekeeper() {
     pin: "",
     role: "Housekeeper",
   });
-  const navigate = useNavigate();
+  const [loading, setLoading] = useState(true); // เพิ่ม loading state
   const { darkMode, toggleDarkMode } = useContext(DarkModeContext);
   const [visibleRow, setVisibleRow] = useState(null); // เก็บ index หรือ id ของ row ที่เปิดอยู่
 
   const togglePin = (rowId) => {
     setVisibleRow((prev) => (prev === rowId ? null : rowId));
   };
+    useEffect(() => {
+      const timer = setTimeout(() => {
+        setLoading(false);
+      }, 2000); // แสดง loading 2 วินาที
+  
+      return () => clearTimeout(timer);
+    }, []);
 
   useEffect(() => {
     const housekeeperSource = new EventSource("/account/housekeepers", {
@@ -180,65 +181,6 @@ function Housekeeper() {
         return [...prev, { id: housekeeper._id, name: housekeeper.name }];
       }
     });
-  };
-
-  const handleSubmitPasswordChange = async () => {
-    if (newPassword.length !== 4 || confirmPassword.length !== 4) {
-      setStatusPopup("error");
-      setMessage("Please enter a 4-digit PIN");
-      setTimeout(() => {
-        setStatusPopup(null);
-      }, 3000);
-      return;
-    }
-    if (newPassword !== confirmPassword) {
-      setStatusPopup("error");
-      setMessage("Passwords do not match");
-      setTimeout(() => {
-        setStatusPopup(null);
-        setShowPasswordModal(false);
-        setNewPassword("");
-        setConfirmPassword("");
-      }, 3000);
-      return;
-    }
-
-    try {
-      const token = localStorage.getItem("token");
-
-      const res = await axios.patch(
-        "/account/changeadminpw",
-        { newpin: newPassword },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      setMessage(res.data.message || "PIN Admin Update Successfully");
-      setStatusPopup("success");
-
-      setTimeout(() => {
-        setStatusPopup(null);
-        setShowPasswordModal(false);
-        setNewPassword("");
-        setConfirmPassword("");
-      }, 3000);
-    } catch (error) {
-      // ✅ ใช้ error.response แทน res
-      const messageFromBackend =
-        error.res?.data?.message || "Failed to update PIN. Please try again.";
-
-      console.error("Error updating PIN:", messageFromBackend);
-
-      setMessage(messageFromBackend);
-      setStatusPopup("error");
-
-      setTimeout(() => {
-        setStatusPopup(null);
-      }, 3000);
-    }
   };
 
   const handleChangePin = async () => {
@@ -413,17 +355,39 @@ function Housekeeper() {
       console.log("Profile state updated:", profile);
     }
   }, [profile]);
-  const handleNavigateByRole = () => {
-    const role = localStorage.getItem("role"); // ดึง role จาก localStorage
-    console.log("Navigating based on role:", role);
-    if (role === "Superadmin") {
-      navigate("/account/superadmin");
-    } else if (role === "Admin") {
-      navigate("/account/admin");
-    } else {
-      navigate("/"); // สำรองเผื่อ role อื่นหรือไม่มี role
-    }
-  };
+
+    // Loading Screen Component
+  if (loading) {
+    return (
+      <div
+        className={`min-h-screen flex items-center justify-center ${
+          darkMode ? "bg-gray-900" : "bg-gray-50"
+        } transition-colors duration-300`}
+      >
+        <div className="text-center">
+          <Loader2
+            className={`w-12 h-12 animate-spin mx-auto mb-4 ${
+              darkMode ? "text-blue-400" : "text-blue-600"
+            }`}
+          />
+          <h2
+            className={`text-lg font-semibold mb-2 ${
+              darkMode ? "text-white" : "text-gray-800"
+            }`}
+          >
+            Loading...
+          </h2>
+          <p
+            className={`text-sm ${
+              darkMode ? "text-gray-400" : "text-gray-600"
+            }`}
+          >
+            Please wait while we prepare admin management
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -526,205 +490,6 @@ function Housekeeper() {
           </div>
         </div>
       )}
-      {showPasswordModal && (
-        <div className="fixed inset-0 z-50 backdrop-blur-sm bg-gray-300/30 flex items-center justify-center">
-          <div
-            className={`${
-              darkMode ? "bg-gray-800 text-white" : "bg-white"
-            } p-6 rounded-xl shadow-lg w-96`}
-          >
-            <h2
-              className={`text-lg font-semibold mb-4 ${
-                darkMode ? "text-white" : "text-gray-800"
-              }`}
-            >
-              Change PIN
-            </h2>
-
-            {/* New Password */}
-            <div className="mb-4">
-              <label
-                className={`block text-sm mb-1 ${
-                  darkMode ? "text-gray-300" : "text-gray-600"
-                }`}
-              >
-                New PIN
-              </label>
-              <div className="relative">
-                <input
-                  type={showNewPassword ? "text" : "password"}
-                  value={newPassword}
-                  maxLength={4}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  className={`w-full px-3 py-2 pr-10 border rounded-md shadow-sm focus:ring focus:ring-blue-200 ${
-                    darkMode
-                      ? "bg-gray-700 border-gray-600 text-white"
-                      : "border-gray-300"
-                  }`}
-                />
-                <RefreshButton
-                  type="button"
-                  onClick={() => setShowNewPassword(!showNewPassword)}
-                  className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-500"
-                >
-                  {showNewPassword ? (
-                    // icon ตาเปิด
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-5 w-5"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                      />
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M2.458 12C3.732 7.943 7.522 5 12 5s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S3.732 16.057 2.458 12z"
-                      />
-                    </svg>
-                  ) : (
-                    // icon ตาปิด
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-5 w-5"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a9.96 9.96 0 012.293-3.95"
-                      />
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M6.428 6.428A9.954 9.954 0 0112 5c4.478 0 8.268 2.943 9.542 7a9.96 9.96 0 01-1.205 2.423"
-                      />
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M3 3l18 18"
-                      />
-                    </svg>
-                  )}
-                </RefreshButton>
-              </div>
-            </div>
-
-            {/* Confirm Password */}
-            <div className="mb-6">
-              <label
-                className={`block text-sm mb-1 ${
-                  darkMode ? "text-gray-300" : "text-gray-600"
-                }`}
-              >
-                Confirm New PIN
-              </label>
-              <div className="relative">
-                <input
-                  type={showConfirmPassword ? "text" : "password"}
-                  maxLength={4}
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className={`w-full px-3 py-2 pr-10 border rounded-md shadow-sm focus:ring focus:ring-blue-200 ${
-                    darkMode
-                      ? "bg-gray-700 border-gray-600 text-white"
-                      : "border-gray-300"
-                  }`}
-                />
-                <RefreshButton
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-500"
-                >
-                  {showConfirmPassword ? (
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-5 w-5"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                      />
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M2.458 12C3.732 7.943 7.522 5 12 5s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S3.732 16.057 2.458 12z"
-                      />
-                    </svg>
-                  ) : (
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-5 w-5"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a9.96 9.96 0 012.293-3.95"
-                      />
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M6.428 6.428A9.954 9.954 0 0112 5c4.478 0 8.268 2.943 9.542 7a9.96 9.96 0 01-1.205 2.423"
-                      />
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M3 3l18 18"
-                      />
-                    </svg>
-                  )}
-                </RefreshButton>
-              </div>
-            </div>
-
-            {/* Buttons */}
-            <div className="flex justify-end gap-2">
-              <RefreshButton
-                onClick={() => setShowPasswordModal(false)}
-                className={`px-4 py-2 rounded-md ${
-                  darkMode
-                    ? "bg-gray-600 text-gray-300 hover:bg-gray-500"
-                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                }`}
-              >
-                Cancel
-              </RefreshButton>
-              <RefreshButton
-                onClick={() => {
-                  handleSubmitPasswordChange();
-                }}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-              >
-                Update Pin
-              </RefreshButton>
-            </div>
-          </div>
-        </div>
-      )}
       {statusPopup === "success" && (
         <div className="fixed top-6 right-6 z-[9999]">
           <div className="bg-green-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-2 animate-slide-in">
@@ -755,17 +520,6 @@ function Housekeeper() {
           <div className="bg-red-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-2 animate-slide-in">
             <XCircle className="w-5 h-5" />
             <span className="font-medium">{message}</span>
-          </div>
-        </div>
-      )}
-
-      {signoutsuccess && (
-        <div className="fixed top-6 right-6 z-50">
-          <div className="bg-green-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-2 animate-slide-in">
-            <CheckCircle className="w-5 h-5" />
-            <span className="font-medium">
-              Signout Successful! Redirecting...
-            </span>
           </div>
         </div>
       )}
@@ -871,7 +625,7 @@ function Housekeeper() {
                     darkMode ? "text-white" : "text-gray-900"
                   }`}
                 >
-                  Housekeepers
+                  Housekeeper
                 </h2>
               </div>
               <div className="flex flex-col sm:flex-row gap-3">
@@ -905,7 +659,11 @@ function Housekeeper() {
                     className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm ${
                       selectedMembers.length > 0
                         ? "bg-red-600 text-white hover:bg-red-700"
-                        : "bg-gray-100 text-gray-400"
+                        : `${
+                            darkMode
+                              ? "bg-gray-600 text-gray-400"
+                              : "bg-gray-100 text-gray-400"
+                          } cursor-not-allowed`
                     }`}
                   >
                     <Trash2 className="w-4 h-4" />

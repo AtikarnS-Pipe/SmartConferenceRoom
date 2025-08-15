@@ -18,6 +18,7 @@ import {
   Sun,
   Moon,
   XCircle,
+  Loader2,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -56,6 +57,7 @@ function Superadmin() {
   const [open, setOpen] = useState(false);
   const [showDeleteAdminConfirm, setShowDeleteAdminConfirm] = useState(false);
   const [pendingDeleteAdmin, setPendingDeleteAdmin] = useState(null); // ฟังก์ชันที่รอการยืนยัน
+  const [loading, setLoading] = useState(true); // เพิ่ม loading state
 
   // New states for Add Admin functionality
   const [showAddAdminModal, setShowAddAdminModal] = useState(false);
@@ -71,6 +73,15 @@ function Superadmin() {
   const { darkMode, toggleDarkMode } = useContext(DarkModeContext);
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
+
+  // เพิ่ม useEffect สำหรับจัดการ loading
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 2000); // แสดง loading 2 วินาที
+
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     const housekeeperSource = new EventSource("/account/housekeepers", {
@@ -90,7 +101,7 @@ function Superadmin() {
 
     const handleAdminList = (event) => {
       const data = JSON.parse(event.data);
-      console.log("📥 AdminList SSE data received:", data); // ⬅️ ใส่ตรงนี้
+      console.log("🔥 AdminList SSE data received:", data); // ⬅️ ใส่ตรงนี้
       if (Array.isArray(data)) {
         setAdmins(data);
       }
@@ -160,93 +171,6 @@ function Superadmin() {
   console.log("Admins:", admins);
   console.log("Filtered:", filteredMembers);
 
-  const handleSubmitPasswordChange = async () => {
-    if (newPassword.length !== 4 || confirmPassword.length !== 4) {
-      setStatusPopup("error");
-      setMessage("Please enter a 4-digit PIN");
-      setTimeout(() => {
-        setStatusPopup(null);
-      }, 3000);
-      return;
-    }
-    if (newPassword !== confirmPassword) {
-      setStatusPopup("error");
-      setMessage("Passwords do not match");
-      setTimeout(() => {
-        setStatusPopup(null);
-        setShowPasswordModal(false);
-        setNewPassword("");
-        setConfirmPassword("");
-      }, 3000);
-      return;
-    }
-
-    try {
-      const token = localStorage.getItem("token");
-
-      const res = await axios.patch(
-        "/account/changeadminpw",
-        { newpin: newPassword },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      setMessage(res.data.message);
-      setStatusPopup("success");
-
-      setTimeout(() => {
-        setStatusPopup(null);
-        setShowPasswordModal(false);
-        setNewPassword("");
-        setConfirmPassword("");
-      }, 3000);
-    } catch (error) {
-      // ✅ ใช้ error.response แทน res
-      const messageFromBackend =
-        error.res?.data?.message || "PIN is already use. Please try again.";
-
-      console.error("Error updating PIN:", messageFromBackend);
-
-      setMessage(messageFromBackend);
-      setStatusPopup("error");
-
-      setTimeout(() => {
-        setStatusPopup(null);
-        setShowPasswordModal(true);
-        setNewPassword("");
-        setConfirmPassword("");
-      }, 3000);
-    }
-  };
-
-  const handleSignout = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      const res = await axios.post(
-        "/account/signout",
-        {}, // ไม่มี body ในการ signout (เว้นเปล่า)
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          withCredentials: true,
-        }
-      );
-
-      if (res.data.success) {
-        setSignoutsuccess(true);
-        setTimeout(() => {
-          window.location.href = "/";
-        }, 3000); // แสดงข้อความสำเร็จ 3 วินาทีแล้ว redirect
-      }
-    } catch (error) {
-      console.error("Signout error:", error);
-      alert("Failed to sign out.");
-    }
-  };
   const handleAddAdmin = async (e) => {
     e.preventDefault();
     console.log("Sending data:", newMember);
@@ -431,6 +355,39 @@ function Superadmin() {
       })
       .replace(",", "");
   };
+
+  // Loading Screen Component
+  if (loading) {
+    return (
+      <div
+        className={`min-h-screen flex items-center justify-center ${
+          darkMode ? "bg-gray-900" : "bg-gray-50"
+        } transition-colors duration-300`}
+      >
+        <div className="text-center">
+          <Loader2
+            className={`w-12 h-12 animate-spin mx-auto mb-4 ${
+              darkMode ? "text-blue-400" : "text-blue-600"
+            }`}
+          />
+          <h2
+            className={`text-lg font-semibold mb-2 ${
+              darkMode ? "text-white" : "text-gray-800"
+            }`}
+          >
+            Loading...
+          </h2>
+          <p
+            className={`text-sm ${
+              darkMode ? "text-gray-400" : "text-gray-600"
+            }`}
+          >
+            Please wait while we prepare admin management
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -800,7 +757,7 @@ function Superadmin() {
                         : `${
                             darkMode
                               ? "bg-gray-600 text-gray-400"
-                              : "bg-gray-300 text-gray-500"
+                              : "bg-gray-100 text-gray-400"
                           } cursor-not-allowed`
                     }`}
                     disabled={selectedMembers.length === 0}
@@ -941,11 +898,10 @@ function Superadmin() {
               } transition-colors duration-300`}
             >
               <p
-          
-            className={`text-sm text-center ${darkMode ? "text-gray-400" : "text-gray-500"}`}
-          >
-            Updated Real-Time
-          </p>
+                className={`text-sm text-center ${darkMode ? "text-gray-400" : "text-gray-500"}`}
+              >
+                Updated Real-Time
+              </p>
             </div>
           </div>
         </div>

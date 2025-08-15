@@ -74,7 +74,9 @@ function Header({
             }`}>
               <div className={`text-sm tracking-widest ${
                 darkMode ? 'text-white' : 'text-gray-700'
-              }`}>
+              }`}
+               style={{ minWidth: `${(profile?.pin?.length || 4) * 0.65}rem`, textAlign: 'center' }}
+               >
                 {show ? profile?.pin || '0000' : '●'.repeat(profile?.pin?.length || 4)}
               </div>
               <RefreshButton
