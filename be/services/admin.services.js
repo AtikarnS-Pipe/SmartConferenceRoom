@@ -1,16 +1,16 @@
-const getGraphClient = require("../utils/graph"); 
+const getGraphClient = require("../utils/graph");
 const Token = require('../models/token');
 const tokenCache = require('../utils/tokenCache')
-const {getTodaydatetime}  = require('../utils/getTodaydatetime');
+const { getTodaydatetime } = require('../utils/getTodaydatetime');
 const userModel = require('../models/User');
 const sendMailAsync = require('../services/sendmail.services')
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const RESET_SECRET = process.env.JWT_RESET_SECRET || "jwt-reset-secret";
 const { roomobject } = require('../utils/tokenCache');
-require('dotenv').config({path: '../config/.env'});
+require('dotenv').config({ path: '../config/.env' });
 
-async function GetScheduleData(actoken, Room, start, end){  
+async function GetScheduleData(actoken, Room, start, end) {
     try {
         // start: 06072025
         // end: 12072025
@@ -32,8 +32,8 @@ async function GetScheduleData(actoken, Room, start, end){
 
         const startDateTime = startTH.toISOString();
         const endDateTime = endTH.toISOString();
-        if(process.env.DEBUG_MODE) console.log("start query scedule(UTC):", startDateTime, endDateTime);
-        if(!actoken){
+        if (process.env.DEBUG_MODE) console.log("start query scedule(UTC):", startDateTime, endDateTime);
+        if (!actoken) {
             throw new Error("No access token in schedule Page.")
         }
         const graphResponse = await getGraphClient(actoken)
@@ -44,32 +44,32 @@ async function GetScheduleData(actoken, Room, start, end){
                 "$orderby": "start/dateTime",
                 "$top": 100, // default = 10 ,Limit max = 100 events, if more than 100 events, you need to use pagination
                 "$select": "organizer,subject,start,end,locations",
-                "$filter": "isCancelled eq false" 
+                "$filter": "isCancelled eq false"
             })
             .get();
         if (!graphResponse || !graphResponse.value) {
             throw new Error(`No value in graphResponse for room ${Room}: ${JSON.stringify(graphResponse)}`);
         }
         const results = graphResponse.value
-        if(process.env.DEBUG_MODE) console.log("admin scedule =>", results)
+        if (process.env.DEBUG_MODE) console.log("admin scedule =>", results)
         return results;
-        
+
     } catch (error) {
         console.error("error:", error);
     }
 }
 
-async function sendscheduledata(req, res){
-    try{
+async function sendscheduledata(req, res) {
+    try {
         const Room = req.params.Room;
         const startdate = req.params.startdate;
         const enddate = req.params.enddate;
-        if(!Room || !startdate || !enddate){
+        if (!Room || !startdate || !enddate) {
             throw new Error("Missing parameters: Room, startdate, or enddate");
         }
         const accesstoken = tokenCache.getAccessToken();
         const results = await GetScheduleData(accesstoken, Room, startdate, enddate);
-        if(!results){
+        if (!results) {
             throw new Error("No results found!!");
         }
         res.write(`data: ${JSON.stringify({ results })}\n\n`);
@@ -87,7 +87,7 @@ async function sendscheduledata(req, res){
 async function getUserProfile(accessToken) {
     try {
         const profile = await getGraphClient(accessToken).api('https://graph.microsoft.com/v1.0/me').get();
-        if(process.env.DEBUG_MODE) console.log("getUserProfile profile:", profile.mail);
+        if (process.env.DEBUG_MODE) console.log("getUserProfile profile:", profile.mail);
         return profile;
     } catch (error) {
         console.error('Error fetching user profile:', error);
@@ -114,7 +114,7 @@ async function addCacheandDB(tokenObject) {
 
 async function fetchAllRoom(res, accessToken) {
     try {
-        const {startDateTime, endDateTime} = await getTodaydatetime();
+        const { startDateTime, endDateTime } = await getTodaydatetime();
         if (!accessToken) {
             throw new Error("No accessToken");
         }
@@ -129,7 +129,7 @@ async function fetchAllRoom(res, accessToken) {
                         "$orderby": "start/dateTime",
                         "$top": 100,
                         "$select": "id,organizer,start,end,location",
-                        "$filter": "isCancelled eq false" 
+                        "$filter": "isCancelled eq false"
                     })
                     .get();
 
@@ -171,7 +171,7 @@ async function sendOTP(email) {
         user.otp.used = false;
         user.otp.expireAt = new Date(Date.now() + (5 * 60 * 1000));
         await user.save();
-        
+
         const body = `Hello,
 Your One-Time Password (OTP) is: ${otpCode}
 
@@ -184,7 +184,7 @@ Smart Conforence Display System
         await sendMailAsync("Your One-Time Password (OTP)", body, user.email, tokenCache.getAccessToken());
         return { success: true, message: `Send OTP to ${user.email}` };
     } catch (err) {
-        return { success: false, message: `${err.message}`};
+        return { success: false, message: `${err.message}` };
     }
 }
 
@@ -196,39 +196,39 @@ Smart Conforence Display System
  * @returns {Object} { success: Boolean, message: String, reset_token: String }
  */
 async function verifyOTP(email, otpCode) {
-  try {
-    const user = await userModel.findOne({ email });
-    if (!user) {
-      return { success: false, message: 'Invalid credentials.' }; 
+    try {
+        const user = await userModel.findOne({ email });
+        if (!user) {
+            return { success: false, message: 'Invalid credentials.' };
+        }
+
+        const otp = user.otp;
+        if (!otp || !otp.code) {
+            return { success: false, message: 'OTP not found for this user.' };
+        }
+
+        const now = Date.now();
+
+        if (otp.used) {
+            return { success: false, message: 'This OTP has already been used.' };
+        }
+
+        if (now > new Date(otp.expireAt).getTime()) {
+            return { success: false, message: 'This OTP is expired.' };
+        }
+
+        if (otp.code !== otpCode) {
+            return { success: false, message: 'Invalid OTP code.' };
+        }
+
+        user.otp.used = true;
+        await user.save();
+        const resetToken = jwt.sign({ email }, RESET_SECRET, { expiresIn: '10m' });
+
+        return { success: true, message: 'OTP verified successfully.', token: resetToken };
+    } catch (err) {
+        return { success: false, message: err.message };
     }
-
-    const otp = user.otp;
-    if (!otp || !otp.code) {
-      return { success: false, message: 'OTP not found for this user.' };
-    }
-
-    const now = Date.now();
-
-    if (otp.used) {
-      return { success: false, message: 'This OTP has already been used.' };
-    }
-
-    if (now > new Date(otp.expireAt).getTime()) {
-      return { success: false, message: 'This OTP is expired.' };
-    }
-
-    if (otp.code !== otpCode) {
-      return { success: false, message: 'Invalid OTP code.' };
-    }
-
-    user.otp.used = true;
-    await user.save();
-    const resetToken = jwt.sign( {email}, RESET_SECRET, { expiresIn: '10m' });
-    
-    return { success: true, message: 'OTP verified successfully.', token: resetToken };
-  } catch (err) {
-    return { success: false, message: err.message };
-  }
 }
 
 /**
@@ -242,7 +242,7 @@ async function resetPassword(resetToken, newPassword) {
         const payload = jwt.verify(resetToken, RESET_SECRET);
         const user = await userModel.findOne({ email: payload.email });
         if (!user) {
-            return { success: false, message: "User not found!"};
+            return { success: false, message: "User not found!" };
         }
         const salt = await bcrypt.genSalt(parseInt(process.env.BCRYPT_SALT_ROUNDS));
         const hashedPassword = await bcrypt.hash(newPassword, salt);
@@ -256,10 +256,10 @@ async function resetPassword(resetToken, newPassword) {
     }
 }
 
-module.exports = { 
-    GetScheduleData, 
-    addCacheandDB, 
-    sendscheduledata, 
+module.exports = {
+    GetScheduleData,
+    addCacheandDB,
+    sendscheduledata,
     fetchAllRoom,
     sendOTP,
     verifyOTP,

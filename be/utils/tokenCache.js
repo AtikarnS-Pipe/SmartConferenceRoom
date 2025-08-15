@@ -1,15 +1,16 @@
 // tokenCache.js
-const {refreshAccessToken} = require('./AuthProvider')
-const {encryptToken, decryptToken} = require('../utils/encode')
+const { refreshAccessToken } = require('./AuthProvider')
+const { encryptToken, decryptToken } = require('../utils/encode')
 const Token = require('../models/token')
 const getGraphClient = require('./graph');
 
 let accessToken = null;
 let refreshToken = null;
 let expiryDate = null; // Date object or ISO string
+let calendarLoaded = false;
 let roomobject = {
-    "1501": '', "1502": '', "1503": '', "1504": '',"1505": '',
-    "1506": '', "1514": '', "1515": '', "1519": '', "1520": '',
+  "1501": '', "1502": '', "1503": '', "1504": '', "1505": '',
+  "1506": '', "1514": '', "1515": '', "1519": '', "1520": '',
 }
 
 let started = false; // กำหนด monitor เริ่มรันเเค่ครั้งเดียว
@@ -28,21 +29,21 @@ async function monitorToken() {
 
   console.log("🚀 Starting token monitor...");
   while (true) {
-    if (!refreshToken || !expiryDate || refreshToken === null) {
-      const tokenData = await Token.findOne({ 
-        token_status: { $in: ['refreshed', 'createtoken'] } 
+    if (!refreshToken || !expiryDate || refreshToken === 'null') {
+      const tokenData = await Token.findOne({
+        token_status: { $in: ['refreshed', 'createtoken'] }
       }).sort({ createdAt: -1 });
       if (!tokenData) console.log("No token found in DB, Admin needs to login.");
 
-      refreshToken = tokenData ? decryptToken(tokenData.refreshToken) : null;
+      refreshToken = tokenData ? tokenData.refreshToken : null;
       expiryDate = tokenData ? new Date(tokenData.expiryDate) : null;
       accessToken = tokenData ? tokenData.accessToken : null;
 
-        if (!refreshToken || !expiryDate) {
-          console.log("⏳ Monitoring is waiting for token in cache...");
-          await sleep(5000);
-          continue;
-        }
+      if (!refreshToken || !expiryDate) {
+        console.log("⏳ Monitoring is waiting for token in cache...");
+        await sleep(5000);
+        continue;
+      }
     }
 
     const now = new Date();
@@ -52,11 +53,11 @@ async function monitorToken() {
       try {
         console.log("🔁 Refreshing token...");
         // console.log("refresh tokenn:", refreshToken );
-        const newToken = await refreshAccessToken(refreshToken);
+        const newToken = await refreshAccessToken(decryptToken(refreshToken));
         if (!newToken || !newToken.access_token) {
           console.log("logs status: refresh token failed in DB");
           accessToken = null
-          refreshToken =  null
+          refreshToken = null
           expiryDate = null
 
           await Token.create({
@@ -65,11 +66,11 @@ async function monitorToken() {
             expiryDate,
             token_status: 'refreshfailed'
           });
-          await sleep(10*1000); // wait 10s before retrying
+          await sleep(10 * 1000); // wait 10s before retrying
           continue;
         }
         // console.log("New token received:", newToken);
-        const newRefreshToken = newToken.refresh_token? encryptToken(newToken.refresh_token) : null;
+        const newRefreshToken = newToken.refresh_token ? encryptToken(newToken.refresh_token) : null;
 
         accessToken = newToken.access_token;
         refreshToken = newRefreshToken;
@@ -88,23 +89,26 @@ async function monitorToken() {
         continue;
       }
     }
-    if(accessToken) await monitorCalendarId(accessToken); // Call to monitor calendar IDs
-    await sleep(60*1000);
+    if (accessToken && !calendarLoaded) {
+      calendarLoaded = await monitorCalendarId(accessToken);
+    }
+    await sleep(60 * 1000);
   }
 }
 
 function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms)); 
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 async function monitorCalendarId(token) {
   const isroomissing = Object.values(roomobject).some(val => !val) // if any roomobject key is empty
-  try{
-    if(isroomissing){ //อยากให้เช็คถ้า value ด้านในว่างเปล่า หรือ server down ไรงี้ให้ ดึงมาใหม่ที ทำยังไงครับ
+  try {
+    if (isroomissing) {
       console.log("Preloading calendar IDs api...");
       const calendars = await GetIdRoomnumber(token, roomobject); // update roomobject value with calendar IDs
+      return calendars ? true : false;
     }
-    
+
   } catch (err) {
     console.error("❌ Failed to get calendar ID :", err.message);
   }
@@ -113,16 +117,16 @@ async function monitorCalendarId(token) {
 async function GetIdRoomnumber(token, roomobject) {
   try {
     const calendars = await getGraphClient(token)
-    .api('https://graph.microsoft.com/v1.0/me/calendars')
-    .get();
+      .api('https://graph.microsoft.com/v1.0/me/calendars')
+      .get();
     console.log("Preloading calendar IDs foreach...");
     calendars.value.forEach(cal => {
-        const roomMatch = Object.keys(roomobject).find(room => 
-            cal.owner?.address?.includes(`${room}@tcc-technology.com`)
-        );
-        if (roomMatch) {
-            roomobject[roomMatch] = cal.id;
-        }
+      const roomMatch = Object.keys(roomobject).find(room =>
+        cal.owner?.address?.includes(`${room}@tcc-technology.com`)
+      );
+      if (roomMatch) {
+        roomobject[roomMatch] = cal.id;
+      }
     });
     // console.log("Available calendars:", calendars.value.map(cal => ({
     //     name: cal.name,
