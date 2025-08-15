@@ -1,6 +1,7 @@
 const User = require('../../models/User');
 const {AddLogmonitoring} = require('../../utils/AddLogmonitoring');
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const GetDateTimeTH = require('../../utils/getTodaydatetime');
 require('dotenv').config();
 // const { GetTimeAPI } = require('../../utils/getTodaydatetime');
@@ -58,19 +59,19 @@ const createadmin = async (req, res) => {
     };
     const log = await AddLogmonitoring(datalogs);
   
-    const token = jwt.sign({ userId: newAdmin._id }, process.env.JWT_SECRET, {
-      expiresIn: process.env.JWT_EXPIRES_IN,
-    });
-    const refreshtoken = jwt.sign({ userId: newAdmin._id }, process.env.JWT_SECRET, {
-      expiresIn: process.env.JWT_REFRESH_EXPIRES_IN,
-    });
+    // const token = jwt.sign({ userId: newAdmin._id }, process.env.JWT_SECRET, {
+    //   expiresIn: process.env.JWT_EXPIRES_IN,
+    // });
+    // const refreshtoken = jwt.sign({ userId: newAdmin._id }, process.env.JWT_SECRET, {
+    //   expiresIn: process.env.JWT_REFRESH_EXPIRES_IN,
+    // });
 
-    res.cookie("refreshtoken", refreshtoken, { // จนกว่าจะปิด browser cookie จึงจะหมดอายุ
-      httpOnly: true,
-      secure: false,  // เปลี่ยนเป็น true ถ้าใช้ HTTPS
-      sameSite: 'lax', // ป้องกัน CSRF
-      path: '/account/refreshtoken', // จำกัด route ที่ใช้ cookie ได้
-    });
+    // res.cookie("refreshtoken", refreshtoken, { // จนกว่าจะปิด browser cookie จึงจะหมดอายุ
+    //   httpOnly: true,
+    //   secure: false,  // เปลี่ยนเป็น true ถ้าใช้ HTTPS
+    //   sameSite: 'lax', // ป้องกัน CSRF
+    //   path: '/account/refreshtoken', // จำกัด route ที่ใช้ cookie ได้
+    // });
 
     res.status(201).json({
       success: true,
