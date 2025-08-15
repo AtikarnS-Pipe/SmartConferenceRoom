@@ -34,9 +34,9 @@ const getAllusers = async (req, res) => {
             
             
             if (userProfile.mail !== 'meetingroom@tcc-technology.com') {
-                console.error(`💥 Unauthorized email: ${userProfile.mail}, Only meetingroom@tcc-technology.com is allowed. `);
+                console.error(`💥 Unauthorized email: ${userProfile.mail} `);
                 res.write(`event: forceLogout\ndata: ${JSON.stringify({ 
-                error: `Unauthorized email: ${userProfile.mail}, Only meetingroom@tcc-technology.com is allowed.`})}\n\n`);
+                error: `Unauthorized email: ${userProfile.mail}`})}\n\n`);
                 return;
             }
 

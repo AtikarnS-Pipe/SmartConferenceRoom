@@ -17,7 +17,7 @@ async function GetAdminListFromDB(res){
 async function GetHousekeeperFromDB(res){
     try {
         const Housekeeper = await User.find({role: "Housekeeper"})
-        .select('name role');
+        .select('name role pin');
         // console.log("data:", Housekeeper)
         res.write(`event: HousekeeperList\ndata: ${JSON.stringify(Housekeeper)}\n\n`);
         return Housekeeper;

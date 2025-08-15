@@ -48,32 +48,43 @@ const Auth = async (req, res) => { // admin sign-in
 }
 
 // รับ newpw จาก body //ไม่ส่ง oldpw มาละ
-const ChangeAdminPin = async (req, res) => { // ไม่น่าต้อง logs เปลี่ยน pin ตัวเอง
-  try{
+const ChangeAdminPin = async (req, res) => {
+  try {
     const admin = req.user;
-    const {newpin} = req.body;
-    if (admin.role !== 'Admin' && admin.role !== 'Superadmin') return res.status(403).json({ message: 'Only admin can change password' });
-    if (!newpin) return res.status(400).json({ message: 'Passwords are required!' });
+    const { newpin } = req.body;
 
-    const checkpin = await User.findOne({ 
-      role: { $ne: 'Deactivated'}, _id: { $ne: admin._id}, pin: newpin,   
+    if (admin.role !== 'Admin' && admin.role !== 'Superadmin') {
+      return res.status(403).json({ field: 'pin', message: 'Only admin can change password' });
+    }
+
+    if (!newpin) {
+      return res.status(400).json({ field: 'pin', message: 'PIN is required' });
+    }
+
+    const checkpin = await User.findOne({
+      role: { $ne: 'Deactivated' },
+      _id: { $ne: admin._id },
+      pin: newpin,
     });
-    if (checkpin){
-      return res.status(400).json({ message: 'This PIN already exists, please choose another.' });
+
+    if (checkpin) {
+      return res.status(400).json({ field: 'pin', message: 'This PIN already exists, please choose another.' });
     }
 
-    // existingUser.pin = await bcrypt.hash(newpin, parseInt(process.env.BCRYPT_SALT_ROUNDS));
-    if(admin.pin.toString() === newpin.toString()) {
-      return res.status(400).json({ message: 'New PIN must not be the same as the old PIN.' });
+    if (admin.pin.toString() === newpin.toString()) {
+      return res.status(400).json({ field: 'pin', message: 'New PIN must not be the same as the old PIN.' });
     }
+
     admin.pin = newpin;
     await admin.save();
-    res.json({ success: true, NewPin: admin.pin, message: `${admin.email} Pin changed successfully` });
+
+    res.json({ success: true, NewPin: admin.pin, message: 'PIN updated successfully' });
   } catch (error) {
-    console.error("Change password error:", error);
-    res.status(500).json({ error: 'Internal server error'});
+    console.error('Change password error:', error);
+    res.status(500).json({ message: 'Internal server error' });
   }
-}
+};
+
 
 const Createhousekeeper = async (req, res) => { 
     const admin = req.user; // จาก authorize middleware
@@ -177,17 +188,17 @@ const deletehousekeeper = async (req, res) => {
 const editpinhousekeeper = async (req, res) => {
   try{
     const admin = req.user;
-    const { id, newpin } = req.body;
+    const { name, newpin } = req.body;
     if (admin.role !== 'Admin' && admin.role !== 'Superadmin') return res.status(403).json({ message: 'Only admin can edit pin housekeeper.' });
-    if (!id || !newpin) return res.status(400).json({ message: 'ID and Pin are required' });
+    if (!name || !newpin) return res.status(400).json({ message: 'ID and Pin are required' });
 
     // Find housekeeper and any user with same PIN in one query
     const [ThisHousekeeper, conflictUser] = await Promise.all([
-      User.findOne({ _id: id, role: 'Housekeeper' }),
+      User.findOne({ name, role: 'Housekeeper' }),
       User.findOne({
         role: { $ne: 'Deactivated' },
         pin: newpin,
-        _id: { $ne: id } // exclude this housekeeper id
+        name: { $ne: name } // exclude this housekeeper id
       }),
     ]);
 
@@ -208,7 +219,7 @@ const editpinhousekeeper = async (req, res) => {
     };
     const log = await AddLogmonitoring(datalogs);
 
-    res.status(200).json({ success: true, message: `Housekeeper's name, ${ThisHousekeeper.name}, has been updated pins with ${newpin} successfully` });
+    res.status(200).json({ success: true, message: `Housekeeper's name, ${ThisHousekeeper.name}, has been updated pins with successfully` });
   } catch (error) {
     console.error("Delete housekeeper error:", error);
     res.status(500).json({ error: 'Internal server error' });
