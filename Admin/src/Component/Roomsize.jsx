@@ -5,7 +5,6 @@ import Roomcard from './Roomcard';
 import RefreshButton from "../utils/refreshToken";
 import axios from 'axios';
 import Header from './Header.jsx';
-import Navbar from './navbar.jsx';
 import { useDarkMode } from './Context/DarkModeContext';
 import { CircularProgress } from '@mui/material';
 import ButtonFilter from './ButtonFilter';

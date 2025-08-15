@@ -15,7 +15,6 @@ import Housekeeper from "./Component/Manage/Housekeeper";
 import Log from "./Component/Manage/Log";
 import RoleGuard from "./Component/Authen/Frontend/Roleguard";
 import { ThemeProvider } from "./Component/Context/DarkModeContext";
-import Layout from "./Component/Layout";
 import AccountLayout from "./Component/Manage/Accountlayout"; // ✅ import Layout ที่ใช้ Sidebar
 import UnauthorizedAccess from "./Component/Unauthorized";
 
@@ -38,14 +37,6 @@ function App() {
             }
           />
 
-          <Route
-            element={
-              <Protect>
-                <Layout />
-              </Protect>
-            }
-          >
-          </Route>
 
           <Route
             path="/forgot-password"

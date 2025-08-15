@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   Users,
@@ -40,6 +40,7 @@ export default function Sidebar() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [statusPopup, setStatusPopup] = useState(null);
   const [message, setMessage] = useState("");
+  const dropdownRef = useRef(null);
 
   // Get user info from localStorage (fallback)
   const userName = localStorage.getItem("name") || "User";
@@ -62,6 +63,19 @@ export default function Sidebar() {
         console.error("Error fetching profile:", err);
         // If API fails, we'll use localStorage values as fallback
       });
+  }, []);
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setUserDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("touchstart", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
+    };  
   }, []);
 
   // Helper function to check if a path is active
@@ -301,7 +315,7 @@ export default function Sidebar() {
 
       {/* Change PIN Modal */}
       {showPasswordModal && (
-        <div className={`fixed inset-0 z-50 backdrop-blur-sm ${
+        <div  className={`fixed inset-0 z-50 backdrop-blur-sm ${
           darkMode ? "bg-gray-300/30" : "bg-white/30"
         } flex items-center justify-center font-display`}>
           <div
@@ -698,7 +712,7 @@ export default function Sidebar() {
 
                   {/* Expanded Dropdown - Full Text */}
                   {userDropdownOpen && (
-                    <div
+                    <div ref={dropdownRef}
                       className={`absolute bottom-full left-0 right-0 mb-2 ${
                         darkMode ? "bg-gray-700" : "bg-slate-700"
                       } rounded-lg shadow-lg border ${

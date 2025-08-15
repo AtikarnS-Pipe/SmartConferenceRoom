@@ -72,7 +72,7 @@ function Header({
             <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg w-fit ${
               darkMode ? 'bg-gray-700' : 'bg-gray-200'
             }`}>
-              <div className={`text-sm tracking-widest ${
+              <div className={`text-base tracking-widest ${
                 darkMode ? 'text-white' : 'text-gray-700'
               }`}
                style={{ minWidth: `${(profile?.pin?.length || 4) * 0.65}rem`, textAlign: 'center' }}

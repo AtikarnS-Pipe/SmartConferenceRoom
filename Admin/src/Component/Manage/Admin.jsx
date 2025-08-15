@@ -5,7 +5,7 @@ import {
   UserCheck,
   MoreHorizontal,
   CheckCircle,
-  ChevronDown,
+  Loader2,
   Search,
   Plus,
   XCircle,
@@ -51,7 +51,7 @@ function Admin() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoading(false);
-    }, 2000); // 2 seconds loading
+    }, 1000); // 2 seconds loading
 
     return () => clearTimeout(timer);
   }, []);
@@ -276,13 +276,33 @@ function Admin() {
   };
 
   // Loading Screen Component
+// Loading Screen Component
   if (isLoading) {
     return (
-      <div className={`min-h-screen flex items-center justify-center ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+      <div
+        className={`min-h-screen flex items-center justify-center ${
+          darkMode ? "bg-gray-900" : "bg-gray-50"
+        } transition-colors duration-300`}
+      >
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className={`text-lg font-medium ${darkMode ? 'text-white' : 'text-gray-700'}`}>
+          <Loader2
+            className={`w-12 h-12 animate-spin mx-auto mb-4 ${
+              darkMode ? "text-blue-400" : "text-blue-600"
+            }`}
+          />
+          <h2
+            className={`text-lg font-semibold mb-2 ${
+              darkMode ? "text-white" : "text-gray-800"
+            }`}
+          >
             Loading...
+          </h2>
+          <p
+            className={`text-sm ${
+              darkMode ? "text-gray-400" : "text-gray-600"
+            }`}
+          >
+            Please wait while we prepare admin management
           </p>
         </div>
       </div>

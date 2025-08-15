@@ -78,7 +78,7 @@ function Superadmin() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setLoading(false);
-    }, 2000); // แสดง loading 2 วินาที
+    }, 1000); // แสดง loading 2 วินาที
 
     return () => clearTimeout(timer);
   }, []);
