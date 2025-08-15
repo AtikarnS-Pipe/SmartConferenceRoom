@@ -56,11 +56,12 @@ const getuser = async (req, res) => {
 // controller function for pin validation
 const keyPins = async (req, res) => {
     try {
-        const { eventId, pin } = req.body;
-        if (!eventId || !pin) {
+        const { eventId, pin, room_number } = req.body;
+        if (!eventId || !pin || !room_number) {
             return res.status(200).json({ error: "Missing required fields!" });
         }
 
+        const room = room_number.slice(2, 4);
         const isValid = await compareKey({ eventId, pin });
 
         if (!isValid) {
@@ -68,6 +69,12 @@ const keyPins = async (req, res) => {
             return res.status(200).json({ error: "Booking not found" });
         }
 
+        // const isOpen = await sendMQTTMessage(`floor15/access-control`, `open_${room}`);
+        // console.log(`MQTT message sent: ${isOpen}`);
+        // if (!isOpen.success) {
+        //     console.error(`Failed to send MQTT message: ${isOpen.error}`);
+        //     return res.status(500).json({ error: "Failed to send MQTT message" });
+        // }
         return res.status(200).json({ pinValid: isValid });
     } catch (error) {
         return res.status(500).json({ error: "Internal Server Error" });
@@ -85,11 +92,18 @@ const adminKeyPin = async (req, res) => {
             return res.status(200).json({ message: "Missing required fields! " });
         }
 
+        const room = room_number.slice(2, 4);
         const result = await adminCompareKey(pin, room_number);
 
         if (!result.success) {
             return res.status(200).json({ success: result.success, message: result.message });
         }
+        // const isOpen = await sendMQTTMessage(`floor15/access-control`, `adminopen_${room}`); 
+        // console.log(`MQTT message sent: ${isOpen}`);
+        // if (!isOpen.success) {
+        //     console.error(`Failed to send MQTT message: ${isOpen.error}`);
+        //     return res.status(500).json({ error: "Failed to send MQTT message" });
+        // }
 
         return res.status(200).json({ success: result.success, message: result.message });
     } catch (err) {
@@ -172,7 +186,7 @@ const deleteroom = async (req, res) => {
     }
 }
 
-	const createroom = async (req, res) => {
+const createroom = async (req, res) => {
     const { createroomdata } = req.body;
 
     if (!createroomdata ||
@@ -267,6 +281,11 @@ const endmeeting = async (req, res) => {
                 },
             })
         console.log("Update event success");
+
+        // const isClosed = await sendMQTTMessage(`floor15/access-control`, `close_${room}`);
+        // console.log(`MQTT message sent: ${isClosed}`);
+        // if(!isClosed.success) throw new Error(isClosed.error);
+
         res.status(200).json({ message: "Update event successfully" });
     } catch (error) {
         console.error("Error in endtask:", error);
@@ -280,7 +299,7 @@ const closedoor = async (req, res) => {
     const room = room_number.slice(2, 4);
 
     try {
-        // const isClosed = await sendMQTTMessage(`floor15/access-control/${room}`, 'close');
+        // const isClosed = await sendMQTTMessage(`floor15/access-control`, `close_${room}`);
         // console.log(`MQTT message sent: ${isClosed}`);
         // if(!isClosed.success) throw new Error(isClosed.error);
         return res.status(200).json({ success: true, message: `Door for room ${room_number} closed successfully` });
