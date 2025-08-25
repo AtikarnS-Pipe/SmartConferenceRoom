@@ -15,6 +15,7 @@ const PinPopupManager = ({ events, onPinSuccess, closeSignal, bookingInProgress 
   const [pendingError, setPendingError] = useState('');
   const [isTemporarilyHidden, setIsTemporarilyHidden] = useState(false);
   const [timeoutId, setTimeoutId] = useState(null);
+  const [isExpired, setIsExpired] = useState(false); // เพิ่มสถานะเพื่อติดตามว่าเลยเวลาแล้วหรือยัง
 
   // ฟังก์ชัน POST เช็ก PIN
   const sendPinToBackend = async ({ eventId, pin, room_number }) => {
@@ -50,27 +51,37 @@ const PinPopupManager = ({ events, onPinSuccess, closeSignal, bookingInProgress 
     setPinVerified(false);
     setError('');
     setIsTemporarilyHidden(false);
+    setIsExpired(true); // เมื่อรีเซ็ต แสดงว่าเลยเวลาแล้ว
     if (timeoutId) {
       clearTimeout(timeoutId);
       setTimeoutId(null);
     }
   };
 
-  // จัดการ timeout 15 นาทีของ event
+  // จัดการ timeout 1 นาทีของ event
   useEffect(() => {
-    if (!currentEvent || pinVerified) return;
+    if (!currentEvent || pinVerified) {
+      // ถ้าไม่มี event หรือ verified แล้ว ให้รีเซ็ตสถานะ
+      if (!currentEvent) {
+        setIsExpired(false);
+      }
+      return;
+    }
 
     const start = new Date(currentEvent.start.dateTime + 'Z');
     const now = new Date();
     const msSinceStart = now - start;
-    const deadline = 15 * 60 * 1000;
+    const deadline = 15 * 60 * 1000; 
 
-    // ถ้าเลยเวลาแล้ว ลบทันที
+    // ถ้าเลยเวลาแล้ว ลบทันที และตั้งสถานะเป็น expired
     if (msSinceStart >= deadline) {
       // deleteEventOnBackend({ eventId: currentEvent.id });
       resetAllStates();
       return;
     }
+
+    // รีเซ็ตสถานะ expired ถ้ายังไม่เลยเวลา
+    setIsExpired(false);
 
     // ยังไม่ครบ 15 นาที: ตั้ง timeout
     const id = setTimeout(() => {
@@ -89,7 +100,7 @@ const PinPopupManager = ({ events, onPinSuccess, closeSignal, bookingInProgress 
       setIsTemporarilyHidden(true);
     }
 
-    if (!closeSignal && isTemporarilyHidden && currentEvent && !pinVerified) {
+    if (!closeSignal && isTemporarilyHidden && currentEvent && !pinVerified && !isExpired) {
       const start = new Date(currentEvent.start.dateTime + 'Z');
       const now = new Date();
       const deadline = 15 * 60 * 1000;
@@ -102,16 +113,30 @@ const PinPopupManager = ({ events, onPinSuccess, closeSignal, bookingInProgress 
         resetAllStates();
       }
     }
-  }, [closeSignal, isTemporarilyHidden, currentEvent, pinVerified]);
+  }, [closeSignal, isTemporarilyHidden, currentEvent, pinVerified, isExpired]);
 
   // ควบคุมการแสดง popup ตามสถานะห้อง
   useEffect(() => {
-    if (isOccupied && !pinVerified && !bookingInProgress && !isTemporarilyHidden) {
-      setPinVisible(true);
+    // ตรวจสอบว่าเลยเวลาแล้วหรือยัง ก่อนแสดง popup
+    if (isOccupied && !pinVerified && !bookingInProgress && !isTemporarilyHidden && !isExpired) {
+      // ตรวจสอบเวลาอีกครั้งก่อนแสดง popup
+      if (currentEvent) {
+        const start = new Date(currentEvent.start.dateTime + 'Z');
+        const now = new Date();
+        const msSinceStart = now - start;
+        const deadline = 15 * 60 * 1000;
+
+        if (msSinceStart < deadline) {
+          setPinVisible(true);
+        } else {
+          // ถ้าเลยเวลาแล้ว ให้รีเซ็ตทันที
+          resetAllStates();
+        }
+      }
     } else if (!isOccupied) {
       resetAllStates();
     }
-  }, [isOccupied, pinVerified, bookingInProgress, isTemporarilyHidden]);
+  }, [isOccupied, pinVerified, bookingInProgress, isTemporarilyHidden, isExpired, currentEvent]);
 
   // ฟังก์ชันการ submit PIN
   const handlePinSubmit = async (pin) => {
@@ -151,7 +176,7 @@ const PinPopupManager = ({ events, onPinSuccess, closeSignal, bookingInProgress 
 
   return (
     <>
-      {pinVisible && (
+      {pinVisible && !isExpired && (
         <PinPopup
           onSubmit={handlePinSubmit}
           error={error}

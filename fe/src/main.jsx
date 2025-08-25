@@ -5,7 +5,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 
 
 createRoot(document.getElementById('root')).render(
-  <BrowserRouter>
+  <BrowserRouter basename="/user/">
     <Routes>
       <Route path="/users/api/:floor/:room" element={<Home />} />
     </Routes>

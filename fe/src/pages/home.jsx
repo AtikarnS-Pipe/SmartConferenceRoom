@@ -9,8 +9,8 @@ import TimeSchedule from '../components/Time-Schedule'
 import ZoomControl from '../components/ZoomControl'
 import TimeWarningCard from '../components/TimeWarningCard'
 //hooks
-import { useCurrentEvent } from '../hooks/useCurrentEvent'; 
-import { useRoomData } from '../hooks/useRoomData'  
+import { useCurrentEvent } from '../hooks/useCurrentEvent';
+import { useRoomData } from '../hooks/useRoomData'
 import { getTimeRemaining } from '../hooks/useTimeRemaining'
 import { useCurrentTime } from '../hooks/useCurrentTime';
 import { useEvents } from '../hooks/useEvents';
@@ -20,11 +20,11 @@ import StaffPinPopupManager from '../hooks/useStaffPinPopupManager'
 
 function Home() {
   const { floor, room, capacity } = useRoomData();
-  const { events, loading } = useEvents( floor, room);
-  const {currentEvent,isOccupied } = useCurrentEvent(events);
+  const { events, loading } = useEvents(floor, room);
+  const { currentEvent, isOccupied } = useCurrentEvent(events);
   const currentTime = useCurrentTime()
   useCloseDoor(events);
-  
+
   const [zoomLevel, setZoomLevel] = useState(1);
   const [closeUserPin, setCloseUserPin] = useState(false);
   const [bookingInProgress, setBookingInProgress] = useState(false);
@@ -37,26 +37,26 @@ function Home() {
   return (
     <div className="container">
       <div className={`main-container ${isOccupied ? 'occupied' : 'available'}`}>
-        <Lightcontainer isOccupied={isOccupied} floor={floor} room={room}/>
+        <Lightcontainer isOccupied={isOccupied} floor={floor} room={room} />
         <div className="content-wrapper">
           <div className="header-section">
             <div className="left-section">
-              <StatusIndicator isOccupied={isOccupied}/>
+              <StatusIndicator isOccupied={isOccupied} />
               <div className="clock-container">
-                <DateTimeDisplay/>
+                <DateTimeDisplay />
               </div>
             </div>
-            
+
             <div className="right-section">
-              <Roomnumber floor={floor} room={room} capacity={capacity}/>
+              <Roomnumber floor={floor} room={room} capacity={capacity} />
             </div>
           </div>
-          
+
           {/* detail */}
           <div className="main-section">
-            <Boxdetail isOccupied={isOccupied} event={currentEvent} getTimeRemaining={getTimeRemaining} loading={loading} onSetBookingInProgress={setBookingInProgress}/>
+            <Boxdetail isOccupied={isOccupied} event={currentEvent} getTimeRemaining={getTimeRemaining} loading={loading} onSetBookingInProgress={setBookingInProgress} />
           </div>
-          
+
           {/* schedule */}
           <div className="schedule-section">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -68,15 +68,16 @@ function Home() {
             </div>
           </div>
         </div>
-      {/* Time Warning Card */}
-      <TimeWarningCard currentEvent={currentEvent} getTimeRemaining={getTimeRemaining}/>
+        {/* Time Warning Card */}
+        <TimeWarningCard currentEvent={currentEvent} getTimeRemaining={getTimeRemaining} />
       </div>
 
       {/* popup */}
-      {/* <PinPopupManager events={events} closeSignal={closeUserPin} bookingInProgress={bookingInProgress} /> */}
+      <PinPopupManager events={events} closeSignal={closeUserPin} bookingInProgress={bookingInProgress} />
       <StaffPinPopupManager showTestButton closeUserPinPopup={handleCloseUserPin} />
     </div>
   )
 }
 
 export default Home
+
