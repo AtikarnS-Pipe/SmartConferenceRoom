@@ -5,8 +5,7 @@ import { IoPerson } from "react-icons/io5";
 import { useNavigate } from 'react-router-dom';
 import RefreshButton from "../utils/refreshToken"; // Assuming you have a RefreshButton component
 import { useDarkMode } from './Context/DarkModeContext';
-import Myicons from '../assets/board-meeting 1.svg'; // Assuming you have a MyIcons context or file
-import Icons from '../assets/meeting 1.svg'; // Assuming you have a JSON file with icons data
+import Icons from '../assets/discussion.png'; // Assuming you have a JSON file with icons data
 
 function Roomcard(props) {
   const { data, icons } = props
@@ -55,22 +54,7 @@ function Roomcard(props) {
           : { filter: 'none' }; // สีปกติ
 
         if (count === 1) {
-          return <img src={Icons} alt="icon" className='w-10 h-10' style={iconStyle} />;
-        } else if (count === 2) {
-          return (
-            <div className='flex justify-center space-x-2'>
-              <img src={Myicons} alt="icon" className='w-10 h-10' style={iconStyle} />
-            </div>
-          );
-        } else if (count === 3) {
-          const iconColor = darkMode ? 'white' : 'black';
-          return (
-            <div className='flex justify-center space-x-2'>
-              <MdPeople size={40} color={iconColor} />
-              <MdPeople size={40} color={iconColor} />
-              <MdPeople size={40} color={iconColor} />
-            </div>
-          );
+          return <img src={Icons} alt="icon" className='w-14 h-14' style={iconStyle} />;
         } else {
           return null;
         }

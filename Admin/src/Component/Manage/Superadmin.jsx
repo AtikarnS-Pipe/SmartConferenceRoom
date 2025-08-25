@@ -66,14 +66,6 @@ function Superadmin() {
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
 
-  const filteredMembers = members.filter((member) => {
-    const keyword = searchTerm.toLowerCase();
-    return (
-      member.name?.toLowerCase().includes(keyword) ||
-      member.email?.toLowerCase().includes(keyword) ||
-      member.role?.toLowerCase().includes(keyword)
-    );
-  });
 
   useEffect(() => {
     const housekeeperSource = new EventSource('/account/housekeepers', {
@@ -119,6 +111,36 @@ function Superadmin() {
     };
   }, []);
 
+const [adminCount, setAdminCount] = useState(0);
+const [housekeeperCount, setHousekeeperCount] = useState(0);
+
+useEffect(() => {
+  setAllUsers([...admins, ...housekeepers]);
+}, [admins, housekeepers]);
+
+useEffect(() => {
+  const adminList = allUsers.filter(u => u.role === 'Admin');
+  const housekeeperList = allUsers.filter(u => u.role === 'Housekeeper');
+
+
+  setAdminCount(adminList.length);
+  setHousekeeperCount(housekeeperList.length);
+}, [allUsers]);
+
+const superadminmem = allUsers.filter(user => user.role === 'Admin');
+
+const filteredMembers = superadminmem.filter((member) => {
+  const keyword = searchTerm.toLowerCase();
+  return (
+    member.name?.toLowerCase().includes(keyword) ||
+    member.email?.toLowerCase().includes(keyword) ||
+    member.role?.toLowerCase().includes(keyword)
+  );
+});
+console.log("Search Term:", searchTerm);
+console.log("Admins:", admins);
+console.log("Filtered:", filteredMembers);
+
 const handleSubmitPasswordChange = async () => {
   if (newPassword !== confirmPassword) {
     setStatusPopup('error');
@@ -158,7 +180,7 @@ const handleSubmitPasswordChange = async () => {
   } catch (error) {
     // ✅ ใช้ error.response แทน res
     const messageFromBackend =
-      error.res?.data?.message || 'Failed to update PIN. Please try again.';
+      error.res?.data?.message || 'PIN is already use. Please try again.';
 
     console.error('Error updating PIN:', messageFromBackend);
 
@@ -167,7 +189,7 @@ const handleSubmitPasswordChange = async () => {
 
     setTimeout(() => {
       setStatusPopup(null);
-      setShowPasswordModal(false);
+      setShowPasswordModal(true);
       setNewPassword('');
       setConfirmPassword('');
     }, 3000);
@@ -200,7 +222,8 @@ const handleSignout = async () => {
     alert('Failed to sign out.');
   }
 };
-const handleAddAdmin = async () => {
+const handleAddAdmin = async (e) => {
+  e.preventDefault();
   console.log('Sending data:', newMember);
 
   if (!newMember.name || !newMember.pin || !newMember.email || !newMember.password) {
@@ -232,19 +255,17 @@ const handleAddAdmin = async () => {
 
     // ✅ เช็คให้แน่ว่าสถานะ 201 เท่านั้นถึงถือว่าสำเร็จ
     if (response.status === 201) {
-      setMessage(response.data.message || 'Admin created successfully');
-      setAdminStatus('success');
-
-      // ✅ ล้างฟอร์ม
       setNewMember({ name: "", pin: "", email: "", password: "" });
       setShowPassword(false);
       setShowPin(false);
+      setMessage(response.data.message || 'Admin created successfully');
+      setAdminStatus('success');  
 
+      setShowAddAdminModal(false);
       setTimeout(() => {
         setAdminStatus(null);
-        setShowAddAdminModal(false);
         setShowAdminStatus(false);
-      }, 2000);
+      }, 3000);
     } else {
       throw new Error("Unexpected response status: " + response.status);
     }
@@ -260,15 +281,12 @@ const handleAddAdmin = async () => {
     setAdminStatus('error');
 
     // ✅ ล้างฟอร์ม
-    setNewMember({ email: '', password: '', name: '', pin: '' });
     setShowPassword(false);
     setShowPin(false);
-
     setTimeout(() => {
       setAdminStatus(null);
-      setShowAddAdminModal(false);
       setShowAdminStatus(false);
-    }, 2000);
+    }, 3000);
   }
 };
 
@@ -322,10 +340,9 @@ const performDeleteAdmins = async () => {
     if (selectedMembers.length === filteredMembers.length) {
       setSelectedMembers([]);
     } else {
-      setSelectedMembers(filteredMembers.map((m) => m.id));
+      setSelectedMembers(filteredMembers.map((m) => m._id));
     }
   };
-
   const handleMemberSelect = (id) => {
     setSelectedMembers((prev) =>
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
@@ -369,29 +386,9 @@ const performDeleteAdmins = async () => {
     }).replace(',', '');
   };
 
-const [adminCount, setAdminCount] = useState(0);
-const [housekeeperCount, setHousekeeperCount] = useState(0);
-const [totalUsers, setTotalUsers] = useState(0);
-
-useEffect(() => {
-  setAllUsers([...admins, ...housekeepers]);
-}, [admins, housekeepers]);
-
-useEffect(() => {
-  const adminList = allUsers.filter(u => u.role === 'Admin');
-  const housekeeperList = allUsers.filter(u => u.role === 'Housekeeper');
-
-  console.log("🧑‍💼 allUsers (in housekeeper page):", allUsers);
-
-  setAdminCount(adminList.length);
-  setHousekeeperCount(housekeeperList.length);
-  setTotalUsers(adminList.length + housekeeperList.length);
-}, [allUsers]);
-
-const superadminmem = allUsers.filter(user => user.role === 'Admin');
 
   return (
-    <div className={`min-h-screen ${darkMode ? 'bg-gray-900' : 'bg-gray-50'} flex flex-col md:flex-row font-display transition-colors duration-300`}>
+    <div className={`min-h-screen ${darkMode ? 'bg-gray-900' : 'bg-gray-50'} font-display transition-colors duration-300`}>
       {showPasswordModal && (
         <div className="fixed inset-0 z-50 backdrop-blur-sm bg-gray-300/30 flex items-center justify-center">
           <div className={`${darkMode ? 'bg-gray-800 text-white' : 'bg-white'} p-6 rounded-xl shadow-lg w-96`}>
@@ -470,6 +467,7 @@ const superadminmem = allUsers.filter(user => user.role === 'Admin');
 
       {/* Add Admin Modal */}
       {showAddAdminModal && (
+        <form onSubmit={handleAddAdmin}>
        <div className="fixed inset-0 z-50 backdrop-blur-sm bg-white/20 flex items-center justify-center shadow-xl/30">
           <div className={`${darkMode ? 'bg-gray-800 text-white' : 'bg-white'} p-6 rounded-xl shadow-lg w-96 max-h-[90vh] overflow-y-auto`}>
             <h2 className={`text-lg font-semibold mb-4 ${darkMode ? 'text-white' : 'text-gray-800'}`}>Add New Admin</h2>
@@ -477,7 +475,9 @@ const superadminmem = allUsers.filter(user => user.role === 'Admin');
             <div className="mb-4">
               <label className={`block text-sm mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>Email</label>
               <input
+                name='email'
                 type="email"
+                required
                 value={newMember.email}
                 onChange={(e) => setNewMember({...newMember, email: e.target.value})}
                 className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring focus:ring-blue-200 ${
@@ -558,7 +558,7 @@ const superadminmem = allUsers.filter(user => user.role === 'Admin');
                 Cancel
               </RefreshButton>
               <RefreshButton
-                onClick={handleAddAdmin}
+                type="submit"
                 className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center gap-2"
               >
                 Confirm
@@ -566,6 +566,7 @@ const superadminmem = allUsers.filter(user => user.role === 'Admin');
             </div>
           </div>
         </div>
+        </form>
       )}
 
       {statusPopup === 'success' && (
@@ -606,7 +607,7 @@ const superadminmem = allUsers.filter(user => user.role === 'Admin');
           <div className="fixed top-6 right-6 z-[9999]">
             <div className="bg-green-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-2 animate-slide-in">
               <CheckCircle className="w-5 h-5" />
-              <span className="font-medium">Delete Housekeeper Successful.</span>
+              <span className="font-medium">Delete Admin Successful.</span>
             </div>
           </div>
         )}
@@ -614,7 +615,7 @@ const superadminmem = allUsers.filter(user => user.role === 'Admin');
           <div className="fixed top-6 right-6 z-[9999]">
           <div className="bg-red-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-2 animate-slide-in">
             <XCircle className="w-5 h-5" />
-            <span className="font-medium">Delete Housekeeper Failed..</span>
+            <span className="font-medium">Delete Admin Failed..</span>
           </div>
         </div>
         )}
@@ -653,46 +654,10 @@ const superadminmem = allUsers.filter(user => user.role === 'Admin');
         </div>
       )}
 
-      {/* Sidebar */}
-      <div className={`w-full md:w-64 ${darkMode ? 'bg-gray-800' : 'bg-slate-800'} text-white flex flex-row md:flex-col sticky top-0 h-screen transition-colors duration-300`}>
-        <div className={`p-4 md:p-6 border-b ${darkMode ? 'border-gray-700' : 'border-slate-700'} w-full`}>
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-              <Users className="w-5 h-5 text-white" />
-            </div>
-            <span className="font-semibold text-lg">Conference Room</span>
-          </div>
-        </div>
-        <div className="flex-1 p-2 md:p-4">
-          <div className="space-y-2">
-            <RefreshButton className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left hover:${darkMode ? 'bg-gray-700' : 'bg-slate-700'} cursor-pointer`} onClick={() => navigate('/admin/api')}>
-              <Home className="w-4 h-4" />
-              <span className="text-sm">Home</span>
-            </RefreshButton>
-          </div>
-          <div className="mt-4 md:mt-6">
-            <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-slate-400'} uppercase tracking-wider mb-3 px-3`}>Role Filter</p>
-            <div className="space-y-1">
-              <RefreshButton className="w-full flex items-center gap-3 px-3 py-2 rounded-lg bg-white text-blue-600 text-left">
-                <Shield className="w-4 h-4" />
-                <span className="text-sm">Admin</span>
-              </RefreshButton>
-              <RefreshButton className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-300 hover:${darkMode ? 'bg-gray-700' : 'bg-slate-700'} text-left cursor-pointer`} onClick={() => navigate('/account/housekeeper')}>
-                <UserCheck className="w-4 h-4 text-white" />
-                <span className="text-sm text-white">Housekeeper</span>
-              </RefreshButton>
-              <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-slate-400'} uppercase tracking-wider mb-3 px-3 mt-5`}>MONITORING</p>
-              <RefreshButton className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-300 hover:${darkMode ? 'bg-gray-700' : 'bg-slate-700'} text-left cursor-pointer`} onClick={() => navigate('/account/dashboard')}>
-                <LayoutDashboard className="w-4 h-4 text-white" />
-                <span className="text-sm text-white">Dashboard</span>
-              </RefreshButton>
-            </div>
-          </div>
-        </div>
-      </div>
+
 
       {/* Main Content */}
-      <div className="flex-1 overflow-auto">
+      <div className="w-full">
         {/* Header */}
         <div className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border-b px-4 md:px-6 py-4 transition-colors duration-300`}>
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-2">
@@ -906,7 +871,7 @@ const superadminmem = allUsers.filter(user => user.role === 'Admin');
                   </tr>
                 </thead>
                 <tbody className={`${darkMode ? 'bg-gray-800' : 'bg-white'} divide-y ${darkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
-                  {superadminmem.map((m) => (
+                  {filteredMembers.map((m) => (
                     <tr key={m._id} className={darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}>
                       <td className="px-6 py-4">
                         <input
@@ -943,7 +908,7 @@ const superadminmem = allUsers.filter(user => user.role === 'Admin');
               </table>
             </div>
 
-            {superadminmem.length === 0 && (
+            {filteredMembers.length === 0 && (
               <div className="text-center py-12">
                 <Shield className={`mx-auto w-12 h-12 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`} />
                 <p className={`mt-2 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>No admins found</p>

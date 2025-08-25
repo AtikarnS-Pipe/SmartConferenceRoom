@@ -13,12 +13,18 @@ function RoomSize() {
   const { size } = useParams();          // size มาจาก URL เช่น /roomsize/4
   const peopleSize = Number(size);       // แปลงเป็น number ถ้าจำเป็น
   const [profile, setProfile] = useState(null);
-  const { rooms = [], icons = [] } = location.state || {};
+  const { rooms = [], icons = []  } = location.state || {};
+  const [filteredRoom, setFilteredRoom] = useState([]);
+  const [filterType, setFilterType] = useState(null); // "available" | "unavailable" | null
   const [currentTime, setCurrentTime] = useState(new Date());
   const navigate = useNavigate(); 
   const [openMenu1, setOpenMenu1] = useState(false); 
   const [selectedSize, setSelectedSize] = useState(peopleSize);
   const { darkMode } = useDarkMode();
+
+  const handleGoHome = () => {
+  navigate('/admin/api');
+};
   const handleSizeNavigate = (size) => {
         navigate(`/roomsize/${size}`, {
           state: {
@@ -66,6 +72,10 @@ function RoomSize() {
       navigate('/'); // สำรองเผื่อ role อื่นหรือไม่มี role
     }
   };
+    const handleRoomFilter = (rooms, type) => {
+      setFilteredRoom(rooms);
+      setFilterType(type);
+    };
 
   useEffect(() => {
         const timer = setInterval(() => {
@@ -74,20 +84,6 @@ function RoomSize() {
         return () => clearInterval(timer);
     }, []);
 
-    const dateString = currentTime.toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      timeZone: 'Asia/Bangkok'
-    });
-    const timeString = currentTime.toLocaleTimeString('th-TH', {
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: false,
-      timeZone: 'Asia/Bangkok'
-    });
     
 
   // กรอง icons ที่ตรงกับจำนวนคน
@@ -106,17 +102,8 @@ function RoomSize() {
   if (filteredRooms.length === 0) {
     return (
       <div className={`font-display min-h-screen transition-colors duration-300 ${
-        darkMode ? 'bg-gray-900' : 'bg-white'
+        darkMode ? 'bg-gray-90' : 'bg-white'
       }`}>
-        <Navbar 
-          navigate={navigate}
-          toggleDropdown1={toggleDropdown1}
-          openMenu1={openMenu1}
-          handleSizeNavigate={handleSizeNavigate}
-          handleNavigateByRole={handleNavigateByRole}
-          timeString={timeString}
-          dateString={dateString}
-        />
         <div className={`p-10 text-xl transition-colors duration-300 ${
           darkMode ? 'text-white' : 'text-black'
         }`}>ไม่พบห้องสำหรับ {peopleSize} คน</div>
@@ -128,20 +115,12 @@ function RoomSize() {
     <div className={`font-display min-h-screen transition-colors duration-300 ${
       darkMode ? 'bg-gray-700' : 'bg-white'
     }`}>
-       <Navbar 
-          navigate={navigate}
-          toggleDropdown1={toggleDropdown1}
-          openMenu1={openMenu1}
-          handleSizeNavigate={handleSizeNavigate}
-          handleNavigateByRole={handleNavigateByRole}
-          timeString={timeString}
-          dateString={dateString}
-        />
-        <Roomdata rooms={rooms} currentTime={new Date()} icons={icons}/>
+        <Roomdata rooms={filteredRooms} currentTime={new Date()} icons={icons}/>
       <div className={`p-4 mx-2 rounded-3xl shadow-xl transition-colors duration-300 ${
         darkMode ? 'bg-gray-800' : 'bg-[#f8f7f1]'
       }`}>
-        <Roomcard data={filteredRooms} icons={filteredIcons} />
+        {/* <Roomcard data={filteredRoom.length > 0 ? filteredRoom : filteredRooms} icons={filteredIcons} filterType={filterType} /> */}
+        <Roomcard data={filteredRooms} icons={filteredIcons} filterType={filterType} />
       </div>
     </div>
   );

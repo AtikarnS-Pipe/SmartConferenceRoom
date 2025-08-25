@@ -103,6 +103,24 @@ const handleAdminList = (event) => {
   };
 }, []);
 
+  // คำนวณจำนวน
+const [adminCount, setAdminCount] = useState(0);
+const [housekeeperCount, setHousekeeperCount] = useState(0);
+
+useEffect(() => {
+  setAllUsers([...admins, ...housekeepers]);
+}, [admins, housekeepers]);
+
+useEffect(() => {
+  const adminList = allUsers.filter(u => u.role === 'Admin');
+  const housekeeperList = allUsers.filter(u => u.role === 'Housekeeper');
+
+  console.log("🧑‍💼 allUsers (in housekeeper page):", allUsers);
+
+  setAdminCount(adminList.length);
+  setHousekeeperCount(housekeeperList.length);
+}, [allUsers]);
+
 
     useEffect(() => {
     function handleClickOutside(event) {
@@ -116,7 +134,16 @@ const handleAdminList = (event) => {
 
 
   // filter สำหรับค้นหา housekeeper
-const filteredMembers = allUsers.filter(user => user.role === 'Housekeeper');
+const Housekeepermem = allUsers.filter(user => user.role === 'Housekeeper');
+
+const filteredMembers = Housekeepermem.filter((member) => {
+  const keyword = searchTerm.toLowerCase();
+  return (
+    member.name?.toLowerCase().includes(keyword) ||
+    member.email?.toLowerCase().includes(keyword) ||
+    member.role?.toLowerCase().includes(keyword)
+  );
+});
 
 
 const handleSelectAll = () => {
@@ -188,9 +215,7 @@ const handleSelectHousekeeper = (housekeeper) => {
 
     setTimeout(() => {
       setStatusPopup(null);
-      setShowPasswordModal(false);
-      setNewPassword('');
-      setConfirmPassword('');
+
     }, 3000);
   }
 };
@@ -275,7 +300,7 @@ const handleAddMember = async () => {
         lastLogin: "N/A"
       }
     ]);
-
+    setMessage(response.data.message);
     setCreatehousekeeper('success');
     
     setTimeout(() => {
@@ -286,13 +311,11 @@ const handleAddMember = async () => {
 
   } catch (error) {
     console.error("Error creating housekeeper:", error.response?.data || error.message);
-
+    setMessage(error.response?.data?.message);
     setCreatehousekeeper('error');
 
     setTimeout(() => {
       setCreatehousekeeper(null);
-      setShowModal(false);
-      setNewMember({ name: "", pin: "", role: "Housekeeper" });
     }, 2000);
   }
 };
@@ -408,23 +431,6 @@ const handleSignout = async () => {
   }
 };
 
-  // คำนวณจำนวน
-const [adminCount, setAdminCount] = useState(0);
-const [housekeeperCount, setHousekeeperCount] = useState(0);
-
-useEffect(() => {
-  setAllUsers([...admins, ...housekeepers]);
-}, [admins, housekeepers]);
-
-useEffect(() => {
-  const adminList = allUsers.filter(u => u.role === 'Admin');
-  const housekeeperList = allUsers.filter(u => u.role === 'Housekeeper');
-
-  console.log("🧑‍💼 allUsers (in housekeeper page):", allUsers);
-
-  setAdminCount(adminList.length);
-  setHousekeeperCount(housekeeperList.length);
-}, [allUsers]);
 
 
   return (
@@ -637,7 +643,7 @@ useEffect(() => {
           <div className="fixed top-6 right-6 z-[9999]">
             <div className="bg-green-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-2 animate-slide-in">
               <CheckCircle className="w-5 h-5" />
-              <span className="font-medium">Create Housekeeper Successful.</span>
+              <span className="font-medium">{message}.</span>
             </div>
           </div>
         )}
@@ -645,7 +651,7 @@ useEffect(() => {
         <div className="fixed top-6 right-6 z-[9999]">
           <div className="bg-red-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-2 animate-slide-in">
             <XCircle className="w-5 h-5" />
-            <span className="font-medium">Create Housekeeper Failed, Please Try Again.</span>
+            <span className="font-medium">{message}</span>
           </div>
         </div>
       )}
@@ -691,7 +697,7 @@ useEffect(() => {
           </div>
         )}
       {/* Sidebar */}
-      <div className={`w-full md:w-64 ${darkMode ? 'bg-gray-800' : 'bg-slate-800'} text-white flex flex-row md:flex-col sticky top-0 h-screen`}>
+      {/* <div className={`w-full md:w-64 ${darkMode ? 'bg-gray-800' : 'bg-slate-800'} text-white flex flex-row md:flex-col sticky top-0 h-screen`}>
         <div className={`p-4 md:p-6 border-b ${darkMode ? 'border-gray-700' : 'border-slate-700'} w-full`}>
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
@@ -726,7 +732,7 @@ useEffect(() => {
             </div>
           </div>
         </div>
-      </div>
+      </div> */}
 
       {/* Main Content */}
       <div className="flex-1 overflow-auto">

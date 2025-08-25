@@ -2,14 +2,14 @@
 @import "tailwindcss";
 
 /* Dark mode global styles */
-.dark {
+/* .dark {
   color-scheme: dark;
-}
+} */
 
-.dark body {
-  background-color: #111827;
+/* .dark body {
+  background-color: #271111;
   color: #f9fafb;
-}
+} */
 
 @media (max-width: 568px) {
   .custom-class {
@@ -79,4 +79,20 @@
 /* Font family class */
 .font-display {
   font-family: var(--font-display), sans-serif;
+}
+
+/* Animation for notifications */
+@keyframes slide-in {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-in {
+  animation: slide-in 0.3s ease-out;
 }

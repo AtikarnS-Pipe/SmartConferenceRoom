@@ -45,14 +45,7 @@ function Admin() {
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
 
-  const filteredMembers = members.filter((member) => {
-    const keyword = searchTerm.toLowerCase();
-    return (
-      member.name?.toLowerCase().includes(keyword) ||
-      member.email?.toLowerCase().includes(keyword) ||
-      member.role?.toLowerCase().includes(keyword)
-    );
-  });
+
 
   useEffect(() => {
     const housekeeperSource = new EventSource('/account/housekeepers', {
@@ -97,6 +90,33 @@ function Admin() {
       adminSource.close();
     };
   }, []);
+
+const [adminCount, setAdminCount] = useState(0);
+const [housekeeperCount, setHousekeeperCount] = useState(0);
+useEffect(() => {
+  setAllUsers([...admins, ...housekeepers]);
+}, [admins, housekeepers]);
+
+useEffect(() => {
+  const adminList = allUsers.filter(u => u.role === 'Admin');
+  const housekeeperList = allUsers.filter(u => u.role === 'Housekeeper');
+
+  console.log("🧑‍💼 allUsers (in housekeeper page):", allUsers);
+
+  setAdminCount(adminList.length);
+  setHousekeeperCount(housekeeperList.length);
+}, [allUsers]);
+
+const adminmem = allUsers.filter(user => user.role === 'Admin');
+
+  const filteredMembers = adminmem.filter((member) => {
+    const keyword = searchTerm.toLowerCase();
+    return (
+      member.name?.toLowerCase().includes(keyword) ||
+      member.email?.toLowerCase().includes(keyword) ||
+      member.role?.toLowerCase().includes(keyword)
+    );
+  });
 
   console.log("Members data fetched:", members);
 
@@ -240,26 +260,10 @@ const handleSignout = async () => {
       hour12: false,
     }).replace(',', '');
   };
-const [adminCount, setAdminCount] = useState(0);
-const [housekeeperCount, setHousekeeperCount] = useState(0);
-useEffect(() => {
-  setAllUsers([...admins, ...housekeepers]);
-}, [admins, housekeepers]);
 
-useEffect(() => {
-  const adminList = allUsers.filter(u => u.role === 'Admin');
-  const housekeeperList = allUsers.filter(u => u.role === 'Housekeeper');
-
-  console.log("🧑‍💼 allUsers (in housekeeper page):", allUsers);
-
-  setAdminCount(adminList.length);
-  setHousekeeperCount(housekeeperList.length);
-}, [allUsers]);
-
-const adminmem = allUsers.filter(user => user.role === 'Admin');
 
   return (
-    <div className={`min-h-screen ${darkMode ? 'bg-gray-900' : 'bg-gray-50'} flex flex-col md:flex-row font-display transition-colors duration-300`}>
+    <div className={`min-h-screen ${darkMode ? 'bg-gray-900' : 'bg-gray-50'} font-display transition-colors duration-300`}>
       {showPasswordModal && (
         <div className="fixed inset-0 z-50 backdrop-blur-sm bg-gray-300/30 flex items-center justify-center">
           <div className={`${darkMode ? 'bg-gray-800 text-white' : 'bg-white'} p-6 rounded-xl shadow-lg w-96`}>
@@ -353,7 +357,7 @@ const adminmem = allUsers.filter(user => user.role === 'Admin');
       )}
 
         {signoutsuccess && (
-        <div className="fixed top-6 right-115 z-50">
+        <div className="fixed top-6 right-6 z-50">
           <div className="bg-green-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-2 animate-slide-in">
             <CheckCircle className="w-5 h-5" />
             <span className="font-medium">Signout Successful! Redirecting...</span>
@@ -361,47 +365,8 @@ const adminmem = allUsers.filter(user => user.role === 'Admin');
         </div>
       )}
 
-
-      {/* Sidebar */}
-      <div className={`w-full md:w-64 ${darkMode ? 'bg-gray-800' : 'bg-slate-800'} text-white flex flex-row md:flex-col sticky top-0 h-screen transition-colors duration-300`}>
-        <div className={`p-4 md:p-6 border-b ${darkMode ? 'border-gray-700' : 'border-slate-700'} w-full`}>
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-              <Users className="w-5 h-5 text-white" />
-            </div>
-            <span className="font-semibold text-lg">Conference Room</span>
-          </div>
-        </div>
-        <div className="flex-1 p-2 md:p-4">
-          <div className="space-y-2">
-            <RefreshButton className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left hover:${darkMode ? 'bg-gray-700' : 'bg-slate-700'} cursor-pointer`} onClick={() => navigate('/admin/api')}>
-              <Home className="w-4 h-4" />
-              <span className="text-sm">Home</span>
-            </RefreshButton>
-          </div>
-          <div className="mt-4 md:mt-6">
-            <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-slate-400'} uppercase tracking-wider mb-3 px-3`}>Role Filter</p>
-            <div className="space-y-1">
-              <RefreshButton className="w-full flex items-center gap-3 px-3 py-2 rounded-lg bg-white text-blue-600 text-left">
-                <Shield className="w-4 h-4" />
-                <span className="text-sm">Admin</span>
-              </RefreshButton>
-              <RefreshButton className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-300 hover:${darkMode ? 'bg-gray-700' : 'bg-slate-700'} text-left cursor-pointer`} onClick={() => navigate('/account/housekeeper')}>
-                <UserCheck className="w-4 h-4 text-white" />
-                <span className="text-sm text-white">Housekeeper</span>
-              </RefreshButton>
-              <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-slate-400'} uppercase tracking-wider mb-3 px-3 mt-5`}>MONITORING</p>
-              <button className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-300 hover:${darkMode ? 'bg-gray-700' : 'bg-slate-700'} text-left cursor-pointer`} onClick={() => navigate('/account/dashboard')}>
-                <LayoutDashboard className="w-4 h-4 text-white" />
-                <span className="text-sm text-white">Dashboard</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Main Content */}
-      <div className="flex-1 overflow-auto">
+      <div className="w-full">
         {/* Header */}
         <div className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border-b px-4 md:px-6 py-4 transition-colors duration-300`}>
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-2">
@@ -596,7 +561,7 @@ const adminmem = allUsers.filter(user => user.role === 'Admin');
                   </tr>
                 </thead>
                 <tbody className={`${darkMode ? 'bg-gray-800' : 'bg-white'} divide-y ${darkMode ? 'divide-gray-700' : 'divide-gray-200'}`}>
-                  {adminmem.map((m) => (
+                  {filteredMembers.map((m) => (
                     <tr key={m._id} className={darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}>
                       <td className="px-6 py-4">
                         <input
@@ -633,7 +598,7 @@ const adminmem = allUsers.filter(user => user.role === 'Admin');
               </table>
             </div>
 
-            {adminmem.length === 0 && (
+            {filteredMembers.length === 0 && (
               <div className="text-center py-12">
                 <Shield className={`mx-auto w-12 h-12 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`} />
                 <p className={`mt-2 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>No admins found</p>

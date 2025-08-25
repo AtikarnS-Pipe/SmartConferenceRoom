@@ -2,6 +2,7 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
+const backend = "http://backend:4000";
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss()],
@@ -10,25 +11,25 @@ export default defineConfig({
     host: true,
     port: 5170,
     proxy: {
-      '/rooms': 'http://backend:4000',
-      '/admin/login': 'http://backend:4000',
-      '/admin/sse': 'http://backend:4000',
-      '/admin/schedule': 'http://backend:4000',
-      '/account/refreshtoken': 'http://backend:4000',
-      '/account/createhousekeeper': 'http://backend:4000',
-      '/account/changeadminpw': 'http://backend:4000',
-      '/account/edithousekeeper': 'http://backend:4000',
-      '/account/deletehousekeeper': 'http://backend:4000',
-      '/account/member': 'http://backend:4000',
-      '/account/auth': 'http://backend:4000',
-      '/account/housekeepers': 'http://backend:4000',
-      '/account/signout': 'http://backend:4000',
-      '/account/getname': 'http://backend:4000',
-      '/account/logsmonitoring': 'http://backend:4000',
-      '/account/me': 'http://backend:4000',
-      '/account/checkpin': 'http://backend:4000',
-      '/superadmin/createadmin': 'http://backend:4000',
-      '/superadmin/deleteadmin': 'http://backend:4000',
+      '/rooms': backend,
+      '/admin/login': backend,
+      '/admin/sse': backend,
+      '/admin/schedule': backend,
+      '/account/refreshtoken': backend,
+      '/account/createhousekeeper': backend,
+      '/account/changeadminpw': backend,
+      '/account/edithousekeeper': backend,
+      '/account/deletehousekeeper': backend,
+      '/account/member': backend,
+      '/account/auth': backend,
+      '/account/housekeepers': backend,
+      '/account/signout': backend,
+      '/account/getname': backend,
+      '/account/logsmonitoring': backend,
+      '/account/me': backend,
+      '/account/checkpin': backend,
+      '/superadmin/createadmin': backend,
+      '/superadmin/deleteadmin': backend,
     },
     allowedHosts: [
       'smartconf.tcc-technology.com',
