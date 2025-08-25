@@ -1,4 +1,3 @@
-// hooks/useTouchDetection.js
 import { useEffect } from 'react';
 
 export const useTouchDetection = ({ onTripleTouch, holdDuration = 1000 }) => {

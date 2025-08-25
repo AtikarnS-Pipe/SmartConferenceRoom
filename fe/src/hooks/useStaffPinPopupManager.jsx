@@ -11,7 +11,7 @@ const StaffPinPopupManager = ({ showTestButton, closeUserPinPopup }) => {
   const [pendingError, setPendingError] = useState('');
   const { floor, room } = useRoomData(); 
   const roomId = `${floor}${room}`; // สร้าง roomId จาก floor และ room
-  // console.log(roomId)
+
 
   // Track triple touch toggle
   useTouchDetection({

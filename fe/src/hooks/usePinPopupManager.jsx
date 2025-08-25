@@ -71,7 +71,11 @@ const PinPopupManager = ({ events, onPinSuccess, closeSignal, bookingInProgress 
     const start = new Date(currentEvent.start.dateTime + 'Z');
     const now = new Date();
     const msSinceStart = now - start;
+<<<<<<< HEAD
     const deadline = 15 * 60 * 1000; 
+=======
+    const deadline = 100 * 60 * 1000; // 1 นาที
+>>>>>>> bfe71aa66e13821d094b4b792edbf0b9af8c54c1
 
     // ถ้าเลยเวลาแล้ว ลบทันที และตั้งสถานะเป็น expired
     if (msSinceStart >= deadline) {
@@ -83,7 +87,11 @@ const PinPopupManager = ({ events, onPinSuccess, closeSignal, bookingInProgress 
     // รีเซ็ตสถานะ expired ถ้ายังไม่เลยเวลา
     setIsExpired(false);
 
+<<<<<<< HEAD
     // ยังไม่ครบ 15 นาที: ตั้ง timeout
+=======
+    // ยังไม่ครบ 1 นาที: ตั้ง timeout
+>>>>>>> bfe71aa66e13821d094b4b792edbf0b9af8c54c1
     const id = setTimeout(() => {
       // deleteEventOnBackend({ eventId: currentEvent.id });
       resetAllStates();
@@ -103,7 +111,7 @@ const PinPopupManager = ({ events, onPinSuccess, closeSignal, bookingInProgress 
     if (!closeSignal && isTemporarilyHidden && currentEvent && !pinVerified && !isExpired) {
       const start = new Date(currentEvent.start.dateTime + 'Z');
       const now = new Date();
-      const deadline = 15 * 60 * 1000;
+      const deadline = 100 * 60 * 1000; // 1 นาที
 
       if (now - start < deadline) {
         setPinVisible(true);
@@ -124,7 +132,11 @@ const PinPopupManager = ({ events, onPinSuccess, closeSignal, bookingInProgress 
         const start = new Date(currentEvent.start.dateTime + 'Z');
         const now = new Date();
         const msSinceStart = now - start;
+<<<<<<< HEAD
         const deadline = 15 * 60 * 1000;
+=======
+        const deadline = 100 * 60 * 1000; // 1 นาที
+>>>>>>> bfe71aa66e13821d094b4b792edbf0b9af8c54c1
 
         if (msSinceStart < deadline) {
           setPinVisible(true);
