@@ -1,11 +1,19 @@
 import { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { Mail, Lock, Eye, EyeOff, LogIn, CheckCircle, XCircle } from 'lucide-react';
+import {
+  Mail,
+  Lock,
+  Eye,
+  EyeOff,
+  LogIn,
+  CheckCircle,
+  XCircle,
+} from "lucide-react";
 
 function Verify({ setAuth }) {
-  const [formData, setFormData] = useState({ email: '', password: '' });
-  const [profile, setProfile] = useState('');
+  const [formData, setFormData] = useState({ email: "", password: "" });
+  const [profile, setProfile] = useState("");
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -14,16 +22,22 @@ function Verify({ setAuth }) {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) return;
+    const checkToken = async () => {
+      const token = localStorage.getItem("token");
+      if (!token) return;
 
-    axios.get('/account/me', {
-      headers: { Authorization: `Bearer ${token}` }
-    })
-      .then(res => {
-        setProfile(res.data);
-      })
-      .catch(err => console.error(err));
+      try {
+        const res = await axios.get("/account/me", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        console.log("Token valid:", res.data);
+        navigate("/admin/api");
+      } catch (err) {
+        console.error("Token invalid or expired:", err.response?.status);
+      }
+    };
+
+    checkToken();
   }, []);
 
   useEffect(() => {
@@ -35,7 +49,7 @@ function Verify({ setAuth }) {
   const handleInputChange = (e) => {
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [e.target.name]: e.target.value,
     });
   };
 
@@ -45,16 +59,16 @@ function Verify({ setAuth }) {
     setError("");
 
     try {
-      const res = await axios.post('/account/auth', formData);
-      localStorage.setItem('token', res.data.token);
-      localStorage.setItem('role', res.data.role); // เก็บ role ใน localStorage
+      const res = await axios.post("/account/auth", formData);
+      localStorage.setItem("token", res.data.token);
+      localStorage.setItem("role", res.data.role); // เก็บ role ใน localStorage
       console.log("Login successful:", res.data.token);
       setAuth(true);
       setLoginSuccess(true);
       console.log("Profile data:");
       // แสดง toast success 4 วินาทีแล้วไปหน้าอื่น
       setTimeout(() => {
-        navigate('/login/ms');
+        navigate("/login/ms");
       }, 4000);
     } catch (error) {
       setError("Invalid email or password");
@@ -65,9 +79,8 @@ function Verify({ setAuth }) {
   };
 
   const handleForgotPassword = () => {
-    navigate('/forgot-password');
+    navigate("/forgot-password");
   };
-
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -76,7 +89,9 @@ function Verify({ setAuth }) {
         <div className="fixed top-6 right-6 z-50">
           <div className="bg-green-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-2 animate-slide-in">
             <CheckCircle className="w-5 h-5" />
-            <span className="font-medium">Login Successful! Redirecting...</span>
+            <span className="font-medium">
+              Login Successful! Redirecting...
+            </span>
           </div>
         </div>
       )}
@@ -94,7 +109,11 @@ function Verify({ setAuth }) {
       <div className="flex flex-1">
         {/* Left Side - Logo (Hidden on small screens) */}
         <div className="hidden lg:flex flex-1 bg-[#0398fc] items-center justify-center p-8">
-          <img src="src/assets/Logotcc.png" alt="Logo" className="w-auto h-80 mx-auto mb-4" />
+          <img
+            src="src/assets/Logotcc.png"
+            alt="Logo"
+            className="w-auto h-80 mx-auto mb-4"
+          />
         </div>
         {/* <div className="hidden lg:flex flex-1 bg-gray-10 items-center justify-center p-8">
           <img src="src/assets/Logotcc-old.png" alt="Logo" className="w-auto h-80 mx-auto mb-4" />
@@ -105,8 +124,8 @@ function Verify({ setAuth }) {
           className="flex-1 lg:flex-1 relative flex items-center justify-center p-4 lg:p-8"
           style={{
             backgroundImage: `url('https://images.pexels.com/photos/273209/pexels-photo-273209.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2')`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
+            backgroundSize: "cover",
+            backgroundPosition: "center",
           }}
         >
           <div className="relative z-10 bg-white rounded-2xl shadow-2xl p-6 lg:p-8 w-full max-w-md mx-4 lg:mx-0">
@@ -114,13 +133,18 @@ function Verify({ setAuth }) {
               <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Lock className="w-8 h-8 text-blue-600" />
               </div>
-              <h1 className="text-xl lg:text-2xl font-bold text-gray-900 mb-2">Admin Authentication</h1>
+              <h1 className="text-xl lg:text-2xl font-bold text-gray-900 mb-2">
+                Admin Authentication
+              </h1>
               <p className="text-gray-600 text-sm">Sign in to your account</p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4 lg:space-y-6">
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="email"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Email Address
                 </label>
                 <div className="relative">
@@ -141,7 +165,10 @@ function Verify({ setAuth }) {
               </div>
 
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="password"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   Password
                 </label>
                 <div className="relative">
@@ -151,7 +178,7 @@ function Verify({ setAuth }) {
                   <input
                     id="password"
                     name="password"
-                    type={showPassword ? 'text' : 'password'}
+                    type={showPassword ? "text" : "password"}
                     required
                     value={formData.password}
                     onChange={handleInputChange}

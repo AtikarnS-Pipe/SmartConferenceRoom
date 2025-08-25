@@ -2,20 +2,21 @@ import React, { useState, useEffect, useRef } from 'react';
 import dayjs from 'dayjs';
 import isBetween from 'dayjs/plugin/isBetween';
 import { ChevronLeft, ChevronRight, Home, Calendar, Clock, User, X, MapPin, Sun, Moon } from 'lucide-react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import RefreshButton from '../../utils/refreshToken';
 import { useDarkMode } from '../Context/DarkModeContext';
-import Navbar from '../navbar';
+import Header from '../Header';
 import axios from 'axios'
-import {CircularProgress,} from '@mui/material';
+import {CircularProgress,} from '@mui/material'; 
+import {ArrowLeft}  from 'lucide-react';
 
 dayjs.extend(isBetween);
 
 const HOURS_START = 7;
 const HOURS_END = 24;
-const PIXELS_PER_HOUR = 60; // ปรับให้สัมพันธ์กับความสูงของแต่ละชั่วโมง
-const DAY_WIDTH = 260; // เดิม 180
-const COLUMN_LEFT_OFFSET = 120; // เดิม 80
+const PIXELS_PER_HOUR = 60;
+const DAY_WIDTH = 260;
+const COLUMN_LEFT_OFFSET = 120;
 const HEADER_HEIGHT = 60;
 const MIN_HEIGHT_FOR_TIME = 32;
 
@@ -29,6 +30,7 @@ const parseDate = (str) => {
 
 const Room1501 = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { Room, startdate, enddate } = useParams();
   const socketRef = useRef();
   const [view, setView] = useState('Day');
@@ -39,31 +41,73 @@ const Room1501 = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [profile, setProfile] = useState(null);
   const { darkMode, toggleDarkMode } = useDarkMode();
+  
+  // Header states - รับข้อมูลจาก location.state
+  const [selectedSize, setSelectedSize] = useState(location.state?.selectedSize || "Room");
+  const [events, setEvents] = useState(location.state?.events || []);
 
   // Navbar state and handlers
   const [openMenu1, setOpenMenu1] = useState(false);
   
   const toggleDropdown1 = () => setOpenMenu1(!openMenu1);
-  
-  const handleGoHome = () => {
-  navigate('/admin/api');
-};
 
+  const handleBack = () => navigate(-1);
+
+  // ✅ Fix: แก้ไข handleSizeNavigate เพื่อส่งข้อมูลที่ถูกต้อง
   const handleSizeNavigate = (size) => {
-    navigate('/admin/api', { state: { size } });
+    const label = size === 4 ? 'S' : size === 6 ? 'M' : size === 10 ? 'L' : 'Room';
+    
+    // ข้อมูล icons แบบเดียวกับใน Admin.jsx
+    const iconClass = [
+      { id: 1, room: "1501", icons: 1, people: 4 },
+      { id: 2, room: "1502", icons: 1, people: 4 },
+      { id: 3, room: "1503", icons: 1, people: 4 },
+      { id: 4, room: "1504", icons: 1, people: 4 },
+      { id: 5, room: "1505", icons: 1, people: 6 },
+      { id: 6, room: "1506", icons: 1, people: 6 },
+      { id: 7, room: "1514", icons: 1, people: 10 },
+      { id: 8, room: "1515", icons: 1, people: 10 },
+      { id: 9, room: "1519", icons: 1, people: 4 },
+      { id: 10, room: "1520", icons: 1, people: 4 },
+    ];
+
+    // ✅ Navigate ไปยัง roomsize โดยไม่ส่งข้อมูลเก่า ให้ RoomSize ไปดึงข้อมูลสดเอง
+    navigate(`/roomsize/${size}`, {
+      state: {
+        icons: iconClass,
+        peopleSize: size,
+        rooms: [], // ✅ ส่งเป็น array ว่าง ให้ RoomSize ดึงข้อมูลสดเอง
+        selectedSize: label,
+        resetFilter: false
+      },
+      replace: true,
+    });
     setOpenMenu1(false);
   };
   
   const handleNavigateByRole = () => {
-    const role = localStorage.getItem('role');// ดึง role จาก profile state
+    const role = localStorage.getItem('role');
     console.log("Navigating based on role:", role);
     if (role === 'Superadmin') {
       navigate('/account/superadmin');
     } else if (role === 'Admin') {
       navigate('/account/admin');
     } else {
-      navigate('/'); // สำรองเผื่อ role อื่นหรือไม่มี role
+      navigate('/');
     }
+  };
+
+  // ✅ Fix: แก้ไข clearAllFilters เพื่อส่งข้อมูลที่ถูกต้อง
+  const clearAllFilters = () => {
+    setSelectedSize("Room");
+    
+    // ส่งข้อมูลที่จำเป็นกลับไปหน้า admin
+    navigate('/admin/api', {
+      state: {
+        clearFilter: true,
+        events: events
+      }
+    });
   };
   
   // Format time and date for navbar (matching Admin.jsx format)
@@ -81,10 +125,7 @@ const Room1501 = () => {
     hour12: false,
     timeZone: 'Asia/Bangkok'
   });
-
-
-
-  console.log("scheduleApi", scheduleApi);
+  
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
@@ -117,6 +158,10 @@ const Room1501 = () => {
       try {
         const data = JSON.parse(e.data);
         setScheduleApi(data.results);
+        // ✅ อัพเดท events state เมื่อได้ข้อมูลใหม่
+        if (data.results) {
+          setEvents(data.results);
+        }
         setIsLoading(false);
       } catch (err) {
         console.error("Error parsing SSE data:", err);
@@ -148,7 +193,12 @@ const Room1501 = () => {
   const handleDateChange = (days) => {
     const newStart = dayjs(selectedDate).add(days, 'day');
     const newEnd = view === 'Day' ? newStart : newStart.add(6, 'day');
-    navigate(`/room/${Room}/${formatDate(newStart)}/${formatDate(newEnd)}`);
+    navigate(`/room/${Room}/${formatDate(newStart)}/${formatDate(newEnd)}`, {
+      state: {
+        selectedSize,
+        events
+      }
+    });
     setSelectedDate(newStart.format('YYYY-MM-DD'));
   };
 
@@ -156,7 +206,12 @@ const Room1501 = () => {
     const start = dayjs(selectedDate);
     const end = newView === 'Day' ? start : start.add(6, 'day');
     setView(newView);
-    navigate(`/room/${Room}/${formatDate(start)}/${formatDate(end)}`);
+    navigate(`/room/${Room}/${formatDate(start)}/${formatDate(end)}`, {
+      state: {
+        selectedSize,
+        events
+      }
+    });
   };
 
   const getViewRange = () => {
@@ -165,7 +220,6 @@ const Room1501 = () => {
     return { start, end };
   };
 
-  // ปรับ columnWidth ให้สัมพันธ์กับ DAY_WIDTH
   const columnWidth = view === 'Day'
     ? Math.max((window.innerWidth - COLUMN_LEFT_OFFSET - 32) * 0.99, DAY_WIDTH)
     : DAY_WIDTH;
@@ -396,24 +450,32 @@ const Room1501 = () => {
         : 'bg-gradient-to-br from-slate-50 to-slate-100'
     }`}>
       
+      {/* Header Component */}
+      <Header 
+        title="Schedule" 
+        subtitle="Room booking schedule view"
+      />
+      
       <div className="p-4 sm:p-6 max-w-[1800px] mx-auto">
-        {/* Header */}
+        {/* Page Header */}
         <div className="mb-8">
+          
+          {/* ✅ Back Button */}
+          <RefreshButton
+            onClick={handleBack}
+            className={`px-3 py-2 mb-3 rounded-xl font-medium transition-all duration-200 shadow-md hover:shadow-xl flex items-center gap-2
+              ${darkMode 
+                ? 'bg-gray-800 text-white hover:bg-gray-600 ' 
+                : 'bg-white text-gray-800 hover:bg-gray-100 border border-gray-100'
+              }`}
+          >
+            <ArrowLeft className="h-5 w-5" />
+            Back
+          </RefreshButton>
+          
           <div className="flex flex-col sm:flex-row items-center justify-center sm:justify-between gap-4 md:gap-6">
             {/* Left Section */}
             <div className="flex flex-col gap-4 items-center sm:items-start">
-              {/* <RefreshButton
-                onClick={() => navigate('/admin/api')}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg w-fit ${
-                  darkMode 
-                    ? 'bg-gray-700 text-white hover:bg-gray-600' 
-                    : 'bg-slate-800 text-white hover:bg-slate-700'
-                }`}
-              >
-                <Home className="h-5 w-5" />
-                <span className="font-medium">Home</span>
-              </RefreshButton> */}
-              
               <div className="flex items-center gap-3">
                 <div className={`text-white p-4 rounded-xl shadow-lg transition-colors duration-300 ${
                   darkMode 
@@ -422,7 +484,7 @@ const Room1501 = () => {
                 }`}>
                   <div className="flex items-center gap-2">
                     <MapPin className="h-5 w-5" />
-                    <span className="text-xl font-bold">
+                    <span className="text-xl font-bold whitespace-nowrap">
                       Room {Room?.replace(/(\d{2})(\d{2})/, '$1/$2')}
                     </span>
                   </div>
@@ -430,103 +492,50 @@ const Room1501 = () => {
               </div>
             </div>
 
-            {/* Center Section */}
-            {/* <div className="text-center w-full lg:w-auto">
-              <div className={`text-2xl lg:text-3xl font-bold mb-2 transition-colors duration-300 ${
-                darkMode ? 'text-white' : 'text-slate-800'
-              }`}>
-                {dayjs(selectedDate).format('dddd, MMMM D')}
-              </div>
-              <div className={`text-lg transition-colors duration-300 ${
-                darkMode ? 'text-gray-300' : 'text-slate-600'
-              }`}>
-                {dayjs(selectedDate).format('YYYY')}
-              </div>
-            </div> */}
-
             {/* Right Section */}
             <div className="flex flex-col items-center gap-4 w-full lg:w-auto">
-              {/* <div className="flex items-center gap-3">
-                <div className={`flex items-center gap-2 px-4 py-2 rounded-xl shadow-md transition-colors duration-300 ${
-                  darkMode ? 'bg-gray-700' : 'bg-white'
-                }`}>
-                  <Clock className={`h-5 w-5 transition-colors duration-300 ${
-                    darkMode ? 'text-gray-300' : 'text-slate-600'
-                  }`} />
-                  <span className={`text-xl font-mono font-semibold transition-colors duration-300 ${
-                    darkMode ? 'text-white' : 'text-slate-800'
-                  }`}>
-                    {dayjs(currentTime).format('HH:mm:ss')}
-                  </span>
+              <div className="flex gap-2 w-full justify-center sm:justify-end lg:justify-center"> 
+                <div className="flex gap-2">
+                  {['Day', 'Week'].map((option) => (
+                    <RefreshButton
+                      key={option}
+                      onClick={() => updateURLForView(option)}
+                      className={`px-4 py-2 rounded-xl font-medium transition-all duration-200 ${
+                        view === option
+                          ? darkMode 
+                            ? 'bg-gray-800 text-white shadow-lg' 
+                            : 'bg-slate-800 text-white shadow-lg'
+                          : darkMode 
+                            ? 'bg-gray-800 text-white shadow-md hover:bg-gray-600' 
+                            : 'bg-white text-slate-600 shadow-md hover:bg-slate-50'
+                      }`}
+                    >
+                      {option}
+                    </RefreshButton>
+                  ))}
                 </div>
                 
-                <RefreshButton
-                  onClick={toggleDarkMode}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg ${
-                    darkMode 
-                      ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
-                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                  }`}
-                  title={darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-                >
-                  {darkMode ? (
-                    <>
-                      <Sun className="w-4 h-4" />
-                      <span className="text-sm">Light</span>
-                    </>
-                  ) : (
-                    <>
-                      <Moon className="w-4 h-4" />
-                      <span className="text-sm">Dark</span>
-                    </>
-                  )}
-                </RefreshButton>
-              </div> */}
-              
-              
-              <div className="flex gap-2 w-full justify-center sm:justify-end lg:justify-center"> 
-              <div className="flex gap-2">
-                {['Day', 'Week'].map((option) => (
+                <div className="flex items-center gap-2">
                   <RefreshButton
-                    key={option}
-                    onClick={() => updateURLForView(option)}
-                    className={`px-4 py-2 rounded-xl font-medium transition-all duration-200 ${
-                      view === option
-                        ? darkMode 
-                          ? 'bg-gray-800 text-white shadow-lg' 
-                          : 'bg-slate-800 text-white shadow-lg'
-                        : darkMode 
-                          ? 'bg-gray-800 text-white shadow-md hover:bg-gray-600' 
-                          : 'bg-white text-slate-600 shadow-md hover:bg-slate-50'
+                    onClick={() => handleDateChange(-1)}
+                    className={`p-2 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg ${
+                      darkMode 
+                        ? 'bg-gray-800 text-white hover:bg-gray-600' 
+                        : 'bg-slate-800 text-white hover:bg-slate-700'
                     }`}
                   >
-                    {option}
+                    <ChevronLeft className="h-5 w-5" />
                   </RefreshButton>
-                ))}
-              </div>
-              
-              
-              <div className="flex items-center gap-2">
-                <RefreshButton
-                  onClick={() => handleDateChange(-1)}
-                  className={`p-2 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg ${
-                    darkMode 
-                      ? 'bg-gray-800 text-white hover:bg-gray-600' 
-                      : 'bg-slate-800 text-white hover:bg-slate-700'
-                  }`}
-                >
-                  <ChevronLeft className="h-5 w-5" />
-                </RefreshButton>
-                <RefreshButton
-                  onClick={() => handleDateChange(1)}
-                  className={`p-2 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg ${
-                    darkMode 
-                      ? 'bg-gray-800 text-white hover:bg-gray-600' 
-                      : 'bg-slate-800 text-white hover:bg-slate-700'
-                  }`}
-                >
-                  <ChevronRight className="h-5 w-5" />
-                </RefreshButton>
+                  <RefreshButton
+                    onClick={() => handleDateChange(1)}
+                    className={`p-2 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg ${
+                      darkMode 
+                        ? 'bg-gray-800 text-white hover:bg-gray-600' 
+                        : 'bg-slate-800 text-white hover:bg-slate-700'
+                    }`}
+                  >
+                    <ChevronRight className="h-5 w-5" />
+                  </RefreshButton>
                 </div>
               </div>
             </div>
@@ -539,9 +548,6 @@ const Room1501 = () => {
         }`}>
           {isLoading ? (
             <div className="flex items-center justify-center h-64">
-              {/* <div className={`animate-spin rounded-full h-12 w-12 border-b-2 ${
-                darkMode ? 'border-gray-400' : 'border-slate-800'
-              }`}></div> */}
               <CircularProgress size="30px"/>  
             </div>
           ) : (
