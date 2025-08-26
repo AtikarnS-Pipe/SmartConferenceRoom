@@ -36,8 +36,6 @@ function App() {
               </Protect>
             }
           />
-
-
           <Route
             path="/forgot-password"
             element={

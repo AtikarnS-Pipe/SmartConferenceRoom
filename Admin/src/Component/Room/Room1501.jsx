@@ -15,10 +15,10 @@ dayjs.extend(isBetween);
 const HOURS_START = 7;
 const HOURS_END = 24;
 const PIXELS_PER_HOUR = 60;
-const MIN_DAY_WIDTH = 280;
-const WEEK_DAY_MAX = 180;
-const WEEK_DAY_MIN = 120;
-const COLUMN_LEFT_OFFSET = 120;
+const MIN_DAY_WIDTH = 200;
+const WEEK_DAY_MAX = 200; // เพิ่มขึ้น
+const WEEK_DAY_MIN = 100; // เพิ่มขึ้น
+const COLUMN_LEFT_OFFSET = 100;
 const HEADER_HEIGHT = 60;
 const MIN_HEIGHT_FOR_TIME = 32;
 
@@ -46,6 +46,7 @@ const Room1501 = () => {
   
   // Responsive state
   const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1200);
+  const [containerRef, setContainerRef] = useState(null);
   
   // Header states
   const [selectedSize, setSelectedSize] = useState(location.state?.selectedSize || "Room");
@@ -192,24 +193,35 @@ const Room1501 = () => {
     return { start, end };
   };
 
-  // แก้ไข responsive column width
+  // ✅ แก้ไข column width calculation ให้เต็มพื้นที่
   const getColumnWidth = () => {
+    // คำนวณ available width ที่แม่นยำ
+    let sidebarWidth = 0;
+    let containerPadding = 16; // 2 * 8px (p-2)
+    
+    if (windowWidth >= 1024) { // lg
+      sidebarWidth = 250;
+      containerPadding = 48; // 2 * 24px (lg:p-6)
+    } else if (windowWidth >= 640) { // sm
+      containerPadding = 32; // 2 * 16px (sm:p-4)
+    }
+    
+    // คำนวณพื้นที่ที่เหลือหลังจากหัก sidebar, padding, time column และ card padding
+    const calendarCardPadding = 32; // padding ภายในการ์ด calendar
+    const availableWidth = windowWidth - sidebarWidth - containerPadding - COLUMN_LEFT_OFFSET - calendarCardPadding;
+    
     if (view === 'Day') {
-      const containerPadding = 48;
-      const sidebarWidth = windowWidth <= 1024 ? 0 : 250;
-      const availableWidth = windowWidth - COLUMN_LEFT_OFFSET - containerPadding - sidebarWidth;
+      // Day view: ใช้พื้นที่เต็ม
       return Math.max(availableWidth, MIN_DAY_WIDTH);
     } else {
-      const containerPadding = 48;
-      const sidebarWidth = windowWidth <= 1024 ? 0 : 250;
-      const availableWidth = windowWidth - COLUMN_LEFT_OFFSET - containerPadding - sidebarWidth;
-      const idealWidth = Math.floor(availableWidth / 7);
+      // Week view: แบ่งพื้นที่ที่เหลือให้ 7 วันเท่าๆ กัน
+      const idealColumnWidth = Math.floor(availableWidth / 7);
       
-      if (idealWidth >= WEEK_DAY_MIN && idealWidth <= WEEK_DAY_MAX) {
-        return idealWidth;
-      } else if (idealWidth > WEEK_DAY_MAX) {
-        return WEEK_DAY_MAX;
+      // ถ้าคำนวณได้ไม่น้อยกว่า minimum ใช้ ideal width
+      if (idealColumnWidth >= WEEK_DAY_MIN) {
+        return idealColumnWidth;
       } else {
+        // ถ้าหน้าจอแคบมาก ใช้ minimum และให้ scroll
         return WEEK_DAY_MIN;
       }
     }
@@ -219,10 +231,28 @@ const Room1501 = () => {
   const calendarHeight = (HOURS_END - HOURS_START) * PIXELS_PER_HOUR + HEADER_HEIGHT;
   const numDays = view === 'Day' ? 1 : 7;
   
+  // ✅ ปรับ container width ให้เหมาะสม
   const getCalendarContainerWidth = () => {
-    const totalWidth = COLUMN_LEFT_OFFSET + (columnWidth * numDays);
-    return totalWidth;
+    if (view === 'Day') {
+      // Day view: ใช้ width ที่พอดีกับ content
+      return COLUMN_LEFT_OFFSET + columnWidth;
+    } else {
+      // Week view: ถ้า column fit หน้าจอ ใช้ 100%, ถ้าไม่ ใช้ minimum
+      const totalWidth = COLUMN_LEFT_OFFSET + (columnWidth * numDays);
+      const availableSpace = windowWidth - (windowWidth >= 1024 ? 250 : 0) - (windowWidth >= 1024 ? 48 : windowWidth >= 640 ? 32 : 16) - 32;
+      
+      if (totalWidth <= availableSpace) {
+        return '100%'; // ใช้พื้นที่เต็ม
+      } else {
+        return `${totalWidth}px`; // ใช้ขนาดที่คำนวณได้
+      }
+    }
   };
+
+  // แก้ไข responsive breakpoints สำหรับ layout
+  const isMobile = windowWidth < 768; // md breakpoint
+  const isTablet = windowWidth >= 768 && windowWidth < 1024; // md to lg
+  const isDesktop = windowWidth >= 1024; // lg+
 
   // Event rendering with proper sizing
   const renderEventsInCalendar = () => {
@@ -280,7 +310,16 @@ const Room1501 = () => {
 
       const colorClass = eventColors[event.id % eventColors.length];
       
-      const eventPadding = view === 'Day' ? 8 : Math.min(6, columnWidth * 0.05);
+      // ปรับ event sizing ตาม responsive
+      let eventPadding, fontSize;
+      if (view === 'Day') {
+        eventPadding = isMobile ? 6 : 8;
+        fontSize = isMobile ? '12px' : '14px';
+      } else {
+        eventPadding = isMobile ? 3 : Math.min(6, columnWidth * 0.05);
+        fontSize = columnWidth > 120 ? '12px' : columnWidth > 100 ? '11px' : '10px';
+      }
+      
       const eventWidth = Math.max(columnWidth - (eventPadding * 2), 40);
       const eventLeft = COLUMN_LEFT_OFFSET + dayOffset * columnWidth + eventPadding;
 
@@ -294,20 +333,20 @@ const Room1501 = () => {
             height: `${Math.max(height, 20)}px`,
             left: `${eventLeft}px`,
             width: `${eventWidth}px`,
-            padding: view === 'Day' ? '8px' : `${Math.min(4, columnWidth * 0.03)}px 4px`,
-            fontSize: view === 'Day' ? '14px' : columnWidth > 140 ? '12px' : '10px'
+            padding: `${eventPadding}px`,
+            fontSize: fontSize
           }}
         >
           <div className="font-semibold text-white/90 overflow-hidden text-ellipsis whitespace-nowrap">
             {event.title}
           </div>
           {height >= MIN_HEIGHT_FOR_TIME && (
-            <div className={`text-white/70 mt-1 ${view === 'Day' ? 'text-xs' : 'text-xs'}`}>
+            <div className="text-white/70 mt-1" style={{ fontSize: `${parseInt(fontSize) - 1}px` }}>
               {event.isAllDay ? 'All Day' : `${startTime.format('HH:mm')} - ${endTime.format('HH:mm')}`}
             </div>
           )}
-          {height >= 60 && columnWidth > 120 && (
-            <div className="text-xs text-white/60 mt-1 overflow-hidden text-ellipsis whitespace-nowrap">
+          {height >= 50 && columnWidth > 120 && (
+            <div className="text-white/60 mt-1 overflow-hidden text-ellipsis whitespace-nowrap" style={{ fontSize: `${parseInt(fontSize) - 1}px` }}>
               {event.subject}
             </div>
           )}
@@ -367,35 +406,35 @@ const Room1501 = () => {
       
       {/* Main Content */}
       <div className="flex-1 flex flex-col p-2 sm:p-4 lg:p-6 min-h-0">
-        {/* ✅ Page Header - แก้ไข responsive layout */}
+        {/* Page Header */}
         <div className="flex-shrink-0 mb-3 sm:mb-4">
           
           {/* Back Button */}
           <RefreshButton
             onClick={handleBack}
-            className={`px-3 py-2 mb-2 rounded-xl font-medium transition-all duration-200 shadow-md hover:shadow-xl flex items-center gap-2 ${
+            className={`px-4 sm:px-5 py-2.5 sm:py-3 mb-3 rounded-xl font-medium transition-all duration-200 shadow-md hover:shadow-xl flex items-center gap-2 ${
               darkMode 
                 ? 'bg-gray-800 text-white hover:bg-gray-600 ' 
                 : 'bg-white text-gray-800 hover:bg-gray-100 border border-gray-100'
             }`}
           >
             <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
-            <span className="hidden sm:inline">Back</span>
+            <span className="text-sm sm:text-base font-medium">Back</span>
           </RefreshButton>
           
-          {/* ✅ Desktop Layout */}
+          {/* Desktop Layout */}
           <div className="hidden md:flex flex-col sm:flex-row items-center justify-center sm:justify-between gap-3 md:gap-4">
             {/* Left Section */}
             <div className="flex flex-col gap-3 items-center sm:items-start">
               <div className="flex items-center gap-3">
-                <div className={`text-white p-2 sm:p-3 rounded-xl shadow-lg transition-colors duration-300 ${
+                <div className={`text-white p-3 sm:p-4 rounded-xl shadow-lg transition-colors duration-300 ${
                   darkMode 
                     ? 'bg-gradient-to-r from-gray-700 to-gray-800' 
                     : 'bg-gradient-to-r from-slate-800 to-slate-900'
                 }`}>
                   <div className="flex items-center gap-2">
                     <MapPin className="h-4 w-4 sm:h-5 sm:w-5" />
-                    <span className="text-sm sm:text-lg font-bold whitespace-nowrap">
+                    <span className="text-base sm:text-lg font-bold whitespace-nowrap">
                       Room {Room?.replace(/(\d{2})(\d{2})/, '$1/$2')}
                     </span>
                   </div>
@@ -411,7 +450,7 @@ const Room1501 = () => {
                     <RefreshButton
                       key={option}
                       onClick={() => updateURLForView(option)}
-                      className={`px-2 sm:px-3 py-1.5 sm:py-2 rounded-xl font-medium transition-all duration-200 text-xs sm:text-sm ${
+                      className={`px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl font-medium transition-all duration-200 text-sm sm:text-base ${
                         view === option
                           ? darkMode 
                             ? 'bg-gray-800 text-white shadow-lg' 
@@ -426,37 +465,37 @@ const Room1501 = () => {
                   ))}
                 </div>
                 
-                <div className="flex items-center gap-1 sm:gap-2">
+                <div className="flex items-center gap-2">
                   <RefreshButton
                     onClick={() => handleDateChange(-1)}
-                    className={`p-1.5 sm:p-2 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg ${
+                    className={`p-2.5 sm:p-3 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg ${
                       darkMode 
                         ? 'bg-gray-800 text-white hover:bg-gray-600' 
                         : 'bg-slate-800 text-white hover:bg-slate-700'
                     }`}
                   >
-                    <ChevronLeft className="h-3 w-3 sm:h-4 sm:w-4" />
+                    <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5" />
                   </RefreshButton>
                   <RefreshButton
                     onClick={() => handleDateChange(1)}
-                    className={`p-1.5 sm:p-2 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg ${
+                    className={`p-2.5 sm:p-3 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg ${
                       darkMode 
                         ? 'bg-gray-800 text-white hover:bg-gray-600' 
                         : 'bg-slate-800 text-white hover:bg-slate-700'
                     }`}
                   >
-                    <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4" />
+                    <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5" />
                   </RefreshButton>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* ✅ Mobile Layout - ปุ่มทั้งหมดอยู่ด้านซ้าย */}
+          {/* Mobile Layout */}
           <div className="md:hidden space-y-3">
             {/* Room Info */}
             <div className="flex items-center gap-3">
-              <div className={`text-white p-2 rounded-xl shadow-lg transition-colors duration-300 ${
+              <div className={`text-white p-3 rounded-xl shadow-lg transition-colors duration-300 ${
                 darkMode 
                   ? 'bg-gradient-to-r from-gray-700 to-gray-800' 
                   : 'bg-gradient-to-r from-slate-800 to-slate-900'
@@ -470,15 +509,15 @@ const Room1501 = () => {
               </div>
             </div>
 
-            {/* Control Buttons - รวมอยู่ด้านซ้าย */}
+            {/* Control Buttons */}
             <div className="flex items-center gap-2 flex-wrap">
               {/* Day/Week Buttons */}
-              <div className="flex gap-1">
+              <div className="flex gap-2">
                 {['Day', 'Week'].map((option) => (
                   <RefreshButton
                     key={option}
                     onClick={() => updateURLForView(option)}
-                    className={`px-3 py-1.5 rounded-lg font-medium transition-all duration-200 text-xs ${
+                    className={`px-4 py-2.5 rounded-lg font-medium transition-all duration-200 text-sm ${
                       view === option
                         ? darkMode 
                           ? 'bg-gray-800 text-white shadow-lg' 
@@ -494,34 +533,34 @@ const Room1501 = () => {
               </div>
               
               {/* Date Navigation Buttons */}
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-2">
                 <RefreshButton
                   onClick={() => handleDateChange(-1)}
-                  className={`p-1.5 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg ${
+                  className={`p-2.5 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg ${
                     darkMode 
                       ? 'bg-gray-800 text-white hover:bg-gray-600' 
                       : 'bg-slate-800 text-white hover:bg-slate-700'
                   }`}
                 >
-                  <ChevronLeft className="h-3 w-3" />
+                  <ChevronLeft className="h-4 w-4" />
                 </RefreshButton>
                 <RefreshButton
                   onClick={() => handleDateChange(1)}
-                  className={`p-1.5 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg ${
+                  className={`p-2.5 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg ${
                     darkMode 
                       ? 'bg-gray-800 text-white hover:bg-gray-600' 
                       : 'bg-slate-800 text-white hover:bg-slate-700'
                   }`}
                 >
-                  <ChevronRight className="h-3 w-3" />
+                  <ChevronRight className="h-4 w-4" />
                 </RefreshButton>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Calendar Container */}
-        <div className={`flex-1 rounded-2xl shadow-xl transition-colors duration-300 min-h-0 ${
+        {/* ✅ Calendar Container - ปรับให้เต็มพื้นที่ */}
+        <div className={`flex-1 rounded-xl lg:rounded-2xl shadow-xl transition-colors duration-300 min-h-0 ${
           darkMode ? 'bg-gray-800' : 'bg-white'
         }`}>
           {isLoading ? (
@@ -542,8 +581,8 @@ const Room1501 = () => {
                 }`}
                 style={{
                   height: `${calendarHeight}px`,
-                  width: `${getCalendarContainerWidth()}px`,
-                  minWidth: `${getCalendarContainerWidth()}px`
+                  width: getCalendarContainerWidth(),
+                  minWidth: view === 'Day' ? 'auto' : `${COLUMN_LEFT_OFFSET + (WEEK_DAY_MIN * numDays)}px`
                 }}
               >
                 {/* Time Column */}
@@ -573,14 +612,14 @@ const Room1501 = () => {
                       return (
                         <div
                           key={hour}
-                          className={`border-t text-xs pl-2 flex items-center transition-colors duration-300 ${
+                          className={`border-t text-xs pl-1 sm:pl-2 flex items-center transition-colors duration-300 ${
                             darkMode 
                               ? 'border-gray-600 text-gray-400' 
                               : 'border-gray-200 text-gray-500'
                           }`}
                           style={{ height: `${PIXELS_PER_HOUR}px` }}
                         >
-                          <div className={`px-2 py-1 rounded-md font-medium transition-colors duration-300 ${
+                          <div className={`px-1 sm:px-2 py-1 rounded text-xs font-medium transition-colors duration-300 ${
                             darkMode 
                               ? 'bg-gray-800 text-gray-200' 
                               : 'bg-white text-gray-700'
@@ -631,9 +670,9 @@ const Room1501 = () => {
                           style={{ width: `${columnWidth}px` }}
                         >
                           <div className={`font-medium uppercase tracking-wider ${
-                            columnWidth > 140 ? 'text-xs' : 'text-[10px]'
+                            columnWidth > 140 ? 'text-xs' : columnWidth > 100 ? 'text-[10px]' : 'text-[9px]'
                           }`}>
-                            {columnWidth > 140 ? date.format('ddd') : date.format('dd')}
+                            {columnWidth > 120 ? date.format('ddd') : columnWidth > 80 ? date.format('dd') : date.format('dd').charAt(0)}
                           </div>
                           <div className={`font-bold ${
                             isToday 
@@ -643,7 +682,7 @@ const Room1501 = () => {
                               : darkMode 
                                 ? 'text-gray-200' 
                                 : 'text-gray-800'
-                          } ${columnWidth > 140 ? 'text-lg' : 'text-sm'}`}>
+                          } ${columnWidth > 140 ? 'text-base' : columnWidth > 100 ? 'text-sm' : 'text-xs'}`}>
                             {date.format('D')}
                           </div>
                         </div>
