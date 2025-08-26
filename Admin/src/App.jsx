@@ -60,39 +60,40 @@ function App() {
               }
             />
 
-            <Route
-              path="/account/superadmin"
-              element={
-                <Protect>
-                  <RoleGuard allowedRoles={["Superadmin"]}>
-                    <SuperAdminDashboard />
-                  </RoleGuard>
-                </Protect>
-              }
-            />
+              <Route
+                path="/account/superadmin"
+                element={
+                  <Protect>
+                    <RoleGuard allowedRoles={["Superadmin"]}>
+                      <SuperAdminDashboard />
+                    </RoleGuard>
+                  </Protect>
+                }
+              />
 
-            <Route
-              path="/account/housekeeper"
-              element={
-                <Protect>
-                  <Housekeeper />
-                </Protect>
-              }
-            />
-            <Route
-              path="/account/dashboard"
-              element={
-                <Protect>
-                  <Log />
-                </Protect>
-              }
-            />
-          </Route>
-        </Routes>
-      </Router>
+              <Route
+                path="/account/housekeeper"
+                element={
+                  <Protect>
+                    <Housekeeper />
+                  </Protect>
+                }
+              />
+              <Route
+                path="/account/dashboard"
+                element={
+                  <Protect>
+                    <Log />
+                  </Protect>
+                }
+              />
+            </Route>
+          </Routes>
+        </Router>
       </AuthProvider>
     </ThemeProvider>
   );
 }
 
 export default App;
+
