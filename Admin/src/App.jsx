@@ -24,77 +24,78 @@ function App() {
 
   return (
     <ThemeProvider>
-       <AuthProvider>
-      <Router>
-        <Routes>
-          <Route path="/" element={<Verify setAuth={setAuth} />} />
-          <Route
-            path="/login/ms"
-            element={
-              <Protect>
-                <LoginPage />
-              </Protect>
-            }
-          />
-
-
-          <Route
-            path="/forgot-password"
-            element={
-              <Protect>
-                <ForgotPasswordFlow />
-              </Protect>
-            }
-          />
-          <Route path="/unauthorized" element={<UnauthorizedAccess />} /> 
-          <Route element={<AccountLayout darkMode={darkMode} />}> 
-            <Route path="/room/:Room/:startdate/:enddate" element={ <Protect><RoomPages /></Protect>}/>
-            <Route path="/admin/api" element={<Protect><RoomPage /></Protect>} />
-            <Route path="/roomsize/:size" element={<Protect><RoomSize /></Protect>} />
+      <AuthProvider>
+        <Router basename="/admin/">
+          <Routes>
+            <Route path="/" element={<Verify setAuth={setAuth} />} />
             <Route
-              path="/account/admin"
+              path="/login/ms"
               element={
                 <Protect>
-                  <RoleGuard allowedRoles={["Admin"]}>
-                    <Admin />
-                  </RoleGuard>
+                  <LoginPage />
                 </Protect>
               }
             />
 
-            <Route
-              path="/account/superadmin"
-              element={
-                <Protect>
-                  <RoleGuard allowedRoles={["Superadmin"]}>
-                    <SuperAdminDashboard />
-                  </RoleGuard>
-                </Protect>
-              }
-            />
 
             <Route
-              path="/account/housekeeper"
+              path="/forgot-password"
               element={
                 <Protect>
-                  <Housekeeper />
+                  <ForgotPasswordFlow />
                 </Protect>
               }
             />
-            <Route
-              path="/account/dashboard"
-              element={
-                <Protect>
-                  <Log />
-                </Protect>
-              }
-            />
-          </Route>
-        </Routes>
-      </Router>
+            <Route path="/unauthorized" element={<UnauthorizedAccess />} /> 
+            <Route element={<AccountLayout darkMode={darkMode} />}> 
+              <Route path="/room/:Room/:startdate/:enddate" element={ <Protect><RoomPages /></Protect>}/>
+              <Route path="/admin/api" element={<Protect><RoomPage /></Protect>} />
+              <Route path="/roomsize/:size" element={<Protect><RoomSize /></Protect>} />
+              <Route
+                path="/account/admin"
+                element={
+                  <Protect>
+                    <RoleGuard allowedRoles={["Admin"]}>
+                      <Admin />
+                    </RoleGuard>
+                  </Protect>
+                }
+              />
+
+              <Route
+                path="/account/superadmin"
+                element={
+                  <Protect>
+                    <RoleGuard allowedRoles={["Superadmin"]}>
+                      <SuperAdminDashboard />
+                    </RoleGuard>
+                  </Protect>
+                }
+              />
+
+              <Route
+                path="/account/housekeeper"
+                element={
+                  <Protect>
+                    <Housekeeper />
+                  </Protect>
+                }
+              />
+              <Route
+                path="/account/dashboard"
+                element={
+                  <Protect>
+                    <Log />
+                  </Protect>
+                }
+              />
+            </Route>
+          </Routes>
+        </Router>
       </AuthProvider>
     </ThemeProvider>
   );
 }
 
 export default App;
+
