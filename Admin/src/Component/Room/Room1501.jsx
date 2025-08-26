@@ -6,7 +6,7 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import RefreshButton from '../../utils/refreshToken';
 import { useDarkMode } from '../Context/DarkModeContext';
 import Header from '../Header';
-import axios from 'axios'
+import axios from 'axios';
 import {CircularProgress,} from '@mui/material'; 
 import {ArrowLeft}  from 'lucide-react';
 
@@ -15,7 +15,9 @@ dayjs.extend(isBetween);
 const HOURS_START = 7;
 const HOURS_END = 24;
 const PIXELS_PER_HOUR = 60;
-const DAY_WIDTH = 260;
+const MIN_DAY_WIDTH = 280;
+const WEEK_DAY_MAX = 180;
+const WEEK_DAY_MIN = 120;
 const COLUMN_LEFT_OFFSET = 120;
 const HEADER_HEIGHT = 60;
 const MIN_HEIGHT_FOR_TIME = 32;
@@ -42,22 +44,28 @@ const Room1501 = () => {
   const [profile, setProfile] = useState(null);
   const { darkMode, toggleDarkMode } = useDarkMode();
   
-  // Header states - รับข้อมูลจาก location.state
+  // Responsive state
+  const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1200);
+  
+  // Header states
   const [selectedSize, setSelectedSize] = useState(location.state?.selectedSize || "Room");
   const [events, setEvents] = useState(location.state?.events || []);
 
-  // Navbar state and handlers
-  const [openMenu1, setOpenMenu1] = useState(false);
-  
-  const toggleDropdown1 = () => setOpenMenu1(!openMenu1);
-
   const handleBack = () => navigate(-1);
 
-  // ✅ Fix: แก้ไข handleSizeNavigate เพื่อส่งข้อมูลที่ถูกต้อง
+  // Handle window resize
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowWidth(window.innerWidth);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const handleSizeNavigate = (size) => {
     const label = size === 4 ? 'S' : size === 6 ? 'M' : size === 10 ? 'L' : 'Room';
     
-    // ข้อมูล icons แบบเดียวกับใน Admin.jsx
     const iconClass = [
       { id: 1, room: "1501", icons: 1, people: 4 },
       { id: 2, room: "1502", icons: 1, people: 4 },
@@ -71,37 +79,20 @@ const Room1501 = () => {
       { id: 10, room: "1520", icons: 1, people: 4 },
     ];
 
-    // ✅ Navigate ไปยัง roomsize โดยไม่ส่งข้อมูลเก่า ให้ RoomSize ไปดึงข้อมูลสดเอง
     navigate(`/roomsize/${size}`, {
       state: {
         icons: iconClass,
         peopleSize: size,
-        rooms: [], // ✅ ส่งเป็น array ว่าง ให้ RoomSize ดึงข้อมูลสดเอง
+        rooms: [],
         selectedSize: label,
         resetFilter: false
       },
       replace: true,
     });
-    setOpenMenu1(false);
   };
   
-  const handleNavigateByRole = () => {
-    const role = localStorage.getItem('role');
-    console.log("Navigating based on role:", role);
-    if (role === 'Superadmin') {
-      navigate('/account/superadmin');
-    } else if (role === 'Admin') {
-      navigate('/account/admin');
-    } else {
-      navigate('/');
-    }
-  };
-
-  // ✅ Fix: แก้ไข clearAllFilters เพื่อส่งข้อมูลที่ถูกต้อง
   const clearAllFilters = () => {
     setSelectedSize("Room");
-    
-    // ส่งข้อมูลที่จำเป็นกลับไปหน้า admin
     navigate('/admin/api', {
       state: {
         clearFilter: true,
@@ -109,22 +100,6 @@ const Room1501 = () => {
       }
     });
   };
-  
-  // Format time and date for navbar (matching Admin.jsx format)
-  const dateString = currentTime.toLocaleDateString('en-US', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    timeZone: 'Asia/Bangkok'
-  });
-  const timeString = currentTime.toLocaleTimeString('th-TH', {
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: false,
-    timeZone: 'Asia/Bangkok'
-  });
   
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -140,14 +115,12 @@ const Room1501 = () => {
     })
       .then(res => {
         setProfile(res.data);
-        console.log("Profile data fetched:", res.data);
       })
       .catch(err => console.error(err));
   }, []);
 
   useEffect(() => {
     if (!Room || !startdate || !enddate) {
-      console.log("Incomplete parameters entered");
       return;
     }
     
@@ -158,7 +131,6 @@ const Room1501 = () => {
       try {
         const data = JSON.parse(e.data);
         setScheduleApi(data.results);
-        // ✅ อัพเดท events state เมื่อได้ข้อมูลใหม่
         if (data.results) {
           setEvents(data.results);
         }
@@ -220,44 +192,40 @@ const Room1501 = () => {
     return { start, end };
   };
 
-  const columnWidth = view === 'Day'
-    ? Math.max((window.innerWidth - COLUMN_LEFT_OFFSET - 32) * 0.99, DAY_WIDTH)
-    : DAY_WIDTH;
-
-  const getCurrentTimeIndicator = () => {
-    const now = dayjs();
-    const { start, end } = getViewRange();
-    
-    if (!now.isBetween(start, end, 'day', '[]')) return null;
-    
-    const currentHour = now.hour() + now.minute() / 60;
-    if (currentHour < HOURS_START || currentHour > HOURS_END) return null;
-    
-    const topOffset = (currentHour - HOURS_START) * PIXELS_PER_HOUR;
-    const dayOffset = now.diff(start.startOf('day'), 'day');
-    
-    return (
-      <div className="absolute z-30 pointer-events-none">
-        <div
-          className="absolute bg-red-500 h-0.5 shadow-lg"
-          style={{
-            top: `${topOffset + HEADER_HEIGHT}px`,
-            left: `${COLUMN_LEFT_OFFSET + dayOffset * columnWidth}px`,
-            width: `${columnWidth}px`,
-          }}
-        />
-        <div
-          className="absolute bg-red-500 rounded-full w-3 h-3 -ml-1.5 -mt-1.5 shadow-lg"
-          style={{
-            top: `${topOffset + HEADER_HEIGHT}px`,
-            left: `${COLUMN_LEFT_OFFSET + dayOffset * columnWidth}px`,
-          }}
-        />
-      </div>
-    );
+  // แก้ไข responsive column width
+  const getColumnWidth = () => {
+    if (view === 'Day') {
+      const containerPadding = 48;
+      const sidebarWidth = windowWidth <= 1024 ? 0 : 250;
+      const availableWidth = windowWidth - COLUMN_LEFT_OFFSET - containerPadding - sidebarWidth;
+      return Math.max(availableWidth, MIN_DAY_WIDTH);
+    } else {
+      const containerPadding = 48;
+      const sidebarWidth = windowWidth <= 1024 ? 0 : 250;
+      const availableWidth = windowWidth - COLUMN_LEFT_OFFSET - containerPadding - sidebarWidth;
+      const idealWidth = Math.floor(availableWidth / 7);
+      
+      if (idealWidth >= WEEK_DAY_MIN && idealWidth <= WEEK_DAY_MAX) {
+        return idealWidth;
+      } else if (idealWidth > WEEK_DAY_MAX) {
+        return WEEK_DAY_MAX;
+      } else {
+        return WEEK_DAY_MIN;
+      }
+    }
   };
 
-  const renderEvents = () => {
+  const columnWidth = getColumnWidth();
+  const calendarHeight = (HOURS_END - HOURS_START) * PIXELS_PER_HOUR + HEADER_HEIGHT;
+  const numDays = view === 'Day' ? 1 : 7;
+  
+  const getCalendarContainerWidth = () => {
+    const totalWidth = COLUMN_LEFT_OFFSET + (columnWidth * numDays);
+    return totalWidth;
+  };
+
+  // Event rendering with proper sizing
+  const renderEventsInCalendar = () => {
     if (!scheduleApi) return null;
     
     const { start, end } = getViewRange();
@@ -288,7 +256,6 @@ const Room1501 = () => {
           location: t.location || 'Room ' + Room,
         };
       })
-      
       .filter(event => {
         const eventStart = dayjs(event.start);
         const eventEnd = dayjs(event.end);
@@ -312,28 +279,34 @@ const Room1501 = () => {
       ];
 
       const colorClass = eventColors[event.id % eventColors.length];
+      
+      const eventPadding = view === 'Day' ? 8 : Math.min(6, columnWidth * 0.05);
+      const eventWidth = Math.max(columnWidth - (eventPadding * 2), 40);
+      const eventLeft = COLUMN_LEFT_OFFSET + dayOffset * columnWidth + eventPadding;
 
       return (
         <div
           key={event.id}
           onClick={() => setSelectedEvent(event)}
-          className={`absolute ${colorClass} text-white border-l-4 rounded-lg shadow-lg p-3 text-sm overflow-hidden cursor-pointer transition-all duration-200 hover:shadow-xl hover:scale-105 hover:z-20`}
+          className={`absolute ${colorClass} text-white border-l-4 rounded-lg shadow-lg cursor-pointer transition-all duration-200 hover:shadow-xl hover:scale-105 hover:z-20`}
           style={{
             top: `${topOffset + HEADER_HEIGHT}px`,
-            height: `${height}px`,
-            left: `${COLUMN_LEFT_OFFSET + dayOffset * columnWidth + 2}px`,
-            width: `${columnWidth - 8}px`,
+            height: `${Math.max(height, 20)}px`,
+            left: `${eventLeft}px`,
+            width: `${eventWidth}px`,
+            padding: view === 'Day' ? '8px' : `${Math.min(4, columnWidth * 0.03)}px 4px`,
+            fontSize: view === 'Day' ? '14px' : columnWidth > 140 ? '12px' : '10px'
           }}
         >
           <div className="font-semibold text-white/90 overflow-hidden text-ellipsis whitespace-nowrap">
             {event.title}
           </div>
           {height >= MIN_HEIGHT_FOR_TIME && (
-            <div className="text-xs text-white/70 mt-1">
+            <div className={`text-white/70 mt-1 ${view === 'Day' ? 'text-xs' : 'text-xs'}`}>
               {event.isAllDay ? 'All Day' : `${startTime.format('HH:mm')} - ${endTime.format('HH:mm')}`}
             </div>
           )}
-          {height >= 60 && (
+          {height >= 60 && columnWidth > 120 && (
             <div className="text-xs text-white/60 mt-1 overflow-hidden text-ellipsis whitespace-nowrap">
               {event.subject}
             </div>
@@ -343,148 +316,86 @@ const Room1501 = () => {
     });
   };
 
-  const renderTimeLines = () =>
-    [...Array(HOURS_END - HOURS_START)].map((_, i) => {
-      const hour = HOURS_START + i;
-      return (
-        <div
-          key={hour}
-          className={`absolute left-0 right-0 border-t text-xs pl-2 flex items-center transition-colors duration-300 ${
-            darkMode 
-              ? 'border-gray-600 text-gray-400' 
-              : 'border-gray-200 text-gray-500'
-          }`}
-          style={{ top: `${HEADER_HEIGHT + i * PIXELS_PER_HOUR}px`, height: `${PIXELS_PER_HOUR}px` }}
-        >
-          <div className={`px-2 py-1 rounded-md font-medium transition-colors duration-300 ${
-            darkMode 
-              ? 'bg-gray-800 text-gray-200' 
-              : 'bg-white text-gray-700'
-          }`}>
-            {String(hour).padStart(2, '0')}:00
-          </div>
-        </div>
-      );
-    });
-
-  const renderDayColumns = () => {
-    const numDays = view === 'Day' ? 1 : 7;
-    return [...Array(numDays)].map((_, i) => (
-      <div
-        key={i}
-        className={`absolute top-0 bottom-0 border-r transition-colors duration-300 ${
-          darkMode ? 'border-gray-600' : 'border-gray-200'
-        }`}
-        style={{
-          left: `${COLUMN_LEFT_OFFSET + i * columnWidth}px`,
-          width: `${columnWidth}px`,
-        }}
-      />
-    ));
-  };
-
-  const renderDayHeaders = () => {
-    const { start } = getViewRange();
-    const numDays = view === 'Day' ? 1 : 7;
-    const today = dayjs().format('YYYY-MM-DD');
+  // Current time indicator
+  const renderCurrentTimeIndicator = () => {
+    const now = dayjs();
+    const { start, end } = getViewRange();
+    
+    if (!now.isBetween(start, end, 'day', '[]')) return null;
+    
+    const currentHour = now.hour() + now.minute() / 60;
+    if (currentHour < HOURS_START || currentHour > HOURS_END) return null;
+    
+    const topOffset = (currentHour - HOURS_START) * PIXELS_PER_HOUR;
+    const dayOffset = now.diff(start.startOf('day'), 'day');
 
     return (
-      <div
-        className={`absolute top-0 left-0 right-0 border-b transition-colors duration-300 ${
-          darkMode 
-            ? 'bg-gradient-to-r from-gray-800 to-gray-700 border-gray-600' 
-            : 'bg-gradient-to-r from-slate-50 to-slate-100 border-gray-200'
-        }`}
-        style={{ height: `${HEADER_HEIGHT}px`, marginLeft: `${COLUMN_LEFT_OFFSET}px` }}
-      >
-        <div className="flex h-full">
-          {[...Array(numDays)].map((_, i) => {
-            const date = start.add(i, 'day');
-            const isToday = date.format('YYYY-MM-DD') === today;
-            
-            return (
-              <div
-                key={i}
-                className={`flex flex-col items-center justify-center border-r transition-all duration-200 ${
-                  darkMode ? 'border-gray-600' : 'border-gray-200'
-                } ${
-                  isToday 
-                    ? darkMode 
-                      ? 'bg-blue-900/50 text-blue-300' 
-                      : 'bg-blue-50 text-blue-600'
-                    : darkMode 
-                      ? 'text-gray-300' 
-                      : 'text-gray-700'
-                }`}
-                style={{ width: `${columnWidth}px` }}
-              >
-                <div className="text-xs font-medium uppercase tracking-wider">
-                  {date.format('ddd')}
-                </div>
-                <div className={`text-lg font-bold ${
-                  isToday 
-                    ? darkMode 
-                      ? 'text-blue-300' 
-                      : 'text-blue-600'
-                    : darkMode 
-                      ? 'text-gray-200' 
-                      : 'text-gray-800'
-                }`}>
-                  {date.format('D')}
-                </div>
-              </div>
-            );
-          })}
-        </div>
+      <div className="absolute z-30 pointer-events-none">
+        <div
+          className="absolute bg-red-500 h-0.5 shadow-lg"
+          style={{
+            top: `${topOffset + HEADER_HEIGHT}px`,
+            left: `${COLUMN_LEFT_OFFSET + dayOffset * columnWidth}px`,
+            width: `${columnWidth}px`,
+          }}
+        />
+        <div
+          className="absolute bg-red-500 rounded-full w-3 h-3 -ml-1.5 -mt-1.5 shadow-lg"
+          style={{
+            top: `${topOffset + HEADER_HEIGHT}px`,
+            left: `${COLUMN_LEFT_OFFSET + dayOffset * columnWidth}px`,
+          }}
+        />
       </div>
     );
   };
 
-  const calendarHeight = (HOURS_END - HOURS_START) * PIXELS_PER_HOUR + HEADER_HEIGHT;
-  const numDays = view === 'Day' ? 1 : 7;
-
   return (
-    <div className={`font-display min-h-screen transition-colors duration-300 ${
+    <div className={`h-screen flex flex-col transition-colors duration-300 ${
       darkMode 
         ? 'bg-gradient-to-br from-gray-700 to-gray-800' 
         : 'bg-gradient-to-br from-slate-50 to-slate-100'
-    }`}>
+    }`} style={{ overflow: 'hidden' }}>
       
       {/* Header Component */}
-      <Header 
-        title="Schedule" 
-        subtitle="Room booking schedule view"
-      />
+      <div className="flex-shrink-0">
+        <Header 
+          title="Schedule" 
+          subtitle="Room booking schedule view"
+        />
+      </div>
       
-      <div className="p-4 sm:p-6 max-w-[1800px] mx-auto">
-        {/* Page Header */}
-        <div className="mb-8">
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col p-2 sm:p-4 lg:p-6 min-h-0">
+        {/* ✅ Page Header - แก้ไข responsive layout */}
+        <div className="flex-shrink-0 mb-3 sm:mb-4">
           
-          {/* ✅ Back Button */}
+          {/* Back Button */}
           <RefreshButton
             onClick={handleBack}
-            className={`px-3 py-2 mb-3 rounded-xl font-medium transition-all duration-200 shadow-md hover:shadow-xl flex items-center gap-2
-              ${darkMode 
+            className={`px-3 py-2 mb-2 rounded-xl font-medium transition-all duration-200 shadow-md hover:shadow-xl flex items-center gap-2 ${
+              darkMode 
                 ? 'bg-gray-800 text-white hover:bg-gray-600 ' 
                 : 'bg-white text-gray-800 hover:bg-gray-100 border border-gray-100'
-              }`}
+            }`}
           >
-            <ArrowLeft className="h-5 w-5" />
-            Back
+            <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
+            <span className="hidden sm:inline">Back</span>
           </RefreshButton>
           
-          <div className="flex flex-col sm:flex-row items-center justify-center sm:justify-between gap-4 md:gap-6">
+          {/* ✅ Desktop Layout */}
+          <div className="hidden md:flex flex-col sm:flex-row items-center justify-center sm:justify-between gap-3 md:gap-4">
             {/* Left Section */}
-            <div className="flex flex-col gap-4 items-center sm:items-start">
+            <div className="flex flex-col gap-3 items-center sm:items-start">
               <div className="flex items-center gap-3">
-                <div className={`text-white p-4 rounded-xl shadow-lg transition-colors duration-300 ${
+                <div className={`text-white p-2 sm:p-3 rounded-xl shadow-lg transition-colors duration-300 ${
                   darkMode 
                     ? 'bg-gradient-to-r from-gray-700 to-gray-800' 
                     : 'bg-gradient-to-r from-slate-800 to-slate-900'
                 }`}>
                   <div className="flex items-center gap-2">
-                    <MapPin className="h-5 w-5" />
-                    <span className="text-xl font-bold whitespace-nowrap">
+                    <MapPin className="h-4 w-4 sm:h-5 sm:w-5" />
+                    <span className="text-sm sm:text-lg font-bold whitespace-nowrap">
                       Room {Room?.replace(/(\d{2})(\d{2})/, '$1/$2')}
                     </span>
                   </div>
@@ -493,14 +404,14 @@ const Room1501 = () => {
             </div>
 
             {/* Right Section */}
-            <div className="flex flex-col items-center gap-4 w-full lg:w-auto">
+            <div className="flex flex-col items-center gap-3 w-full lg:w-auto">
               <div className="flex gap-2 w-full justify-center sm:justify-end lg:justify-center"> 
                 <div className="flex gap-2">
                   {['Day', 'Week'].map((option) => (
                     <RefreshButton
                       key={option}
                       onClick={() => updateURLForView(option)}
-                      className={`px-4 py-2 rounded-xl font-medium transition-all duration-200 ${
+                      className={`px-2 sm:px-3 py-1.5 sm:py-2 rounded-xl font-medium transition-all duration-200 text-xs sm:text-sm ${
                         view === option
                           ? darkMode 
                             ? 'bg-gray-800 text-white shadow-lg' 
@@ -515,35 +426,102 @@ const Room1501 = () => {
                   ))}
                 </div>
                 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1 sm:gap-2">
                   <RefreshButton
                     onClick={() => handleDateChange(-1)}
-                    className={`p-2 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg ${
+                    className={`p-1.5 sm:p-2 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg ${
                       darkMode 
                         ? 'bg-gray-800 text-white hover:bg-gray-600' 
                         : 'bg-slate-800 text-white hover:bg-slate-700'
                     }`}
                   >
-                    <ChevronLeft className="h-5 w-5" />
+                    <ChevronLeft className="h-3 w-3 sm:h-4 sm:w-4" />
                   </RefreshButton>
                   <RefreshButton
                     onClick={() => handleDateChange(1)}
-                    className={`p-2 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg ${
+                    className={`p-1.5 sm:p-2 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg ${
                       darkMode 
                         ? 'bg-gray-800 text-white hover:bg-gray-600' 
                         : 'bg-slate-800 text-white hover:bg-slate-700'
                     }`}
                   >
-                    <ChevronRight className="h-5 w-5" />
+                    <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4" />
                   </RefreshButton>
                 </div>
               </div>
             </div>
           </div>
+
+          {/* ✅ Mobile Layout - ปุ่มทั้งหมดอยู่ด้านซ้าย */}
+          <div className="md:hidden space-y-3">
+            {/* Room Info */}
+            <div className="flex items-center gap-3">
+              <div className={`text-white p-2 rounded-xl shadow-lg transition-colors duration-300 ${
+                darkMode 
+                  ? 'bg-gradient-to-r from-gray-700 to-gray-800' 
+                  : 'bg-gradient-to-r from-slate-800 to-slate-900'
+              }`}>
+                <div className="flex items-center gap-2">
+                  <MapPin className="h-4 w-4" />
+                  <span className="text-sm font-bold whitespace-nowrap">
+                    Room {Room?.replace(/(\d{2})(\d{2})/, '$1/$2')}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Control Buttons - รวมอยู่ด้านซ้าย */}
+            <div className="flex items-center gap-2 flex-wrap">
+              {/* Day/Week Buttons */}
+              <div className="flex gap-1">
+                {['Day', 'Week'].map((option) => (
+                  <RefreshButton
+                    key={option}
+                    onClick={() => updateURLForView(option)}
+                    className={`px-3 py-1.5 rounded-lg font-medium transition-all duration-200 text-xs ${
+                      view === option
+                        ? darkMode 
+                          ? 'bg-gray-800 text-white shadow-lg' 
+                          : 'bg-slate-800 text-white shadow-lg'
+                        : darkMode 
+                          ? 'bg-gray-800 text-white shadow-md hover:bg-gray-600' 
+                          : 'bg-white text-slate-600 shadow-md hover:bg-slate-50'
+                    }`}
+                  >
+                    {option}
+                  </RefreshButton>
+                ))}
+              </div>
+              
+              {/* Date Navigation Buttons */}
+              <div className="flex items-center gap-1">
+                <RefreshButton
+                  onClick={() => handleDateChange(-1)}
+                  className={`p-1.5 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg ${
+                    darkMode 
+                      ? 'bg-gray-800 text-white hover:bg-gray-600' 
+                      : 'bg-slate-800 text-white hover:bg-slate-700'
+                  }`}
+                >
+                  <ChevronLeft className="h-3 w-3" />
+                </RefreshButton>
+                <RefreshButton
+                  onClick={() => handleDateChange(1)}
+                  className={`p-1.5 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg ${
+                    darkMode 
+                      ? 'bg-gray-800 text-white hover:bg-gray-600' 
+                      : 'bg-slate-800 text-white hover:bg-slate-700'
+                  }`}
+                >
+                  <ChevronRight className="h-3 w-3" />
+                </RefreshButton>
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* Calendar */}
-        <div className={`rounded-2xl shadow-xl overflow-x-auto transition-colors duration-300 ${
+        {/* Calendar Container */}
+        <div className={`flex-1 rounded-2xl shadow-xl transition-colors duration-300 min-h-0 ${
           darkMode ? 'bg-gray-800' : 'bg-white'
         }`}>
           {isLoading ? (
@@ -551,30 +529,172 @@ const Room1501 = () => {
               <CircularProgress size="30px"/>  
             </div>
           ) : (
-            <div
-              className={`relative transition-colors duration-300 ${
-                darkMode 
-                  ? 'bg-gradient-to-b from-gray-800 to-gray-900' 
-                  : 'bg-gradient-to-b from-white to-slate-50'
+            <div 
+              className={`h-full ${
+                view === 'Week' ? 'overflow-auto' : 'overflow-auto'
               }`}
-              style={{
-                height: `${calendarHeight}px`,
-                minWidth: view === 'Day'
-                  ? '100%'
-                  : `${COLUMN_LEFT_OFFSET + columnWidth * numDays + 40}px`
-              }}
             >
-              {renderDayHeaders()}
-              {renderTimeLines()}
-              {renderDayColumns()}
-              {renderEvents()}
-              {getCurrentTimeIndicator()}
+              <div
+                className={`relative transition-colors duration-300 ${
+                  darkMode 
+                    ? 'bg-gradient-to-b from-gray-800 to-gray-900' 
+                    : 'bg-gradient-to-b from-white to-slate-50'
+                }`}
+                style={{
+                  height: `${calendarHeight}px`,
+                  width: `${getCalendarContainerWidth()}px`,
+                  minWidth: `${getCalendarContainerWidth()}px`
+                }}
+              >
+                {/* Time Column */}
+                <div 
+                  className={`absolute left-0 top-0 transition-colors duration-300 border-r ${
+                    darkMode 
+                      ? 'bg-gradient-to-b from-gray-800 to-gray-900 border-gray-600' 
+                      : 'bg-gradient-to-b from-white to-slate-50 border-gray-200'
+                  }`}
+                  style={{ 
+                    width: `${COLUMN_LEFT_OFFSET}px`,
+                    height: `${calendarHeight}px`
+                  }}
+                >
+                  {/* Time Header Spacer */}
+                  <div 
+                    className={`border-b transition-colors duration-300 ${
+                      darkMode ? 'border-gray-600' : 'border-gray-200'
+                    }`}
+                    style={{ height: `${HEADER_HEIGHT}px` }}
+                  />
+                  
+                  {/* Time Labels */}
+                  <div>
+                    {[...Array(HOURS_END - HOURS_START)].map((_, i) => {
+                      const hour = HOURS_START + i;
+                      return (
+                        <div
+                          key={hour}
+                          className={`border-t text-xs pl-2 flex items-center transition-colors duration-300 ${
+                            darkMode 
+                              ? 'border-gray-600 text-gray-400' 
+                              : 'border-gray-200 text-gray-500'
+                          }`}
+                          style={{ height: `${PIXELS_PER_HOUR}px` }}
+                        >
+                          <div className={`px-2 py-1 rounded-md font-medium transition-colors duration-300 ${
+                            darkMode 
+                              ? 'bg-gray-800 text-gray-200' 
+                              : 'bg-white text-gray-700'
+                          }`}>
+                            {String(hour).padStart(2, '0')}:00
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Day Headers */}
+                <div
+                  className={`absolute border-b transition-colors duration-300 z-20 ${
+                    darkMode 
+                      ? 'bg-gradient-to-r from-gray-800 to-gray-700 border-gray-600' 
+                      : 'bg-gradient-to-r from-slate-50 to-slate-100 border-gray-200'
+                  }`}
+                  style={{ 
+                    height: `${HEADER_HEIGHT}px`,
+                    left: `${COLUMN_LEFT_OFFSET}px`,
+                    width: `${columnWidth * numDays}px`,
+                    top: 0
+                  }}
+                >
+                  <div className="flex h-full">
+                    {[...Array(numDays)].map((_, i) => {
+                      const { start } = getViewRange();
+                      const date = start.add(i, 'day');
+                      const today = dayjs().format('YYYY-MM-DD');
+                      const isToday = date.format('YYYY-MM-DD') === today;
+                      
+                      return (
+                        <div
+                          key={i}
+                          className={`flex flex-col items-center justify-center border-r transition-all duration-200 ${
+                            darkMode ? 'border-gray-600' : 'border-gray-200'
+                          } ${
+                            isToday 
+                              ? darkMode 
+                                ? 'bg-blue-900/50 text-blue-300' 
+                                : 'bg-blue-50 text-blue-600'
+                              : darkMode 
+                                ? 'text-gray-300' 
+                                : 'text-gray-700'
+                          }`}
+                          style={{ width: `${columnWidth}px` }}
+                        >
+                          <div className={`font-medium uppercase tracking-wider ${
+                            columnWidth > 140 ? 'text-xs' : 'text-[10px]'
+                          }`}>
+                            {columnWidth > 140 ? date.format('ddd') : date.format('dd')}
+                          </div>
+                          <div className={`font-bold ${
+                            isToday 
+                              ? darkMode 
+                                ? 'text-blue-300' 
+                                : 'text-blue-600'
+                              : darkMode 
+                                ? 'text-gray-200' 
+                                : 'text-gray-800'
+                          } ${columnWidth > 140 ? 'text-lg' : 'text-sm'}`}>
+                            {date.format('D')}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Day Columns */}
+                {[...Array(numDays)].map((_, i) => (
+                  <div
+                    key={i}
+                    className={`absolute border-r transition-colors duration-300 ${
+                      darkMode ? 'border-gray-600' : 'border-gray-200'
+                    }`}
+                    style={{
+                      left: `${COLUMN_LEFT_OFFSET + i * columnWidth}px`,
+                      width: `${columnWidth}px`,
+                      top: `${HEADER_HEIGHT}px`,
+                      bottom: 0
+                    }}
+                  />
+                ))}
+
+                {/* Hour Lines */}
+                {[...Array(HOURS_END - HOURS_START)].map((_, i) => (
+                  <div
+                    key={i}
+                    className={`absolute border-t transition-colors duration-300 ${
+                      darkMode ? 'border-gray-600' : 'border-gray-200'
+                    }`}
+                    style={{ 
+                      top: `${HEADER_HEIGHT + i * PIXELS_PER_HOUR}px`,
+                      left: `${COLUMN_LEFT_OFFSET}px`,
+                      width: `${columnWidth * numDays}px`
+                    }}
+                  />
+                ))}
+
+                {/* Events */}
+                {renderEventsInCalendar()}
+
+                {/* Current Time Indicator */}
+                {renderCurrentTimeIndicator()}
+              </div>
             </div>
           )}
         </div>
       </div>
 
-      {/* Enhanced Modal */}
+      {/* Event Modal */}
       {selectedEvent && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className={`rounded-2xl shadow-2xl w-full max-w-md transform transition-all duration-300 scale-100 ${
@@ -582,7 +702,7 @@ const Room1501 = () => {
           }`}>
             <div className="p-6">
               <div className="flex items-center justify-between mb-6">
-                <h2 className={`text-2xl font-bold transition-colors duration-300 ${
+                <h2 className={`text-xl sm:text-2xl font-bold transition-colors duration-300 ${
                   darkMode ? 'text-white' : 'text-slate-800'
                 }`}>Booking Details</h2>
                 <RefreshButton
@@ -599,38 +719,38 @@ const Room1501 = () => {
               
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
-                  <User className={`h-5 w-5 transition-colors duration-300 ${
+                  <User className={`h-5 w-5 flex-shrink-0 transition-colors duration-300 ${
                     darkMode ? 'text-gray-400' : 'text-slate-500'
                   }`} />
-                  <div>
+                  <div className="min-w-0 flex-1">
                     <p className={`text-sm transition-colors duration-300 ${
                       darkMode ? 'text-gray-400' : 'text-slate-500'
                     }`}>Organizer</p>
-                    <p className={`font-semibold transition-colors duration-300 ${
+                    <p className={`font-semibold transition-colors duration-300 truncate ${
                       darkMode ? 'text-white' : 'text-slate-800'
                     }`}>{selectedEvent.title}</p>
                   </div>
                 </div>
                 
                 <div className="flex items-center gap-3">
-                  <Calendar className={`h-5 w-5 transition-colors duration-300 ${
+                  <Calendar className={`h-5 w-5 flex-shrink-0 transition-colors duration-300 ${
                     darkMode ? 'text-gray-400' : 'text-slate-500'
                   }`} />
-                  <div>
+                  <div className="min-w-0 flex-1">
                     <p className={`text-sm transition-colors duration-300 ${
                       darkMode ? 'text-gray-400' : 'text-slate-500'
                     }`}>Subject</p>
-                    <p className={`font-semibold transition-colors duration-300 ${
+                    <p className={`font-semibold transition-colors duration-300 truncate ${
                       darkMode ? 'text-white' : 'text-slate-800'
                     }`}>{selectedEvent.subject}</p>
                   </div>
                 </div>
                 
                 <div className="flex items-center gap-3">
-                  <Clock className={`h-5 w-5 transition-colors duration-300 ${
+                  <Clock className={`h-5 w-5 flex-shrink-0 transition-colors duration-300 ${
                     darkMode ? 'text-gray-400' : 'text-slate-500'
                   }`} />
-                  <div>
+                  <div className="min-w-0 flex-1">
                     <p className={`text-sm transition-colors duration-300 ${
                       darkMode ? 'text-gray-400' : 'text-slate-500'
                     }`}>Time</p>
@@ -645,14 +765,14 @@ const Room1501 = () => {
                 </div>
                 
                 <div className="flex items-center gap-3">
-                  <MapPin className={`h-5 w-5 transition-colors duration-300 ${
+                  <MapPin className={`h-5 w-5 flex-shrink-0 transition-colors duration-300 ${
                     darkMode ? 'text-gray-400' : 'text-slate-500'
                   }`} />
-                  <div>
+                  <div className="min-w-0 flex-1">
                     <p className={`text-sm transition-colors duration-300 ${
                       darkMode ? 'text-gray-400' : 'text-slate-500'
                     }`}>Location</p>
-                    <p className={`font-semibold transition-colors duration-300 ${
+                    <p className={`font-semibold transition-colors duration-300 truncate ${
                       darkMode ? 'text-white' : 'text-slate-800'
                     }`}>{selectedEvent.location}</p>
                   </div>

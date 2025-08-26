@@ -1,6 +1,7 @@
 import { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import Logo from '../../../assets/Logotcc.png';
 import {
   Mail,
   Lock,
@@ -110,7 +111,7 @@ function Verify({ setAuth }) {
         {/* Left Side - Logo (Hidden on small screens) */}
         <div className="hidden lg:flex flex-1 bg-[#0398fc] items-center justify-center p-8">
           <img
-            src="src/assets/Logotcc.png"
+            src={Logo}
             alt="Logo"
             className="w-auto h-80 mx-auto mb-4"
           />
