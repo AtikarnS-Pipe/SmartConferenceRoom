@@ -15,7 +15,7 @@ import Housekeeper from "./Component/Manage/Housekeeper";
 import Log from "./Component/Manage/Log";
 import RoleGuard from "./Component/Authen/Frontend/Roleguard";
 import { ThemeProvider } from "./Component/Context/DarkModeContext";
-import AccountLayout from "./Component/Manage/Accountlayout"; // ✅ import Layout ที่ใช้ Sidebar
+import AccountLayout from "./Component/Manage/Accountlayout";
 import UnauthorizedAccess from "./Component/Unauthorized";
 
 function App() {
@@ -24,41 +24,52 @@ function App() {
 
   return (
     <ThemeProvider>
-       <AuthProvider>
-      <Router>
-        <Routes>
-          <Route path="/" element={<Verify setAuth={setAuth} />} />
-          <Route
-            path="/login/ms"
-            element={
-              <Protect>
-                <LoginPage />
-              </Protect>
-            }
-          />
-          <Route
-            path="/forgot-password"
-            element={
-              <Protect>
-                <ForgotPasswordFlow />
-              </Protect>
-            }
-          />
-          <Route path="/unauthorized" element={<UnauthorizedAccess />} /> 
-          <Route element={<AccountLayout darkMode={darkMode} />}> 
-            <Route path="/room/:Room/:startdate/:enddate" element={ <Protect><RoomPages /></Protect>}/>
-            <Route path="/admin/api" element={<Protect><RoomPage /></Protect>} />
-            <Route path="/roomsize/:size" element={<Protect><RoomSize /></Protect>} />
+      <AuthProvider>
+        {/* ✅ เอา basename ออก หรือใช้ basename="/admin" */}
+        <Router>
+          <Routes>
+            <Route path="/" element={<Verify setAuth={setAuth} />} />
             <Route
-              path="/account/admin"
+              path="/login/ms"
               element={
                 <Protect>
-                  <RoleGuard allowedRoles={["Admin"]}>
-                    <Admin />
-                  </RoleGuard>
+                  <LoginPage />
                 </Protect>
               }
             />
+
+            <Route
+              path="/forgot-password"
+              element={
+                  <ForgotPasswordFlow />
+              }
+            />
+            <Route path="/unauthorized" element={<UnauthorizedAccess />} /> 
+            
+            <Route element={<AccountLayout darkMode={darkMode} />}> 
+              <Route path="/room/:Room/:startdate/:enddate" element={ 
+                <Protect><RoomPages /></Protect>
+              }/>
+              
+              {/* ✅ กลับมาใช้ path เดิม */}
+              <Route path="/admin/api" element={
+                <Protect><RoomPage /></Protect>
+              } />
+              
+              <Route path="/roomsize/:size" element={
+                <Protect><RoomSize /></Protect>
+              } />
+              
+              <Route
+                path="/account/admin"
+                element={
+                  <Protect>
+                    <RoleGuard allowedRoles={["Admin"]}>
+                      <Admin />
+                    </RoleGuard>
+                  </Protect>
+                }
+              />
 
               <Route
                 path="/account/superadmin"
@@ -79,6 +90,7 @@ function App() {
                   </Protect>
                 }
               />
+              
               <Route
                 path="/account/dashboard"
                 element={
@@ -96,4 +108,3 @@ function App() {
 }
 
 export default App;
-

@@ -14,15 +14,6 @@ function UnauthorizedAccess() {
     window.location.href = '/admin/login';
   };
 
-  const handleContactAdmin = () => {
-    // You can customize this to your organization's contact method
-    // For example, open email client or redirect to contact page
-    const email = 'admin@yourcompany.com'; // Replace with your admin email
-    const subject = 'Request for Room Booking System Access';
-    const body = 'Hi Admin,\n\nI would like to request access to the Meeting Room Booking System.\n\nThank you.';
-    
-    window.location.href = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-  };
 
   return (
     <div className={`min-h-screen flex items-center justify-center p-4 transition-colors duration-300 ${

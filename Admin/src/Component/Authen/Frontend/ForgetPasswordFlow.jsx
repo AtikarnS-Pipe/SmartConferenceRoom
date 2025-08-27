@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Mail, ArrowLeft, Key, Shield } from 'lucide-react';
 import { useNavigate } from 'react-router-dom'; // เพิ่ม import
 import axios from 'axios';
+import BG from '../../../assets/tower.jpeg';
+import Logo from '../../../assets/Logotcc.png';
 
 const ForgotPasswordFlow = () => { 
   const [step, setStep] = useState('email');
@@ -288,15 +290,15 @@ const handlePasswordReset = async (e) => {
   return (
     <div className="min-h-screen flex">
       {/* Left Side - Logo */}
-      <div className="flex-1 bg-gray-10 flex items-center justify-center p-8">
-        <img src="src/assets/Logotcc.png" alt="Logo" className="w-120 h-70 mx-auto mb-4" />
+      <div className="hidden lg:flex flex-1 bg-[#0398fc] items-center justify-center p-8">
+        <img src={Logo} alt="Logo" className="w-auto h-80 mx-auto mb-4" />
       </div>
 
       {/* Right Side - Form */}
       <div 
         className="flex-1 relative flex items-center justify-center p-8"
         style={{
-          backgroundImage: `url('https://images.pexels.com/photos/273209/pexels-photo-273209.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2')`,
+          backgroundImage: `url('${BG}')`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
         }}
