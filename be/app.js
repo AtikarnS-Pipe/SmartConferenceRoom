@@ -24,10 +24,10 @@ app.use(cookieParser());
 
 monitorToken(); // เริ่ม monitor token loop
 
-app.use("/admin", Adminrouter);
-app.use("/user", Userrouter);
-app.use("/account", Accountrouter);
-app.use("/superadmin", SuperAdminRouter)
+app.use("/api1/admin", Adminrouter);
+app.use("/api2/user", Userrouter);
+app.use("/api1/account", Accountrouter);
+app.use("/api1/superadmin", SuperAdminRouter)
 
 app.get('/', (req, res) => {
   res.send('Welcome to the Smart Display Conference System!');
