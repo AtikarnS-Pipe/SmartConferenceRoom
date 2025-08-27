@@ -52,7 +52,7 @@ function RoomSize() {
     if (!token) return;
 
     setLoading(true);
-    const eventSource = new EventSource(`/admin/sse?token=${token}`);
+    const eventSource = new EventSource(`/api1/admin/sse?token=${token}`);
 
     eventSource.onmessage = (e) => {
       try {
@@ -167,7 +167,7 @@ function RoomSize() {
     const token = localStorage.getItem('token');
     if (!token) return;
 
-    axios.get('/account/me', {
+    axios.get('/api1/account/me', {
       headers: { Authorization: `Bearer ${token}` }
     })
       .then(res => {

@@ -57,11 +57,11 @@ function Admin() {
   }, []);
 
   useEffect(() => {
-    const housekeeperSource = new EventSource('/account/housekeepers', {
+    const housekeeperSource = new EventSource('/api1/account/housekeepers', {
       withCredentials: true,
     });
   
-    const adminSource = new EventSource('/account/member', {
+    const adminSource = new EventSource('/api1/account/member', {
       withCredentials: true,
     });
   
@@ -165,7 +165,7 @@ function Admin() {
       const token = localStorage.getItem('token');
 
       const res = await axios.patch(
-        '/account/changeadminpw',
+        '/api1/account/changeadminpw',
         { newpin: newPassword },
         {
           headers: {
@@ -206,7 +206,7 @@ function Admin() {
     try {
       const token = localStorage.getItem('token');
       const res = await axios.post(
-        '/account/signout',
+        '/api1/account/signout',
         {},
         {
           headers: {
@@ -247,7 +247,7 @@ function Admin() {
     const token = localStorage.getItem('token');
     if (!token) return;
 
-    axios.get('/account/me', {
+    axios.get('/api1/account/me', {
       headers: { Authorization: `Bearer ${token}` }
     })
       .then(res => {

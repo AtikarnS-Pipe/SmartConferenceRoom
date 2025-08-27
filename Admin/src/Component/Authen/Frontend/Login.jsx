@@ -1,8 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState } from "react"; // ⭐ ลบ useEffect ออก
 import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import Logo from '../../../assets/Logotcc.png';
-import BG from '../../../assets/tower.jpeg';
 import {
   Mail,
   Lock,
@@ -23,44 +22,11 @@ function Verify({ setAuth }) {
   const navigate = useNavigate();
   const location = useLocation();
 
+  console.log("🔄 Login Component Rendered - Time:", new Date().toISOString());
+  console.log("📍 Location:", location.pathname);
 
-  useEffect(() => {
-    let isMounted = true;
-
-    const checkToken = async () => {
-      const token = localStorage.getItem("token");
-      if (!token || !isMounted) return;
-
-      try {
-        const res = await axios.get("/account/me", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        console.log("✅ Token valid:", res.data);
-        console.log("📍 Current path:", location.pathname);
-        
-        // ✅ ตรวจสอบว่าไม่ใช่ path ปลายทางแล้ว
-        if (isMounted && location.pathname !== "/api") {
-          navigate("/api", { replace: true });
-        }
-      } catch (err) {
-        console.error("❌ Token invalid or expired:", err.response?.status);
-        if (isMounted) {
-          localStorage.removeItem("token");
-          localStorage.removeItem("role");
-        }
-      }
-    };
-
-    // ✅ เพิ่ม delay เล็กน้อย
-    const timer = setTimeout(() => {
-      checkToken();
-    }, 100);
-
-    return () => {
-      isMounted = false;
-      clearTimeout(timer);
-    };
-  }, [navigate, location.pathname]);
+  // ⭐ ลบ useEffect ที่ตรวจ token ออกทั้งหมด
+  // เพราะ AuthContext จะจัดการให้
 
   const handleInputChange = (e) => {
     setFormData({
@@ -75,15 +41,16 @@ function Verify({ setAuth }) {
     setError("");
 
     try {
-      const res = await axios.post("/account/auth", formData);
+      const res = await axios.post("/api1/account/auth", formData); // ⭐ แก้ API path
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("role", res.data.role);
+      console.log("✅ Login successful:", res.data.token);
       setAuth(true);
       setLoginSuccess(true);
       
       setTimeout(() => {
-        navigate("/login/ms");
-      }, 4000);
+        navigate("/login/ms", { replace: true }); // ⭐ ใช้ replace
+      }, 2000);
     } catch (error) {
       console.error("❌ Login failed:", error);
       setError("Invalid email or password");
@@ -99,8 +66,15 @@ function Verify({ setAuth }) {
 
   return (
     <div className="min-h-screen flex flex-col">
+      {/* Debug Info */}
+      <div className="fixed top-4 left-4 bg-blue-500 text-white p-2 rounded text-xs z-50">
+        <div>Time: {new Date().toLocaleTimeString()}</div>
+        <div>Path: {location.pathname}</div>
+        <div>Token: {localStorage.getItem("token") ? "✅" : "❌"}</div>
+        <div>No useEffect: ✅</div>
+      </div>
 
-      {/* ✅ Success Toast */}
+      {/* Success Toast */}
       {loginSuccess && (
         <div className="fixed top-6 right-6 z-50">
           <div className="bg-green-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-2 animate-slide-in">
@@ -112,7 +86,7 @@ function Verify({ setAuth }) {
         </div>
       )}
 
-      {/* ❌ Error Toast */}
+      {/* Error Toast */}
       {showErrorToast && (
         <div className="fixed top-6 right-6 z-50">
           <div className="bg-red-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-2 animate-slide-in">
@@ -136,7 +110,7 @@ function Verify({ setAuth }) {
         <div
           className="flex-1 lg:flex-1 relative flex items-center justify-center p-4 lg:p-8"
           style={{
-            backgroundImage: `url('${BG}')`,
+            backgroundImage: `url('https://images.pexels.com/photos/273209/pexels-photo-273209.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2')`,
             backgroundSize: "cover",
             backgroundPosition: "center",
           }}

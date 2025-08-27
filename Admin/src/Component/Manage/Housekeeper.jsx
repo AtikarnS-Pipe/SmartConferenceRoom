@@ -71,11 +71,11 @@ function Housekeeper() {
     }, []);
 
   useEffect(() => {
-    const housekeeperSource = new EventSource("/account/housekeepers", {
+    const housekeeperSource = new EventSource("/api1/account/housekeepers", {
       withCredentials: true,
     });
 
-    const adminSource = new EventSource("/account/member", {
+    const adminSource = new EventSource("/api1/account/member", {
       withCredentials: true,
     });
 
@@ -196,7 +196,7 @@ function Housekeeper() {
     try {
       const token = localStorage.getItem("token");
       const res = await axios.patch(
-        "/account/edithousekeeper",
+        "/api1/account/edithousekeeper",
         { newpin: newPin, name: pinTargetName }, // สมมติว่าใช้ name สำหรับระบุตัวผู้ใช้
         {
           headers: {
@@ -249,7 +249,7 @@ function Housekeeper() {
       const token = localStorage.getItem("token");
 
       const response = await axios.post(
-        "/account/createhousekeeper",
+        "/api1/account/createhousekeeper",
         {
           name: newMember.name.trim(),
           pin: newMember.pin.trim(),
@@ -311,7 +311,7 @@ function Housekeeper() {
     try {
       const token = localStorage.getItem("token");
       for (const member of selectedMembers) {
-        await axios.delete(`/account/deletehousekeeper`, {
+        await axios.delete(`/api1/account/deletehousekeeper`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -340,7 +340,7 @@ function Housekeeper() {
     if (!token) return;
 
     axios
-      .get("/account/me", {
+      .get("/api1/account/me", {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then((res) => {

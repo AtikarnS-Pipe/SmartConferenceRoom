@@ -23,7 +23,7 @@ const handleEmailSubmit = async (e) => {
   setIsLoading(true);
 
   try {
-    const res = await axios.post('/account/otp/send', { email });
+    const res = await axios.post('/api1/account/otp/send', { email });
     console.log(res.data);
     // ไม่สนใจ res.data.success เพราะ backend แอบตอบเหมือนกันทุกกรณี
     setStep('otp');
@@ -41,7 +41,7 @@ const handleOtpSubmit = async (e) => {
   setIsLoading(true);
 
   try {
-    const res = await axios.post('/account/otp/verify', {
+    const res = await axios.post('/api1/account/otp/verify', {
       email,
       otp_code: otp
     });
@@ -74,7 +74,7 @@ const handlePasswordReset = async (e) => {
 
   setIsLoading(true);
   try {
-    const res = await axios.post('/account/otp/reset', {
+    const res = await axios.post('/api1/account/otp/reset', {
       reset_token: resetToken,
       new_password: newPassword
     });

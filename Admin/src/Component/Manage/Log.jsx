@@ -59,7 +59,7 @@ function Log() {
   }, []);
 
   useEffect(() => {
-    const eventSource = new EventSource("/account/logsmonitoring", {
+    const eventSource = new EventSource("/api1/account/logsmonitoring", {
       withCredentials: true,
     });
 
@@ -173,7 +173,7 @@ function Log() {
     if (!token) return;
 
     axios
-      .get("/account/me", {
+      .get("/api1/account/me", {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then((res) => {

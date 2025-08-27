@@ -111,7 +111,7 @@ const Room1501 = () => {
     const token = localStorage.getItem('token');
     if (!token) return;
 
-    axios.get('/account/me', {
+    axios.get('/api1/account/me', {
       headers: { Authorization: `Bearer ${token}` }
     })
       .then(res => {
@@ -126,7 +126,7 @@ const Room1501 = () => {
     }
     
     setIsLoading(true);
-    const eventSource = new EventSource(`/admin/schedule/${Room}/${startdate}/${enddate}`);
+    const eventSource = new EventSource(`/api1/admin/schedule/${Room}/${startdate}/${enddate}`);
     
     eventSource.onmessage = (e) => {
       try {

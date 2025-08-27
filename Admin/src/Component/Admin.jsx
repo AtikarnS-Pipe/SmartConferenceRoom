@@ -76,7 +76,7 @@ function RoomPage() {
         console.log("Initializing room data SSE connection");
 
         // สร้าง SSE connection สำหรับข้อมูลห้อง
-        const es = new EventSource(`/admin/sse`);
+        const es = new EventSource(`/api1/admin/sse`);
         setRoomDataSource(es);
 
         es.onopen = () => {

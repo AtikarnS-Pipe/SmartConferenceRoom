@@ -1,15 +1,14 @@
-// AuthContext.js - ปรับปรุงแล้ว
-import { createContext, useContext, useEffect, useState, useCallback } from "react";
+import { createContext, useContext, useEffect, useState, useCallback, useRef } from "react";
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [authStatus, setAuthStatus] = useState("checking"); // checking | authorized | unauthorized
+  const [authStatus, setAuthStatus] = useState("checking");
   const [isRedirecting, setIsRedirecting] = useState(false);
   const [eventSource, setEventSource] = useState(null);
   const [userData, setUserData] = useState(null);
+  const initialized = useRef(false);
 
-  // ฟังก์ชันสำหรับปิด SSE connection
   const closeEventSource = useCallback(() => {
     if (eventSource) {
       eventSource.close();
@@ -17,68 +16,70 @@ export const AuthProvider = ({ children }) => {
     }
   }, [eventSource]);
 
-  // ฟังก์ชันสำหรับ logout - กลับไปหน้าแรกเพื่อ login ใหม่
   const logout = useCallback(() => {
     closeEventSource();
     localStorage.removeItem("token");
-    localStorage.removeItem("role"); // ลบ role ด้วย
+    localStorage.removeItem("role");
     setAuthStatus("unauthorized");
     setUserData(null);
     setIsRedirecting(true);
     
-    // Delay redirect เพื่อให้ UI update - กลับไปหน้าแรกเพื่อ login ใหม่
     setTimeout(() => {
-      window.location.href = "/";
+      window.location.href = "/admin/";
     }, 100);
   }, [closeEventSource]);
 
-  // ฟังก์ชันสำหรับ redirect ไป unauthorized
   const redirectToUnauthorized = useCallback(() => {
     closeEventSource();
     setAuthStatus("unauthorized");
     setIsRedirecting(true);
     
     setTimeout(() => {
-      window.location.href = "/unauthorized";
+      window.location.href = "/admin/unauthorized";
     }, 100);
   }, [closeEventSource]);
 
   useEffect(() => {
+    if (initialized.current) return;
+    initialized.current = true;
+    
     const initializeAuth = async () => {
       const token = localStorage.getItem("token");
-      const code = new URLSearchParams(window.location.search).get("code");
+      const currentPath = window.location.pathname;
 
-      // ถ้าไม่มี token ให้ redirect ไปหน้าแรกเพื่อ login
+      // ⭐ สำคัญมาก: หน้าที่ไม่ต้องมี token (public pages)
+      const publicPages = ["/", "/admin/", "/admin/forgot-password", "/admin/unauthorized"];
+      
+      if (publicPages.includes(currentPath)) {
+        console.log("📄 Public page, setting unauthorized status only");
+        setAuthStatus("unauthorized");
+        return; // ⭐ ไม่ redirect เพราะเป็นหน้า public
+      }
+
+      // ⭐ ถ้าไม่มี token และไม่ใช่หน้า public ให้ redirect
       if (!token) {
+        console.log("❌ No token and not public page, redirecting to login");
         setAuthStatus("unauthorized");
         setIsRedirecting(true);
-        
-        // ตรวจสอบว่าอยู่หน้าแรกหรือไม่ ถ้าไม่ใช่ให้ redirect กลับไปหน้าแรก
-        const currentPath = window.location.pathname;
-        if (currentPath !== '/') {
-          setTimeout(() => {
-            window.location.href = "/";
-          }, 100);
-        }
+        setTimeout(() => {
+          window.location.href = "/admin/";
+        }, 100);
         return;
       }
 
       try {
-        // สร้าง SSE connection
+        // เฉพาะหน้าที่ต้องมี token ถึงจะสร้าง SSE
+        const code = new URLSearchParams(window.location.search).get("code");
         const es = new EventSource(`/admin/sse?code=${code}`);
         setEventSource(es);
 
-        // เมื่อเชื่อมต่อสำเร็จ
         es.onopen = () => {
           console.log("SSE connection established");
         };
 
-        // รับข้อมูลจาก SSE
         es.onmessage = (e) => {
           try {
             const data = JSON.parse(e.data);
-            
-            // ถ้ามีข้อมูลห้องแสดงว่า authorized
             if (data.results) {
               setAuthStatus("authorized");
               setUserData(data.user || null);
@@ -89,13 +90,11 @@ export const AuthProvider = ({ children }) => {
           }
         };
 
-        // จัดการ force logout
         es.addEventListener("forceLogout", (event) => {
           try {
             const data = JSON.parse(event.data);
             console.log("Force logout received:", data.error);
             
-            // แสดง alert หรือ notification ถ้าต้องการ
             if (data.error.includes("unauthorized") || data.error.includes("forbidden")) {
               alert("คุณไม่มีสิทธิ์เข้าใช้งานระบบ กรุณาติดต่อผู้ดูแลระบบ");
             }
@@ -107,25 +106,16 @@ export const AuthProvider = ({ children }) => {
           }
         });
 
-        // จัดการข้อผิดพลาด
         es.onerror = (err) => {
           console.error("SSE error:", err);
           
-          // ตรวจสอบสถานะ connection
           if (es.readyState === EventSource.CLOSED) {
             const errorStatus = err.target?.status;
             
             if (errorStatus === 401 || errorStatus === 403) {
               redirectToUnauthorized();
             } else {
-              // Error อื่นๆ (เช่น network error, token หมดอายุ) ให้กลับไปหน้าแรก
-              setAuthStatus("unauthorized");
-              setIsRedirecting(true);
-              closeEventSource();
-              
-              setTimeout(() => {
-                window.location.href = "/";
-              }, 100);
+              logout();
             }
           }
         };
@@ -137,14 +127,9 @@ export const AuthProvider = ({ children }) => {
     };
 
     initializeAuth();
+    return () => closeEventSource();
+  }, []);
 
-    // Cleanup function
-    return () => {
-      closeEventSource();
-    };
-  }, []); // ลบ dependencies ออกเพื่อให้รันแค่ครั้งเดียว
-
-  // ฟังก์ชันสำหรับ retry connection
   const retryConnection = useCallback(() => {
     setAuthStatus("checking");
     setIsRedirecting(false);
@@ -152,18 +137,13 @@ export const AuthProvider = ({ children }) => {
     const token = localStorage.getItem("token");
     
     if (!token) {
-      // ถ้าไม่มี token ให้กลับไปหน้าแรก
       logout();
       return;
     }
     
     const code = new URLSearchParams(window.location.search).get("code");
-    
-    // Recreate connection
     const es = new EventSource(`/admin/sse?code=${code}`);
     setEventSource(es);
-    
-    // ทำซ้ำ logic เดิม...
   }, [logout]);
 
   const contextValue = {
