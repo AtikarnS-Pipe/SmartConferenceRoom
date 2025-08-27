@@ -570,7 +570,7 @@ const BookingModal = ({ isOpen, onClose, onSubmit }) => {
         // console.log("Submitting booking:", payload);
         
         // Step 1: Create the event
-        const response = await axios.post('/user/ms/create', { createroomdata: payload })
+        const response = await axios.post('/api2/user/ms/create', { createroomdata: payload })
         // console.log("Booking created successfully, waiting for events to update...");
 
         // Step 2: ตั้ง flag เพื่อรอ event จาก SSE
@@ -596,7 +596,7 @@ const BookingModal = ({ isOpen, onClose, onSubmit }) => {
     try {
       const Pin = randomPin();
       // console.log("Generated PIN:", Pin);
-      const pinResponse = await axios.post('/user/search-pin', {
+      const pinResponse = await axios.post('/api2/user/search-pin', {
         pindata: {
           eventId: matchevent.id,
           room_number: roomId,

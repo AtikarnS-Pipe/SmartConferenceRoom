@@ -16,7 +16,7 @@ export function useEvents(floor, room) {
     return;
   }
 
-  const eventSource = new EventSource(`/user/sse/${floor}/${room}`);
+  const eventSource = new EventSource(`/api2/user/sse/${floor}/${room}`);
 
   const fallbackTimeout = setTimeout(() => {
     console.warn("SSE fallback timeout: no data received.");

@@ -50,7 +50,7 @@ return () => clearTimeout(timeoutId);
       };
       console.log('Sending endmeeting data:', endmeetingdata);
 
-      const response = await axios.patch('/user/endmeeting', { endmeetingdata });
+      const response = await axios.patch('/api2/user/endmeeting', { endmeetingdata });
       
       if (response.status === 200) {
         setIsSuccess(true);

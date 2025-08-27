@@ -40,7 +40,7 @@ const StaffPinPopupManager = ({ showTestButton, closeUserPinPopup }) => {
   setPendingError('');
 
   try {
-    const res = await axios.post('/user/admin-key', {
+    const res = await axios.post('/api2/user/admin-key', {
       pin: pin,
       room_number: roomId,
     });
