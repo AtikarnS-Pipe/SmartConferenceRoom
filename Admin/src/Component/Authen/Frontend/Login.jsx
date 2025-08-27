@@ -22,8 +22,6 @@ function Verify({ setAuth }) {
   const navigate = useNavigate();
   const location = useLocation();
 
-  console.log("🔄 Login Component Rendered - Time:", new Date().toISOString());
-  console.log("📍 Location:", location.pathname);
 
   // ⭐ ลบ useEffect ที่ตรวจ token ออกทั้งหมด
   // เพราะ AuthContext จะจัดการให้
@@ -49,8 +47,8 @@ function Verify({ setAuth }) {
       setLoginSuccess(true);
       
       setTimeout(() => {
-        navigate("/login/ms", { replace: true }); // ⭐ ใช้ replace
-      }, 2000);
+        navigate("/login/ms", { replace: true }); 
+      }, 1000);
     } catch (error) {
       console.error("❌ Login failed:", error);
       setError("Invalid email or password");
@@ -66,13 +64,6 @@ function Verify({ setAuth }) {
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Debug Info */}
-      <div className="fixed top-4 left-4 bg-blue-500 text-white p-2 rounded text-xs z-50">
-        <div>Time: {new Date().toLocaleTimeString()}</div>
-        <div>Path: {location.pathname}</div>
-        <div>Token: {localStorage.getItem("token") ? "✅" : "❌"}</div>
-        <div>No useEffect: ✅</div>
-      </div>
 
       {/* Success Toast */}
       {loginSuccess && (

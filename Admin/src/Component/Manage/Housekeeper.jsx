@@ -65,7 +65,7 @@ function Housekeeper() {
     useEffect(() => {
       const timer = setTimeout(() => {
         setLoading(false);
-      }, 1000); // แสดง loading 2 วินาที
+      }, 200); // แสดง loading 2 วินาที
   
       return () => clearTimeout(timer);
     }, []);

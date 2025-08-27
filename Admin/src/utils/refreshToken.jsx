@@ -30,6 +30,12 @@ export default function RefreshButton({ onClick, children, ...props }) {
       }
     } catch (err) {
       console.error('Refresh token failed:', err);
+      if (err.response?.status === 401) {
+        console.log("Refresh token expired, redirecting to login");
+        localStorage.removeItem("token");
+        localStorage.removeItem("role");
+        window.location.href = "/admin/";
+      }
     }
   };
 

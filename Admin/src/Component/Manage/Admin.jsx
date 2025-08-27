@@ -51,7 +51,7 @@ function Admin() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoading(false);
-    }, 1000); // 2 seconds loading
+    }, 2000); // 2 seconds loading
 
     return () => clearTimeout(timer);
   }, []);

@@ -46,19 +46,58 @@ export const AuthProvider = ({ children }) => {
     const initializeAuth = async () => {
       const token = localStorage.getItem("token");
       const currentPath = window.location.pathname;
+      const hasOAuthCode = new URLSearchParams(window.location.search).get("code");
 
-      // ⭐ สำคัญมาก: หน้าที่ไม่ต้องมี token (public pages)
-      const publicPages = ["/", "/admin/", "/admin/forgot-password", "/admin/unauthorized"];
+      console.log("🔍 AuthContext - Current path:", currentPath);
+      console.log("🔍 AuthContext - Has OAuth code:", !!hasOAuthCode);
+      console.log("🔍 AuthContext - Token exists:", !!token);
+
+      // ⭐ หน้าที่ไม่ต้องมี token (public pages)
+      const publicPages = [
+        "/", 
+        "/admin/", 
+        "/admin/forgot-password", 
+        "/admin/unauthorized",
+        "/admin/login/ms" // ⭐ Microsoft OAuth redirect to backend
+      ];
+
+      // ⭐ หน้าที่เป็น OAuth callback (มี code parameter)
+      const isOAuthCallback = hasOAuthCode && (
+        currentPath === "/admin/admin/api" || // ⭐ Microsoft OAuth callback path
+        currentPath === "/admin/api" ||       // ⭐ Alternative callback path
+        currentPath.includes("/admin/api")    // ⭐ Any api path with OAuth code
+      );
       
-      if (publicPages.includes(currentPath)) {
-        console.log("📄 Public page, setting unauthorized status only");
-        setAuthStatus("unauthorized");
-        return; // ⭐ ไม่ redirect เพราะเป็นหน้า public
+      // ⭐ ถ้าเป็น public page หรือ OAuth callback
+      if (publicPages.includes(currentPath) || isOAuthCallback) {
+        console.log("📄 Public page or OAuth callback detected");
+        
+        if (isOAuthCallback) {
+          console.log("🔗 OAuth callback detected, processing...");
+          // ⭐ ใน OAuth callback ให้รอสักครู่เพื่อให้ component ประมวลผล OAuth code
+          setAuthStatus("checking");
+          
+          // ⭐ หลังจาก 3 วินาที ถ้ายังไม่มี token ให้ redirect กลับ login
+          setTimeout(() => {
+            const tokenAfterOAuth = localStorage.getItem("token");
+            if (!tokenAfterOAuth) {
+              console.log("❌ OAuth timeout, no token received");
+              setAuthStatus("unauthorized");
+              window.location.href = "/admin/";
+            } else {
+              console.log("✅ OAuth token received, setting authorized");
+              setAuthStatus("authorized");
+            }
+          }, 3000);
+        } else {
+          setAuthStatus("unauthorized");
+        }
+        return;
       }
 
-      // ⭐ ถ้าไม่มี token และไม่ใช่หน้า public ให้ redirect
+      // ⭐ ถ้าไม่มี token และไม่ใช่ public page หรือ OAuth callback
       if (!token) {
-        console.log("❌ No token and not public page, redirecting to login");
+        console.log("❌ No token and not public/OAuth page, redirecting to login");
         setAuthStatus("unauthorized");
         setIsRedirecting(true);
         setTimeout(() => {
@@ -68,9 +107,9 @@ export const AuthProvider = ({ children }) => {
       }
 
       try {
-        // เฉพาะหน้าที่ต้องมี token ถึงจะสร้าง SSE
+        // ⭐ เฉพาะหน้าที่มี token แล้วถึงจะสร้าง SSE
         const code = new URLSearchParams(window.location.search).get("code");
-        const es = new EventSource(`/admin/sse?code=${code}`);
+        const es = new EventSource(`/admin/sse?code=${code || ''}`);
         setEventSource(es);
 
         es.onopen = () => {
@@ -128,7 +167,7 @@ export const AuthProvider = ({ children }) => {
 
     initializeAuth();
     return () => closeEventSource();
-  }, []);
+  }, [logout, redirectToUnauthorized, closeEventSource]);
 
   const retryConnection = useCallback(() => {
     setAuthStatus("checking");
@@ -142,7 +181,7 @@ export const AuthProvider = ({ children }) => {
     }
     
     const code = new URLSearchParams(window.location.search).get("code");
-    const es = new EventSource(`/admin/sse?code=${code}`);
+    const es = new EventSource(`/admin/sse?code=${code || ''}`);
     setEventSource(es);
   }, [logout]);
 
