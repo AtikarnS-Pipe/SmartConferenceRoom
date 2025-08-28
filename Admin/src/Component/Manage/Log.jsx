@@ -35,7 +35,6 @@ function Log() {
   const [selectedLevel, setSelectedLevel] = useState("all");
   const [selectedSource, setSelectedSource] = useState("all");
   const [logs, setLogs] = useState([]);
-  const [newPassword, setNewPassword] = useState("");
   const [show, setShow] = useState(false);
   const [profile, setProfile] = useState("");
   const [statusPopup, setStatusPopup] = useState(null);
@@ -102,16 +101,33 @@ function Log() {
 
   const ITEMS_PER_PAGE = 10;
 
+  const formatTimestamp = (timestamp) => {
+    if (!timestamp) return "N/A";
+    const date = new Date(timestamp);
+    return date
+      .toLocaleString("en-GB", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+      })
+      .replace(",", "");
+  };
+
   const filteredLogs = logs.filter((log) => {
     const message = log.message || log.Details || "";
     const source = log.source || log.role || "";
     const level = log.level || log.L_status || "";
     const id = log.user_Id ? log.user_Id.toString() : ""; // แปลง ObjectId เป็น string
+    const timestamp = formatTimestamp(log.L_createdAt || log.timestamp); // เพิ่ม timestamp สำหรับ search
 
     const matchesSearch =
       message.toLowerCase().includes(searchTerm.toLowerCase()) ||
       source.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      id.includes(searchTerm); // เพิ่มตรงนี้
+      id.includes(searchTerm) ||
+      timestamp.toLowerCase().includes(searchTerm.toLowerCase()); // เพิ่มการ search timestamp
 
     const matchesLevel = selectedLevel === "all" || level === selectedLevel;
     const matchesSource = selectedSource === "all" || source === selectedSource;
@@ -138,21 +154,6 @@ function Log() {
       new Date(b.L_createdAt || b.timestamp) -
       new Date(a.L_createdAt || a.timestamp)
   );
-
-  const formatTimestamp = (timestamp) => {
-    if (!timestamp) return "N/A";
-    const date = new Date(timestamp);
-    return date
-      .toLocaleString("en-GB", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false,
-      })
-      .replace(",", "");
-  };
 
   const uniqueSources = Array.from(
     new Set(logs.map((log) => log.source || log.role).filter(Boolean))
@@ -351,9 +352,12 @@ function Log() {
                     />
                     <input
                       type="text"
-                      placeholder="Search by Status, User ID, or Details..."
+                      placeholder="Search by Status, User ID, Role, Details, or Timestamp..."
                       value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
+                      onChange={(e) => {
+                        setSearchTerm(e.target.value);
+                        setCurrentPage(1); // รีเซ็ตกลับหน้า 1 เมื่อ search
+                      }}
                       className={`pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 w-full ${
                         darkMode
                           ? "bg-gray-800 border-gray-600 text-white"

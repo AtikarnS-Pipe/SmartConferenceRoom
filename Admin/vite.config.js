@@ -27,7 +27,6 @@ export default defineConfig({
       '/account/getname': backend,
       '/account/logsmonitoring': backend,
       '/account/me': backend,
-      '/account/checkpin': backend,
       '/superadmin/createadmin': backend,
       '/superadmin/deleteadmin': backend,
     },
