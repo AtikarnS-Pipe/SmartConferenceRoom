@@ -78,17 +78,17 @@ function Superadmin() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setLoading(false);
-    }, 1000); // แสดง loading 2 วินาที
+    }, 200); // แสดง loading 2 วินาที
 
     return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
-    const housekeeperSource = new EventSource("/account/housekeepers", {
+    const housekeeperSource = new EventSource("/api1/account/housekeepers", {
       withCredentials: true,
     });
 
-    const adminSource = new EventSource("/account/member", {
+    const adminSource = new EventSource("/api1/account/member", {
       withCredentials: true,
     });
 
@@ -197,7 +197,7 @@ function Superadmin() {
       const token = localStorage.getItem("token");
 
       const response = await axios.post(
-        "/superadmin/createadmin",
+        "/api1/superadmin/createadmin",
         {
           email: newMember.email,
           password: newMember.password,
@@ -272,7 +272,7 @@ function Superadmin() {
         selectedMembers.includes(m._id)
       );
       for (const member of selectedMemberObjects) {
-        await axios.delete(`/superadmin/deleteadmin`, {
+        await axios.delete(`/api1/superadmin/deleteadmin`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -321,7 +321,7 @@ function Superadmin() {
     if (!token) return;
 
     axios
-      .get("/account/me", {
+      .get("/api1/account/me", {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then((res) => {

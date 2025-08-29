@@ -52,13 +52,13 @@ function Log() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setLoading(false);
-    }, 1000); // แสดง loading 1.5 วินาที
+    }, 200); // แสดง loading 1.5 วินาที
 
     return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
-    const eventSource = new EventSource("/account/logsmonitoring", {
+    const eventSource = new EventSource("/api1/account/logsmonitoring", {
       withCredentials: true,
     });
 
@@ -174,7 +174,7 @@ function Log() {
     if (!token) return;
 
     axios
-      .get("/account/me", {
+      .get("/api1/account/me", {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then((res) => {

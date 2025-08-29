@@ -26,7 +26,7 @@ function App() {
     <ThemeProvider>
       <AuthProvider>
         {/* ✅ เอา basename ออก หรือใช้ basename="/admin" */}
-        <Router>
+        <Router basename="/admin">
           <Routes>
             <Route path="/" element={<Verify setAuth={setAuth} />} />
             <Route

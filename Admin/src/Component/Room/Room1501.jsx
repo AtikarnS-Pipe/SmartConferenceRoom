@@ -111,7 +111,7 @@ const Room1501 = () => {
     const token = localStorage.getItem('token');
     if (!token) return;
 
-    axios.get('/account/me', {
+    axios.get('/api1/account/me', {
       headers: { Authorization: `Bearer ${token}` }
     })
       .then(res => {
@@ -126,7 +126,7 @@ const Room1501 = () => {
     }
     
     setIsLoading(true);
-    const eventSource = new EventSource(`/admin/schedule/${Room}/${startdate}/${enddate}`);
+    const eventSource = new EventSource(`/api1/admin/schedule/${Room}/${startdate}/${enddate}`);
     
     eventSource.onmessage = (e) => {
       try {
@@ -195,26 +195,18 @@ const Room1501 = () => {
 
   // ✅ แก้ไข column width calculation ให้เต็มพื้นที่
   const getColumnWidth = () => {
-    // คำนวณ available width ที่แม่นยำ
-    let sidebarWidth = 0;
-    let containerPadding = 16; // 2 * 8px (p-2)
-    
-    if (windowWidth >= 1024) { // lg
-      sidebarWidth = 250;
-      containerPadding = 48; // 2 * 24px (lg:p-6)
-    } else if (windowWidth >= 640) { // sm
-      containerPadding = 32; // 2 * 16px (sm:p-4)
-    }
-    
-    // คำนวณพื้นที่ที่เหลือหลังจากหัก sidebar, padding, time column และ card padding
+    // คำนวณ available width ที่แม่นยำ - ใช้ container ขนาดเต็ม
+    const containerPadding = windowWidth >= 1024 ? 48 : windowWidth >= 640 ? 32 : 16;
     const calendarCardPadding = 32; // padding ภายในการ์ด calendar
-    const availableWidth = windowWidth - sidebarWidth - containerPadding - COLUMN_LEFT_OFFSET - calendarCardPadding;
+    
+    // คำนวณพื้นที่ที่เหลือจากหน้าจอเต็ม
+    const availableWidth = windowWidth - containerPadding - COLUMN_LEFT_OFFSET - calendarCardPadding;
     
     if (view === 'Day') {
-      // Day view: ใช้พื้นที่เต็ม
+      // Day view: ใช้พื้นที่เต็มที่เหลือ
       return Math.max(availableWidth, MIN_DAY_WIDTH);
     } else {
-      // Week view: แบ่งพื้นที่ที่เหลือให้ 7 วันเท่าๆ กัน
+      // Week view: แบ่งพื้นที่เต็มให้ 7 วันเท่าๆ กัน
       const idealColumnWidth = Math.floor(availableWidth / 7);
       
       // ถ้าคำนวณได้ไม่น้อยกว่า minimum ใช้ ideal width
@@ -231,21 +223,15 @@ const Room1501 = () => {
   const calendarHeight = (HOURS_END - HOURS_START) * PIXELS_PER_HOUR + HEADER_HEIGHT;
   const numDays = view === 'Day' ? 1 : 7;
   
-  // ✅ ปรับ container width ให้เหมาะสม
+  // ✅ ปรับ container width ให้เต็มพื้นที่
   const getCalendarContainerWidth = () => {
     if (view === 'Day') {
-      // Day view: ใช้ width ที่พอดีกับ content
-      return COLUMN_LEFT_OFFSET + columnWidth;
+      // Day view: ใช้ width เต็มที่เหลือ
+      return '100%';
     } else {
-      // Week view: ถ้า column fit หน้าจอ ใช้ 100%, ถ้าไม่ ใช้ minimum
+      // Week view: ให้ใช้พื้นที่เต็ม ถ้าไม่พอจะมี scroll
       const totalWidth = COLUMN_LEFT_OFFSET + (columnWidth * numDays);
-      const availableSpace = windowWidth - (windowWidth >= 1024 ? 250 : 0) - (windowWidth >= 1024 ? 48 : windowWidth >= 640 ? 32 : 16) - 32;
-      
-      if (totalWidth <= availableSpace) {
-        return '100%'; // ใช้พื้นที่เต็ม
-      } else {
-        return `${totalWidth}px`; // ใช้ขนาดที่คำนวณได้
-      }
+      return '100%'; // เปลี่ยนให้ใช้ 100% เสมอ
     }
   };
 
@@ -345,11 +331,11 @@ const Room1501 = () => {
               {event.isAllDay ? 'All Day' : `${startTime.format('HH:mm')} - ${endTime.format('HH:mm')}`}
             </div>
           )}
-          {height >= 50 && columnWidth > 120 && (
+          {/* {height >= 50 && columnWidth > 120 && (
             <div className="text-white/60 mt-1 overflow-hidden text-ellipsis whitespace-nowrap" style={{ fontSize: `${parseInt(fontSize) - 1}px` }}>
               {event.subject}
             </div>
-          )}
+          )} */}
         </div>
       );
     });
@@ -560,7 +546,7 @@ const Room1501 = () => {
         </div>
 
         {/* ✅ Calendar Container - ปรับให้เต็มพื้นที่ */}
-        <div className={`flex-1 rounded-xl lg:rounded-2xl shadow-xl transition-colors duration-300 min-h-0 ${
+        <div className={`flex-1 rounded-xl lg:rounded-2xl shadow-xl transition-colors duration-300 min-h-0 w-full ${
           darkMode ? 'bg-gray-800' : 'bg-white'
         }`}>
           {isLoading ? (
@@ -569,20 +555,19 @@ const Room1501 = () => {
             </div>
           ) : (
             <div 
-              className={`h-full ${
+              className={`h-full w-full ${
                 view === 'Week' ? 'overflow-auto' : 'overflow-auto'
               }`}
             >
               <div
-                className={`relative transition-colors duration-300 ${
+                className={`relative transition-colors duration-300 w-full ${
                   darkMode 
                     ? 'bg-gradient-to-b from-gray-800 to-gray-900' 
                     : 'bg-gradient-to-b from-white to-slate-50'
                 }`}
                 style={{
                   height: `${calendarHeight}px`,
-                  width: getCalendarContainerWidth(),
-                  minWidth: view === 'Day' ? 'auto' : `${COLUMN_LEFT_OFFSET + (WEEK_DAY_MIN * numDays)}px`
+                  minWidth: view === 'Day' ? '100%' : `${COLUMN_LEFT_OFFSET + (WEEK_DAY_MIN * numDays)}px`
                 }}
               >
                 {/* Time Column */}

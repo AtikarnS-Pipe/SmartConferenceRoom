@@ -11,7 +11,7 @@ function UnauthorizedAccess() {
     // Clear any existing tokens
     
     // Redirect to Microsoft login
-    window.location.href = '/admin/login';
+    window.location.href = '/api1/admin/login';
   };
 
 

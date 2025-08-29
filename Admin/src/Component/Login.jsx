@@ -3,7 +3,7 @@ import { useEffect} from 'react'
 const LoginPage = () => {
   // เช็ค code params
   useEffect(() => {
-      window.location.href = `/admin/login`;
+      window.location.href = `/api1/admin/login`;
       return;
   }, []);
   

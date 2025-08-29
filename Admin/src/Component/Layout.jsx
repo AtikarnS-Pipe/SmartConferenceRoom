@@ -30,7 +30,7 @@ const Layout = () => {
 
     if (!token) return;
 
-    const eventSource = new EventSource(`/admin/sse?code=${code}&token=${token}`);
+    const eventSource = new EventSource(`/api1/admin/sse?code=${code}&token=${token}`);
 
     eventSource.onmessage = (e) => {
       try {

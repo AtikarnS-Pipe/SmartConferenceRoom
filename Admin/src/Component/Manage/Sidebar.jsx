@@ -52,7 +52,7 @@ export default function Sidebar() {
     if (!token) return;
 
     axios
-      .get("/account/me", {
+      .get("/api1/account/me", {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then((res) => {
@@ -168,7 +168,7 @@ export default function Sidebar() {
       const token = localStorage.getItem("token");
 
       const res = await axios.patch(
-        "/account/changeadminpw",
+        "/api1/account/changeadminpw",
         { newpin: newPassword },
         {
           headers: {
@@ -212,7 +212,7 @@ export default function Sidebar() {
     if (!token) return;
 
     axios
-      .get("/account/me", {
+      .get("/api1/account/me", {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then((res) => {
@@ -228,7 +228,7 @@ export default function Sidebar() {
     try {
       const token = localStorage.getItem("token");
       const res = await axios.post(
-        "/account/signout",
+        "/api1/account/signout",
         {},
         {
           headers: {
