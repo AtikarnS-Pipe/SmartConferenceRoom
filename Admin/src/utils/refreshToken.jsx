@@ -56,7 +56,8 @@ export default function RefreshButton({ onClick, children, ...props }) {
         console.log("Refresh token expired, redirecting to login");
         localStorage.removeItem("token");
         localStorage.removeItem("role");
-        window.location.href = "/admin/";
+        // Router basename="/admin" ใช้อยู่แล้ว ดังนั้นไปที่ root ภายในแอพเป็น '/'
+        window.location.href = "/";
       }
     }
   };

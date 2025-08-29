@@ -1,6 +1,7 @@
-import { useState } from "react"; // ⭐ ลบ useEffect ออก
+import { useState, useEffect } from "react"; 
 import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
+import { jwtDecode } from "jwt-decode";
 import Logo from '../../../assets/Logotcc.png';
 import {
   Mail,
@@ -22,9 +23,68 @@ function Verify({ setAuth }) {
   const navigate = useNavigate();
   const location = useLocation();
 
-
-  // ⭐ ลบ useEffect ที่ตรวจ token ออกทั้งหมด
-  // เพราะ AuthContext จะจัดการให้
+  // ปรับปรุง useEffect เพื่อตรวจสอบ token ด้วย JWT decode และ redirect ถ้า token ยังไม่หมดอายุ
+  useEffect(() => {
+    console.log("🔍 Login - Full path:", window.location.pathname);
+    console.log("🔍 Login - Search:", window.location.search);
+    
+    const checkValidToken = () => {
+      const token = localStorage.getItem("token");
+      console.log("🔍 Login - Token:", token ? "exists" : "not found");
+      
+      if (!token) return false;
+      
+      // ตรวจสอบว่าเป็น JWT token ที่ถูกต้อง
+      if (token.split('.').length !== 3) {
+        console.log("❌ Login - Invalid token format");
+        localStorage.removeItem("token");
+        localStorage.removeItem("role");
+        return false;
+      }
+      
+      try {
+        const decodedToken = jwtDecode(token);
+        const currentTime = Date.now() / 1000;
+        
+        // ตรวจสอบว่า token ยังไม่หมดอายุ (เพิ่ม buffer 30 วินาที)
+        if (decodedToken.exp > currentTime + 30) {
+          console.log("✅ Login - Valid token found, token expires at:", new Date(decodedToken.exp * 1000));
+          console.log("🕒 Login - Current time:", new Date());
+          return true;
+        } else {
+          console.log("❌ Login - Token expired or about to expire");
+          localStorage.removeItem("token");
+          localStorage.removeItem("role");
+          return false;
+        }
+      } catch (error) {
+        console.error("❌ Login - Invalid token:", error);
+        localStorage.removeItem("token");
+        localStorage.removeItem("role");
+        return false;
+      }
+    };
+    
+    // เช็คว่าเป็น root path หรือไม่ (localhost:5170 หรือ localhost:5170/admin)
+    const currentPath = window.location.pathname;
+    const isRootAccess = currentPath === "/" || currentPath === "/admin" || currentPath === "/admin/";
+    
+    console.log("🔍 Login - Is root access:", isRootAccess);
+    
+    // ถ้าเป็น root access และ token ยังไม่หมดอายุ ให้ redirect ไปที่หน้า Admin
+    if (isRootAccess && checkValidToken()) {
+      console.log("🚀 Login - Valid token detected, redirecting to Admin page");
+      setAuth(true);
+      
+      // ใช้ window.location.href เพื่อให้แน่ใจว่า redirect ทำงาน
+      // path หน้าหลักคือ /admin/admin/api
+      window.location.href = "/admin/admin/api";
+      return;
+    }
+    
+    // ถ้าไม่ใช่ root access หรือไม่มี valid token ให้อยู่ที่หน้า login
+    console.log("📋 Login - Staying on login page");
+  }, [navigate, setAuth]);
 
   const handleInputChange = (e) => {
     setFormData({
@@ -39,9 +99,12 @@ function Verify({ setAuth }) {
     setError("");
 
     try {
-      const res = await axios.post("/api1/account/auth", formData); // ⭐ แก้ API path
+      const res = await axios.post("/api1/account/auth", formData);
+      
+      // เก็บ token และ role
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("role", res.data.role);
+      
       console.log("✅ Login successful:", res.data.token);
       setAuth(true);
       setLoginSuccess(true);
@@ -62,9 +125,9 @@ function Verify({ setAuth }) {
     navigate("/forgot-password");
   };
 
+  // JSX ส่วนที่เหลือคงเดิม...
   return (
     <div className="min-h-screen flex flex-col">
-
       {/* Success Toast */}
       {loginSuccess && (
         <div className="fixed top-6 right-6 z-50">
