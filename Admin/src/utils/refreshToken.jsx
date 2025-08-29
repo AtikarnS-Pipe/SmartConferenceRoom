@@ -1,23 +1,47 @@
-
-import React from 'react';
+import React from "react";
 import axios from "axios";
-import { useNavigate } from 'react-router-dom';
+
+let isRefreshing = false;
 
 export const refreshToken = async () => {
-  try {
-    const refreshRes = await axios.post("/api1/account/refreshtoken", {}, { withCredentials: true });
-    console.log("Refresh response success:", refreshRes);
-    const newToken = refreshRes.data.accessToken;
-    if (!newToken) {
-      console.error("No accessToken returned in refresh response.");
-      return;
-    }
+  if (isRefreshing) {
+    console.log("⏩ Refresh already in progress, skipping...");
+    return;
+  }
 
-    localStorage.setItem("token", newToken);
-    // console.log("Access token refreshed successfully.");
-  } catch (err) {
-    console.error("Token refresh error:", err);
-    // navigate('/');
+  isRefreshing = true;
+  let attempts = 0;
+
+  try {
+    while (attempts < 2) {
+      try {
+        const refreshRes = await axios.post(
+          "/api1/account/refreshtoken",
+          {},
+          { withCredentials: true }
+        );
+
+        const newToken = refreshRes.data?.accessToken;
+        if (!newToken) {
+          throw new Error("No accessToken returned in refresh response.");
+        }
+
+        localStorage.setItem("token", newToken);
+        console.log("✅ Access token refreshed successfully.");
+        return newToken;
+      } catch (err) {
+        attempts++;
+        if (err.code === "ERR_NETWORK" && attempts < 2) {
+          console.warn("Network error, retrying refresh...");
+          await new Promise((r) => setTimeout(r, 1000));
+        } else {
+          throw err;
+        }
+      }
+    }
+    throw new Error("Refresh token failed after 2 attempts.");
+  } finally {
+    isRefreshing = false;
   }
 };
 
@@ -25,11 +49,9 @@ export default function RefreshButton({ onClick, children, ...props }) {
   const handleClick = async (e) => {
     try {
       await refreshToken();
-      if (onClick) {
-        onClick(e);
-      }
+      if (onClick) onClick(e);
     } catch (err) {
-      console.error('Refresh token failed:', err);
+      console.error("❌ Refresh token failed:", err);
       if (err.response?.status === 401) {
         console.log("Refresh token expired, redirecting to login");
         localStorage.removeItem("token");

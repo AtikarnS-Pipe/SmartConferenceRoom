@@ -376,10 +376,10 @@ const Room1501 = () => {
   };
 
   return (
-    <div className={`h-screen flex flex-col transition-colors duration-300 ${
+    <div className={`h-screen flex flex-col transition-colors duration-300 font-display ${
       darkMode 
-        ? 'bg-gradient-to-br from-gray-700 to-gray-800' 
-        : 'bg-gradient-to-br from-slate-50 to-slate-100'
+        ? 'bg-gray-900' 
+        : 'bg-slate-100'
     }`} style={{ overflow: 'hidden' }}>
       
       {/* Header Component */}
