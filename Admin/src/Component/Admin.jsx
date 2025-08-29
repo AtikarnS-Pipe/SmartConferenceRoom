@@ -223,7 +223,7 @@ function RoomPage() {
 
     return (
         <div className={`font-display min-h-screen transition-colors duration-300 ${
-            darkMode ? "bg-gray-700" : "bg-gray-50"
+            darkMode ? "bg-gray-900" : "bg-gray-50"
         }`}>
             <Header/>
             
