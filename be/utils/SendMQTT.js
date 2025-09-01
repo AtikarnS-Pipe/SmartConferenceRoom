@@ -1,5 +1,6 @@
 // MQTT server 
 const mqtt = require('mqtt');
+const { MqttState } = require('../models/MqttState');
 require('dotenv').config({ path: './config/.env' });
 // MQTT connect
 const mqttOptions = {
@@ -10,8 +11,11 @@ const mqttOptions = {
 };
 
 const connectUrl = process.env.MQTT_BROKER_URL; 
+// Keywords
+const SUB_TOPIC = process.env.MQTT_TOPIC; 
+let client;
 
-// ฟังก์ชันส่งข้อความ
+// ฟังก์ชันส่งข้อความ หา mqtt ให้ open/close door
 function sendMQTTMessage(topic, message) {
   return new Promise((resolve, reject) => {
     client.publish(topic, message, { qos: 1 }, (err) => {
@@ -26,12 +30,7 @@ function sendMQTTMessage(topic, message) {
   });
 }
 
-
-// Keywords
-const SUB_TOPIC = 'floor15/access-control/cmd';
-const PUB_TOPIC = 'floor15/access-control/res'; // แนะนำให้แยก topic สำหรับ response
-
-export async function initMqtt() {
+async function initMqtt() {
   const client = mqtt.connect(connectUrl, mqttOptions);
 
   client.on('connect', () => {
@@ -47,18 +46,65 @@ export async function initMqtt() {
 
   client.on('message', async (topic, payload) => {
     const text = payload.toString();
-    // อยากให้มี roomset = {"1-2": ["open", "open"], "5-6": ["closed", "closed"], "14-15": ["open", "closed"]};
-    // ตัวอย่างเงื่อนไข: “Check the status of room door {roomset}” ให้เปลี่ยนเป็นดังนี้ ไล่เช็คว่า message ส่งมาตามนี้ไหม
-    if (topic === SUB_TOPIC && /Check the status of room door 1-2/i.test(text)) {
-      // ต้องการตอบ 2 ข้อความ:
-      // Message 1: "room 15-1 is open" --> delay ~1 วินาที แล้วส่ง
-      // Message 2: "room 15-2 is closed" (ส่งต่อทันทีหลังจาก #1)
-      try {
-        await publish(client, PUB_TOPIC, 'room 15-1 is open'); เลข 1 คือ เลขตัวเเรกของ roomset ก่อน - นั้น
-        await delay(1000); // delay 1 วิ
-        await publish(client, PUB_TOPIC, 'room 15-2 is closed'); เลข 2 คือ เลขตัวที่สองของ roomset หลัง - นั้น
-      } catch (e) {
-        console.error('Publish error:', e);
+    console.log('MQTT Received data:', topic, text);
+
+    if (topic === SUB_TOPIC) {
+      // match pattern เช่น  "Check the status of room door 1-2"
+      const match = text.match(/Check the status of room door (\d+)-(\d+)/i);
+      if (match) {
+        const [_, first, second] = match; // _ is not interest index 0 value, ex:  first=1, second=2
+
+        const room1 = 1500 + parseInt(first, 10);
+        const room2 = 1500 + parseInt(second, 10);
+        const roomdash1 = "15-" + parseInt(room1.toString().slice(2), 10); // 15-1
+        const roomdash2 = "15-" + parseInt(room2.toString().slice(2), 10); // 15-14
+
+        try {
+          // หา state จาก DB
+          const DB_room1 = await MqttState.findOne({ Meeting_room: room1 });
+          const DB_room2 = await MqttState.findOne({ Meeting_room: room2 });
+
+          // ส่งออก MQTT ตาม state ที่เจอ
+
+          if (DB_room1) {
+            let statusMsg = `room ${roomdash1} is ${DB_room1.state}`;
+
+            if (DB_room1.state === 'adminopen' && DB_room1.updatedAt) {
+              const now = new Date();
+              const diffMs = now - DB_room1.updatedAt; // คำนวณ ms ว่าผ่านมากี่เท่าไรเเล้ว ถึง 15m? รอส่งกลับไป mqtt 
+              const diffSec = Math.floor(diffMs / 1000);
+              const minutes = Math.floor(diffSec / 60);
+              const seconds = diffSec % 60; 
+
+              const timeString = `${minutes}m${seconds}s`;
+              statusMsg += ` (${timeString})`; // append เวลา
+              console.log("ข้อความadminopen : ", )
+            }
+
+            await publish(client, SUB_TOPIC, statusMsg);
+            await delay(1000);
+          }
+          
+          if (DB_room2) {
+            let statusMsg = `room ${roomdash2} is ${DB_room2.state}`;
+
+            if (DB_room2.state === 'adminopen' && DB_room2.updatedAt) {
+              const now = new Date();
+              const diffMs = now - DB_room2.updatedAt; // คำนวณ ms ว่าผ่านมากี่เท่าไรเเล้ว ถึง 15m? รอส่งกลับไป mqtt 
+              const diffSec = Math.floor(diffMs / 1000);
+              const minutes = Math.floor(diffSec / 60);
+              const seconds = diffSec % 60; 
+
+              const timeString = `${minutes}m${seconds}s`;
+              statusMsg += ` (${timeString})`; // append เวลา
+              console.log("ข้อความadminopen : ", )
+            }
+
+            await publish(client, SUB_TOPIC, statusMsg);
+          }
+        } catch (err) {
+          console.error('DB query error:', err);
+        }
       }
     }
   });
@@ -77,4 +123,4 @@ function publish(client, topic, msg, qos = 1, retain = false) {
 function delay(ms) {
   return new Promise(res => setTimeout(res, ms));
 }
-module.exports = { sendMQTTMessage };
+module.exports = { sendMQTTMessage, initMqtt };

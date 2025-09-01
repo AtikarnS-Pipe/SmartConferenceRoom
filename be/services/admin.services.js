@@ -6,10 +6,10 @@ const userModel = require('../models/User');
 const sendMailAsync = require('../services/sendmail.services')
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
-const RESET_SECRET = process.env.JWT_RESET_SECRET || "jwt-reset-secret";
 const { roomobject } = require('../utils/tokenCache');
 require('dotenv').config({ path: '../config/.env' });
 
+const RESET_SECRET = process.env.JWT_RESET_SECRET || "jwt-reset-secret";
 async function GetScheduleData(actoken, Room, start, end) {
     try {
         // start: 06072025

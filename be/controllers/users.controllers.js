@@ -1,4 +1,4 @@
-const { authProvider } = require("../utils/AuthProvider");
+const { MqttState } = require("../models/MqttState");
 const { compareKey, adminCompareKey } = require('../services/pin.services');
 require('dotenv').config({ path: './config/.env' });
 const tokenCache = require("../utils/tokenCache");
@@ -71,7 +71,17 @@ const keyPins = async (req, res) => {
         }
 
         const isOpen = await sendMQTTMessage(`floor15/access-control/cmd`, `open_${room}`);
+        const isUpdated = await MqttState.findOneAndUpdate(
+            { Meeting_room: room_number },          // หา record ตามห้อง
+            { $set: { state: "open" } },     // อัพเดต state = open
+            { new: true, upsert: true }      // upsert กันพลาด ถ้าไม่เจอให้สร้าง
+        );
+
         console.log(`MQTT message sent: ${isOpen}`);
+        if (!isUpdated) {
+            console.error(`Failed to update MQTT state: ${isUpdated.error}`);
+            return res.status(500).json({ error: "Failed to update MQTT state" });
+        }
         if (!isOpen.success) {
             console.error(`Failed to send MQTT message: ${isOpen.error}`);
             return res.status(500).json({ error: "Failed to send MQTT message" });
@@ -86,9 +96,9 @@ const keyPins = async (req, res) => {
 const adminKeyPin = async (req, res) => {
     try {
         console.log(`${req.method} ${req.originalUrl}`);
-        // console.log("Request body:", req.body);
+
         const { pin, room_number } = req.body;
-        console.log("Pin:", pin, "Room Number:", room_number);
+        console.log("Pin:", pin, "Room Number:", room_number); 
         if (!pin || !room_number) {
             return res.status(200).json({ message: "Missing required fields! " });
         }
@@ -101,7 +111,17 @@ const adminKeyPin = async (req, res) => {
         }
         console.log("Admin pin valid, sending MQTT command to open door");
         const isOpen = await sendMQTTMessage(`floor15/access-control/cmd`, `adminopen_${room}`); 
+        const isUpdated = await MqttState.findOneAndUpdate(
+            { Meeting_room: room_number },          // หา record ตามห้อง
+            { $set: { state: "adminopen" } },     // อัพเดต state = adminopen
+            { new: true, upsert: true }      // upsert กันพลาด ถ้าไม่เจอให้สร้าง
+        );
+
         console.log(`MQTT message sent: ${isOpen}`);
+        if (!isUpdated) {
+            console.error(`Failed to update MQTT state: ${isUpdated.error}`);
+            return res.status(500).json({ error: "Failed to update MQTT state" });
+        }
         if (!isOpen.success) {
             console.error(`Failed to send MQTT message: ${isOpen.error}`);
             return res.status(500).json({ error: "Failed to send MQTT message" });
@@ -303,8 +323,18 @@ const closedoor = async (req, res) => {
     console.log("Room for close door:", room);
     try {
         const isClosed = await sendMQTTMessage(`floor15/access-control/cmd`, `close_${room}`);
+        const isUpdated = await MqttState.findOneAndUpdate(
+            { Meeting_room: room_number },          // หา record ตามห้อง
+            { $set: { state: "close" } },     // อัพเดต state = close
+            { new: true, upsert: true }      // upsert กันพลาด ถ้าไม่เจอให้สร้าง
+        );
+
+        if (!isUpdated) {
+            console.error(`Failed to update MQTT state: ${isUpdated.error}`);
+            return res.status(500).json({ error: "Failed to update MQTT state" });
+        }
         console.log(`MQTT message sent: ${isClosed}`);
-        if(!isClosed.success) throw new Error(isClosed.error);
+        if (!isClosed.success) throw new Error(isClosed.error);
         return res.status(200).json({ success: true, message: `Door for room ${room_number} closed successfully` });
     } catch (error) {
         console.error(`Error closing door for room ${room_number}:`, error)

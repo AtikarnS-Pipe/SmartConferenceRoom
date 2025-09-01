@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 const bookingKeySchema = new mongoose.Schema({
-    room: Number,
+    room: {type: Number, ref: "MqttState"},
     eventId: String,
     organizerMail: String,
     pin: String,
