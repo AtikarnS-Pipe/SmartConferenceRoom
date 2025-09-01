@@ -135,7 +135,6 @@ async function GetIdRoomnumber(token, roomobject) {
     // })));
     return calendars;
   } catch (error) {
-    console.error('Error Get calendar id by roomnumber :', error);
     throw new Error('Failed to fetch ID');
   }
 }

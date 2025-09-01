@@ -2,6 +2,7 @@ const { authProvider } = require("../utils/AuthProvider");
 const { compareKey, adminCompareKey } = require('../services/pin.services');
 require('dotenv').config({ path: './config/.env' });
 const tokenCache = require("../utils/tokenCache");
+const { sendMQTTMessage } = require("../utils/SendMQTT");
 const { getuserdatabyroom, waitUntil } = require('../services/users.services');
 // crud microsoft
 const { GeteventId, createMSEvent } = require('../services/users.services');
@@ -34,7 +35,7 @@ const getuser = async (req, res) => {
     getuserdatabyroom(res, RoomNumber);
     const intervalId = setInterval(async () => {
         getuserdatabyroom(res, RoomNumber);
-    }, 8000);
+    }, 6000);
 
     // จัดการ cleanup 
     req.on('close', () => {
@@ -61,7 +62,7 @@ const keyPins = async (req, res) => {
             return res.status(200).json({ error: "Missing required fields!" });
         }
 
-        const room = room_number.slice(2, 4);
+        const room = parseInt(room_number.slice(2, 4), 10);
         const isValid = await compareKey({ eventId, pin });
 
         if (!isValid) {
@@ -69,12 +70,12 @@ const keyPins = async (req, res) => {
             return res.status(200).json({ error: "Booking not found" });
         }
 
-        // const isOpen = await sendMQTTMessage(`floor15/access-control`, `open_${room}`);
-        // console.log(`MQTT message sent: ${isOpen}`);
-        // if (!isOpen.success) {
-        //     console.error(`Failed to send MQTT message: ${isOpen.error}`);
-        //     return res.status(500).json({ error: "Failed to send MQTT message" });
-        // }
+        const isOpen = await sendMQTTMessage(`floor15/access-control/cmd`, `open_${room}`);
+        console.log(`MQTT message sent: ${isOpen}`);
+        if (!isOpen.success) {
+            console.error(`Failed to send MQTT message: ${isOpen.error}`);
+            return res.status(500).json({ error: "Failed to send MQTT message" });
+        }
         return res.status(200).json({ pinValid: isValid });
     } catch (error) {
         return res.status(500).json({ error: "Internal Server Error" });
@@ -92,22 +93,23 @@ const adminKeyPin = async (req, res) => {
             return res.status(200).json({ message: "Missing required fields! " });
         }
 
-        const room = room_number.slice(2, 4);
+        const room = parseInt(room_number.slice(2, 4), 10);
         const result = await adminCompareKey(pin, room_number);
 
         if (!result.success) {
             return res.status(200).json({ success: result.success, message: result.message });
         }
-        // const isOpen = await sendMQTTMessage(`floor15/access-control`, `adminopen_${room}`); 
-        // console.log(`MQTT message sent: ${isOpen}`);
-        // if (!isOpen.success) {
-        //     console.error(`Failed to send MQTT message: ${isOpen.error}`);
-        //     return res.status(500).json({ error: "Failed to send MQTT message" });
-        // }
+        console.log("Admin pin valid, sending MQTT command to open door");
+        const isOpen = await sendMQTTMessage(`floor15/access-control/cmd`, `adminopen_${room}`); 
+        console.log(`MQTT message sent: ${isOpen}`);
+        if (!isOpen.success) {
+            console.error(`Failed to send MQTT message: ${isOpen.error}`);
+            return res.status(500).json({ error: "Failed to send MQTT message" });
+        }
 
         return res.status(200).json({ success: result.success, message: result.message });
     } catch (err) {
-        return res.status(500).json({ message: result.message });
+        return res.status(500).json({ message: err.message });
     }
 }
 
@@ -281,10 +283,11 @@ const endmeeting = async (req, res) => {
                 },
             })
         console.log("Update event success");
-
-        // const isClosed = await sendMQTTMessage(`floor15/access-control`, `close_${room}`);
-        // console.log(`MQTT message sent: ${isClosed}`);
-        // if(!isClosed.success) throw new Error(isClosed.error);
+        const room = parseInt(endmeetingdata.room_number.slice(2, 4), 10);
+        console.log("Room for close door:", room);
+        const isClosed = await sendMQTTMessage(`floor15/access-control/cmd`, `close_${room}`);
+        console.log(`MQTT message sent: ${isClosed}`);
+        if(!isClosed.success) throw new Error(isClosed.error);
 
         res.status(200).json({ message: "Update event successfully" });
     } catch (error) {
@@ -296,12 +299,12 @@ const endmeeting = async (req, res) => {
 const closedoor = async (req, res) => {
     const { room_number } = req.body;
     if (!room_number) return res.status(400).json({ error: "RoomNumber is Missing" });
-    const room = room_number.slice(2, 4);
-
+    const room = parseInt(room_number.slice(2, 4), 10);
+    console.log("Room for close door:", room);
     try {
-        // const isClosed = await sendMQTTMessage(`floor15/access-control`, `close_${room}`);
-        // console.log(`MQTT message sent: ${isClosed}`);
-        // if(!isClosed.success) throw new Error(isClosed.error);
+        const isClosed = await sendMQTTMessage(`floor15/access-control/cmd`, `close_${room}`);
+        console.log(`MQTT message sent: ${isClosed}`);
+        if(!isClosed.success) throw new Error(isClosed.error);
         return res.status(200).json({ success: true, message: `Door for room ${room_number} closed successfully` });
     } catch (error) {
         console.error(`Error closing door for room ${room_number}:`, error)
