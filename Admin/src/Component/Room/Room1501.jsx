@@ -5,8 +5,8 @@ import { ChevronLeft, ChevronRight, Home, Calendar, Clock, User, X, MapPin, Sun,
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import RefreshButton from '../../utils/refreshToken';
 import { useDarkMode } from '../Context/DarkModeContext';
+import { useProfile } from '../Context/ProfileContext';
 import Header from '../Header';
-import axios from 'axios';
 import {CircularProgress,} from '@mui/material'; 
 import {ArrowLeft}  from 'lucide-react';
 
@@ -41,8 +41,8 @@ const Room1501 = () => {
   const [scheduleApi, setScheduleApi] = useState(null);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [profile, setProfile] = useState(null);
   const { darkMode, toggleDarkMode } = useDarkMode();
+  const { profile } = useProfile(); // ใช้ profile จาก Context
   
   // Responsive state
   const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1200);
@@ -105,19 +105,6 @@ const Room1501 = () => {
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
-  }, []);
-
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) return;
-
-    axios.get('/api1/account/me', {
-      headers: { Authorization: `Bearer ${token}` }
-    })
-      .then(res => {
-        setProfile(res.data);
-      })
-      .catch(err => console.error(err));
   }, []);
 
   useEffect(() => {
@@ -387,6 +374,7 @@ const Room1501 = () => {
         <Header 
           title="Schedule" 
           subtitle="Room booking schedule view"
+          showPin={false}
         />
       </div>
       

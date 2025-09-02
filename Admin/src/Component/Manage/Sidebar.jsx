@@ -21,6 +21,7 @@ import {
 import RefreshButton from "../../utils/refreshToken";
 import axios from "axios";
 import { useDarkMode } from '../Context/DarkModeContext';
+import { useProfile } from '../Context/ProfileContext';
 
 export default function Sidebar() {
   const navigate = useNavigate();
@@ -29,8 +30,8 @@ export default function Sidebar() {
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const { darkMode } = useDarkMode();
 
-  // User profile states
-  const [profile, setProfile] = useState(null);
+  // User profile from context
+  const { profile, refreshProfile } = useProfile();
 
   // Change PIN states
   const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -46,35 +47,26 @@ export default function Sidebar() {
   const userName = localStorage.getItem("name") || "User";
   const userRole = localStorage.getItem("role") || "Admin";
 
-  // Fetch user profile on component mount
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) return;
+  // Use profile from context, no need to fetch again
 
-    axios
-      .get("/api1/account/me", {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      .then((res) => {
-        setProfile(res.data);
-        console.log("Profile data fetched:", res.data);
-      })
-      .catch((err) => {
-        console.error("Error fetching profile:", err);
-        // If API fails, we'll use localStorage values as fallback
-      });
-  }, []);
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+      // ตรวจสอบว่าคลิกเป็น RefreshButton หรือไม่
+      const isRefreshButton = event.target.closest('button')?.className?.includes('RefreshButton') || 
+                             event.target.closest('button')?.type === 'button';
+      
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target) && !isRefreshButton) {
+        console.log("👆 Clicking outside dropdown, closing..."); // Debug log
         setUserDropdownOpen(false);
       }
     };
-    document.addEventListener("mousedown", handleClickOutside);
-    document.addEventListener("touchstart", handleClickOutside);
+    
+    // ใช้ mouseup แทน mousedown เพื่อไม่ให้ขัดแย้งกับ onMouseDown ของ buttons
+    document.addEventListener("mouseup", handleClickOutside);
+    document.addEventListener("touchend", handleClickOutside);
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      document.removeEventListener("touchstart", handleClickOutside);
+      document.removeEventListener("mouseup", handleClickOutside);
+      document.removeEventListener("touchend", handleClickOutside);
     };  
   }, []);
 
@@ -142,8 +134,73 @@ export default function Sidebar() {
 
   // Handle Change PIN
   const handleChangePIN = () => {
+    console.log("🔑 Change PIN clicked - start"); // Debug log
     setUserDropdownOpen(false);
-    setTimeout(() => setShowPasswordModal(true), 100);
+    console.log("🔑 Dropdown closed, setting timeout for modal"); // Debug log
+    setTimeout(() => {
+      console.log("🔑 Opening password modal"); // Debug log
+      setShowPasswordModal(true);
+    }, 150); // เพิ่ม delay เล็กน้อย
+  };
+
+  // Handle Sign Out
+  const handleSignOut = async () => {
+    console.log("🚪 Sign out clicked - start"); // Debug log
+    setUserDropdownOpen(false); // ปิด dropdown ก่อน
+    
+    try {
+      console.log("🚪 Getting token from localStorage"); // Debug log
+      const token = localStorage.getItem("token");
+      
+      if (!token) {
+        console.log("❌ No token found, redirecting to login");
+        setStatusPopup("error");
+        setMessage("No authentication token found");
+        setTimeout(() => {
+          navigate("/");
+        }, 1000);
+        return;
+      }
+
+      console.log("🚪 Sending signout request to API"); // Debug log
+      const res = await axios.post(
+        "/api1/account/signout",
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          withCredentials: true,
+        }
+      );
+
+      console.log("🚪 Signout response:", res.data); // Debug log
+
+      if (res.data.success) {
+        console.log("✅ Signout successful, showing success message"); // Debug log
+        setStatusPopup("success");
+        setMessage("Sign out successful! Redirecting...");
+        setTimeout(() => {
+          console.log("🚪 Clearing localStorage and redirecting"); // Debug log
+          localStorage.clear();
+          window.location.href = "/"; // ใช้ window.location.href แทน navigate
+        }, 1500);
+      } else {
+        console.log("❌ Signout failed - no success flag"); // Debug log
+        setStatusPopup("error");
+        setMessage("Sign out failed. Please try again.");
+        setTimeout(() => {
+          setStatusPopup(null);
+        }, 3000);
+      }
+    } catch (error) {
+      console.error("❌ Signout error:", error); // Debug log
+      setStatusPopup("error");
+      setMessage("Failed to sign out. Please try again.");
+      setTimeout(() => {
+        setStatusPopup(null);
+      }, 3000);
+    }
   };
 
   const handleSubmitPasswordChange = async () => {
@@ -206,54 +263,9 @@ export default function Sidebar() {
     }
   };
 
-  // Helper function to refetch profile
+  // Helper function to refetch profile - ใช้ refreshProfile จาก Context แทน
   const fetchProfile = () => {
-    const token = localStorage.getItem("token");
-    if (!token) return;
-
-    axios
-      .get("/api1/account/me", {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      .then((res) => {
-        setProfile(res.data);
-      })
-      .catch((err) => {
-        console.error("Error fetching profile:", err);
-      });
-  };
-
-  // Handle Sign Out
-  const handleSignOut = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      const res = await axios.post(
-        "/api1/account/signout",
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          withCredentials: true,
-        }
-      );
-
-      if (res.data.success) {
-        setStatusPopup("success");
-        setMessage("Sign out successful! Redirecting...");
-        setTimeout(() => {
-          localStorage.clear();
-          navigate("/");
-        }, 1000);
-      }
-    } catch (error) {
-      console.error("Signout error:", error);
-      setStatusPopup("error");
-      setMessage("Failed to sign out. Please try again.");
-      setTimeout(() => {
-        setStatusPopup(null);
-      }, 1000);
-    }
+    refreshProfile();
   };
 
   // Get user initials for avatar
@@ -276,18 +288,22 @@ export default function Sidebar() {
     switch (role) {
       case 'Superadmin':
         return (
-          <div className="p-1 rounded-full bg-yellow-600">
-            <Crown className="w-6 h-6 text-white-100" />
+          <div className="p-1 rounded-full bg-yellow-600 w-full h-full flex items-center justify-center">
+            <Crown className="w-4 h-4 text-white" />
           </div>
         );
       case 'Admin':
         return (
-          <div className="p-1 rounded-full bg-blue-600">
-            <Shield className="w-6 h-6 text-gray-100" />
+          <div className="p-1 rounded-full bg-blue-600 w-full h-full flex items-center justify-center">
+            <Shield className="w-4 h-4 text-white" />
           </div>
         );
       default:
-        return null;
+        return (
+          <div className="p-1 rounded-full bg-gray-600 w-full h-full flex items-center justify-center">
+            <Users className="w-4 h-4 text-white" />
+          </div>
+        );
     }
   };
 
@@ -670,14 +686,24 @@ export default function Sidebar() {
                       <div className="py-2 px-1">
                         <div className="flex flex-col justify-center gap-2">
                           <RefreshButton
-                            onClick={handleChangePIN}
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              console.log("🔑 Desktop collapsed - Change PIN triggered"); // Debug log
+                              handleChangePIN();
+                            }}
                             className="p-3 rounded-lg text-slate-300 hover:bg-slate-600 hover:text-white transition-colors flex items-center justify-center"
                             title="Change PIN"
                           >
                             <Key className="w-5 h-5" />
                           </RefreshButton>
                           <RefreshButton
-                            onClick={handleSignOut}
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              console.log("🚪 Desktop collapsed - Sign Out triggered"); // Debug log
+                              handleSignOut();
+                            }}
                             className="p-3 rounded-lg text-slate-300 hover:bg-red-600 hover:text-white transition-colors flex items-center justify-center"
                             title="Sign Out"
                           >
@@ -721,14 +747,24 @@ export default function Sidebar() {
                     >
                       <div className="py-2">
                         <RefreshButton
-                          onClick={handleChangePIN}
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            console.log("🔑 Desktop expanded - Change PIN triggered"); // Debug log
+                            handleChangePIN();
+                          }}
                           className="w-full px-3 py-2 text-left text-sm text-slate-300 hover:bg-slate-600 hover:text-white flex items-center gap-2 transition-colors"
                         >
                           <Key className="w-4 h-4" />
                           Change PIN
                         </RefreshButton>
                         <RefreshButton
-                          onClick={handleSignOut}
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            console.log("🚪 Desktop expanded - Sign Out triggered"); // Debug log
+                            handleSignOut();
+                          }}
                           className="w-full px-3 py-2 text-left text-sm text-slate-300 hover:bg-red-600 hover:text-white flex items-center gap-2 transition-colors"
                         >
                           <LogOut className="w-4 h-4" />
@@ -805,13 +841,13 @@ export default function Sidebar() {
             </RefreshButton>
 
             {/* Mobile User Menu */}
-            <div className="relative">
+            <div className="relative" ref={dropdownRef}>
               <RefreshButton
                 className="flex flex-col items-center gap-1 p-3 rounded-lg text-slate-300 hover:bg-slate-700 hover:text-white min-w-[60px] min-h-[60px] justify-center transition-all duration-200"
                 onClick={() => setUserDropdownOpen(!userDropdownOpen)}
               >
-                <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs font-medium">
-                  {getUserInitials(displayName)}
+                <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-medium">
+                  {getRoleIcon()}
                 </div>
                 <span className="text-xs">Profile</span>
               </RefreshButton>
@@ -827,8 +863,8 @@ export default function Sidebar() {
                 >
                   <div className="p-3 border-b border-slate-600">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-medium">
-                        {getUserInitials(displayName)}
+                      <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium">
+                        {getRoleIcon()}
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-white truncate">
@@ -840,14 +876,24 @@ export default function Sidebar() {
                   </div>
                   <div className="py-2">
                     <RefreshButton
-                      onClick={handleChangePIN}
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log("🔑 Mobile - Change PIN triggered"); // Debug log
+                        handleChangePIN();
+                      }}
                       className="w-full px-3 py-2 text-left text-sm text-slate-300 hover:bg-slate-600 hover:text-white flex items-center gap-2 transition-colors"
                     >
                       <Key className="w-4 h-4" />
                       Change PIN
                     </RefreshButton>
                     <RefreshButton
-                      onClick={handleSignOut}
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log("🚪 Mobile - Sign Out triggered"); // Debug log
+                        handleSignOut();
+                      }}
                       className="w-full px-3 py-2 text-left text-sm text-slate-300 hover:bg-red-600 hover:text-white flex items-center gap-2 transition-colors"
                     >
                       <LogOut className="w-4 h-4" />

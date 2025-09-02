@@ -20,34 +20,46 @@ import {
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { DarkModeContext } from '../Context/DarkModeContext';
+import { useProfile } from '../Context/ProfileContext';
 import RefreshButton from '../../utils/refreshToken';
 import Statscard from '../Statscard';
 import Header from '../Header';
+import useUserData from '../../hooks/useUserData';
 
 function Admin() {
-  const [isLoading, setIsLoading] = useState(true);
+  // ใช้ custom hook สำหรับจัดการ user data
+  const {
+    housekeepers,
+    admins,
+    allUsers,
+    adminCount,
+    housekeeperCount,
+    isLoading: userDataLoading,
+    error: userDataError,
+    refreshData
+  } = useUserData();
+
   const [searchTerm, setSearchTerm] = useState('');
   const [members, setMembers] = useState([]);
   const [signoutsuccess, setSignoutsuccess] = useState(false);
-  const [profile, setProfile] = useState(null);
   const [selectedMembers, setSelectedMembers] = useState([]);
   const [newPassword, setNewPassword] = useState('');
   const [show, setShow] = useState(false);
   const [message, setMessage] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [housekeepers, setHousekeepers] = useState([]);
-  const [admins, setAdmins] = useState([]);
-  const [allUsers, setAllUsers] = useState([]);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [statusPopup, setStatusPopup] = useState(null);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [open, setOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // สำหรับ loading หน้า
+  
   const { darkMode, toggleDarkMode } = useContext(DarkModeContext);
+  const { profile } = useProfile(); // ใช้ profile จาก Context
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
 
-  // Loading effect
+  // Loading effect สำหรับหน้า
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoading(false);
@@ -55,67 +67,6 @@ function Admin() {
 
     return () => clearTimeout(timer);
   }, []);
-
-  useEffect(() => {
-    const housekeeperSource = new EventSource('/api1/account/housekeepers', {
-      withCredentials: true,
-    });
-  
-    const adminSource = new EventSource('/api1/account/member', {
-      withCredentials: true,
-    });
-  
-    const handleHousekeeperList = (event) => {
-      const data = JSON.parse(event.data);
-      if (Array.isArray(data)) {
-        setHousekeepers(data);
-      }
-    };
-  
-    const handleAdminList = (event) => {
-      const data = JSON.parse(event.data);
-      console.log("🔥 AdminList SSE data received:", data);
-      if (Array.isArray(data)) {
-        setAdmins(data);
-      }
-    };
-  
-    housekeeperSource.addEventListener('HousekeeperList', handleHousekeeperList);
-    adminSource.addEventListener('adminList', handleAdminList);
-  
-    housekeeperSource.onerror = (err) => {
-      console.error('SSE error (housekeeper):', err);
-      housekeeperSource.close();
-    };
-    adminSource.onerror = (err) => {
-      console.error('SSE error (admin):', err);
-      adminSource.close();
-    };
-  
-    return () => {
-      housekeeperSource.removeEventListener('HousekeeperList', handleHousekeeperList);
-      adminSource.removeEventListener('AdminList', handleAdminList);
-      housekeeperSource.close();
-      adminSource.close();
-    };
-  }, []);
-
-  const [adminCount, setAdminCount] = useState(0);
-  const [housekeeperCount, setHousekeeperCount] = useState(0);
-  
-  useEffect(() => {
-    setAllUsers([...admins, ...housekeepers]);
-  }, [admins, housekeepers]);
-
-  useEffect(() => {
-    const adminList = allUsers.filter(u => u.role === 'Admin');
-    const housekeeperList = allUsers.filter(u => u.role === 'Housekeeper');
-
-    console.log("🧑‍💼 allUsers (in housekeeper page):", allUsers);
-
-    setAdminCount(adminList.length);
-    setHousekeeperCount(housekeeperList.length);
-  }, [allUsers]);
 
   const adminmem = allUsers.filter(user => user.role === 'Admin');
 
@@ -202,32 +153,6 @@ function Admin() {
     }
   };
 
-  const handleSignout = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const res = await axios.post(
-        '/api1/account/signout',
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          withCredentials: true,
-        }
-      );
-
-      if (res.data.success) {
-        setSignoutsuccess(true);
-        setTimeout(() => {
-          window.location.href = '/';
-        }, 3000);
-      }
-
-    } catch (error) {
-      console.error('Signout error:', error);
-      alert('Failed to sign out.');
-    }
-  };
 
   const handleSelectAll = () => {
     if (selectedMembers.length === filteredMembers.length) {
@@ -242,20 +167,6 @@ function Admin() {
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
     );
   };
-
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) return;
-
-    axios.get('/api1/account/me', {
-      headers: { Authorization: `Bearer ${token}` }
-    })
-      .then(res => {
-        setProfile(res.data);
-        console.log("Profile data fetched:", res.data);
-      })
-      .catch(err => console.error(err));
-  }, []);
 
   useEffect(() => {
     if (profile) {
@@ -276,8 +187,7 @@ function Admin() {
   };
 
   // Loading Screen Component
-// Loading Screen Component
-  if (isLoading) {
+  if (isLoading || userDataLoading) {
     return (
       <div
         className={`min-h-screen flex items-center justify-center ${
@@ -302,8 +212,19 @@ function Admin() {
               darkMode ? "text-gray-400" : "text-gray-600"
             }`}
           >
-            Please wait while we prepare admin management
+            {userDataLoading ? "Loading user data..." : "Please wait while we prepare admin management"}
           </p>
+          {userDataError && (
+            <div className="mt-4">
+              <p className="text-red-500 text-sm mb-2">{userDataError}</p>
+              <button
+                onClick={refreshData}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm transition-colors duration-200"
+              >
+                Retry Connection
+              </button>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -315,7 +236,6 @@ function Admin() {
       <Header 
         title="Admin Management" 
         subtitle="Manage administrator accounts and access"
-        profile={profile}
         show={show}
         setShow={setShow}
       />

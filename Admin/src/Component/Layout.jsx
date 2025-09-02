@@ -23,33 +23,10 @@ const Layout = () => {
     setOutletKey(Date.now());
   };
 
-  // เพิ่ม SSE เพื่อดึงข้อมูลห้อง
-  useEffect(() => {
-    const code = new URLSearchParams(location.search).get("code");
-    const token = localStorage.getItem("token");
-
-    if (!token) return;
-
-    const eventSource = new EventSource(`/api1/admin/sse?code=${code}&token=${token}`);
-
-    eventSource.onmessage = (e) => {
-      try {
-        const data = JSON.parse(e.data);
-        setEvents(data.results);
-      } catch (err) {
-        console.error("Error parsing SSE data:", err);
-      }
-    };
-
-    eventSource.onerror = (err) => {
-      console.error("SSE error:", err);
-      eventSource.close();
-    };
-
-    return () => {
-      eventSource.close();
-    };
-  }, [location.search]);
+  // ลบ SSE connection เดิมออกแล้ว เพราะใช้ useUserData hook แทน
+  // useEffect(() => {
+  //   // SSE logic removed - handled by useUserData hook in individual components
+  // }, [location.search]);
 
   useEffect(() => {
     const timer = setInterval(() => {

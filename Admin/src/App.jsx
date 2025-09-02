@@ -15,6 +15,7 @@ import Housekeeper from "./Component/Manage/Housekeeper";
 import Log from "./Component/Manage/Log";
 import RoleGuard from "./Component/Authen/Frontend/Roleguard";
 import { ThemeProvider } from "./Component/Context/DarkModeContext";
+import { ProfileProvider } from "./Component/Context/ProfileContext";
 import AccountLayout from "./Component/Manage/Accountlayout";
 import UnauthorizedAccess from "./Component/Unauthorized";
 
@@ -25,6 +26,7 @@ function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
+        <ProfileProvider>
         {/* ✅ เอา basename ออก หรือใช้ basename="/admin" */}
         <Router basename="/admin">
           <Routes>
@@ -102,6 +104,7 @@ function App() {
             </Route>
           </Routes>
         </Router>
+        </ProfileProvider>
       </AuthProvider>
     </ThemeProvider>
   );

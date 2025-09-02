@@ -18,54 +18,79 @@ function RoomPage() {
   const [events, setEvents] = useState([]);
   const [filteredRoom, setFilteredRoom] = useState([]);
   const [filterType, setFilterType] = useState(null);
-  const [filterStatus, setFilterStatus] = useState("all");
   const [emptyMessage, setEmptyMessage] = useState("");
-  const [roomDataSource, setRoomDataSource] = useState(null);
 
   const location = useLocation();
   const { darkMode } = useDarkMode();
   const { authStatus, isRedirecting, logout, retryConnection } = useAuth();
 
-  // ใช้ ref เพื่อป้องกัน multiple connections
+  // ใช้ ref เพื่อป้องกัน multiple connections และเก็บ EventSource reference
   const connectionInitialized = useRef(false);
+  const roomDataSource = useRef(null);
   const retryCount = useRef(0);
   const maxRetries = 3;
 
   useEffect(() => {
     // Reset connection flag เมื่อ component mount
+    console.log("🚀 Admin component mounted, resetting flags");
     connectionInitialized.current = false;
     retryCount.current = 0;
+    setLoading(true); // เริ่มต้นด้วย loading state
 
     return () => {
-      if (roomDataSource) {
-        roomDataSource.close();
+      console.log("🧹 Admin component unmounting, cleaning up");
+      if (roomDataSource.current) {
+        roomDataSource.current.close();
+        roomDataSource.current = null;
       }
+      connectionInitialized.current = false;
     };
-  }, []);
+  }, []); // ลบ dependency เพื่อให้รันแค่ครั้งเดียวตอน mount
 
   useEffect(() => {
+    console.log("🔍 AuthStatus changed:", authStatus, "Connection initialized:", connectionInitialized.current);
+    
     // ถ้า authStatus เป็น authorized และยังไม่ได้ initialize connection
     if (authStatus === "authorized" && !connectionInitialized.current) {
+      console.log("✅ Starting room data initialization");
       initializeRoomData();
       connectionInitialized.current = true;
     } else if (authStatus === "unauthorized") {
+      console.log("❌ Unauthorized, cleaning up connections");
       setLoading(false);
       // ปิด connection ถ้ามี
-      if (roomDataSource) {
-        roomDataSource.close();
-        setRoomDataSource(null);
+      if (roomDataSource.current) {
+        roomDataSource.current.close();
+        roomDataSource.current = null;
       }
       connectionInitialized.current = false;
+    } else if (authStatus === "checking") {
+      console.log("⏳ Auth checking, setting loading state");
+      setLoading(true);
     }
-  }, [authStatus]);
+  }, [authStatus]); // ลบ roomDataSource dependency เพราะใช้ ref แล้ว
+
+  // useEffect สำหรับ handle route changes
+  useEffect(() => {
+    console.log("🛤️ Route changed, current path:", location.pathname);
+    
+    // ถ้ากลับมาที่หน้า admin และ authStatus เป็น authorized แต่ไม่มี connection
+    if (location.pathname.includes('/admin/api') && authStatus === "authorized" && !connectionInitialized.current) {
+      console.log("🔄 Route back to admin, reinitializing connection");
+      setLoading(true);
+      initializeRoomData();
+      connectionInitialized.current = true;
+    }
+  }, [location.pathname, authStatus]);
 
   const initializeRoomData = () => {
+    console.log("🔌 Initializing room data connection");
     const code = new URLSearchParams(location.search).get("code");
     const token = localStorage.getItem("token");
 
     // เช็คซ้ำอีกครั้งก่อนสร้าง connection
     if (!token) {
-      console.log("No token found, redirecting to home for login");
+      console.log("❌ No token found, redirecting to home for login");
       window.location.href = "/";
       return;
     }
@@ -78,7 +103,7 @@ function RoomPage() {
 
         if (decodedToken.exp <= currentTime) {
           // Token หมดอายุ
-          console.log("Token expired, redirecting to login");
+          console.log("❌ Token expired, redirecting to login");
           localStorage.removeItem("token");
           localStorage.removeItem("role");
           window.location.href = "/";
@@ -86,14 +111,14 @@ function RoomPage() {
         }
       } else {
         // Token ไม่ถูกต้อง
-        console.log("Invalid token format, redirecting to login");
+        console.log("❌ Invalid token format, redirecting to login");
         localStorage.removeItem("token");
         localStorage.removeItem("role");
         window.location.href = "/";
         return;
       }
     } catch (error) {
-      console.error("Error decoding token:", error);
+      console.error("❌ Error decoding token:", error);
       localStorage.removeItem("token");
       localStorage.removeItem("role");
       window.location.href = "/";
@@ -101,60 +126,71 @@ function RoomPage() {
     }
 
     // ปิด connection เดิมถ้ามี
-    if (roomDataSource) {
-      roomDataSource.close();
+    if (roomDataSource.current) {
+      console.log("🔌 Closing existing SSE connection");
+      roomDataSource.current.close();
+      roomDataSource.current = null;
     }
 
-    console.log("Initializing room data SSE connection");
+    console.log("🔌 Creating new SSE connection to /api1/admin/sse");
+    setLoading(true); // เซ็ต loading เมื่อเริ่มสร้าง connection
 
     // สร้าง SSE connection สำหรับข้อมูลห้อง
     const es = new EventSource(`/api1/admin/sse`);
-    setRoomDataSource(es);
+    roomDataSource.current = es;
 
     es.onopen = () => {
-      console.log("Room data SSE connection opened successfully");
+      console.log("✅ Room data SSE connection opened successfully");
       retryCount.current = 0; // Reset retry count เมื่อเชื่อมต่อสำเร็จ
     };
 
     es.onmessage = (e) => {
       try {
         const data = JSON.parse(e.data);
-        console.log("Received room data:", data);
+        // เพิ่มเงื่อนไขให้ console.log แสดงเฉพาะเมื่ออยู่ในหน้า Admin
+        if (location.pathname.includes('/admin/api')) {
+          console.log("📨 Received room data:", data);
+        }
 
         if (data.results) {
+          if (location.pathname.includes('/admin/api')) {
+            console.log("✅ Setting events data and stopping loading");
+          }
           setEvents(data.results);
           setLoading(false);
         }
       } catch (err) {
-        console.error("Error parsing room data:", err);
+        console.error("❌ Error parsing room data:", err);
         setLoading(false);
       }
     };
 
     es.onerror = (err) => {
-      console.error("Room data SSE error:", err);
+      console.error("❌ Room data SSE error:", err);
       setLoading(false);
 
       // ปิด connection
       es.close();
-      setRoomDataSource(null);
+      roomDataSource.current = null;
       connectionInitialized.current = false;
 
       // จำกัดจำนวนครั้งในการ retry
       if (retryCount.current < maxRetries) {
         retryCount.current++;
         console.log(
-          `Retrying connection (${retryCount.current}/${maxRetries})...`
+          `🔄 Retrying connection (${retryCount.current}/${maxRetries})...`
         );
 
         // รอ 2 วินาทีก่อน retry
         setTimeout(() => {
           if (authStatus === "authorized") {
+            console.log("🔄 Retrying room data initialization");
             initializeRoomData();
+            connectionInitialized.current = true;
           }
         }, 2000);
       } else {
-        console.log("Max retries reached, redirecting to home for login");
+        console.log("❌ Max retries reached, redirecting to home for login");
         // ถ้า retry เกินจำนวนที่กำหนด ให้กลับไปหน้าแรกเพื่อ login ใหม่
         window.location.href = "/";
       }
@@ -177,10 +213,12 @@ function RoomPage() {
   };
 
   const handleRetryConnection = () => {
-    console.log("Manual retry requested");
+    console.log("🔄 Manual retry requested");
     retryCount.current = 0;
     connectionInitialized.current = false;
     setLoading(true);
+    setEvents([]); // Clear existing data
+    setFilteredRoom([]); // Clear filters
 
     if (authStatus === "authorized") {
       initializeRoomData();
@@ -282,7 +320,7 @@ function RoomPage() {
         darkMode ? "bg-gray-900" : "bg-gray-50"
       }`}
     >
-      <Header />
+      <Header showPin={false} />
 
       <Statscard
         darkMode={darkMode}
@@ -331,8 +369,16 @@ function RoomPage() {
             }`}
           >
             <div className="flex items-center gap-2">
-              <span>Loading</span>
+              <span>Loading Room Data...</span>
               <CircularProgress size="25px" />
+            </div>
+            <div className="text-center text-sm">
+              <p className={darkMode ? "text-gray-300" : "text-gray-600"}>
+                Auth Status: {authStatus} | Connection: {connectionInitialized.current ? 'Yes' : 'No'}
+              </p>
+              <p className={darkMode ? "text-gray-300" : "text-gray-600"}>
+                Events Count: {events.length} | SSE: {roomDataSource.current ? 'Connected' : 'Disconnected'}
+              </p>
             </div>
             {retryCount.current > 0 && (
               <div className="text-center">

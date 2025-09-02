@@ -82,6 +82,15 @@ export const AuthProvider = ({ children }) => {
   }, [closeEventSource]);
 
   useEffect(() => {
+    // Reset initialized flag เมื่อ path เปลี่ยนไปยังหน้า protected
+    const currentPath = window.location.pathname;
+    if (currentPath.includes('/admin/api') || currentPath.includes('/account/') || currentPath.includes('/room/')) {
+      console.log("🛤️ Protected route detected, allowing re-initialization");
+      initialized.current = false;
+    }
+  }, [window.location.pathname]);
+
+  useEffect(() => {
     if (initialized.current) return;
     initialized.current = true;
     

@@ -1,5 +1,6 @@
 import RefreshButton from "../utils/refreshToken";
 import { useDarkMode } from "./Context/DarkModeContext";
+import { useProfile } from "./Context/ProfileContext";
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Sun, Moon, Eye, EyeOff } from "lucide-react";
@@ -7,11 +8,12 @@ import { Sun, Moon, Eye, EyeOff } from "lucide-react";
 function Header({ 
   title = "Dashboard", 
   subtitle = "Updated in real-time", 
-  profile,
   show,
   setShow,
+  showPin = true, // เพิ่ม prop สำหรับควบคุมการแสดง PIN
 }) {
   const { darkMode, toggleDarkMode } = useDarkMode();
+  const { profile } = useProfile(); // ใช้ profile จาก Context
   const location = useLocation();
   const [currentTime, setCurrentTime] = useState(new Date());
   
@@ -67,8 +69,8 @@ function Header({
 
         {/* ขวา - Controls */}
         <div className="flex justify-end items-center gap-4">
-          {/* PIN Display - แสดงเฉพาะเมื่อมี profile */}
-          {profile && (
+          {/* PIN Display - แสดงเฉพาะเมื่อมี profile และ showPin เป็น true */}
+          {profile && showPin && (
             <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg w-fit ${
               darkMode ? 'bg-gray-700' : 'bg-gray-200'
             }`}>

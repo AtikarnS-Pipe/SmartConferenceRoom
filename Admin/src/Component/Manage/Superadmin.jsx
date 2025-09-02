@@ -23,11 +23,25 @@ import {
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { DarkModeContext } from "../Context/DarkModeContext";
+import { useProfile } from "../Context/ProfileContext";
 import RefreshButton from "../../utils/refreshToken";
 import Statscard from "../Statscard";
 import Header from "../Header";
+import useUserData from "../../hooks/useUserData";
 
 function Superadmin() {
+  // ใช้ custom hook สำหรับจัดการ user data
+  const {
+    housekeepers,
+    admins,
+    allUsers,
+    adminCount,
+    housekeeperCount,
+    isLoading: userDataLoading,
+    error: userDataError,
+    refreshData
+  } = useUserData();
+
   const [searchTerm, setSearchTerm] = useState("");
   const [members, setMembers] = useState([]);
   const [newMember, setNewMember] = useState({
@@ -38,15 +52,11 @@ function Superadmin() {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showPin, setShowPin] = useState(false);
-  const [profile, setProfile] = useState(null);
   const [selectedMembers, setSelectedMembers] = useState([]);
   const [newPassword, setNewPassword] = useState("");
   const [show, setShow] = useState(false);
   const [showAdminStatus, setShowAdminStatus] = useState(false);
   const [signoutsuccess, setSignoutsuccess] = useState(false);
-  const [housekeepers, setHousekeepers] = useState([]);
-  const [admins, setAdmins] = useState([]);
-  const [allUsers, setAllUsers] = useState([]); // รวมทั้งหมด
   const [deleteadmin, setDeleteadmin] = useState(null);
   const [adminstatus, setAdminStatus] = useState(null);
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -57,7 +67,7 @@ function Superadmin() {
   const [open, setOpen] = useState(false);
   const [showDeleteAdminConfirm, setShowDeleteAdminConfirm] = useState(false);
   const [pendingDeleteAdmin, setPendingDeleteAdmin] = useState(null); // ฟังก์ชันที่รอการยืนยัน
-  const [loading, setLoading] = useState(true); // เพิ่ม loading state
+  const [loading, setLoading] = useState(true); // เพิ่ม loading state สำหรับหน้า
 
   // New states for Add Admin functionality
   const [showAddAdminModal, setShowAddAdminModal] = useState(false);
@@ -71,10 +81,11 @@ function Superadmin() {
   const [showAddAdminPassword, setShowAddAdminPassword] = useState(false);
 
   const { darkMode, toggleDarkMode } = useContext(DarkModeContext);
+  const { profile } = useProfile(); // ใช้ profile จาก Context
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
 
-  // เพิ่ม useEffect สำหรับจัดการ loading
+  // เพิ่ม useEffect สำหรับจัดการ loading หน้า
   useEffect(() => {
     const timer = setTimeout(() => {
       setLoading(false);
@@ -82,71 +93,6 @@ function Superadmin() {
 
     return () => clearTimeout(timer);
   }, []);
-
-  useEffect(() => {
-    const housekeeperSource = new EventSource("/api1/account/housekeepers", {
-      withCredentials: true,
-    });
-
-    const adminSource = new EventSource("/api1/account/member", {
-      withCredentials: true,
-    });
-
-    const handleHousekeeperList = (event) => {
-      const data = JSON.parse(event.data);
-      if (Array.isArray(data)) {
-        setHousekeepers(data);
-      }
-    };
-
-    const handleAdminList = (event) => {
-      const data = JSON.parse(event.data);
-      console.log("🔥 AdminList SSE data received:", data); // ⬅️ ใส่ตรงนี้
-      if (Array.isArray(data)) {
-        setAdmins(data);
-      }
-    };
-
-    housekeeperSource.addEventListener(
-      "HousekeeperList",
-      handleHousekeeperList
-    );
-    adminSource.addEventListener("adminList", handleAdminList);
-
-    housekeeperSource.onerror = (err) => {
-      console.error("SSE error (housekeeper):", err);
-      housekeeperSource.close();
-    };
-    adminSource.onerror = (err) => {
-      console.error("SSE error (admin):", err);
-      adminSource.close();
-    };
-
-    return () => {
-      housekeeperSource.removeEventListener(
-        "HousekeeperList",
-        handleHousekeeperList
-      );
-      adminSource.removeEventListener("AdminList", handleAdminList);
-      housekeeperSource.close();
-      adminSource.close();
-    };
-  }, []);
-
-  const [adminCount, setAdminCount] = useState(0);
-  const [housekeeperCount, setHousekeeperCount] = useState(0);
-
-  useEffect(() => {
-    setAllUsers([...admins, ...housekeepers]);
-  }, [admins, housekeepers]);
-
-  useEffect(() => {
-    const adminList = allUsers.filter((u) => u.role === "Admin");
-    const housekeeperList = allUsers.filter((u) => u.role === "Housekeeper");
-
-    setAdminCount(adminList.length);
-    setHousekeeperCount(housekeeperList.length);
-  }, [allUsers]);
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -157,6 +103,7 @@ function Superadmin() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+  
   const superadminmem = allUsers.filter((user) => user.role === "Admin");
 
   const filteredMembers = superadminmem.filter((member) => {
@@ -167,9 +114,9 @@ function Superadmin() {
       member.role?.toLowerCase().includes(keyword)
     );
   });
-  console.log("Search Term:", searchTerm);
-  console.log("Admins:", admins);
-  console.log("Filtered:", filteredMembers);
+  // console.log("Search Term:", searchTerm);
+  // console.log("Admins:", admins);
+  // console.log("Filtered:", filteredMembers);
 
   const handleAddAdmin = async (e) => {
     e.preventDefault();
@@ -317,21 +264,6 @@ function Superadmin() {
   };
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) return;
-
-    axios
-      .get("/api1/account/me", {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      .then((res) => {
-        setProfile(res.data);
-        console.log("Profile data fetched:", res.data);
-      })
-      .catch((err) => console.error(err));
-  }, []);
-
-  useEffect(() => {
     if (profile) {
       console.log("Profile state updated:", profile);
     }
@@ -357,7 +289,7 @@ function Superadmin() {
   };
 
   // Loading Screen Component
-  if (loading) {
+  if (loading || userDataLoading) {
     return (
       <div
         className={`min-h-screen flex items-center justify-center ${
@@ -382,8 +314,19 @@ function Superadmin() {
               darkMode ? "text-gray-400" : "text-gray-600"
             }`}
           >
-            Please wait while we prepare admin management
+            {userDataLoading ? "Loading user data..." : "Please wait while we prepare superadmin management"}
           </p>
+          {userDataError && (
+            <div className="mt-4">
+              <p className="text-red-500 text-sm mb-2">{userDataError}</p>
+              <button
+                onClick={refreshData}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm transition-colors duration-200"
+              >
+                Retry Connection
+              </button>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -551,6 +494,7 @@ function Superadmin() {
 
               <div className="flex justify-end gap-2">
                 <RefreshButton
+                  type="button"
                   onClick={() => {
                     setShowAddAdminModal(false);
                     setAddAdminForm({
@@ -684,7 +628,6 @@ function Superadmin() {
         <Header 
         title="Admin Management" 
         subtitle="Manage administrator accounts and access"
-        profile={profile}
         show={show}
         setShow={setShow}
       />

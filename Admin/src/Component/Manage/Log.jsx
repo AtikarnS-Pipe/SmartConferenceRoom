@@ -27,6 +27,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { DarkModeContext } from "../Context/DarkModeContext";
+import { useProfile } from "../Context/ProfileContext";
 import RefreshButton from "../../utils/refreshToken";
 import Header from "../Header";
 
@@ -36,13 +37,13 @@ function Log() {
   const [selectedSource, setSelectedSource] = useState("all");
   const [logs, setLogs] = useState([]);
   const [show, setShow] = useState(false);
-  const [profile, setProfile] = useState("");
   const [statusPopup, setStatusPopup] = useState(null);
   const [open, setOpen] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState("disconnected");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(true); // เพิ่ม loading state
   const { darkMode, toggleDarkMode } = useContext(DarkModeContext);
+  const { profile } = useProfile(); // ใช้ profile จาก Context
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
 
@@ -170,21 +171,6 @@ function Log() {
   }, []);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) return;
-
-    axios
-      .get("/api1/account/me", {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      .then((res) => {
-        setProfile(res.data);
-        console.log("Profile data fetched:", res.data);
-      })
-      .catch((err) => console.error(err));
-  }, []);
-
-  useEffect(() => {
     if (profile) {
       console.log("Profile state updated:", profile);
     }
@@ -253,7 +239,6 @@ function Log() {
         <Header
           title="Dashboard"
           subtitle="Real-time system logs and monitoring"
-          profile={profile}
           show={show}
           setShow={setShow}
         />

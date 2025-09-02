@@ -20,11 +20,25 @@ import {
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { DarkModeContext } from "../Context/DarkModeContext"; // Adjust the import path as necessary
+import { useProfile } from "../Context/ProfileContext";
 import RefreshButton from "../../utils/refreshToken"; // Adjust the import path as necessary
 import Statscard from "../Statscard";
 import Header from "../Header";
+import useUserData from "../../hooks/useUserData";
 
 function Housekeeper() {
+  // ใช้ custom hook สำหรับจัดการ user data
+  const {
+    housekeepers,
+    admins,
+    allUsers,
+    adminCount,
+    housekeeperCount,
+    isLoading: userDataLoading,
+    error: userDataError,
+    refreshData
+  } = useUserData();
+
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedMembers, setSelectedMembers] = useState([]);
   const [newPassword, setNewPassword] = useState("");
@@ -34,7 +48,6 @@ function Housekeeper() {
   const [createhousekeeper, setCreatehousekeeper] = useState("");
   const [deletehousekeeper, setDeletehousekeeper] = useState("");
   const [error, setError] = useState("");
-  const [allUsers, setAllUsers] = useState([]); // รวมทั้งหมด
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [pendingDelete, setPendingDelete] = useState(null); // ใช้เก็บ callback ลบจริง
   const [pinTargetName, setPinTargetName] = useState("");
@@ -44,10 +57,7 @@ function Housekeeper() {
   const [statusPopup, setStatusPopup] = useState(null);
   const [housekeeper, setHousekeeper] = useState([]);
   const [message, setMessage] = useState("");
-  const [housekeepers, setHousekeepers] = useState([]);
-  const [admins, setAdmins] = useState([]);
   const [open, setOpen] = useState(false);
-  const [profile, setProfile] = useState("");
   const dropdownRef = useRef(null);
   const [showModal, setShowModal] = useState(false);
   const [newMember, setNewMember] = useState({
@@ -55,88 +65,22 @@ function Housekeeper() {
     pin: "",
     role: "Housekeeper",
   });
-  const [loading, setLoading] = useState(true); // เพิ่ม loading state
+  const [loading, setLoading] = useState(true); // เพิ่ม loading state สำหรับหน้า
   const { darkMode, toggleDarkMode } = useContext(DarkModeContext);
+  const { profile } = useProfile(); // ใช้ profile จาก Context
   const [visibleRow, setVisibleRow] = useState(null); // เก็บ index หรือ id ของ row ที่เปิดอยู่
 
   const togglePin = (rowId) => {
     setVisibleRow((prev) => (prev === rowId ? null : rowId));
   };
-    useEffect(() => {
-      const timer = setTimeout(() => {
-        setLoading(false);
-      }, 200); // แสดง loading 2 วินาที
+  
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 200); // แสดง loading 2 วินาที
   
       return () => clearTimeout(timer);
     }, []);
-
-  useEffect(() => {
-    const housekeeperSource = new EventSource("/api1/account/housekeepers", {
-      withCredentials: true,
-    });
-
-    const adminSource = new EventSource("/api1/account/member", {
-      withCredentials: true,
-    });
-
-    const handleHousekeeperList = (event) => {
-      const data = JSON.parse(event.data);
-      if (Array.isArray(data)) {
-        setHousekeepers(data);
-      }
-    };
-
-    const handleAdminList = (event) => {
-      const data = JSON.parse(event.data);
-      console.log("📥 AdminList SSE data received:", data); // ⬅️ ใส่ตรงนี้
-      if (Array.isArray(data)) {
-        setAdmins(data);
-      }
-    };
-
-    housekeeperSource.addEventListener(
-      "HousekeeperList",
-      handleHousekeeperList
-    );
-    adminSource.addEventListener("adminList", handleAdminList);
-
-    housekeeperSource.onerror = (err) => {
-      console.error("SSE error (housekeeper):", err);
-      housekeeperSource.close();
-    };
-    adminSource.onerror = (err) => {
-      console.error("SSE error (admin):", err);
-      adminSource.close();
-    };
-
-    return () => {
-      housekeeperSource.removeEventListener(
-        "HousekeeperList",
-        handleHousekeeperList
-      );
-      adminSource.removeEventListener("AdminList", handleAdminList);
-      housekeeperSource.close();
-      adminSource.close();
-    };
-  }, []);
-
-  // คำนวณจำนวน
-  const [adminCount, setAdminCount] = useState(0);
-  const [housekeeperCount, setHousekeeperCount] = useState(0);
-
-  useEffect(() => {
-    setAllUsers([...admins, ...housekeepers]);
-  }, [admins, housekeepers]);
-
-  useEffect(() => {
-    const adminList = allUsers.filter((u) => u.role === "Admin");
-    const housekeeperList = allUsers.filter((u) => u.role === "Housekeeper");
-
-    console.log("🧑‍💼 allUsers (in housekeeper page):", allUsers);
-
-    setAdminCount(adminList.length);
-    setHousekeeperCount(housekeeperList.length);
-  }, [allUsers]);
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -336,28 +280,13 @@ function Housekeeper() {
   };
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) return;
-
-    axios
-      .get("/api1/account/me", {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      .then((res) => {
-        setProfile(res.data);
-        console.log("Profile data fetched:", res.data);
-      })
-      .catch((err) => console.error(err));
-  }, []);
-
-  useEffect(() => {
     if (profile) {
       console.log("Profile state updated:", profile);
     }
   }, [profile]);
 
     // Loading Screen Component
-  if (loading) {
+  if (loading || userDataLoading) {
     return (
       <div
         className={`min-h-screen flex items-center justify-center ${
@@ -382,8 +311,19 @@ function Housekeeper() {
               darkMode ? "text-gray-400" : "text-gray-600"
             }`}
           >
-            Please wait while we prepare admin management
+            {userDataLoading ? "Loading user data..." : "Please wait while we prepare housekeeper management"}
           </p>
+          {userDataError && (
+            <div className="mt-4">
+              <p className="text-red-500 text-sm mb-2">{userDataError}</p>
+              <button
+                onClick={refreshData}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm transition-colors duration-200"
+              >
+                Retry Connection
+              </button>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -590,7 +530,6 @@ function Housekeeper() {
         <Header
           title="Housekeeper Management"
           subtitle="Manage housekeepers and access levels"
-          profile={profile}
           show={show}
           setShow={setShow}
         />
