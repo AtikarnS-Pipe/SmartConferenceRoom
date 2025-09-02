@@ -70,16 +70,16 @@ const keyPins = async (req, res) => {
             return res.status(200).json({ error: "Booking not found" });
         }
 
-        const isOpen = await sendMQTTMessage(`floor15/access-control/cmd`, `open_${room}`);
+        const isOpen = await sendMQTTMessage(process.env.MQTT_TOPIC, `open_${room}`);
         const isUpdated = await MqttState.findOneAndUpdate(
-            { Meeting_room: room_number },          // หา record ตามห้อง
+            { Meeting_room: room_number },   // หา record ตามห้อง
             { $set: { state: "open" } },     // อัพเดต state = open
             { new: true, upsert: true }      // upsert กันพลาด ถ้าไม่เจอให้สร้าง
         );
 
-        console.log(`MQTT message sent: ${isOpen}`);
+        console.log("MQTT message sent:", isOpen);
         if (!isUpdated) {
-            console.error(`Failed to update MQTT state: ${isUpdated.error}`);
+            console.error("Failed to update MQTT state");
             return res.status(500).json({ error: "Failed to update MQTT state" });
         }
         if (!isOpen.success) {
@@ -109,17 +109,29 @@ const adminKeyPin = async (req, res) => {
         if (!result.success) {
             return res.status(200).json({ success: result.success, message: result.message });
         }
+
+        // check current state now in database
+        const currentState = await MqttState.findOne({ Meeting_room: room_number });
+
+        if (currentState && currentState.state === "open") {
+            console.log(`Room ${room_number} is already open. Skipping MQTT send.`);
+            return res.status(200).json({ 
+                success: true, 
+                message: `Room ${room_number} is already open` 
+            });
+        }
         console.log("Admin pin valid, sending MQTT command to open door");
-        const isOpen = await sendMQTTMessage(`floor15/access-control/cmd`, `adminopen_${room}`); 
+
+        const isOpen = await sendMQTTMessage(process.env.MQTT_TOPIC, `adminopen_${room}`); 
         const isUpdated = await MqttState.findOneAndUpdate(
-            { Meeting_room: room_number },          // หา record ตามห้อง
-            { $set: { state: "adminopen" } },     // อัพเดต state = adminopen
-            { new: true, upsert: true }      // upsert กันพลาด ถ้าไม่เจอให้สร้าง
+            { Meeting_room: room_number, state: { $ne: "open" } }, // หา record ตามห้อง
+            { $set: { state: "adminopen" } },  // อัพเดต state = adminopen
+            { new: true, upsert: true }       // upsert กันพลาด ถ้าไม่เจอให้สร้าง
         );
 
-        console.log(`MQTT message sent: ${isOpen}`);
+        console.log("MQTT message sent:", isOpen);
         if (!isUpdated) {
-            console.error(`Failed to update MQTT state: ${isUpdated.error}`);
+            console.error("Failed to update MQTT state");
             return res.status(500).json({ error: "Failed to update MQTT state" });
         }
         if (!isOpen.success) {
@@ -305,7 +317,16 @@ const endmeeting = async (req, res) => {
         console.log("Update event success");
         const room = parseInt(endmeetingdata.room_number.slice(2, 4), 10);
         console.log("Room for close door:", room);
-        const isClosed = await sendMQTTMessage(`floor15/access-control/cmd`, `close_${room}`);
+        const isClosed = await sendMQTTMessage(process.env.MQTT_TOPIC, `close_${room}`);
+        const isUpdated = await MqttState.findOneAndUpdate(
+            { Meeting_room: endmeetingdata.room_number }, // หา record ตามห้อง
+            { $set: { state: "close" } },     // อัพเดต state = open
+            { new: true, upsert: true }      // upsert กันพลาด ถ้าไม่เจอให้สร้าง
+        );
+        if (!isUpdated) {
+            console.error("Failed to update MQTT state");
+            return res.status(500).json({ error: "Failed to update MQTT state" });
+        }
         console.log(`MQTT message sent: ${isClosed}`);
         if(!isClosed.success) throw new Error(isClosed.error);
 
@@ -322,7 +343,7 @@ const closedoor = async (req, res) => {
     const room = parseInt(room_number.slice(2, 4), 10);
     console.log("Room for close door:", room);
     try {
-        const isClosed = await sendMQTTMessage(`floor15/access-control/cmd`, `close_${room}`);
+        const isClosed = await sendMQTTMessage(process.env.MQTT_TOPIC, `close_${room}`);
         const isUpdated = await MqttState.findOneAndUpdate(
             { Meeting_room: room_number },          // หา record ตามห้อง
             { $set: { state: "close" } },     // อัพเดต state = close
@@ -330,7 +351,7 @@ const closedoor = async (req, res) => {
         );
 
         if (!isUpdated) {
-            console.error(`Failed to update MQTT state: ${isUpdated.error}`);
+            console.error("Failed to update MQTT state");
             return res.status(500).json({ error: "Failed to update MQTT state" });
         }
         console.log(`MQTT message sent: ${isClosed}`);

@@ -56,8 +56,8 @@ async function initMqtt() {
 
         const room1 = 1500 + parseInt(first, 10);
         const room2 = 1500 + parseInt(second, 10);
-        const roomdash1 = "15-" + parseInt(room1.toString().slice(2), 10); // 15-1
-        const roomdash2 = "15-" + parseInt(room2.toString().slice(2), 10); // 15-14
+        const roomdash1 = "15-" + first; // 15-1
+        const roomdash2 = "15-" + second; // 15-14
 
         try {
           // หา state จาก DB
@@ -77,12 +77,15 @@ async function initMqtt() {
               const seconds = diffSec % 60; 
 
               const timeString = `${minutes}m${seconds}s`;
-              statusMsg += ` (${timeString})`; // append เวลา
-              console.log("ข้อความadminopen : ", )
+              statusMsg += ` ${timeString}`; // append เวลา
+              console.log("ข้อความadminopen : ", statusMsg);
+              if(diffSec >= 15){ // หากมากกว่า 15 min ให้ไปบอก mqtt ปิดประตู
+                sendMQTTMessage(SUB_TOPIC, `close_${first}`); // ex. close_1
+              }
             }
 
-            await publish(client, SUB_TOPIC, statusMsg);
-            await delay(1000);
+            await sendMQTTMessage(SUB_TOPIC, statusMsg);
+            await delay(500);
           }
           
           if (DB_room2) {
@@ -97,26 +100,19 @@ async function initMqtt() {
 
               const timeString = `${minutes}m${seconds}s`;
               statusMsg += ` (${timeString})`; // append เวลา
-              console.log("ข้อความadminopen : ", )
+              console.log("ข้อความadminopen : ", statusMsg);
+              if(diffSec >= 15){ // หากมากกว่า 15 min ให้ไปบอก mqtt ปิดประตู
+                sendMQTTMessage(SUB_TOPIC, `close_${second}`); // ex. close_2
+              }
             }
 
-            await publish(client, SUB_TOPIC, statusMsg);
+            await sendMQTTMessage(SUB_TOPIC, statusMsg);
           }
         } catch (err) {
           console.error('DB query error:', err);
         }
       }
     }
-  });
-}
-
-function publish(client, topic, msg, qos = 1, retain = false) {
-  return new Promise((resolve, reject) => {
-    client.publish(topic, msg, { qos, retain }, (err) => {
-      if (err) return reject(err);
-      console.log(`MQTT -> ${topic}: ${msg}`);
-      resolve();
-    });
   });
 }
 
