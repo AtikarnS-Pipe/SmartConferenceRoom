@@ -50,6 +50,21 @@ function RoomPage() {
   useEffect(() => {
     console.log("🔍 AuthStatus changed:", authStatus, "Connection initialized:", connectionInitialized.current);
     
+    // ⭐ ตรวจสอบ forceLogout flag ก่อนทำอะไร
+    const forceLogout = localStorage.getItem("forceLogout");
+    if (forceLogout === "true") {
+      console.log("🚨 Admin useEffect: ForceLogout flag detected - letting Authcontext handle redirect");
+      // ปิด connection ถ้ามี
+      if (roomDataSource.current) {
+        roomDataSource.current.close();
+        roomDataSource.current = null;
+      }
+      connectionInitialized.current = false;
+      setLoading(false);
+      // ⭐ ไม่ redirect ที่นี่ ให้ Authcontext.jsx จัดการ
+      return;
+    }
+    
     // ถ้า authStatus เป็น authorized และยังไม่ได้ initialize connection
     if (authStatus === "authorized" && !connectionInitialized.current) {
       console.log("✅ Starting room data initialization");
@@ -85,6 +100,16 @@ function RoomPage() {
 
   const initializeRoomData = () => {
     console.log("🔌 Initializing room data connection");
+    
+    // ⭐ ตรวจสอบ forceLogout flag ก่อนทำอะไร
+    const forceLogout = localStorage.getItem("forceLogout");
+    if (forceLogout === "true") {
+      console.log("🚨 Admin: ForceLogout flag detected - letting Authcontext handle redirect");
+      // ⭐ ไม่ redirect ที่นี่ ให้ Authcontext.jsx จัดการ
+      setLoading(false);
+      return;
+    }
+    
     const code = new URLSearchParams(location.search).get("code");
     const token = localStorage.getItem("token");
 
@@ -135,7 +160,8 @@ function RoomPage() {
     console.log("🔌 Creating new SSE connection to /api1/admin/sse");
     setLoading(true); // เซ็ต loading เมื่อเริ่มสร้าง connection
 
-    // สร้าง SSE connection สำหรับข้อมูลห้อง
+    // ⭐ สร้าง SSE connection สำหรับข้อมูลห้อง โดยไม่ส่ง code (ใช้ token ที่มีอยู่)
+    console.log("🔗 Creating room data SSE connection with existing token (no code)");
     const es = new EventSource(`/api1/admin/sse`);
     roomDataSource.current = es;
 
@@ -195,6 +221,32 @@ function RoomPage() {
         window.location.href = "/";
       }
     };
+
+    // ⭐ เพิ่ม forceLogout event listener สำหรับ room data SSE
+    es.addEventListener("forceLogout", (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        console.log("🚨 Admin: Force logout received:", data.error);
+        
+        // ปิด SSE connection ทันที
+        es.close();
+        roomDataSource.current = null;
+        connectionInitialized.current = false;
+        
+        // ⭐ ตั้ง flag แต่ไม่ redirect (ให้ Authcontext.jsx จัดการ)
+        localStorage.setItem("forceLogout", "true");
+        localStorage.setItem("unauthorizedReason", data.error || "Access denied");
+        
+        console.log("🚨 Admin: ForceLogout flag set, letting Authcontext handle redirect");
+      } catch (err) {
+        console.error("❌ Error in Admin forceLogout:", err);
+        es.close();
+        roomDataSource.current = null;
+        connectionInitialized.current = false;
+        localStorage.setItem("forceLogout", "true");
+        localStorage.setItem("unauthorizedReason", "Session error");
+      }
+    });
   };
 
   // ส่วนที่เหลือของโค้ดคงเดิม...
@@ -261,58 +313,6 @@ function RoomPage() {
     );
   }
 
-  // แสดงหน้า error ถ้าไม่มีสิทธิ์
-  if (authStatus === "unauthorized") {
-    return (
-      <div
-        className={`min-h-screen flex items-center justify-center transition-colors duration-300 ${
-          darkMode ? "bg-gray-900" : "bg-gray-50"
-        }`}
-      >
-        <div className="text-center">
-          <div className="mb-4">
-            <svg
-              className="mx-auto h-12 w-12 text-red-500"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
-              />
-            </svg>
-          </div>
-          <h2
-            className={`text-xl font-semibold mb-2 ${
-              darkMode ? "text-white" : "text-gray-900"
-            }`}
-          >
-            Access Denied
-          </h2>
-          <p className={`mb-4 ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
-            คุณไม่มีสิทธิ์เข้าใช้งานระบบนี้
-          </p>
-          <div className="space-x-2">
-            <button
-              onClick={() => (window.location.href = "/")}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition-colors duration-200"
-            >
-              เข้าสู่ระบบใหม่
-            </button>
-            <button
-              onClick={() => (window.location.href = "/admin/api")}
-              className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-md transition-colors duration-200"
-            >
-              ลองใหม่
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div

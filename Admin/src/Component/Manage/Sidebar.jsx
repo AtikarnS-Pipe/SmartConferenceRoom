@@ -122,12 +122,21 @@ export default function Sidebar() {
   };
 
   const handleNavigateByRole = () => {
+    console.log("🧭 handleNavigateByRole called");
     const role = localStorage.getItem("role");
+    const token = localStorage.getItem("token");
+    console.log("🧭 Current role:", role);
+    console.log("🧭 Token exists:", !!token);
+    console.log("🧭 Token length:", token ? token.length : 0);
+    
     if (role === "Superadmin") {
+      console.log("🧭 Navigating to superadmin");
       navigate("/account/superadmin");
     } else if (role === "Admin") {
+      console.log("🧭 Navigating to admin");
       navigate("/account/admin");
     } else {
+      console.log("🧭 No valid role, navigating to root");
       navigate("/");
     }
   };

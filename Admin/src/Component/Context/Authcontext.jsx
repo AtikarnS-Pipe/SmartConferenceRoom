@@ -77,7 +77,7 @@ export const AuthProvider = ({ children }) => {
     setIsRedirecting(true);
     
     setTimeout(() => {
-      window.location.href = "/unauthorized";
+      window.location.href = "/admin/unauthorized";
     }, 100);
   }, [closeEventSource]);
 
@@ -99,6 +99,7 @@ export const AuthProvider = ({ children }) => {
       
       const token = localStorage.getItem("token");
       const role = localStorage.getItem("role");
+      const forceLogout = localStorage.getItem("forceLogout");
       const fullPath = window.location.pathname;
       const routerPath = fullPath.replace('/admin', '') || '/';
       const hasOAuthCode = new URLSearchParams(window.location.search).get("code");
@@ -108,9 +109,31 @@ export const AuthProvider = ({ children }) => {
         routerPath,
         hasToken: !!token,
         hasRole: !!role,
+        forceLogout,
         hasOAuthCode: !!hasOAuthCode,
         tokenLength: token ? token.length : 0
       });
+
+      // ⭐ ตรวจสอบ forceLogout flag ก่อน
+      if (forceLogout === "true") {
+        console.log("🚨 ForceLogout flag detected - clearing flag and redirecting");
+        localStorage.removeItem("forceLogout");
+        localStorage.removeItem("unauthorizedReason");
+        
+        // ⭐ ถ้าอยู่หน้า unauthorized แล้ว ไม่ต้อง redirect อีก
+        if (routerPath === "/unauthorized") {
+          console.log("📍 Already on unauthorized page, setting status only");
+          setAuthStatus("unauthorized");
+          return;
+        }
+        
+        setAuthStatus("unauthorized");
+        setIsRedirecting(true);
+        setTimeout(() => {
+          window.location.href = "/admin/unauthorized";
+        }, 100);
+        return;
+      }
 
       // ตรวจสอบ token validity
       const tokenValid = token ? isTokenValid(token) : false;
@@ -153,20 +176,104 @@ export const AuthProvider = ({ children }) => {
         
         if (isOAuthCallback) {
           console.log("🔗 OAuth callback detected, processing...");
+          console.log(`🔗 OAuth code: ${hasOAuthCode}`);
           setAuthStatus("checking");
           
-          setTimeout(() => {
-            const tokenAfterOAuth = localStorage.getItem("token");
-            if (!isTokenValid(tokenAfterOAuth)) {
-              console.log("❌ OAuth timeout or invalid token");
+          // ⭐ สร้าง SSE connection ทันทีด้วย code parameter
+          try {
+            console.log(`🔗 Creating SSE connection with OAuth code: ${hasOAuthCode}`);
+            
+            const es = new EventSource(`/api1/admin/sse?code=${hasOAuthCode}`);
+            setEventSource(es);
+
+            es.onopen = () => {
+              console.log("✅ SSE connection established for OAuth callback");
+            };
+
+            es.onmessage = (e) => {
+              console.log("📨 OAuth SSE Message received:", e.data);
+              try {
+                const data = JSON.parse(e.data);
+                if (data.results) {
+                  console.log("✅ OAuth SSE data received, confirming authorization");
+                  setAuthStatus("authorized");
+                  setUserData(data.user || null);
+                }
+              } catch (err) {
+                console.error("❌ Error parsing OAuth SSE data:", err);
+                setAuthStatus("unauthorized");
+              }
+            };
+
+            es.addEventListener("forceLogout", (event) => {
+              try {
+                const data = JSON.parse(event.data);
+                console.log("🚨 OAuth Force logout received:", data.error);
+                
+                // ⭐ ปิด EventSource ทันที
+                es.close();
+                setEventSource(null);
+                
+                // ⭐ ไม่ลบ localStorage แต่ mark ว่าเป็น unauthorized session
+                localStorage.setItem("forceLogout", "true");
+                localStorage.setItem("unauthorizedReason", data.error || "Access denied");
+                
+                const errorMsg = data.error ? data.error.toLowerCase() : "";
+                if (errorMsg.includes("unauthorized") || errorMsg.includes("forbidden")) {
+                  console.log("🚨 Unauthorized email detected - redirecting to /admin/unauthorized");
+                  setAuthStatus("unauthorized");
+                  setIsRedirecting(true);
+                  
+                  // ⭐ Redirect ทันทีโดยไม่ต้องรอ แล้วหยุด execution
+                  window.location.replace("/admin/unauthorized");
+                  return;
+                } else {
+                  console.log("🚨 Other error - redirecting to /admin/unauthorized");
+                  setAuthStatus("unauthorized");
+                  setIsRedirecting(true);
+                  window.location.replace("/admin/unauthorized");
+                  return;
+                }
+              } catch (err) {
+                console.error("❌ Error in OAuth forceLogout:", err);
+                es.close();
+                setEventSource(null);
+                localStorage.setItem("forceLogout", "true");
+                localStorage.setItem("unauthorizedReason", "Session error");
+                setAuthStatus("unauthorized");
+                setIsRedirecting(true);
+                window.location.replace("/admin/unauthorized");
+                return;
+              }
+            });
+
+            es.addEventListener("error", (event) => {
+              try {
+                const data = JSON.parse(event.data);
+                console.log("🚨 OAuth SSE Error event received:", data);
+                
+                if (data.error && (data.error.includes("Please login again") || data.error.includes("OAuth code required"))) {
+                  localStorage.setItem("emailUnauthorized", "true");
+                  window.location.href = "/admin/unauthorized";
+                } else {
+                  window.location.href = "/";
+                }
+              } catch (err) {
+                console.error("❌ Error parsing OAuth error event:", err);
+                localStorage.setItem("emailUnauthorized", "true");
+                window.location.href = "/admin/unauthorized";
+              }
+            });
+
+            es.onerror = (err) => {
+              console.error("❌ OAuth SSE error:", err);
               setAuthStatus("unauthorized");
-              // ใช้ internal route '/' เพื่อให้ basename="/admin" ทำงานถูกต้อง
-              window.location.href = "/";
-            } else {
-              console.log("✅ OAuth token received, setting authorized");
-              setAuthStatus("authorized");
-            }
-          }, 3000);
+            };
+
+          } catch (error) {
+            console.error("❌ Error creating OAuth SSE:", error);
+            window.location.href = "/";
+          }
         } else {
           console.log("📄 Setting unauthorized for public page");
           setAuthStatus("unauthorized");
@@ -174,18 +281,16 @@ export const AuthProvider = ({ children }) => {
         return;
       }
 
-      // ✅ **สำคัญ**: สำหรับหน้าที่ต้อง authenticate
-      if (tokenValid) {
-        console.log("✅ Valid token on protected page, setting authorized");
-        setAuthStatus("authorized");
-        
-        // ⭐ เริ่ม SSE connection
-        try {
-          const code = new URLSearchParams(window.location.search).get("code");
-          const es = new EventSource(`/api1/admin/sse?code=${code || ''}`);
-          setEventSource(es);
-
-          es.onopen = () => {
+        // ⭐ สำหรับหน้าที่ต้อง authenticate
+        if (tokenValid) {
+          console.log("✅ Valid token on protected page, setting authorized");
+          setAuthStatus("authorized");
+          
+          // ⭐ เริ่ม SSE connection โดยไม่ส่ง code (ใช้ token ที่มีอยู่)
+          try {
+            console.log("🔗 Creating SSE connection with existing token (no code)");
+            const es = new EventSource(`/api1/admin/sse`);
+            setEventSource(es);          es.onopen = () => {
             console.log("✅ SSE connection established");
           };
 
@@ -209,14 +314,27 @@ export const AuthProvider = ({ children }) => {
               const data = JSON.parse(event.data);
               console.log("🚨 Force logout received:", data.error);
               
-              if (data.error.includes("unauthorized") || data.error.includes("forbidden")) {
-                alert("คุณไม่มีสิทธิ์เข้าใช้งานระบบ กรุณาติดต่อผู้ดูแลระบบ");
-              }
+              // ⭐ ปิด EventSource ทันที
+              es.close();
+              setEventSource(null);
               
-              redirectToUnauthorized();
+              // ⭐ ไม่ลบ localStorage แต่ mark ว่าเป็น unauthorized session
+              localStorage.setItem("forceLogout", "true");
+              localStorage.setItem("unauthorizedReason", data.error || "Access denied");
+              
+              setAuthStatus("unauthorized");
+              setIsRedirecting(true);
+              // ⭐ ใช้ replace แทน href เพื่อไม่ให้กลับมาได้
+              window.location.replace("/admin/unauthorized");
             } catch (err) {
               console.error("❌ Error in forceLogout:", err);
-              redirectToUnauthorized();
+              es.close();
+              setEventSource(null);
+              localStorage.setItem("forceLogout", "true");
+              localStorage.setItem("unauthorizedReason", "Session error");
+              setAuthStatus("unauthorized");
+              setIsRedirecting(true);
+              window.location.replace("/admin/unauthorized");
             }
           });
 

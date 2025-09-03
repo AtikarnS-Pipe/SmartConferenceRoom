@@ -39,14 +39,28 @@ function UnauthorizedAccess() {
         <div className={`mb-6 space-y-3 transition-colors duration-300 ${
           darkMode ? 'text-gray-300' : 'text-gray-600'
         }`}>
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <UserX className="w-5 h-5 text-red-500" />
-            <span className="font-medium text-red-500">Unauthorized Email</span>
-          </div>
           
-          <p className="text-sm">
-            You don't have permission to access the Conference Room System.
-          </p>
+          {/* Error Details Card */}
+            <div className={`p-6 rounded-xl mb-6 border-l-4 border-red-500 transition-colors duration-300 ${
+              darkMode ? 'bg-red-950/30 border-red-500' : 'bg-red-50 border-red-500'
+            }`}>
+              <div className="flex items-start gap-3">
+                <UserX className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
+                <div>
+                  <h3 className={`font-semibold mb-2 ${
+                    darkMode ? 'text-red-400' : 'text-red-700'
+                  }`}>
+                    Unauthorized Email Address
+                  </h3>
+                  <p className={`text-sm leading-relaxed ${
+                    darkMode ? 'text-red-300/80' : 'text-red-600'
+                  }`}>
+                    Your email address is not authorized to access the Conference Room System. 
+                    Please contact your system administrator for access.
+                  </p>
+                </div>
+              </div>
+            </div>
           
         </div>
 

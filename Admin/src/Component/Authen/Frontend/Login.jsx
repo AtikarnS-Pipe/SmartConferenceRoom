@@ -28,6 +28,18 @@ function Verify({ setAuth }) {
     console.log("🔍 Login - Full path:", window.location.pathname);
     console.log("🔍 Login - Search:", window.location.search);
     
+    // ตรวจสอบว่าเป็นผู้ใช้ที่ถูก force logout หรือไม่
+    const wasForceLoggedOut = sessionStorage.getItem("forceLoggedOut");
+    if (wasForceLoggedOut) {
+      console.log("🚫 Login - User was force logged out, staying on login page");
+      sessionStorage.removeItem("forceLoggedOut");
+      // ล้าง token ที่อาจเหลืออยู่
+      localStorage.removeItem("token");
+      localStorage.removeItem("role");
+      localStorage.removeItem("name");
+      return;
+    }
+    
     const checkValidToken = () => {
       const token = localStorage.getItem("token");
       console.log("🔍 Login - Token:", token ? "exists" : "not found");
