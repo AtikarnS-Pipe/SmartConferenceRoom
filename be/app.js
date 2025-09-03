@@ -3,6 +3,7 @@ const syncAllRooms = require('./services/roomsync.services');
 // เชื่อมต่อกับ MongoDB
 const {connectToDatabase} = require("./database/mongodb");
 const { monitorToken } = require('./utils/tokenCache');
+const { seedMqttRooms } = require('./models/MqttState');
 const express = require("express");
 const axios = require('axios');
 // Import routes
@@ -41,4 +42,5 @@ const sintervalId = setInterval(() => {
 app.listen(process.env.PORT, async () => {
   console.log(`Server running at http://localhost:${process.env.PORT}`);
   await connectToDatabase();
+  await seedMqttRooms();
 });
