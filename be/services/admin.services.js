@@ -145,7 +145,23 @@ async function fetchAllRoom(res, accessToken) {
         );
 
         console.log("admin GET API success!!");
-        res.write(`data: ${JSON.stringify({ results })}\n\n`);
+        
+        // สร้าง JWT token สำหรับ authorized user
+        const jwtPayload = {
+            role: 'admin',
+            email: 'authorized', // ใส่ข้อมูล user ที่เหมาะสม
+            iat: Math.floor(Date.now() / 1000),
+            exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60) // expire ใน 24 ชั่วโมง
+        };
+        
+        const jwtToken = jwt.sign(jwtPayload, process.env.JWT_SECRET || 'fallback-secret');
+        console.log("🔑 Created JWT token for authorized user");
+        
+        res.write(`data: ${JSON.stringify({ 
+            results, 
+            token: jwtToken,
+            role: 'admin'
+        })}\n\n`);
     } catch (error) {
         console.error(error);
         res.write(`event: error\ndata: ${JSON.stringify({ error: "Failed to fetch data (fetchRoomEventsAndSend)" })}\n\n`);
