@@ -62,6 +62,7 @@ const keyPins = async (req, res) => {
             return res.status(200).json({ error: "Missing required fields!" });
         }
 
+        const floor = parseInt(room_number.slice(0, 2), 10);
         const room = parseInt(room_number.slice(2, 4), 10);
         const isValid = await compareKey({ eventId, pin });
 
@@ -70,7 +71,7 @@ const keyPins = async (req, res) => {
             return res.status(200).json({ error: "Booking not found" });
         }
 
-        const isOpen = await sendMQTTMessage(process.env.MQTT_TOPIC, `open_${room}`);
+        const isOpen = await sendMQTTMessage(process.env.MQTT_TOPIC, `open_${floor}>${room}`);
         const isUpdated = await MqttState.findOneAndUpdate(
             { Meeting_room: room_number },   // หา record ตามห้อง
             { $set: { state: "open" } },     // อัพเดต state = open
@@ -103,6 +104,7 @@ const adminKeyPin = async (req, res) => {
             return res.status(200).json({ message: "Missing required fields! " });
         }
 
+        const floor = parseInt(room_number.slice(0, 2), 10);
         const room = parseInt(room_number.slice(2, 4), 10);
         const result = await adminCompareKey(pin, room_number);
 
@@ -122,7 +124,7 @@ const adminKeyPin = async (req, res) => {
         }
         console.log("Admin pin valid, sending MQTT command to open door");
 
-        const isOpen = await sendMQTTMessage(process.env.MQTT_TOPIC, `adminopen_${room}`); 
+        const isOpen = await sendMQTTMessage(process.env.MQTT_TOPIC, `adminopen_${floor}>${room}`); 
         const isUpdated = await MqttState.findOneAndUpdate(
             { Meeting_room: room_number, state: { $ne: "open" } }, // หา record ตามห้อง
             { $set: { state: "adminopen" } },  // อัพเดต state = adminopen
@@ -315,20 +317,22 @@ const endmeeting = async (req, res) => {
                 },
             })
         console.log("Update event success");
-        const room = parseInt(endmeetingdata.room_number.slice(2, 4), 10);
-        console.log("Room for close door:", room);
-        const isClosed = await sendMQTTMessage(process.env.MQTT_TOPIC, `close_${room}`);
-        const isUpdated = await MqttState.findOneAndUpdate(
-            { Meeting_room: endmeetingdata.room_number }, // หา record ตามห้อง
-            { $set: { state: "close" } },     // อัพเดต state = open
-            { new: true, upsert: true }      // upsert กันพลาด ถ้าไม่เจอให้สร้าง
-        );
-        if (!isUpdated) {
-            console.error("Failed to update MQTT state");
-            return res.status(500).json({ error: "Failed to update MQTT state" });
-        }
-        console.log(`MQTT message sent: ${isClosed}`);
-        if(!isClosed.success) throw new Error(isClosed.error);
+        
+        // const floor = parseInt(endmeetingdata.room_number.slice(0, 2), 10);
+        // const room = parseInt(endmeetingdata.room_number.slice(2, 4), 10);
+        // console.log("Room for close door:", room);
+        // const isClosed = await sendMQTTMessage(process.env.MQTT_TOPIC, `close_${floor}>${room}`);
+        // const isUpdated = await MqttState.findOneAndUpdate(
+        //     { Meeting_room: endmeetingdata.room_number }, // หา record ตามห้อง
+        //     { $set: { state: "close" } },     // อัพเดต state = open
+        //     { new: true, upsert: true }      // upsert กันพลาด ถ้าไม่เจอให้สร้าง
+        // );
+        // if (!isUpdated) {
+        //     console.error("Failed to update MQTT state");
+        //     return res.status(500).json({ error: "Failed to update MQTT state" });
+        // }
+        // console.log(`MQTT message sent: ${isClosed}`);
+        // if(!isClosed.success) throw new Error(isClosed.error);
 
         res.status(200).json({ message: "Update event successfully" });
     } catch (error) {
@@ -340,10 +344,11 @@ const endmeeting = async (req, res) => {
 const closedoor = async (req, res) => {
     const { room_number } = req.body;
     if (!room_number) return res.status(400).json({ error: "RoomNumber is Missing" });
+    const floor = parseInt(room_number.slice(0, 2), 10);
     const room = parseInt(room_number.slice(2, 4), 10);
     console.log("Room for close door:", room);
     try {
-        const isClosed = await sendMQTTMessage(process.env.MQTT_TOPIC, `close_${room}`);
+        const isClosed = await sendMQTTMessage(process.env.MQTT_TOPIC, `close_${floor}>${room}`);
         const isUpdated = await MqttState.findOneAndUpdate(
             { Meeting_room: room_number },          // หา record ตามห้อง
             { $set: { state: "close" } },     // อัพเดต state = close

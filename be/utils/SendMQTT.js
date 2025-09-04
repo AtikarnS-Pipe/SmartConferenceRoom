@@ -31,7 +31,7 @@ function sendMQTTMessage(topic, message) {
 }
 
 async function initMqtt() {
-  const client = mqtt.connect(connectUrl, mqttOptions);
+  client = mqtt.connect(connectUrl, mqttOptions);
 
   client.on('connect', () => {
     console.log('MQTT connected!!!');
@@ -47,17 +47,18 @@ async function initMqtt() {
   client.on('message', async (topic, payload) => {
     const text = payload.toString();
     console.log('MQTT Received data:', topic, text);
-
+    
     if (topic === SUB_TOPIC) {
       // match pattern เช่น  "Check the status of room door 1-2"
-      const match = text.match(/Check the status of room door (\d+)-(\d+)/i);
+      const match = text.match(/Check the status of room door (\d+)>(\d+)-(\d+)/i);
       if (match) {
-        const [_, first, second] = match; // _ is not interest index 0 value, ex:  first=1, second=2
+        const [_, floor, first, second] = match; // _ is not interest index 0 value, ex:  first=1, second=2
+        console.log(`Request status of rooms: ${match}`);
 
-        const room1 = 1500 + parseInt(first, 10);
-        const room2 = 1500 + parseInt(second, 10);
-        const roomdash1 = "15-" + first; // 15-1
-        const roomdash2 = "15-" + second; // 15-14
+        const room1 = parseInt(floor, 10)*100 + parseInt(first, 10);
+        const room2 = parseInt(floor, 10)*100 + parseInt(second, 10);
+        const roomdash1 = `${floor}-` + first; // 15-1
+        const roomdash2 = `${floor}-` + second; // 15-14
 
         try {
           // หา state จาก DB
@@ -68,6 +69,7 @@ async function initMqtt() {
 
           if (DB_room1) {
             let statusMsg = `room ${roomdash1} is ${DB_room1.state}`;
+            let isTimeout = false;
 
             if (DB_room1.state === 'adminopen' && DB_room1.updatedAt) {
               const now = new Date();
@@ -79,17 +81,27 @@ async function initMqtt() {
               const timeString = `${minutes}m${seconds}s`;
               statusMsg += ` ${timeString}`; // append เวลา
               console.log("ข้อความadminopen : ", statusMsg);
-              if(diffSec >= 15){ // หากมากกว่า 15 min ให้ไปบอก mqtt ปิดประตู
-                sendMQTTMessage(SUB_TOPIC, `close_${first}`); // ex. close_1
+              isTimeout = diffSec >= 15*60;
+              if(isTimeout){ // หากมากกว่า 15 min ให้ไปบอก mqtt ปิดประตู
+                await sendMQTTMessage(SUB_TOPIC, `close_${floor}>${first}`); // ex. close_1
+                const isUpdated = await MqttState.findOneAndUpdate(
+                    { Meeting_room: room1 },   // หา record ตามห้อง
+                    { $set: { state: "close" } },     // อัพเดต state = open
+                    { new: true, upsert: true }      // upsert กันพลาด ถ้าไม่เจอให้สร้าง
+                );
+                if (!isUpdated) {
+                    console.error("Failed to update MQTT state of admin");
+                }
               }
             }
 
-            await sendMQTTMessage(SUB_TOPIC, statusMsg);
+            if(!isTimeout) await sendMQTTMessage(SUB_TOPIC, statusMsg);
             await delay(500);
           }
           
           if (DB_room2) {
             let statusMsg = `room ${roomdash2} is ${DB_room2.state}`;
+            let isTimeout = false;
 
             if (DB_room2.state === 'adminopen' && DB_room2.updatedAt) {
               const now = new Date();
@@ -99,18 +111,55 @@ async function initMqtt() {
               const seconds = diffSec % 60; 
 
               const timeString = `${minutes}m${seconds}s`;
-              statusMsg += ` (${timeString})`; // append เวลา
+              statusMsg += ` ${timeString}`; // append เวลา
               console.log("ข้อความadminopen : ", statusMsg);
-              if(diffSec >= 15){ // หากมากกว่า 15 min ให้ไปบอก mqtt ปิดประตู
-                sendMQTTMessage(SUB_TOPIC, `close_${second}`); // ex. close_2
+              isTimeout = diffSec >= 15*60;
+              if(isTimeout){ // หากมากกว่า 15 min ให้ไปบอก mqtt ปิดประตู
+                await sendMQTTMessage(SUB_TOPIC, `close_${floor}>${second}`); // ex. close_2
+                const isUpdated = await MqttState.findOneAndUpdate(
+                    { Meeting_room: room2 },   // หา record ตามห้อง
+                    { $set: { state: "close" } },     // อัพเดต state = open
+                    { new: true, upsert: true }      // upsert กันพลาด ถ้าไม่เจอให้สร้าง
+                );
+                if (!isUpdated) {
+                    console.error("Failed to update MQTT state of admin");
+                }
               }
             }
 
-            await sendMQTTMessage(SUB_TOPIC, statusMsg);
+            if(!isTimeout) await sendMQTTMessage(SUB_TOPIC, statusMsg);
           }
         } catch (err) {
           console.error('DB query error:', err);
         }
+      }
+
+      // match pattern เช่น  "open_15>1 close_15>1 adminopen_15>20"
+      const match_dev = text.match(/(open|close|adminopen)_(\d+)>(\d+)/i);
+      if (match_dev) {
+        const [_, status, floor, room] = match_dev;
+        const meeting_floor = parseInt(floor, 10)*100 + parseInt(room, 10);
+        const isUpdated = await MqttState.findOneAndUpdate(
+            { Meeting_room: meeting_floor },   // หา record ตามห้อง
+            { $set: { state: status } },     // อัพเดต state = open
+            { new: true, upsert: true }      // upsert กันพลาด ถ้าไม่เจอให้สร้าง
+        );
+        if (!isUpdated) {
+            console.error("Failed to update MQTT state of admin");
+        }
+      }
+
+      // ---- handle openall / closeall (อัปเดตทุกแถวใน DB) ----
+      const match_all = text.match(/^(open_all|close_all)\b/i);
+      if (match_all) {
+        const action = match_all[1].toLowerCase();
+        const target = action === 'open_all' ? 'open' : 'close';
+
+        // อัปเดตทุก document ให้เป็นสถานะเป้าหมาย
+        const res = await MqttState.updateMany(
+          { state: { $ne: target } },      // (optional) อัปเดตเฉพาะแถวที่ยังไม่เป็น target เพื่อลด write
+          { $set: { state: target } }
+        );
       }
     }
   });

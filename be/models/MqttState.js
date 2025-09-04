@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 const MqttStateSchema = new mongoose.Schema({
     Meeting_room: { type: Number, unique: true },
-    state: { enum: ['open', 'closed', 'adminopen'], default: 'open' },
+    state: { type: String, enum: ['open', 'closed', 'adminopen'], default: 'open' },
 },  { timestamps: true });
 
 const MqttState = mongoose.model('MqttState', MqttStateSchema, 'MqttState');

@@ -1,11 +1,11 @@
 require('dotenv').config({ path: './config/.env'});
 const syncAllRooms = require('./services/roomsync.services');
 // เชื่อมต่อกับ MongoDB
-const {connectToDatabase} = require("./database/mongodb");
+const { connectToDatabase} = require("./database/mongodb");
 const { monitorToken } = require('./utils/tokenCache');
 const { seedMqttRooms } = require('./models/MqttState');
 const express = require("express");
-const axios = require('axios');
+const { initMqtt } = require('./utils/SendMQTT');
 // Import routes
 const SuperAdminRouter = require('./routes/superadmin_manage.routes')
 const Adminrouter = require("./routes/admin_ms.routes");
@@ -43,4 +43,5 @@ app.listen(process.env.PORT, async () => {
   console.log(`Server running at http://localhost:${process.env.PORT}`);
   await connectToDatabase();
   await seedMqttRooms();
+  await initMqtt();
 });
