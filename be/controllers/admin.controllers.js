@@ -35,9 +35,16 @@ const getAllusers = async (req, res) => {
             
             if (userProfile.mail !== 'meetingroom@tcc-technology.com') {
                 console.error(`💥 Unauthorized email: ${userProfile.mail} `);
+                console.log("📤 Sending forceLogout event to frontend");
                 res.write(`event: forceLogout\ndata: ${JSON.stringify({ 
                 error: `Unauthorized email: ${userProfile.mail}`})}\n\n`);
-                return;
+                
+                console.log("⏰ Waiting 1 second before closing connection...");
+                setTimeout(() => {
+                    console.log("🔚 Closing SSE connection after unauthorized email");
+                    res.end();
+                }, 1000);
+                return; // ⭐ หยุดการทำงานทันที
             }
 
 
@@ -75,6 +82,26 @@ const getAllusers = async (req, res) => {
                 throw new Error("No refresh token found in caches. Please login again.");
             }
 
+            // ⭐ ตรวจสอบ email อีกครั้งแม้ว่าจะใช้ cached token
+            console.log("🔍 Verifying email with cached token...");
+            const userProfile = await getUserProfile(latestAccessToken);
+            
+            if (userProfile.mail !== 'meetingroom@tcc-technology.com') {
+                console.error(`💥 Unauthorized email with cached token: ${userProfile.mail}`);
+                console.log("📤 Sending forceLogout event to frontend");
+                res.write(`event: forceLogout\ndata: ${JSON.stringify({ 
+                    error: `Unauthorized email: ${userProfile.mail}` 
+                })}\n\n`);
+                
+                console.log("⏰ Waiting 1 second before closing connection...");
+                setTimeout(() => {
+                    console.log("🔚 Closing SSE connection after unauthorized email (cached token)");
+                    res.end();
+                }, 1000);
+                return;
+            }
+            
+            console.log("✅ Email verified with cached token:", userProfile.mail);
             accessToken = latestAccessToken;
             // console.log("get accessToken from cache:", accessToken);
         } catch (err) {

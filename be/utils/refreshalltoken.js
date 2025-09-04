@@ -9,10 +9,10 @@ function refreshalltoken(req, res, userId) {
   // ⭐ แก้ cookie path และ domain
   res.cookie("refreshtoken", newRefreshToken, {
     httpOnly: true,
-    secure: true,
+    secure: false,
     sameSite: 'lax',
     path: '/', // ⭐ เปลี่ยนเป็น / เพื่อให้ใช้ได้ทุก path
-    domain: '.tcc-technology.com' // ⭐ เพื่อให้ใช้ได้ทั้ง subdomain
+    // domain: '.tcc-technology.com' // ⭐ เพื่อให้ใช้ได้ทั้ง subdomain
   });
   
   console.log("Successfully refresh token");
@@ -55,10 +55,10 @@ const refreshadmintoken = async (req, res) => {
     // ⭐ แก้ cookie name และ path ให้ตรงกับ function ข้างบน
     res.cookie("refreshtoken", newRefreshToken, {
       httpOnly: true,
-      secure: true,
+      secure: false,
       sameSite: 'lax',
       path: '/', // ⭐ เปลี่ยนเป็น /
-      domain: '.tcc-technology.com' // ⭐ เพิ่ม domain
+      // domain: '.tcc-technology.com' // ⭐ เพิ่ม domain
     });
 
     console.log("✅ New tokens generated successfully");
@@ -69,4 +69,5 @@ const refreshadmintoken = async (req, res) => {
     });
   });
 };
+
 module.exports = { refreshalltoken, refreshadmintoken }
