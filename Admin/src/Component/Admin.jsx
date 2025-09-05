@@ -372,33 +372,6 @@ function RoomPage() {
               <span>Loading Room Data...</span>
               <CircularProgress size="25px" />
             </div>
-            <div className="text-center text-sm">
-              <p className={darkMode ? "text-gray-300" : "text-gray-600"}>
-                Auth Status: {authStatus} | Connection: {connectionInitialized.current ? 'Yes' : 'No'}
-              </p>
-              <p className={darkMode ? "text-gray-300" : "text-gray-600"}>
-                Events Count: {events.length} | SSE: {roomDataSource.current ? 'Connected' : 'Disconnected'}
-              </p>
-            </div>
-            {retryCount.current > 0 && (
-              <div className="text-center">
-                <p
-                  className={`text-sm ${
-                    darkMode ? "text-gray-300" : "text-gray-600"
-                  }`}
-                >
-                  Retry attempt: {retryCount.current}/{maxRetries}
-                </p>
-                {retryCount.current >= maxRetries && (
-                  <button
-                    onClick={handleRetryConnection}
-                    className="mt-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm transition-colors duration-200"
-                  >
-                    Try Again
-                  </button>
-                )}
-              </div>
-            )}
           </div>
         ) : (
           <Roomcard
