@@ -249,10 +249,13 @@ const Room1501 = () => {
 
         const isAllDay = rawEnd.diff(rawStart, 'hour') === 24 && rawStart.hour() === 7;
         
+        // ✅ ปรับเวลาสิ้นสุดสำหรับ all day event ให้จบที่ 24:00 ของวันเดียวกัน
+        const adjustedEnd = isAllDay ? rawStart.hour(24).minute(0).second(0) : rawEnd;
+        
         return {
           id: index,
           start: rawStart,
-          end: rawEnd,
+          end: adjustedEnd,
           title: organizer || 'No Name',
           isAllDay,
           subject: t.subject || 'Meeting',
@@ -268,10 +271,26 @@ const Room1501 = () => {
     return eventsFromApi.map((event) => {
       const startTime = dayjs(event.start);
       const endTime = dayjs(event.end);
-      const duration = endTime.diff(startTime, 'minute');
-      const topOffset = (startTime.hour() + startTime.minute() / 60 - HOURS_START) * PIXELS_PER_HOUR;
+      
+      // ⭐ จำกัดเวลาให้อยู่ในช่วง HOURS_START (7:00) ถึง HOURS_END (24:00)
+      let displayStartTime = startTime;
+      let displayEndTime = endTime;
+      
+      // ถ้า event เริ่มก่อน 7:00 ให้ปรับเป็น 7:00
+      if (displayStartTime.hour() < HOURS_START) {
+        displayStartTime = displayStartTime.hour(HOURS_START).minute(0).second(0);
+      }
+      
+      // ถ้า event จบหลัง 24:00 ให้ปรับเป็น 24:00
+      if (displayEndTime.hour() >= HOURS_END || (displayEndTime.hour() === 0 && displayEndTime.minute() === 0 && !displayEndTime.isSame(displayStartTime, 'day'))) {
+        displayEndTime = displayStartTime.hour(HOURS_END).minute(0).second(0);
+      }
+      
+      // คำนวณ duration และ position ใหม่ตาม display time
+      const duration = displayEndTime.diff(displayStartTime, 'minute');
+      const topOffset = (displayStartTime.hour() + displayStartTime.minute() / 60 - HOURS_START) * PIXELS_PER_HOUR;
       const height = (duration / 60) * PIXELS_PER_HOUR;
-      const dayOffset = startTime.diff(start.startOf('day'), 'day');
+      const dayOffset = displayStartTime.diff(start.startOf('day'), 'day');
 
       const eventColors = [
         'bg-gradient-to-br from-blue-500 to-blue-600 border-blue-400',
@@ -316,6 +335,7 @@ const Room1501 = () => {
           {height >= MIN_HEIGHT_FOR_TIME && (
             <div className="text-white/70 mt-1" style={{ fontSize: `${parseInt(fontSize) - 1}px` }}>
               {event.isAllDay ? 'All Day' : `${startTime.format('HH:mm')} - ${endTime.format('HH:mm')}`}
+              {/* ⭐ แสดงเวลาจริงที่จอง ไม่ใช่ display time */}
             </div>
           )}
           {/* {height >= 50 && columnWidth > 120 && (
