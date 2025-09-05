@@ -51,21 +51,22 @@ export default function Sidebar() {
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      // ตรวจสอบว่าคลิกเป็น RefreshButton หรือไม่
-      const isRefreshButton = event.target.closest('button')?.className?.includes('RefreshButton') || 
-                             event.target.closest('button')?.type === 'button';
+      // ตรวจสอบว่าคลิกที่ dropdown toggle button หรือไม่
+      const isDropdownToggle = event.target.closest('.dropdown-toggle');
       
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target) && !isRefreshButton) {
+      if (dropdownRef.current && 
+          !dropdownRef.current.contains(event.target) && 
+          !isDropdownToggle) {
         console.log("👆 Clicking outside dropdown, closing..."); // Debug log
         setUserDropdownOpen(false);
       }
     };
     
-    // ใช้ mouseup แทน mousedown เพื่อไม่ให้ขัดแย้งกับ onMouseDown ของ buttons
-    document.addEventListener("mouseup", handleClickOutside);
+    // ใช้ click แทน mouseup เพื่อไม่ให้ขัดแย้งกับ onClick ของ buttons
+    document.addEventListener("click", handleClickOutside);
     document.addEventListener("touchend", handleClickOutside);
     return () => {
-      document.removeEventListener("mouseup", handleClickOutside);
+      document.removeEventListener("click", handleClickOutside);
       document.removeEventListener("touchend", handleClickOutside);
     };  
   }, []);
@@ -674,7 +675,7 @@ export default function Sidebar() {
                 <div className="flex flex-col items-center">
                   <RefreshButton
                     onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-                    className="p-2 rounded-lg hover:bg-slate-700 transition-colors relative"
+                    className="dropdown-toggle p-2 rounded-lg hover:bg-slate-700 transition-colors relative"
                     title={`${displayName} (${displayRole})`}
                   >
                     <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-medium">
@@ -685,6 +686,7 @@ export default function Sidebar() {
                   {/* Collapsed Dropdown - Icons Only */}
                   {userDropdownOpen && (
                     <div
+                      ref={dropdownRef}
                       className={`absolute bottom-full right-0 mb-2 ${
                         darkMode ? "bg-gray-700" : "bg-slate-700"
                       } rounded-lg shadow-lg border ${
@@ -726,8 +728,13 @@ export default function Sidebar() {
               ) : (
                 <div className="relative">
                   <RefreshButton
-                    onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-                    className="w-full p-3 rounded-lg hover:bg-slate-700 transition-colors flex items-center gap-3"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      console.log("👤 Desktop expanded - Profile dropdown toggled", !userDropdownOpen); // Debug log
+                      setUserDropdownOpen(!userDropdownOpen);
+                    }}
+                    className="dropdown-toggle w-full p-3 rounded-lg hover:bg-slate-700 transition-colors flex items-center gap-3"
                   >
                     <div className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-medium flex-shrink-0">
                       {getRoleIcon()}
