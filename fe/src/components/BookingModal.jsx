@@ -29,6 +29,15 @@ const BookingModal = ({ isOpen, onClose, onSubmit }) => {
   const { events, loading: loadingEvents } = useEvents(floor, room);
   const roomId = `${floor}${room}`; // สร้าง roomId จาก floor และ room
 
+  // ปิด modal อัตโนมัติหลัง 5 นาที ถ้าไม่มีการโต้ตอบ
+  useEffect(() => {
+  const timer = setTimeout(() => {
+    onClose();
+  }, 5 * 60 * 1000); // 5 นาที 
+  return () => clearTimeout(timer);
+}, [loadingCreate]);
+
+
   //ปิด pinmodal หลัง 30 วินาที
   useEffect(() => {
   if (!showPinModal) return;
