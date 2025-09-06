@@ -9,7 +9,7 @@ export function useCloseDoor(events) {
   const prevIsOccupied = useRef(false);
   
   useEffect(() => {
-    console.log("Pre:", prevIsOccupied.current, "isoccupied", isOccupied, room);
+    // console.log("Pre:", prevIsOccupied.current, "isoccupied", isOccupied, room);
 }, [isOccupied, roomId]); 
   
 
