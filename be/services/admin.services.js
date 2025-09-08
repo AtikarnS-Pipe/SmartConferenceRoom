@@ -15,7 +15,7 @@ async function GetScheduleData(actoken, Room, start, end) {
         // start: 06072025
         // end: 12072025
         // ถ้า 1 วันต้องเเก้ เเต่ถ้า 1 อาทิตย์ไม่ต้องเเก้
-        console.log("GetScheduleData3333333333333:", Room, start, end);
+        // console.log("GetScheduleData3333333333333:", Room, start, end);
         const tzOffset = 7 * 60; // Thailand UTC+7 (minutes)
         const startYear = parseInt(start.slice(4, 8), 10);
         const startMonth = parseInt(start.slice(2, 4), 10) - 1; // subtract 1 for zero-based month
@@ -51,7 +51,7 @@ async function GetScheduleData(actoken, Room, start, end) {
             throw new Error(`No value in graphResponse for room ${Room}: ${JSON.stringify(graphResponse)}`);
         }
         const results = graphResponse.value
-        if (process.env.DEBUG_MODE) console.log("admin scedule =>", results)
+        // if (process.env.DEBUG_MODE) console.log("admin scedule =>", results)
         return results;
 
     } catch (error) {
@@ -155,7 +155,7 @@ async function fetchAllRoom(res, accessToken) {
         };
         
         const jwtToken = jwt.sign(jwtPayload, process.env.JWT_SECRET || 'fallback-secret');
-        console.log("🔑 Created JWT token for authorized user");
+        // console.log("🔑 Created JWT token for authorized user");
         
         res.write(`data: ${JSON.stringify({ 
             results, 

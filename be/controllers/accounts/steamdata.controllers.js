@@ -19,17 +19,17 @@ const AdminListSchedule = async (req, res) => {
         // จัดการเมื่อ connection ปิด
         req.on('close', () => {
             clearInterval(intervalId);
-            console.log(`SSE connection closed by Steaming Admin List`);
+            // console.log(`SSE connection closed by Steaming Admin List`);
         });
 
         req.on('error', (err) => {
             clearInterval(intervalId);
-            console.error('SSE request error:', err);
+            // console.error('SSE request error:', err);
         });
 
         res.on('finish', () => {
             clearInterval(intervalId);
-            console.log(`Response finished for admin`);
+            // console.log(`Response finished for admin`);
         });
 
     } catch (error) {
@@ -62,17 +62,17 @@ const HousekeeperListSchedule = async (req, res) => {
         // จัดการเมื่อ connection ปิด
         req.on('close', () => {
             clearInterval(intervalId);
-            console.log(`SSE connection closed by Steaming Housekeeper List`);
+            // console.log(`SSE connection closed by Steaming Housekeeper List`);
         });
 
         req.on('error', (err) => {
             clearInterval(intervalId);
-            console.error('SSE request error:', err);
+            // console.error('SSE request error:', err);
         });
 
         res.on('finish', () => {
             clearInterval(intervalId);
-            console.log(`Response finished for housekeeper`);
+            // console.log(`Response finished for housekeeper`);
         });
 
     } catch (error) {
@@ -105,17 +105,17 @@ const LogsListSchedule = async (req, res) => {
         // จัดการเมื่อ connection ปิด
         req.on('close', () => {
             clearInterval(intervalId);
-            console.log(`SSE connection closed by Logs List`);
+            // console.log(`SSE connection closed by Logs List`);
         });
 
         req.on('error', (err) => {
             clearInterval(intervalId);
-            console.error('SSE request error:', err);
+            // console.error('SSE request error:', err);
         });
 
         res.on('finish', () => {
             clearInterval(intervalId);
-            console.log(`Response finished for logs page`);
+            // console.log(`Response finished for logs page`);
         });
 
     } catch (error) {

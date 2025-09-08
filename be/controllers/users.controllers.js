@@ -8,6 +8,8 @@ const { getuserdatabyroom, waitUntil } = require('../services/users.services');
 const { GeteventId, createMSEvent } = require('../services/users.services');
 const getGraphClient = require("../utils/graph");
 const pinstats = require('../models/RoomAccessLog');
+const { getInterval, setIntervalMs } = require("../utils/pollingService");
+
 
 // create ms room
 const bookingkey = require('../models/bookingkey')
@@ -35,22 +37,23 @@ const getuser = async (req, res) => {
     getuserdatabyroom(res, RoomNumber);
     const intervalId = setInterval(async () => {
         getuserdatabyroom(res, RoomNumber);
-    }, 6000);
+    // }, 4000);
+    }, getInterval());
 
     // จัดการ cleanup 
     req.on('close', () => {
         clearInterval(intervalId);
-        console.log(`SSE connection closed for room ${RoomNumber}`);
+        // console.log(`SSE connection closed for room ${RoomNumber}`);
     });
 
     req.on('error', (err) => {
         clearInterval(intervalId);
-        console.error('SSE request error:', err);
+        // console.error('SSE request error:', err);
     });
 
     res.on('finish', () => {
         clearInterval(intervalId);
-        console.log(`Response finished for room ${RoomNumber}`);
+        // console.log(`Response finished for room ${RoomNumber}`);
     });
 };
 
@@ -150,11 +153,14 @@ const adminKeyPin = async (req, res) => {
 // รับ eventId ของการประชุมที่ต้องการลบ
 const deleteroom = async (req, res) => {
     if (process.env.DEBUG_MODE === "false") {
-        const { eventId } = req.body; // , eventId
+        const except_rooms = (process.env.EXECPT_ROOMS || "").split(",").map(num => Number(num.trim()));
+        const { eventId, room_number } = req.body; // , eventId
+        if (except_rooms.includes(Number(room_number))) {
+            return res.status(200).json({ message: `Room ${room_number} is in the exception list, skip delete.` });
+        }
         const AccessToken = tokenCache.getAccessToken();
         if (!AccessToken) {
-            console.error("No refresh token found in cache...");
-            throw new Error("No refresh token found in caches. Please login again.");
+            return res.status(401).json({ error: "No refresh token found. Please login again." });
         }
         try {
             await getGraphClient(AccessToken)
@@ -219,6 +225,8 @@ const deleteroom = async (req, res) => {
             console.error("Error deleting event:", error);
             res.status(500).json({ error: "Failed to delete event" });
         }
+    } else {
+        return res.status(200).json({ message: "Debug mode - skip delete" });
     }
 }
 
@@ -239,9 +247,10 @@ const createroom = async (req, res) => {
     }
 
     try {
+        setIntervalMs(3000, 15000); // ปรับเป็น 3000 วินาที และรีเซ็ตหลัง 20 วินาที
         const isCreated = await createMSEvent(AccessToken, createroomdata);
         if (!isCreated) return res.status(400).json({ success: false, error: "Event creation failed." });
-
+        
         console.log(`Booking created for room ${createroomdata.RoomNumber}`);
         return res.status(200).json({ success: true });
     } catch (error) {
@@ -253,6 +262,8 @@ const createroom = async (req, res) => {
 
 const createsearchpin = async (req, res) => {
     const { pindata } = req.body;
+    console.log("start create date now:", new Date().toISOString());
+
     if (!pindata || !pindata.eventId || !pindata.room_number || !pindata.organizerMail || !pindata.pin || !pindata.startDateTime || !pindata.endDateTime) {
         return res.status(400).json({ error: "All fields are required" });
     }
@@ -269,6 +280,8 @@ const createsearchpin = async (req, res) => {
         });
         // const booking = await bookingkey.findOne({ eventId, room: room_number });
         if (!booking) return res.status(400).json({ error: "Not found eventId" });
+        console.log("end create date now:", new Date().toISOString());
+
         res.status(200).json({ success: true });
     } catch (error) {
         console.error("Error searching pin by event ID:", error);
