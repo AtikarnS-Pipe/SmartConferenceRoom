@@ -57,7 +57,6 @@ export default function Sidebar() {
       if (dropdownRef.current && 
           !dropdownRef.current.contains(event.target) && 
           !isDropdownToggle) {
-        console.log("👆 Clicking outside dropdown, closing..."); // Debug log
         setUserDropdownOpen(false);
       }
     };
@@ -123,47 +122,34 @@ export default function Sidebar() {
   };
 
   const handleNavigateByRole = () => {
-    console.log("🧭 handleNavigateByRole called");
     const role = localStorage.getItem("role");
     const token = localStorage.getItem("token");
-    console.log("🧭 Current role:", role);
-    console.log("🧭 Token exists:", !!token);
-    console.log("🧭 Token length:", token ? token.length : 0);
     
     if (role === "Superadmin") {
-      console.log("🧭 Navigating to superadmin");
       navigate("/account/superadmin");
     } else if (role === "Admin") {
-      console.log("🧭 Navigating to admin");
       navigate("/account/admin");
     } else {
-      console.log("🧭 No valid role, navigating to root");
       navigate("/");
     }
   };
 
   // Handle Change PIN
   const handleChangePIN = () => {
-    console.log("🔑 Change PIN clicked - start"); // Debug log
     setUserDropdownOpen(false);
-    console.log("🔑 Dropdown closed, setting timeout for modal"); // Debug log
     setTimeout(() => {
-      console.log("🔑 Opening password modal"); // Debug log
       setShowPasswordModal(true);
     }, 150); // เพิ่ม delay เล็กน้อย
   };
 
   // Handle Sign Out
   const handleSignOut = async () => {
-    console.log("🚪 Sign out clicked - start"); // Debug log
     setUserDropdownOpen(false); // ปิด dropdown ก่อน
     
     try {
-      console.log("🚪 Getting token from localStorage"); // Debug log
       const token = localStorage.getItem("token");
       
       if (!token) {
-        console.log("❌ No token found, redirecting to login");
         setStatusPopup("error");
         setMessage("No authentication token found");
         setTimeout(() => {
@@ -172,7 +158,6 @@ export default function Sidebar() {
         return;
       }
 
-      console.log("🚪 Sending signout request to API"); // Debug log
       const res = await axios.post(
         "/api1/account/signout",
         {},
@@ -184,19 +169,14 @@ export default function Sidebar() {
         }
       );
 
-      console.log("🚪 Signout response:", res.data); // Debug log
-
       if (res.data.success) {
-        console.log("✅ Signout successful, showing success message"); // Debug log
         setStatusPopup("success");
         setMessage("Sign out successful! Redirecting...");
         setTimeout(() => {
-          console.log("🚪 Clearing localStorage and redirecting"); // Debug log
           localStorage.clear();
           window.location.href = "/"; // ใช้ window.location.href แทน navigate
         }, 1500);
       } else {
-        console.log("❌ Signout failed - no success flag"); // Debug log
         setStatusPopup("error");
         setMessage("Sign out failed. Please try again.");
         setTimeout(() => {
@@ -700,7 +680,6 @@ export default function Sidebar() {
                             onMouseDown={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
-                              console.log("🔑 Desktop collapsed - Change PIN triggered"); // Debug log
                               handleChangePIN();
                             }}
                             className="p-3 rounded-lg text-slate-300 hover:bg-slate-600 hover:text-white transition-colors flex items-center justify-center"
@@ -712,7 +691,6 @@ export default function Sidebar() {
                             onMouseDown={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
-                              console.log("🚪 Desktop collapsed - Sign Out triggered"); // Debug log
                               handleSignOut();
                             }}
                             className="p-3 rounded-lg text-slate-300 hover:bg-red-600 hover:text-white transition-colors flex items-center justify-center"
@@ -731,7 +709,6 @@ export default function Sidebar() {
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      console.log("👤 Desktop expanded - Profile dropdown toggled", !userDropdownOpen); // Debug log
                       setUserDropdownOpen(!userDropdownOpen);
                     }}
                     className="dropdown-toggle w-full p-3 rounded-lg hover:bg-slate-700 transition-colors flex items-center gap-3"
@@ -766,7 +743,6 @@ export default function Sidebar() {
                           onMouseDown={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            console.log("🔑 Desktop expanded - Change PIN triggered"); // Debug log
                             handleChangePIN();
                           }}
                           className="w-full px-3 py-2 text-left text-sm text-slate-300 hover:bg-slate-600 hover:text-white flex items-center gap-2 transition-colors"
@@ -778,7 +754,6 @@ export default function Sidebar() {
                           onMouseDown={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            console.log("🚪 Desktop expanded - Sign Out triggered"); // Debug log
                             handleSignOut();
                           }}
                           className="w-full px-3 py-2 text-left text-sm text-slate-300 hover:bg-red-600 hover:text-white flex items-center gap-2 transition-colors"
@@ -895,7 +870,6 @@ export default function Sidebar() {
                       onMouseDown={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        console.log("🔑 Mobile - Change PIN triggered"); // Debug log
                         handleChangePIN();
                       }}
                       className="w-full px-3 py-2 text-left text-sm text-slate-300 hover:bg-slate-600 hover:text-white flex items-center gap-2 transition-colors"
@@ -907,7 +881,6 @@ export default function Sidebar() {
                       onMouseDown={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        console.log("🚪 Mobile - Sign Out triggered"); // Debug log
                         handleSignOut();
                       }}
                       className="w-full px-3 py-2 text-left text-sm text-slate-300 hover:bg-red-600 hover:text-white flex items-center gap-2 transition-colors"

@@ -24,7 +24,6 @@ const handleEmailSubmit = async (e) => {
 
   try {
     const res = await axios.post('/api1/account/otp/send', { email });
-    console.log(res.data);
     // ไม่สนใจ res.data.success เพราะ backend แอบตอบเหมือนกันทุกกรณี
     setStep('otp');
   }  catch (err) {
@@ -45,7 +44,6 @@ const handleOtpSubmit = async (e) => {
       email,
       otp_code: otp
     });
-    console.log(res.data);
     if (res.data.reset_token) {
       setResetToken(res.data.reset_token);
       setStep('reset');

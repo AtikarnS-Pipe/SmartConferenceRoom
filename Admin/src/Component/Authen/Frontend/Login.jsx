@@ -25,13 +25,10 @@ function Verify({ setAuth }) {
 
   // ปรับปรุง useEffect เพื่อตรวจสอบ token ด้วย JWT decode และ redirect ถ้า token ยังไม่หมดอายุ
   useEffect(() => {
-    console.log("🔍 Login - Full path:", window.location.pathname);
-    console.log("🔍 Login - Search:", window.location.search);
     
     // ตรวจสอบว่าเป็นผู้ใช้ที่ถูก force logout หรือไม่
     const wasForceLoggedOut = sessionStorage.getItem("forceLoggedOut");
     if (wasForceLoggedOut) {
-      console.log("🚫 Login - User was force logged out, staying on login page");
       sessionStorage.removeItem("forceLoggedOut");
       // ล้าง token ที่อาจเหลืออยู่
       localStorage.removeItem("token");
@@ -42,13 +39,11 @@ function Verify({ setAuth }) {
     
     const checkValidToken = () => {
       const token = localStorage.getItem("token");
-      console.log("🔍 Login - Token:", token ? "exists" : "not found");
       
       if (!token) return false;
       
       // ตรวจสอบว่าเป็น JWT token ที่ถูกต้อง
       if (token.split('.').length !== 3) {
-        console.log("❌ Login - Invalid token format");
         localStorage.removeItem("token");
         localStorage.removeItem("role");
         return false;
@@ -60,11 +55,8 @@ function Verify({ setAuth }) {
         
         // ตรวจสอบว่า token ยังไม่หมดอายุ (เพิ่ม buffer 30 วินาที)
         if (decodedToken.exp > currentTime + 30) {
-          console.log("✅ Login - Valid token found, token expires at:", new Date(decodedToken.exp * 1000));
-          console.log("🕒 Login - Current time:", new Date());
           return true;
         } else {
-          console.log("❌ Login - Token expired or about to expire");
           localStorage.removeItem("token");
           localStorage.removeItem("role");
           return false;
@@ -81,11 +73,9 @@ function Verify({ setAuth }) {
     const currentPath = window.location.pathname;
     const isRootAccess = currentPath === "/" || currentPath === "/admin" || currentPath === "/admin/";
     
-    console.log("🔍 Login - Is root access:", isRootAccess);
     
     // ถ้าเป็น root access และ token ยังไม่หมดอายุ ให้ redirect ไปที่หน้า Admin
     if (isRootAccess && checkValidToken()) {
-      console.log("🚀 Login - Valid token detected, redirecting to Admin page");
       setAuth(true);
       
       // ใช้ window.location.href เพื่อให้แน่ใจว่า redirect ทำงาน
@@ -95,7 +85,6 @@ function Verify({ setAuth }) {
     }
     
     // ถ้าไม่ใช่ root access หรือไม่มี valid token ให้อยู่ที่หน้า login
-    console.log("📋 Login - Staying on login page");
   }, [navigate, setAuth]);
 
   const handleInputChange = (e) => {
@@ -117,7 +106,6 @@ function Verify({ setAuth }) {
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("role", res.data.role);
       
-      console.log("✅ Login successful:", res.data.token);
       setAuth(true);
       setLoginSuccess(true);
       

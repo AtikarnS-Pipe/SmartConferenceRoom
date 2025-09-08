@@ -288,7 +288,6 @@ function ButtonFilter ({
     }
     
     setOpenMenu1(false);
-    console.log("Size filtered:", size, "Label:", label, "Rooms found:", finalRooms.length);
   };
 
   return (

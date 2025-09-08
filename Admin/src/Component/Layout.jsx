@@ -23,10 +23,6 @@ const Layout = () => {
     setOutletKey(Date.now());
   };
 
-  // ลบ SSE connection เดิมออกแล้ว เพราะใช้ useUserData hook แทน
-  // useEffect(() => {
-  //   // SSE logic removed - handled by useUserData hook in individual components
-  // }, [location.search]);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -85,7 +81,6 @@ const Layout = () => {
 
   const handleNavigateByRole = () => {
     const role = localStorage.getItem('role');
-    console.log("Navigating based on role:", role);
     if (role === 'Superadmin') {
       navigate('/account/superadmin');
     } else if (role === 'Admin') {

@@ -114,13 +114,9 @@ function Superadmin() {
       member.role?.toLowerCase().includes(keyword)
     );
   });
-  // console.log("Search Term:", searchTerm);
-  // console.log("Admins:", admins);
-  // console.log("Filtered:", filteredMembers);
 
   const handleAddAdmin = async (e) => {
     e.preventDefault();
-    console.log("Sending data:", newMember);
     if (newMember.pin.length !== 4) {
     setStatusPopup('error');
     setMessage('Please enter a 4-digit PIN');
@@ -160,7 +156,6 @@ function Superadmin() {
         }
       );
 
-      console.log("Response:", response.data);
 
       // ✅ เช็คให้แน่ว่าสถานะ 201 เท่านั้นถึงถือว่าสำเร็จ
       if (response.status === 201) {
@@ -265,7 +260,6 @@ function Superadmin() {
 
   useEffect(() => {
     if (profile) {
-      console.log("Profile state updated:", profile);
     }
   }, [profile]);
 
