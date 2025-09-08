@@ -19,8 +19,6 @@ export const useUserData = () => {
   
   // ฟังก์ชันสำหรับปิด connections
   const closeConnections = () => {
-    console.log('🧹 Closing SSE connections...');
-    
     if (housekeeperSourceRef.current) {
       housekeeperSourceRef.current.close();
       housekeeperSourceRef.current = null;
@@ -43,11 +41,9 @@ export const useUserData = () => {
   const initializeConnections = () => {
     // ป้องกันการสร้าง connection ซ้ำ
     if (connectionInitializedRef.current) {
-      console.log('⚠️ SSE connections already initialized, skipping...');
       return;
     }
     
-    console.log('🔌 Initializing SSE connections for user data...');
     setIsLoading(true);
     setError(null);
     
@@ -69,13 +65,11 @@ export const useUserData = () => {
       const handleHousekeeperList = (event) => {
         try {
           const data = JSON.parse(event.data);
-          console.log('👥 Housekeeper data received:', data);
           
           if (Array.isArray(data)) {
             setHousekeepers(data);
           }
         } catch (err) {
-          console.error('❌ Error parsing housekeeper data:', err);
           setError('Failed to parse housekeeper data');
         }
       };
@@ -84,13 +78,11 @@ export const useUserData = () => {
       const handleAdminList = (event) => {
         try {
           const data = JSON.parse(event.data);
-          console.log('👨‍💼 Admin data received:', data);
           
           if (Array.isArray(data)) {
             setAdmins(data);
           }
         } catch (err) {
-          console.error('❌ Error parsing admin data:', err);
           setError('Failed to parse admin data');
         }
       };
@@ -101,16 +93,13 @@ export const useUserData = () => {
       
       // Handle connection opened
       housekeeperSource.onopen = () => {
-        console.log('✅ Housekeeper SSE connection opened');
       };
       
       adminSource.onopen = () => {
-        console.log('✅ Admin SSE connection opened');
       };
       
       // Handle errors
       housekeeperSource.onerror = (err) => {
-        console.error('❌ Housekeeper SSE error:', err);
         setError('Housekeeper connection failed');
         
         // ปิด connection และ retry
@@ -121,14 +110,12 @@ export const useUserData = () => {
         
         // Retry after 3 seconds
         retryTimeoutRef.current = setTimeout(() => {
-          console.log('🔄 Retrying housekeeper connection...');
           connectionInitializedRef.current = false;
           initializeConnections();
         }, 3000);
       };
       
       adminSource.onerror = (err) => {
-        console.error('❌ Admin SSE error:', err);
         setError('Admin connection failed');
         
         // ปิด connection และ retry
@@ -139,7 +126,6 @@ export const useUserData = () => {
         
         // Retry after 3 seconds
         retryTimeoutRef.current = setTimeout(() => {
-          console.log('🔄 Retrying admin connection...');
           connectionInitializedRef.current = false;
           initializeConnections();
         }, 3000);
@@ -148,7 +134,6 @@ export const useUserData = () => {
       connectionInitializedRef.current = true;
       
     } catch (err) {
-      console.error('❌ Failed to initialize SSE connections:', err);
       setError('Failed to initialize connections');
       setIsLoading(false);
     }
@@ -163,12 +148,6 @@ export const useUserData = () => {
     if (admins.length > 0 || housekeepers.length > 0) {
       setIsLoading(false);
     }
-    
-    console.log('📊 Combined user data updated:', {
-      admins: admins.length,
-      housekeepers: housekeepers.length,
-      total: combined.length
-    });
   }, [admins, housekeepers]);
   
   // Main effect สำหรับ initialize connections
@@ -176,7 +155,6 @@ export const useUserData = () => {
     const token = localStorage.getItem('token');
     
     if (!token) {
-      console.log('❌ No token found, skipping SSE initialization');
       setError('No authentication token');
       setIsLoading(false);
       return;
@@ -187,14 +165,12 @@ export const useUserData = () => {
     
     // Cleanup เมื่อ component unmount
     return () => {
-      console.log('🧹 useUserData cleanup...');
       closeConnections();
     };
   }, []); // Empty dependency array - initialize once
   
   // ฟังก์ชันสำหรับ manual refresh
   const refreshData = () => {
-    console.log('🔄 Manual refresh requested...');
     closeConnections();
     setIsLoading(true);
     setError(null);

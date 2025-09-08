@@ -281,7 +281,6 @@ function Housekeeper() {
 
   useEffect(() => {
     if (profile) {
-      console.log("Profile state updated:", profile);
     }
   }, [profile]);
 

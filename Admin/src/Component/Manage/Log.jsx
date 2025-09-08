@@ -64,7 +64,6 @@ function Log() {
     });
 
     eventSource.addEventListener("Logsmonitoring", (event) => {
-      console.log("Received Logsmonnitoring event:", event.data);
 
       try {
         const data = JSON.parse(event.data);
@@ -82,7 +81,6 @@ function Log() {
     setConnectionStatus("disconnected");
 
     eventSource.onopen = () => {
-      console.log("SSE connection opened successfully");
       setConnectionStatus("connected");
     };
     eventSource.onerror = (error) => {
@@ -96,8 +94,6 @@ function Log() {
   }, []);
 
   useEffect(() => {
-    console.log("Logs state updated:", logs);
-    console.log("Number of logs:", logs.length);
   }, [logs]);
 
   const ITEMS_PER_PAGE = 10;
@@ -172,7 +168,6 @@ function Log() {
 
   useEffect(() => {
     if (profile) {
-      console.log("Profile state updated:", profile);
     }
   }, [profile]);
 

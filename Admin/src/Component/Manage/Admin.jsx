@@ -79,7 +79,6 @@ function Admin() {
     );
   });
 
-  console.log("Members data fetched:", members);
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -170,7 +169,6 @@ function Admin() {
 
   useEffect(() => {
     if (profile) {
-      console.log("Profile state updated:", profile);
     }
   }, [profile]);
 

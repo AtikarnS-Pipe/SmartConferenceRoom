@@ -7,7 +7,6 @@ let isRefreshing = false;
 
 export const refreshToken = async () => {
   if (isRefreshing) {
-    console.log("⏩ Refresh already in progress, skipping...");
     return;
   }
   isRefreshing = true;

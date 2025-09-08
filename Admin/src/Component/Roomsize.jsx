@@ -57,17 +57,14 @@ function RoomSize() {
     eventSource.onmessage = (e) => {
       try {
         const data = JSON.parse(e.data);
-        console.log("Live data received in RoomSize:", data.results?.length);
         setLiveEvents(data.results || []);
         setLoading(false);
       } catch (err) {
-        console.error("Error parsing SSE data:", err);
         setLoading(false);
       }
     };
 
     eventSource.onerror = (err) => {
-      console.error("SSE error:", err);
       setLoading(false);
       eventSource.close();
     };
@@ -80,7 +77,6 @@ function RoomSize() {
   // ✅ Fix: Reset filter เมื่อมี resetFilter flag
   useEffect(() => {
     if (resetFilter) {
-      console.log("Resetting filters due to resetFilter flag");
       setFilteredRoom([]);
       setFilterType(null);
       setEmptyMessage("");
@@ -172,14 +168,12 @@ function RoomSize() {
     })
       .then(res => {
         setProfile(res.data);
-        console.log("Profile data fetched:", res.data);
       })
       .catch(err => console.error(err));
   }, []);
 
   const handleNavigateByRole = () => {
     const role = localStorage.getItem('role');
-    console.log("Navigating based on role:", role);
     if (role === 'Superadmin') {
       navigate('/account/superadmin');
     } else if (role === 'Admin') {
@@ -198,7 +192,6 @@ function RoomSize() {
 
   // ✅ FIX: ปรับปรุงฟังก์ชัน clearAllFilters ให้กลับไปหน้าหลัก
   const clearAllFilters = () => {
-    console.log("Clear all filters called from RoomSize");
     // Navigate กลับไปหน้าหลัก (Admin.jsx) พร้อมรีเซ็ต state
     navigate('/admin/api', {
       state: {
@@ -227,8 +220,6 @@ function RoomSize() {
       return roomNumber === iconRoom;
     });
 
-    console.log(`Matching room for icon ${icon.room}:`, matchingRoom ? 'Found' : 'Not found');
-
     return {
       ...icon,
       // ✅ ส่งข้อมูล events ที่ถูกต้อง
@@ -240,24 +231,9 @@ function RoomSize() {
   // ✅ Add: Apply availability filter อัตโนมัติเมื่อข้อมูลพร้อม
   useEffect(() => {
     if (filteredRooms.length > 0 && preserveAvailabilityFilter && preserveAvailabilityFilter !== "Availability") {
-      console.log("Auto-applying availability filter:", preserveAvailabilityFilter);
       applyAvailabilityFilter(filteredRooms, preserveAvailabilityFilter);
     }
   }, [filteredRooms.length, preserveAvailabilityFilter, currentTime]);
-
-  console.log("=== RoomSize Debug Info ===");
-  console.log("People size:", peopleSize);
-  console.log("Selected size:", selectedSize);
-  console.log("Preserve availability filter:", preserveAvailabilityFilter);
-  console.log("Icons:", icons.length);
-  console.log("Live events:", liveEvents.length);
-  console.log("Filtered icons:", filteredIcons.length);
-  console.log("Filtered rooms:", filteredRooms.length);
-  console.log("Filtered rooms data:", filteredRooms.map(r => ({
-    room: r.room,
-    people: r.people,
-    hasEvents: r.events?.length > 0
-  })));
 
   if (filteredRooms.length === 0) {
     return (
