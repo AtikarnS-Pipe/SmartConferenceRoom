@@ -63,7 +63,7 @@ function Admin() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoading(false);
-    }, 2000); // 2 seconds loading
+    }, 200); // 2 seconds loading
 
     return () => clearTimeout(timer);
   }, []);
