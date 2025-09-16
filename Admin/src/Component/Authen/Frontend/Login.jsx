@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
-import Logo from '../../../assets/Logotcc.png';
+import Logo from '../../../assets/Thaibev.png';
 import {
   Mail,
   Lock,
@@ -152,7 +152,7 @@ function Verify({ setAuth }) {
 
       <div className="flex flex-1">
         {/* Left Side - Logo */}
-        <div className="hidden lg:flex flex-1 bg-[#0398fc] items-center justify-center p-8">
+        <div className="hidden lg:flex flex-1 bg-white items-center justify-center p-8">
           <img
             src={Logo}
             alt="Logo"
