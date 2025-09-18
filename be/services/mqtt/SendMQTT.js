@@ -1,6 +1,6 @@
 // MQTT server 
 const mqtt = require('mqtt');
-const { MqttState } = require('../models/MqttState');
+const { MqttState } = require('../../models/MqttState');
 require('dotenv').config({ path: './config/.env' });
 // MQTT connect
 const mqttOptions = {
@@ -168,4 +168,9 @@ async function initMqtt() {
 function delay(ms) {
   return new Promise(res => setTimeout(res, ms));
 }
-module.exports = { sendMQTTMessage, initMqtt };
+
+function getClient() {
+  return client;
+}
+
+module.exports = { sendMQTTMessage, initMqtt, getClient };

@@ -5,7 +5,9 @@ const { connectToDatabase} = require("./database/mongodb");
 const { monitorToken } = require('./utils/tokenCache');
 const { seedMqttRooms } = require('./models/MqttState');
 const express = require("express");
-const { initMqtt } = require('./utils/SendMQTT');
+const { initMqtt } = require('./services/mqtt/SendMQTT');
+const { initLogger } = require('./services/mqtt/mqttlogger'); 
+
 // Import routes
 const { DeviceState } = require('./models/Log_Device_Status');
 const SuperAdminRouter = require('./routes/superadmin_manage.routes')
@@ -69,6 +71,7 @@ app.post('/api2/device', async (req, res) => {
 app.listen(process.env.PORT, async () => {
   console.log(`Server running at http://localhost:${process.env.PORT}`);
   await connectToDatabase();
-  await seedMqttRooms();
-  await initMqtt();
+  await seedMqttRooms(); //set ค่า default state ห้องที่มีจอ
+  await initMqtt(); // connect mqtt + door control (topic cmd)
+  await initLogger(); // attach logger subscriber of mqtt (topic rssi)
 });

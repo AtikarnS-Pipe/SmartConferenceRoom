@@ -1,8 +1,8 @@
 const mongoose = require('mongoose');
 
 const DeviceSchema = new mongoose.Schema({
-    Device_room: { type: Number, ref: "MqttState" },
-    Device_status: { type: String },
+    Device_room: { type: Number },
+    Device_status: { type: String,enum: ["online", "offline"], required: true },
     Device_date: { type: Date, default: Date.now }
 },  { timestamps: true });
 

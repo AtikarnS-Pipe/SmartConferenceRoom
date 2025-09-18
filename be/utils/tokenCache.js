@@ -40,7 +40,7 @@ async function monitorToken() {
       accessToken = tokenData ? tokenData.accessToken : null;
 
       if (!refreshToken || !expiryDate) {
-        console.log("⏳ Monitoring is waiting for token in cache...");
+        console.log("⏳ Monitoring is waiting for token...");
         await sleep(5000);
         continue;
       }
@@ -92,7 +92,7 @@ async function monitorToken() {
     if (accessToken && !calendarLoaded) {
       calendarLoaded = await monitorCalendarId(accessToken);
     }
-    await sleep(60 * 1000);
+    await sleep(30 * 1000);
   }
 }
 

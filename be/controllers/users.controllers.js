@@ -2,7 +2,7 @@ const { MqttState } = require("../models/MqttState");
 const { compareKey, adminCompareKey } = require('../services/pin.services');
 require('dotenv').config({ path: './config/.env' });
 const tokenCache = require("../utils/tokenCache");
-const { sendMQTTMessage } = require("../utils/SendMQTT");
+const { sendMQTTMessage } = require("../services/mqtt/SendMQTT");
 const { getuserdatabyroom, waitUntil } = require('../services/users.services');
 // crud microsoft
 const { GeteventId, createMSEvent } = require('../services/users.services');
