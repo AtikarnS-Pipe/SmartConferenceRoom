@@ -32,18 +32,19 @@ const PinPopupManager = ({ events, onPinSuccess, closeSignal, bookingInProgress 
   };
 
   // ฟังก์ชัน DELETE ลบ event !!!!!!!ปิดก่อนเพราะยังไม่ใช้
-  // const deleteEventOnBackend = async ({ eventId }) => {
-  //   try {
-  //     const res = await fetch('/api2/user/ms/delete', {
-  //       method: 'DELETE',
-  //       headers: { 'Content-Type': 'application/json' },
-  //       body: JSON.stringify({ eventId }),
-  //     });
-  //     return await res.json();
-  //   } catch (e) {
-  //     return { success: false, error: 'Network error' };
-  //   }
-  // };
+  const deleteEventOnBackend = async ({ eventId, room_number }) => {
+    try {
+      const res = await fetch('/api2/user/ms/delete', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ eventId, room_number }),
+      });
+      console.log(`Delete event room ${room_number}`);
+      return await res.json();
+    } catch (e) {
+      return { success: false, error: 'Network error' };
+    }
+  };
 
   // รีเซ็ตสถานะทั้งหมด
   const resetAllStates = () => {
@@ -75,7 +76,7 @@ const PinPopupManager = ({ events, onPinSuccess, closeSignal, bookingInProgress 
 
     // ถ้าเลยเวลาแล้ว ลบทันที และตั้งสถานะเป็น expired
     if (msSinceStart >= deadline) {
-      // deleteEventOnBackend({ eventId: currentEvent.id });
+      deleteEventOnBackend({ eventId: currentEvent.id, room_number: roomId });
       resetAllStates();
       return;
     }
@@ -85,7 +86,7 @@ const PinPopupManager = ({ events, onPinSuccess, closeSignal, bookingInProgress 
 
     // ยังไม่ครบ 15 นาที: ตั้ง timeout
     const id = setTimeout(() => {
-      // deleteEventOnBackend({ eventId: currentEvent.id });
+      deleteEventOnBackend({ eventId: currentEvent.id, room_number: roomId });
       resetAllStates();
     }, deadline - msSinceStart);
 
@@ -109,7 +110,7 @@ const PinPopupManager = ({ events, onPinSuccess, closeSignal, bookingInProgress 
         setPinVisible(true);
         setIsTemporarilyHidden(false);
       } else {
-        // deleteEventOnBackend({ eventId: currentEvent.id });
+        deleteEventOnBackend({ eventId: currentEvent.id, room_number: roomId });
         resetAllStates();
       }
     }

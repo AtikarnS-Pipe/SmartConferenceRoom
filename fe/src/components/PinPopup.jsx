@@ -120,7 +120,7 @@ const PinPopup = ({ onSubmit, error, waiting, title = 'Enter PIN Code', showIcon
           justifyContent: 'center',
           gap: '0.5rem'
         }}>
-          {title} {!disableCountdown && countdown > 0 && `(${countdown}s)`}
+          {title}
           {showStaffIcon && <ShieldUser size={30} color="#000000" />}
           {showIcon && (error === 'Correct password' ? <DoorOpen size={30} color="#000000" /> : <DoorClosedLocked size={30} color="#000000" />)}
         </h2>

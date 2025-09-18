@@ -391,7 +391,7 @@ export default function TimeSchedule({ currentTime, events = [], zoomLevel, setZ
         {/* Bottom Labels */}
         <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px' }}>
           <div style={{ fontSize: '16px', color: '#4E4E4E' }}>08:00 AM</div>
-          <div style={{ fontSize: '16px', color: '#4E4E4E' }}>06:00 PM</div>
+          <div style={{ fontSize: '16px', color: '#4E4E4E' }}>07:00 PM</div>
         </div>
       </div>
 
