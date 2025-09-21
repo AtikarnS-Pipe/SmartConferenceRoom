@@ -79,7 +79,7 @@ async function syncAllRooms() {
                             const except_rooms = (process.env.EXECPT_ROOMS || "").split(",").map(num => Number(num.trim()));
                             if(!except_rooms.includes(Number(roomData.room))){
                                 RoomStr = roomData.room.toString();
-                                const mailcontent = getMailContent(RoomStr, key);
+                                const mailcontent = getMailContent(RoomStr, key, event.start?.dateTime, event.end?.dateTime); // ms ISO datetime format
                                 const mail = process.env.DEBUG_MODE === "true" ? process.env.CENTERLIZED_MAIL : event.organizer?.emailAddress?.address;
                                 await sendMailAsync(mailcontent.subject, mailcontent.body, mail, tokenCache.getAccessToken()); //หัวข้ออีเมล, รหัสผ่าน, หมายเลขห้องที่จะส่งไป
                             }
