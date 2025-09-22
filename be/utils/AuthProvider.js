@@ -39,12 +39,10 @@ async function refreshAccessToken(refresh_token) {
     });
     return response.data;
   } catch (error) {
-    console.error("Error: Refresh token Error");
-    if (error.response) {
-      console.error("Status Code:", error.response.status);
-      console.error("Response Data:", error.response.data);
+    if (error.response?.data?.error === "invalid_grant") {
+      console.warn("⚠️ Refresh token invalid/expired. Waiting for admin login...");
     } else {
-      console.error("Error Message:", error.message);
+      console.error("❌ Failed to refresh token:", error.message);
     }
     return null;
   }

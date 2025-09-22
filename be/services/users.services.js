@@ -81,48 +81,51 @@ const GeteventId = async (accessToken, roomnumber, email, startdatetime, enddate
 }
 
 const createMSEvent = async (AccessToken, createroomdata) => {
-    try{
-        const newEvent = {
-            subject: `Meeting in Room ${createroomdata.RoomNumber}`,
-            start: {
-                dateTime: createroomdata.startdatetime,
-                timeZone: "UTC"
-            },
-            end: {
-                dateTime: createroomdata.enddatetime,
-                timeZone: "UTC"
-            },
-            // location: {
-            //     displayName: `${RoomNumber}@tcc-technology.com`
-            // },
-            attendees: [
-                {
-                emailAddress: {
-                    address: `${createroomdata.RoomNumber}@tcc-technology.com`,
-                    // name: `${RoomNumber} Meetingroom`
-                },
-                type: "required"
-                }
-            ],
-            organizer: {
-                emailAddress: {
-                    // name: "TCCtech Meetingroom222",
-                    address: "meetingroom@tcc-technology.com"
-                }
-            }
-        };
-        const iscreate = await getGraphClient(AccessToken)
-        .api(`/me/events`)  // for calendar you have access to
-        .post(newEvent);
-        if (!iscreate) {
-            return false;
-        }
-        return iscreate;
-    } catch(error){
-        console.error('Error creating MS event:', error.message);
-        return false;
+  try {
+    const newEvent = {
+      subject: `Meeting in Room ${createroomdata.RoomNumber}`,
+      start: { dateTime: createroomdata.startdatetime, timeZone: "UTC" },
+      end: { dateTime: createroomdata.enddatetime, timeZone: "UTC" },
+      attendees: [
+        {
+          emailAddress: {
+            address: `${createroomdata.RoomNumber}@tcc-technology.com`,
+          },
+          type: "required",
+        },
+      ],
+    };
+
+    let iscreate;
+    try {
+      iscreate = await getGraphClient(AccessToken)
+        .api(`/me/events`)
+        .post(newEvent, { fetchOptions: { timeout: 5000 } }); // รอสูงสุด 5 วิ
+    } catch (err) {
+      console.warn("⚠️ Event creation may have timed out, checking manually...");
     }
-}
+
+    // ✅ ถ้า API ตอบกลับมา → ใช้เลย
+    if (iscreate && iscreate.id) return iscreate;
+
+    // 🔎 ถ้า API ไม่ตอบ แต่ event อาจสร้างแล้ว → confirm
+    const check = await getGraphClient(AccessToken)
+      .api(`/me/events`)
+      .filter(`start/dateTime ge '${createroomdata.startdatetime}' and end/dateTime le '${createroomdata.enddatetime}'`)
+      .get();
+
+    if (check.value && check.value.length > 0) {
+      console.log("✅ Event confirmed by checking calendar");
+      return check.value[0]; // คืน event ที่สร้างจริง
+    }
+
+    return false;
+  } catch (error) {
+    console.error("Error creating MS event:", error.message);
+    return false;
+  }
+};
+
 
 async function waitUntil(conditionFn, timeout = 15000, interval = 1000) {
     const start = Date.now();

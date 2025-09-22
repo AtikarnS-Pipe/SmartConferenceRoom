@@ -120,17 +120,17 @@ const getAllusers = async (req, res) => {
     // จัดการเมื่อ connection ปิด
     req.on('close', () => {
         clearInterval(intervalId);
-        console.log(`SSE connection closed for admin`);
+        // console.log(`SSE connection closed for admin`);
     });
 
     req.on('error', (err) => {
         clearInterval(intervalId);
-        console.error('SSE request error:', err);
+        // console.error('SSE request error:', err);
     });
 
     res.on('finish', () => {
         clearInterval(intervalId);
-        console.log(`Response finished for admin`);
+        // console.log(`Response finished for admin`);
     });
            
 
@@ -167,18 +167,18 @@ const getschedule = async (req, res) => {
     // ปิด connection
     req.on('close', () => {
         clearInterval(intervalId);
-        console.log(`SSE connection closed`);
+        // console.log(`SSE connection closed`);
     });
 
     req.on('error', (err) => {
         clearInterval(intervalId);
-        console.error('SSE request error:', err);
+        // console.error('SSE request error:', err);
     });
 
     // จัดการเมื่อ response สิ้นสุด res.end()
     res.on('finish', () => {
         clearInterval(intervalId);
-        console.log(`Response finished`);
+        // console.log(`Response finished`);
     });
 }
 

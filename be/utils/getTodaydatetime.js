@@ -25,6 +25,7 @@ async function getTodaydatetime() {
     const startDateTime = startTH.toISOString();
     const endDateTime = endTH.toISOString();
 
+    // Need to plus 1 day when startDateTime is better equal to 17:00:00 Thailand time
     // console.log("startDateTime (UTC):", startDateTime);
     // console.log("endDateTime (UTC):", endDateTime);
     return {

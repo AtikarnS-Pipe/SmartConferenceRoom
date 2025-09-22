@@ -26,6 +26,7 @@ const logschema = new mongoose.Schema({
     },
     L_createdAt:{
         type: Date,
+        default: Date.now,
         index: { expires: '90d'} // TTL index to auto delete logs
     },
     // createdBy:{

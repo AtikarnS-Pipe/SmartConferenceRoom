@@ -2,12 +2,14 @@ const { MqttState } = require("../models/MqttState");
 const { compareKey, adminCompareKey } = require('../services/pin.services');
 require('dotenv').config({ path: './config/.env' });
 const tokenCache = require("../utils/tokenCache");
-const { sendMQTTMessage } = require("../utils/SendMQTT");
+const { sendMQTTMessage } = require("../services/mqtt/SendMQTT");
 const { getuserdatabyroom, waitUntil } = require('../services/users.services');
 // crud microsoft
 const { GeteventId, createMSEvent } = require('../services/users.services');
 const getGraphClient = require("../utils/graph");
 const pinstats = require('../models/RoomAccessLog');
+const { getInterval, setIntervalMs } = require("../utils/pollingService");
+
 
 // create ms room
 const bookingkey = require('../models/bookingkey')
@@ -35,22 +37,23 @@ const getuser = async (req, res) => {
     getuserdatabyroom(res, RoomNumber);
     const intervalId = setInterval(async () => {
         getuserdatabyroom(res, RoomNumber);
-    }, 6000);
+    // }, 4000);
+    }, getInterval());
 
     // จัดการ cleanup 
     req.on('close', () => {
         clearInterval(intervalId);
-        console.log(`SSE connection closed for room ${RoomNumber}`);
+        // console.log(`SSE connection closed for room ${RoomNumber}`);
     });
 
     req.on('error', (err) => {
         clearInterval(intervalId);
-        console.error('SSE request error:', err);
+        // console.error('SSE request error:', err);
     });
 
     res.on('finish', () => {
         clearInterval(intervalId);
-        console.log(`Response finished for room ${RoomNumber}`);
+        // console.log(`Response finished for room ${RoomNumber}`);
     });
 };
 
@@ -62,6 +65,7 @@ const keyPins = async (req, res) => {
             return res.status(200).json({ error: "Missing required fields!" });
         }
 
+        const floor = parseInt(room_number.slice(0, 2), 10);
         const room = parseInt(room_number.slice(2, 4), 10);
         const isValid = await compareKey({ eventId, pin });
 
@@ -70,7 +74,7 @@ const keyPins = async (req, res) => {
             return res.status(200).json({ error: "Booking not found" });
         }
 
-        const isOpen = await sendMQTTMessage(process.env.MQTT_TOPIC, `open_${room}`);
+        const isOpen = await sendMQTTMessage(process.env.MQTT_TOPIC, `open_${floor}>${room}`);
         const isUpdated = await MqttState.findOneAndUpdate(
             { Meeting_room: room_number },   // หา record ตามห้อง
             { $set: { state: "open" } },     // อัพเดต state = open
@@ -103,6 +107,7 @@ const adminKeyPin = async (req, res) => {
             return res.status(200).json({ message: "Missing required fields! " });
         }
 
+        const floor = parseInt(room_number.slice(0, 2), 10);
         const room = parseInt(room_number.slice(2, 4), 10);
         const result = await adminCompareKey(pin, room_number);
 
@@ -122,7 +127,7 @@ const adminKeyPin = async (req, res) => {
         }
         console.log("Admin pin valid, sending MQTT command to open door");
 
-        const isOpen = await sendMQTTMessage(process.env.MQTT_TOPIC, `adminopen_${room}`); 
+        const isOpen = await sendMQTTMessage(process.env.MQTT_TOPIC, `adminopen_${floor}>${room}`); 
         const isUpdated = await MqttState.findOneAndUpdate(
             { Meeting_room: room_number, state: { $ne: "open" } }, // หา record ตามห้อง
             { $set: { state: "adminopen" } },  // อัพเดต state = adminopen
@@ -148,11 +153,14 @@ const adminKeyPin = async (req, res) => {
 // รับ eventId ของการประชุมที่ต้องการลบ
 const deleteroom = async (req, res) => {
     if (process.env.DEBUG_MODE === "false") {
-        const { eventId } = req.body; // , eventId
+        const except_rooms = (process.env.EXECPT_ROOMS || "").split(",").map(num => Number(num.trim()));
+        const { eventId, room_number } = req.body; // , eventId
+        if (except_rooms.includes(Number(room_number))) {
+            return res.status(200).json({ message: `Room ${room_number} is in the exception list, skip delete.` });
+        }
         const AccessToken = tokenCache.getAccessToken();
         if (!AccessToken) {
-            console.error("No refresh token found in cache...");
-            throw new Error("No refresh token found in caches. Please login again.");
+            return res.status(401).json({ error: "No refresh token found. Please login again." });
         }
         try {
             await getGraphClient(AccessToken)
@@ -217,6 +225,8 @@ const deleteroom = async (req, res) => {
             console.error("Error deleting event:", error);
             res.status(500).json({ error: "Failed to delete event" });
         }
+    } else {
+        return res.status(200).json({ message: "Debug mode - skip delete" });
     }
 }
 
@@ -237,9 +247,10 @@ const createroom = async (req, res) => {
     }
 
     try {
+        setIntervalMs(3000, 15000); // ปรับเป็น 3000 วินาที และรีเซ็ตหลัง 20 วินาที
         const isCreated = await createMSEvent(AccessToken, createroomdata);
         if (!isCreated) return res.status(400).json({ success: false, error: "Event creation failed." });
-
+        
         console.log(`Booking created for room ${createroomdata.RoomNumber}`);
         return res.status(200).json({ success: true });
     } catch (error) {
@@ -251,6 +262,8 @@ const createroom = async (req, res) => {
 
 const createsearchpin = async (req, res) => {
     const { pindata } = req.body;
+    console.log("start create date now:", new Date().toISOString());
+
     if (!pindata || !pindata.eventId || !pindata.room_number || !pindata.organizerMail || !pindata.pin || !pindata.startDateTime || !pindata.endDateTime) {
         return res.status(400).json({ error: "All fields are required" });
     }
@@ -267,6 +280,8 @@ const createsearchpin = async (req, res) => {
         });
         // const booking = await bookingkey.findOne({ eventId, room: room_number });
         if (!booking) return res.status(400).json({ error: "Not found eventId" });
+        console.log("end create date now:", new Date().toISOString());
+
         res.status(200).json({ success: true });
     } catch (error) {
         console.error("Error searching pin by event ID:", error);
@@ -315,20 +330,22 @@ const endmeeting = async (req, res) => {
                 },
             })
         console.log("Update event success");
-        const room = parseInt(endmeetingdata.room_number.slice(2, 4), 10);
-        console.log("Room for close door:", room);
-        const isClosed = await sendMQTTMessage(process.env.MQTT_TOPIC, `close_${room}`);
-        const isUpdated = await MqttState.findOneAndUpdate(
-            { Meeting_room: endmeetingdata.room_number }, // หา record ตามห้อง
-            { $set: { state: "close" } },     // อัพเดต state = open
-            { new: true, upsert: true }      // upsert กันพลาด ถ้าไม่เจอให้สร้าง
-        );
-        if (!isUpdated) {
-            console.error("Failed to update MQTT state");
-            return res.status(500).json({ error: "Failed to update MQTT state" });
-        }
-        console.log(`MQTT message sent: ${isClosed}`);
-        if(!isClosed.success) throw new Error(isClosed.error);
+        
+        // const floor = parseInt(endmeetingdata.room_number.slice(0, 2), 10);
+        // const room = parseInt(endmeetingdata.room_number.slice(2, 4), 10);
+        // console.log("Room for close door:", room);
+        // const isClosed = await sendMQTTMessage(process.env.MQTT_TOPIC, `close_${floor}>${room}`);
+        // const isUpdated = await MqttState.findOneAndUpdate(
+        //     { Meeting_room: endmeetingdata.room_number }, // หา record ตามห้อง
+        //     { $set: { state: "close" } },     // อัพเดต state = open
+        //     { new: true, upsert: true }      // upsert กันพลาด ถ้าไม่เจอให้สร้าง
+        // );
+        // if (!isUpdated) {
+        //     console.error("Failed to update MQTT state");
+        //     return res.status(500).json({ error: "Failed to update MQTT state" });
+        // }
+        // console.log(`MQTT message sent: ${isClosed}`);
+        // if(!isClosed.success) throw new Error(isClosed.error);
 
         res.status(200).json({ message: "Update event successfully" });
     } catch (error) {
@@ -340,10 +357,11 @@ const endmeeting = async (req, res) => {
 const closedoor = async (req, res) => {
     const { room_number } = req.body;
     if (!room_number) return res.status(400).json({ error: "RoomNumber is Missing" });
+    const floor = parseInt(room_number.slice(0, 2), 10);
     const room = parseInt(room_number.slice(2, 4), 10);
     console.log("Room for close door:", room);
     try {
-        const isClosed = await sendMQTTMessage(process.env.MQTT_TOPIC, `close_${room}`);
+        const isClosed = await sendMQTTMessage(process.env.MQTT_TOPIC, `close_${floor}>${room}`);
         const isUpdated = await MqttState.findOneAndUpdate(
             { Meeting_room: room_number },          // หา record ตามห้อง
             { $set: { state: "close" } },     // อัพเดต state = close

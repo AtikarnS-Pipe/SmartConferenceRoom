@@ -14,6 +14,7 @@ const bookingKeySchema = new mongoose.Schema({
     },
     B_createdAt:{
         type: Date,
+        default: Date.now,  
         index: { expires: '90d'} // TTL index to auto delete logs
     }
 });

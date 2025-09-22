@@ -47,10 +47,6 @@ async function adminCompareKey( pin, room_number ) {
         });
         if (!user) return { success: false, message: "User not found!"};
         if (user.role === 'Deactivate') return { success: false, message: "User is Deactivated"};
-        /**
-         * ! update database to log admin/housekeeper insert pinnew Date()
-         * await log.create({ userId: user._id, action: `access room ${room_number}`, role: user.role, timestamp:  });
-         * */
         
         // logsmonitoring function
         const datalogs = {  

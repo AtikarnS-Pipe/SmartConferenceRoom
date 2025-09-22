@@ -62,25 +62,28 @@ async function syncAllRooms() {
                 for (const event of roomData.events) {
                     if (event.organizer?.emailAddress?.address !== process.env.CENTERLIZED_MAIL) { // ถ้าไม่ใช่ผู้ดูแลระบบ
                         // console.log(`Processing event for room ${roomData.room}:`, event.organizer?.emailAddress?.address);
-                        let booking = await bookingkey.findOne({ room: roomData.room, eventId: event.id });
+                        let booking = await bookingkey.findOne({ room: Number(roomData.room), eventId: event.id });
                         if (!booking) { // ถ้ายังไม่มี ให้สร้างใหม่
-                            console.log('Creating new key for room:', roomData.room, 'event id:', event.id);
+                            console.log('Creating new key for room(show include room that except):', roomData.room);
                             const key = randomPin();
                             booking = await bookingkey.create({
-                                room: roomData.room,
+                                room: Number(roomData.room),
                                 eventId: event.id,
                                 organizerMail: event.organizer?.emailAddress?.address,
                                 pin: key, // save pin for user
                                 startDateTime: new Date(event.start?.dateTime + "Z"),
                                 endDateTime: new Date(event.end?.dateTime + "Z"),
                                 B_createdAt: new Date(),
-                            });
-                            // console.log('mail send:', key);
-                            RoomStr = roomData.room.toString();
-                            const mailcontent = getMailContent(RoomStr, key);
-
-                            const mail = process.env.DEBUG_MODE === "true" ? process.env.CENTERLIZED_MAIL : event.organizer?.emailAddress?.address;
-                            await sendMailAsync(mailcontent.subject, mailcontent.body, mail, tokenCache.getAccessToken()); //หัวข้ออีเมล, รหัสผ่าน, หมายเลขห้องที่จะส่งไป
+                            });                            
+                            
+                            const except_rooms = (process.env.EXECPT_ROOMS || "").split(",").map(num => Number(num.trim()));
+                            if(!except_rooms.includes(Number(roomData.room))){
+                                RoomStr = roomData.room.toString();
+                                const mailcontent = getMailContent(RoomStr, key, event.start?.dateTime, event.end?.dateTime); // ms ISO datetime format
+                                const mail = process.env.DEBUG_MODE === "true" ? process.env.CENTERLIZED_MAIL : event.organizer?.emailAddress?.address;
+                                await sendMailAsync(mailcontent.subject, mailcontent.body, mail, tokenCache.getAccessToken()); //หัวข้ออีเมล, รหัสผ่าน, หมายเลขห้องที่จะส่งไป
+                            }
+                            
                         }
                     }
                 }

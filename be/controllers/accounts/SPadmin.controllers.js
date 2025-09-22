@@ -16,7 +16,7 @@ const createadmin = async (req, res) => {
 
   try {
     const existingAdmin = await User.findOne({
-      role: { $ne: 'Deactivated' },
+      role: { $ne: 'Deactivate' },
       $or: [{ email }, { pin }, { name }]
     });
 
