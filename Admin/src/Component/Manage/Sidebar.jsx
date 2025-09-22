@@ -175,7 +175,7 @@ export default function Sidebar() {
         setTimeout(() => {
           localStorage.clear();
           window.location.href = "/"; // ใช้ window.location.href แทน navigate
-        }, 1500);
+        }, 3000);
       } else {
         setStatusPopup("error");
         setMessage("Sign out failed. Please try again.");
@@ -226,10 +226,10 @@ export default function Sidebar() {
 
       setMessage(res.data.message);
       setStatusPopup("success");
+        setShowPasswordModal(false);
 
       setTimeout(() => {
         setStatusPopup(null);
-        setShowPasswordModal(false);
         setNewPassword("");
         setConfirmPassword("");
         // Refresh profile to get updated PIN

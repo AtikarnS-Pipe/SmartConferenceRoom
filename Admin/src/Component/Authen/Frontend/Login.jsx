@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
-import Logo from '../../../assets/Thaibev.png';
+import Logo from '../../../assets/Logotcc.png';
 import {
   Mail,
   Lock,
@@ -100,7 +100,13 @@ function Verify({ setAuth }) {
     setError("");
 
     try {
-      const res = await axios.post("/api1/account/auth", formData);
+      // สร้าง formData ใหม่โดยแปลง email เป็นตัวพิมพ์เล็กก่อนส่งไป backend
+      const submitData = {
+        ...formData,
+        email: formData.email.toLowerCase()
+      };
+      
+      const res = await axios.post("/api1/account/auth", submitData);
       
       // เก็บ token และ role
       localStorage.setItem("token", res.data.token);
@@ -152,7 +158,7 @@ function Verify({ setAuth }) {
 
       <div className="flex flex-1">
         {/* Left Side - Logo */}
-        <div className="hidden lg:flex flex-1 bg-white items-center justify-center p-8">
+        <div className="hidden lg:flex flex-1 bg-[#0398fc] items-center justify-center p-8">
           <img
             src={Logo}
             alt="Logo"

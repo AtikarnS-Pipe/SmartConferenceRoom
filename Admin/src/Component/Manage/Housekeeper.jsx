@@ -36,7 +36,7 @@ function Housekeeper() {
     housekeeperCount,
     isLoading: userDataLoading,
     error: userDataError,
-    refreshData
+    refreshData,
   } = useUserData();
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -73,14 +73,14 @@ function Housekeeper() {
   const togglePin = (rowId) => {
     setVisibleRow((prev) => (prev === rowId ? null : rowId));
   };
-  
+
   useEffect(() => {
     const timer = setTimeout(() => {
       setLoading(false);
     }, 200); // แสดง loading 2 วินาที
-  
-      return () => clearTimeout(timer);
-    }, []);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -152,13 +152,14 @@ function Housekeeper() {
       if (res.status === 200) {
         setMessage(res.data.message || "PIN updated successfully");
         setPinerr("success");
+        setShowPinModal(false);
+
         setTimeout(() => {
           setPinerr(null);
-          setShowPinModal(false);
           setNewPin("");
           setConfirmPin("");
           setPinTargetName("");
-        }, 2000);
+        }, 9000);
       }
     } catch (error) {
       const messageFromBackend =
@@ -220,12 +221,12 @@ function Housekeeper() {
       ]);
       setMessage(response.data.message);
       setCreatehousekeeper("success");
+      setShowModal(false);
+      setNewMember({ name: "", pin: "", role: "Housekeeper" });
 
       setTimeout(() => {
         setCreatehousekeeper(null);
-        setShowModal(false);
-        setNewMember({ name: "", pin: "", role: "Housekeeper" });
-      }, 2000);
+      }, 3000);
     } catch (error) {
       console.error(
         "Error creating housekeeper:",
@@ -284,7 +285,7 @@ function Housekeeper() {
     }
   }, [profile]);
 
-    // Loading Screen Component
+  // Loading Screen Component
   if (loading || userDataLoading) {
     return (
       <div
@@ -310,7 +311,9 @@ function Housekeeper() {
               darkMode ? "text-gray-400" : "text-gray-600"
             }`}
           >
-            {userDataLoading ? "Loading user data..." : "Please wait while we prepare housekeeper management"}
+            {userDataLoading
+              ? "Loading user data..."
+              : "Please wait while we prepare housekeeper management"}
           </p>
           {userDataError && (
             <div className="mt-4">
