@@ -1,17 +1,16 @@
-// src/hooks/useRoomData.jsx
 import { useLocation } from 'react-router-dom';
 
 const roomCapacities = {
   '01': 4,
   '02': 4,
-  '03': 2,
-  '04': 2,
-  '05': 4,
-  '06': 4,
-  '14': 6,
-  '15': 6,
-  '19': 2,
-  '20': 2,
+  '03': 4,
+  '04': 4,
+  '05': 6,
+  '06': 6,
+  '14': 10,
+  '15': 10,
+  '19': 4,
+  '20': 4,
 };
 
 function getRoomCapacity(roomNumber) {

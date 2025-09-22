@@ -33,7 +33,6 @@ const PinPopupManager = ({ events, onPinSuccess, closeSignal, bookingInProgress 
 
   // ฟังก์ชัน DELETE ลบ event !!!!!!!ปิดก่อนเพราะยังไม่ใช้
   const deleteEventOnBackend = async ({ eventId, room_number }) => {
-    console.log('room_numberrrrrrrrrr', room_number);
     try {
       const res = await fetch('/api2/user/ms/delete', {
         method: 'DELETE',
