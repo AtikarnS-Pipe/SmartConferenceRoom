@@ -23,7 +23,7 @@ const handleEmailSubmit = async (e) => {
   setIsLoading(true);
 
   try {
-    const res = await axios.post('/api1/account/otp/send', { email });
+    const res = await axios.post('/api1/account/otp/send', { email: email.trim().toLowerCase() });
     // ไม่สนใจ res.data.success เพราะ backend แอบตอบเหมือนกันทุกกรณี
     setStep('otp');
   }  catch (err) {
@@ -41,7 +41,7 @@ const handleOtpSubmit = async (e) => {
 
   try {
     const res = await axios.post('/api1/account/otp/verify', {
-      email,
+      email: email.trim().toLowerCase(),
       otp_code: otp
     });
     if (res.data.reset_token) {

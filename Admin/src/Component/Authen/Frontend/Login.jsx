@@ -100,7 +100,13 @@ function Verify({ setAuth }) {
     setError("");
 
     try {
-      const res = await axios.post("/api1/account/auth", formData);
+      // สร้าง formData ใหม่โดยแปลง email เป็นตัวพิมพ์เล็กก่อนส่งไป backend
+      const submitData = {
+        ...formData,
+        email: formData.email.toLowerCase()
+      };
+      
+      const res = await axios.post("/api1/account/auth", submitData);
       
       // เก็บ token และ role
       localStorage.setItem("token", res.data.token);

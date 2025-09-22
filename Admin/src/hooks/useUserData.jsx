@@ -16,6 +16,7 @@ export const useUserData = () => {
   const adminSourceRef = useRef(null);
   const connectionInitializedRef = useRef(false);
   const retryTimeoutRef = useRef(null);
+  const loadingTimeoutRef = useRef(null);
   
   // ฟังก์ชันสำหรับปิด connections
   const closeConnections = () => {
@@ -32,6 +33,11 @@ export const useUserData = () => {
     if (retryTimeoutRef.current) {
       clearTimeout(retryTimeoutRef.current);
       retryTimeoutRef.current = null;
+    }
+    
+    if (loadingTimeoutRef.current) {
+      clearTimeout(loadingTimeoutRef.current);
+      loadingTimeoutRef.current = null;
     }
     
     connectionInitializedRef.current = false;
@@ -133,6 +139,14 @@ export const useUserData = () => {
       
       connectionInitializedRef.current = true;
       
+      // ตั้ง timeout หยุด loading หาก SSE ไม่ส่งข้อมูลมาภายใน 10 วินาที
+      loadingTimeoutRef.current = setTimeout(() => {
+        if (admins.length === 0 && housekeepers.length === 0) {
+          setIsLoading(false);
+          setError('Please wait while connecting to server... If this takes too long, try refreshing the page.');
+        }
+      }, 10000);
+      
     } catch (err) {
       setError('Failed to initialize connections');
       setIsLoading(false);
@@ -144,9 +158,13 @@ export const useUserData = () => {
     const combined = [...admins, ...housekeepers];
     setAllUsers(combined);
     
-    // ถ้ามีข้อมูลอย่างน้อย 1 อย่าง ให้หยุด loading
+    // ถ้ามีข้อมูลอย่างน้อย 1 อย่าง ให้หยุด loading และยกเลิก timeout
     if (admins.length > 0 || housekeepers.length > 0) {
       setIsLoading(false);
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current);
+        loadingTimeoutRef.current = null;
+      }
     }
   }, [admins, housekeepers]);
   

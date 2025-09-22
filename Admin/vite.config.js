@@ -17,6 +17,8 @@ export default defineConfig({
       '/api1/admin/schedule': backend,
       '/api1/account/refreshtoken': backend,
       '/api1/account/createhousekeeper': backend,
+      '/api1/account/otp/send': backend,
+      '/api1/account/otp/verify': backend,
       '/api1/account/changeadminpw': backend,
       '/api1/account/edithousekeeper': backend,
       '/api1/account/deletehousekeeper': backend,

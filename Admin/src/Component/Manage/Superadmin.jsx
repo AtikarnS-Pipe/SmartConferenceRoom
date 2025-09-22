@@ -32,8 +32,6 @@ import useUserData from "../../hooks/useUserData";
 function Superadmin() {
   // ใช้ custom hook สำหรับจัดการ user data
   const {
-    housekeepers,
-    admins,
     allUsers,
     adminCount,
     housekeeperCount,
@@ -308,7 +306,7 @@ function Superadmin() {
               darkMode ? "text-gray-400" : "text-gray-600"
             }`}
           >
-            {userDataLoading ? "Loading user data..." : "Please wait while we prepare superadmin management"}
+            {userDataLoading ? "Please wait while we prepare superadmin management" : "Loading user data..."}
           </p>
           {userDataError && (
             <div className="mt-4">
