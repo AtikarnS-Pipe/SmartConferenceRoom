@@ -184,10 +184,10 @@ export default function TimeSchedule({
 
   // Calculate zoom level to show default time range (8 AM - 7 PM)
   function getDefaultRangeZoomLevel() {
-  // Always zoom to show 8:00am-7:00pm fully, regardless of containerWidth
-  // 8am-7pm = 11 hours, so zoom = 24/11
-  const hoursRatio = 24 / defaultRangeHours; // 24 / 11 ≈ 2.18
-  return hoursRatio;
+    // Always zoom to show 8:00am-7:00pm fully, regardless of containerWidth
+    // 8am-7pm = 11 hours, so zoom = 24/11
+    const hoursRatio = 24 / defaultRangeHours; // 24 / 11 ≈ 2.18
+    return hoursRatio;
   }
 
   useEffect(() => {
