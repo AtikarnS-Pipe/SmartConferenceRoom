@@ -1,7 +1,57 @@
 
-function getMailContent(RoomStr, key){
+function getMailContent(RoomStr, key, startIso, endIso) {
+    // ----------------------------
+    // Format Date & Time
+    // ----------------------------
+    let periodStr;
+    const optionsDate = { year: "numeric", month: "short", day: "2-digit" };
+    const optionsTime = { hour: "numeric", minute: "2-digit", hour12: true };
+
+    // raw UTC date
+    const rawStart = new Date(startIso);
+    const rawEnd = new Date(endIso);
+    console.log("Raw UTC start:", rawStart.toISOString(), "end:", rawEnd.toISOString());
+    console.log("Raw hour start:", rawStart.getUTCHours(), "end:", rawEnd.getUTCHours());
+
+    // ----------------------------
+    // ตรวจ all-day โดยเลื่อนเวลา UTC +7 ชม.
+    // ----------------------------
+    const tzOffset = 7 * 60 * 60 * 1000; // Bangkok +7
+    const adjStart = new Date(rawStart.getTime() + tzOffset);
+    const adjEnd = new Date(rawEnd.getTime() + tzOffset);
+
+    // all-day Hardcode check (เลื่อนเวลา +7 ชม.) 17.00.00 +7 = 00.00.00 in UTC
+    const isAllDay =
+        adjStart.getUTCHours() === 0 && adjStart.getUTCMinutes() === 0 && 
+        adjEnd.getUTCHours() === 0 && adjEnd.getUTCMinutes() === 0 &&
+        (adjEnd - adjStart) >= 24 * 60 * 60 * 1000;
+
+    console.log("isAllDay:", rawEnd - rawStart, isAllDay, adjStart, adjEnd);
+
+
+    const startDateStr = adjStart.toLocaleDateString("en-US", optionsDate);
+    const endDateStr = adjEnd.toLocaleDateString("en-US", optionsDate);
+
+    if (isAllDay) {
+        // All-day
+        periodStr = `${startDateStr}, All day`;
+    } else if (startDateStr !== endDateStr) {
+        // Cross-day
+        const startTimeStr = adjStart.toLocaleTimeString("en-US", optionsTime);
+        const endTimeStr = adjEnd.toLocaleTimeString("en-US", optionsTime);
+        periodStr = `${startDateStr} ${startTimeStr} – ${endDateStr} ${endTimeStr}`;
+    } else {
+        // Normal single-day
+        const startTimeStr = adjStart.toLocaleTimeString("en-US", optionsTime);
+        const endTimeStr = adjEnd.toLocaleTimeString("en-US", optionsTime);
+        periodStr = `${startDateStr}, ${startTimeStr}–${endTimeStr}`;
+    }
+
+    const roomDisplay = `\\${RoomStr.slice(0, 2)}>${RoomStr.slice(2, 4)}`;
+    const subject = `Room ${roomDisplay} – Meeting Access PIN | ${periodStr}`;
+
     return {
-        subject: "Pin for room booking",
+        subject: subject,
         body: `<!DOCTYPE html>
             <html lang="en">
             <head>
@@ -50,7 +100,7 @@ function getMailContent(RoomStr, key){
                                     <!-- PIN Section -->
                                     <div style="background: #4CAF50; border-radius: 12px; padding: 25px; margin: 25px 0; text-align: center;">
                                         <h3 style="color: #ffffff; margin: 0 0 15px; font-size: 18px; font-weight: 600;">
-                                            Room \\${RoomStr.slice(0, 2)}>${RoomStr.slice(2, 4)} Access PIN
+                                            Room ${roomDisplay} Access PIN
                                         </h3>
                                         <div style="background-color: rgba(255, 255, 255, 0.2); border-radius:12px; padding: 15px; margin: 15px 0;">
                                             <span style="color: #ffffff; font-size: 32px; font-weight: bold; letter-spacing: 4px; font-family: 'Courier New', monospace;">
@@ -71,7 +121,13 @@ function getMailContent(RoomStr, key){
                                             <div style="display: block; padding: 5px 0;">
                                                 <strong style="color: #4a5568; font-size: 14px; display: inline-block;">Room Number:</strong>
                                                 <span style="color: #4a5568; font-size: 14px; margin-left: 10px;">
-                                                    \\${RoomStr.slice(0, 2)}>${RoomStr.slice(2, 4)}
+                                                    ${roomDisplay}
+                                                </span>
+                                            </div>
+                                            <div style="display: block; padding: 5px 0;">
+                                                <strong style="color: #4a5568; font-size: 14px; display: inline-block;">Meeting Schedule:</strong>
+                                                <span style="color: #4a5568; font-size: 14px; margin-left: 10px;">
+                                                    ${periodStr}
                                                 </span>
                                             </div>
                                             <div style="display: block; padding: 5px 0;">
@@ -89,7 +145,7 @@ function getMailContent(RoomStr, key){
                                             How to Use Your PIN
                                         </h4>
                                         <ol style="color: #4a5568; margin: 0; padding-left: 20px; font-size: 14px; line-height: 1.6;">
-                                            <li>Arrive at Room \\${RoomStr.slice(0, 2)}>${RoomStr.slice(2, 4)} at your scheduled time</li>
+                                            <li>Arrive at Room ${roomDisplay} at your scheduled time</li>
                                             <li>Locate the display panel outside the room.</li>
                                             <li>Enter your 4-digit PIN: <strong>${key}</strong></li>
                                             <li>Confirm your attendance to activate the booking</li>

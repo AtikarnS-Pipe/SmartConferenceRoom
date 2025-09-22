@@ -5,6 +5,8 @@ const Userschema = new mongoose.Schema({
     email:{ // only admin
         type: String,
         required: false,
+        lowercase: true,
+        trim: true,
         // unique: true,
         // sparse: true,
     },

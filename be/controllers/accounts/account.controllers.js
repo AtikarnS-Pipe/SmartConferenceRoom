@@ -62,7 +62,7 @@ const ChangeAdminPin = async (req, res) => {
     }
 
     const checkpin = await User.findOne({
-      role: { $ne: 'Deactivated' },
+      role: { $ne: 'Deactivate' },
       _id: { $ne: admin._id },
       pin: newpin,
     });
@@ -93,7 +93,7 @@ const Createhousekeeper = async (req, res) => {
     }
     const { name, pin } = req.body;
     const checkpin = await User.findOne({  // ถ้ามี name or pin สักอันที่ตรง
-      role: { $ne: 'Deactivated' },
+      role: { $ne: 'Deactivate' },
       $or : [
         { pin }, {name}
       ]
@@ -196,7 +196,7 @@ const editpinhousekeeper = async (req, res) => {
     const [ThisHousekeeper, conflictUser] = await Promise.all([
       User.findOne({ name, role: 'Housekeeper' }),
       User.findOne({
-        role: { $ne: 'Deactivated' },
+        role: { $ne: 'Deactivate' },
         pin: newpin,
         name: { $ne: name } // exclude this housekeeper id
       }),
