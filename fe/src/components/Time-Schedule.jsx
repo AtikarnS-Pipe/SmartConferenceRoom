@@ -139,20 +139,53 @@ export default function TimeSchedule({
     )} ${ampm}`;
   }
 
-  // Auto-reset zoom to default range view after inactivity
+  // Single timer for both zoom and scroll reset
   useEffect(() => {
-    // Don't auto-reset if user has zoomed out significantly (viewing full timeline)
-    const currentMinZoom = getAdaptiveZoomLevel();
-    const defaultRangeZoom = getDefaultRangeZoomLevel();
+    const container = containerRef.current;
+    if (!container) return;
 
-    // Only auto-reset if zoom is close to default range zoom
-    if (zoomLevel > currentMinZoom && zoomLevel < defaultRangeZoom * 0.8) {
-      const timer = setTimeout(() => {
-        setZoomLevel(getDefaultRangeZoomLevel());
-      }, 60000);
-      return () => clearTimeout(timer);
-    }
-  }, [zoomLevel, containerWidth]);
+    let inactivityTimer;
+
+    // Function to reset to default view with precise calculation
+    const resetToDefaultView = () => {
+      const defaultZoom = getDefaultRangeZoomLevel();
+      const scheduleWidth = baseWidth * defaultZoom;
+      const startHourPercent = defaultStartHour / 24; // 8/24 = 0.333
+      const targetPosition = startHourPercent * scheduleWidth;
+
+      // Set zoom and scroll simultaneously without delay
+      setZoomLevel(defaultZoom);
+      container.scrollLeft = targetPosition; // Direct assignment, no smooth scroll
+    };
+
+    // Reset timer on any interaction
+    const resetTimer = () => {
+      if (inactivityTimer) clearTimeout(inactivityTimer);
+      inactivityTimer = setTimeout(resetToDefaultView, 5000); // 30 seconds
+    };
+
+    // Event handlers
+    const handleScroll = resetTimer;
+    const handleWheel = resetTimer;
+    const handleTouch = resetTimer;
+
+    // Add event listeners
+    container.addEventListener("scroll", handleScroll);
+    container.addEventListener("wheel", handleWheel, { passive: true });
+    container.addEventListener("touchstart", handleTouch);
+    container.addEventListener("touchmove", handleTouch);
+
+    // Initial timer
+    resetTimer();
+
+    return () => {
+      container.removeEventListener("scroll", handleScroll);
+      container.removeEventListener("wheel", handleWheel);
+      container.removeEventListener("touchstart", handleTouch);
+      container.removeEventListener("touchmove", handleTouch);
+      if (inactivityTimer) clearTimeout(inactivityTimer);
+    };
+  }, [containerWidth, baseWidth, defaultStartHour, zoomLevel]);
 
   // Update time position
   useEffect(() => {
@@ -184,10 +217,19 @@ export default function TimeSchedule({
 
   // Calculate zoom level to show default time range (8 AM - 7 PM)
   function getDefaultRangeZoomLevel() {
-    // Always zoom to show 8:00am-7:00pm fully, regardless of containerWidth
-    // 8am-7pm = 11 hours, so zoom = 24/11
+    if (containerWidth <= 0) return 2.0;
+
+    // คำนวณ zoom ที่ต้องการให้ช่วง 8am-7pm (11 ชั่วโมง) แสดงเต็มหน้าจอ
+    // baseWidth = 1200px แสดง 24 ชั่วโมง
+    // ต้องการให้ containerWidth แสดง 11 ชั่วโมง
+    // zoom = (containerWidth / baseWidth) * (24 / 11)
+
+    const baseZoomForContainer = containerWidth / baseWidth; // zoom สำหรับให้ timeline เต็มหน้าจอ
     const hoursRatio = 24 / defaultRangeHours; // 24 / 11 ≈ 2.18
-    return hoursRatio;
+    const dynamicZoom = baseZoomForContainer * hoursRatio;
+
+    // ให้ minimum zoom เป็น 1.5 เพื่อไม่ให้เล็กเกินไป
+    return Math.max(dynamicZoom, 1.5);
   }
 
   useEffect(() => {
@@ -315,72 +357,113 @@ export default function TimeSchedule({
   const isFullDayEvent = useIsFullDayEvent();
 
   return (
-    <div
-      ref={containerRef}
-      style={{
-        width: "100%",
-        overflowX: "auto",
-        position: "relative",
-        zIndex: 1,
-      }}
-    >
+    <>
       <div
-        ref={scheduleRef}
+        ref={containerRef}
         style={{
+          width: "100%",
+          overflowX: "auto",
           position: "relative",
-          width: `${baseWidth * effectiveZoomLevel}px`,
-          transition: "width 0.3s ease",
+          zIndex: 1,
         }}
       >
-        {/* Time Labels */}
         <div
-          style={{
-            display: "flex",
-            justifyContent: "space-around",
-            marginBottom: "4px",
-          }}
-        >
-          {times.map((time, i) => (
-            <div key={i} style={{ fontSize: "16px", color: "#4E4E4E" }}>
-              {time}
-            </div>
-          ))}
-        </div>
-
-        {/* Timeline */}
-        <div
+          ref={scheduleRef}
           style={{
             position: "relative",
-            height: "100px",
-            backgroundColor: "#F3F4F6",
-            borderRadius: "10px",
-            overflow: "hidden",
+            width: `${baseWidth * effectiveZoomLevel}px`,
+            transition: "width 0.3s ease",
+            zIndex: 1,
           }}
         >
-          {/* Events */}
-          {Array.isArray(events) &&
-            events.map((event, i) => {
-              // Check if this is a 24-hour or multi-day event
-              const isFullDayEvent = () => {
-                if (!event?.start?.dateTime || !event?.end?.dateTime)
-                  return false;
+          {/* Time Labels */}
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-around",
+              marginBottom: "4px",
+            }}
+          >
+            {times.map((time, i) => (
+              <div key={i} style={{ fontSize: "16px", color: "#4E4E4E" }}>
+                {time}
+              </div>
+            ))}
+          </div>
 
-                const startDate = new Date(event.start.dateTime + "Z");
-                const endDate = new Date(event.end.dateTime + "Z");
+          {/* Timeline */}
+          <div
+            style={{
+              position: "relative",
+              height: "100px",
+              backgroundColor: "#F3F4F6",
+              borderRadius: "10px",
+              overflow: "hidden",
+            }}
+          >
+            {/* Events */}
+            {Array.isArray(events) &&
+              events.map((event, i) => {
+                // Check if this is a 24-hour or multi-day event
+                const isFullDayEvent = () => {
+                  if (!event?.start?.dateTime || !event?.end?.dateTime)
+                    return false;
 
-                // Calculate duration in hours
-                const durationHours = (endDate - startDate) / (1000 * 60 * 60);
+                  const startDate = new Date(event.start.dateTime + "Z");
+                  const endDate = new Date(event.end.dateTime + "Z");
 
-                // Consider it a full day if duration is 24 hours or more
-                return durationHours >= 24;
-              };
+                  // Calculate duration in hours
+                  const durationHours =
+                    (endDate - startDate) / (1000 * 60 * 60);
 
-              // If it's a full day event, display it across the entire schedule
-              if (isFullDayEvent()) {
+                  // Consider it a full day if duration is 24 hours or more
+                  return durationHours >= 24;
+                };
+
+                // If it's a full day event, display it across the entire schedule
+                if (isFullDayEvent()) {
+                  const startAMPM = toAMPM_UTCplus7(event?.start?.dateTime);
+                  const endAMPM = toAMPM_UTCplus7(event?.end?.dateTime);
+                  const color = "#2E5074";
+
+                  return (
+                    <div
+                      key={i}
+                      onClick={() => setSelectedEvent(event)}
+                      style={{
+                        position: "absolute",
+                        top: "20%",
+                        left: "0%",
+                        width: "100%",
+                        height: "60%",
+                        backgroundColor: color,
+                        borderRadius: "4px",
+                        padding: "2px 6px",
+                        fontSize: "14px",
+                        color: "white",
+                        overflow: "hidden",
+                        whiteSpace: "nowrap",
+                        textOverflow: "ellipsis",
+                        cursor: "pointer",
+                      }}
+                    >
+                      <p style={{ display: "inline-block", fontSize: "1rem" }}>
+                        {event?.organizer?.emailAddress?.name || "No Name"}
+                      </p>
+                      <p>(Full Day)</p>
+                    </div>
+                  );
+                }
+
+                // Regular event handling (existing code)
+                const start24 = to24HHMM_UTCplus7(event?.start?.dateTime);
+                const end24 = to24HHMM_UTCplus7(event?.end?.dateTime);
+                const startPercent = getTimePercent(start24);
+                const endPercent = getTimePercent(end24);
                 const startAMPM = toAMPM_UTCplus7(event?.start?.dateTime);
                 const endAMPM = toAMPM_UTCplus7(event?.end?.dateTime);
+                const widthPercent = endPercent - startPercent;
                 const color = "#2E5074";
-
                 return (
                   <div
                     key={i}
@@ -388,13 +471,13 @@ export default function TimeSchedule({
                     style={{
                       position: "absolute",
                       top: "20%",
-                      left: "0%",
-                      width: "100%",
+                      left: `${startPercent}%`,
+                      width: `${widthPercent}%`,
                       height: "60%",
                       backgroundColor: color,
                       borderRadius: "4px",
                       padding: "2px 6px",
-                      fontSize: "14px",
+                      fontSize: "12px",
                       color: "white",
                       overflow: "hidden",
                       whiteSpace: "nowrap",
@@ -405,95 +488,58 @@ export default function TimeSchedule({
                     <p style={{ display: "inline-block", fontSize: "1rem" }}>
                       {event?.organizer?.emailAddress?.name || "No Name"}
                     </p>
-                    <p>(Full Day)</p>
+                    <p style={{ fontSize: "0.875rem" }}>
+                      {startAMPM} - {endAMPM}
+                    </p>
                   </div>
                 );
-              }
+              })}
 
-              // Regular event handling (existing code)
-              const start24 = to24HHMM_UTCplus7(event?.start?.dateTime);
-              const end24 = to24HHMM_UTCplus7(event?.end?.dateTime);
-              const startPercent = getTimePercent(start24);
-              const endPercent = getTimePercent(end24);
-              const startAMPM = toAMPM_UTCplus7(event?.start?.dateTime);
-              const endAMPM = toAMPM_UTCplus7(event?.end?.dateTime);
-              const widthPercent = endPercent - startPercent;
-              const color = "#2E5074";
-              return (
+            {/* Time Indicator */}
+            <div
+              style={{
+                position: "absolute",
+                top: 0,
+                bottom: 0,
+                left: `${timePosition}%`,
+                width: "2px",
+                backgroundColor: "#EF4444",
+                zIndex: 10,
+                transition: "left 1s ease",
+                boxShadow: "0 0 4px rgba(239, 68, 68, 0.5)",
+              }}
+            />
+
+            {/* Hour Dividers */}
+            <div style={{ display: "flex", height: "100%" }}>
+              {times.map((_, i) => (
                 <div
                   key={i}
-                  onClick={() => setSelectedEvent(event)}
                   style={{
-                    position: "absolute",
-                    top: "20%",
-                    left: `${startPercent}%`,
-                    width: `${widthPercent}%`,
-                    height: "60%",
-                    backgroundColor: color,
-                    borderRadius: "4px",
-                    padding: "2px 6px",
-                    fontSize: "12px",
-                    color: "white",
-                    overflow: "hidden",
-                    whiteSpace: "nowrap",
-                    textOverflow: "ellipsis",
-                    cursor: "pointer",
+                    flex: 1,
+                    borderRight:
+                      i === times.length - 1 ? "none" : "1px solid #D1D5DB",
                   }}
-                >
-                  <p style={{ display: "inline-block", fontSize: "1rem" }}>
-                    {event?.organizer?.emailAddress?.name || "No Name"}
-                  </p>
-                  <p style={{ fontSize: "0.875rem" }}>
-                    {startAMPM} - {endAMPM}
-                  </p>
-                </div>
-              );
-            })}
+                />
+              ))}
+            </div>
+          </div>
 
-          {/* Time Indicator */}
+          {/* Bottom Labels */}
           <div
             style={{
-              position: "absolute",
-              top: 0,
-              bottom: 0,
-              left: `${timePosition}%`,
-              width: "2px",
-              backgroundColor: "#EF4444",
-              zIndex: 10,
-              transition: "left 1s ease",
-              boxShadow: "0 0 4px rgba(239, 68, 68, 0.5)",
+              display: "flex",
+              justifyContent: "space-between",
+              marginTop: "4px",
             }}
-          />
-
-          {/* Hour Dividers */}
-          <div style={{ display: "flex", height: "100%" }}>
-            {times.map((_, i) => (
-              <div
-                key={i}
-                style={{
-                  flex: 1,
-                  borderRight:
-                    i === times.length - 1 ? "none" : "1px solid #D1D5DB",
-                }}
-              />
-            ))}
+          >
+            <div style={{ fontSize: "16px", color: "#4E4E4E" }}>12:00 AM</div>
+            <div style={{ fontSize: "16px", color: "#4E4E4E" }}>11:00 PM</div>
           </div>
-        </div>
-
-        {/* Bottom Labels */}
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            marginTop: "4px",
-          }}
-        >
-          <div style={{ fontSize: "16px", color: "#4E4E4E" }}>12:00 AM</div>
-          <div style={{ fontSize: "16px", color: "#4E4E4E" }}>11:00 PM</div>
         </div>
       </div>
 
-      {/* Popup overlay */}
+      {/* Popup overlay (ย้ายออกมานอก container) */}
       {selectedEvent && (
         <>
           {/* Overlay */}
@@ -501,9 +547,9 @@ export default function TimeSchedule({
             style={{
               position: "fixed",
               inset: 0,
-              backgroundColor: "rgba(0,0,0,0.5)",
+              backgroundColor: "rgba(0,0,0,0.7)",
               backdropFilter: "blur(6px)",
-              zIndex: 999,
+              zIndex: 9999,
             }}
             onClick={() => setSelectedEvent(null)}
           />
@@ -518,30 +564,16 @@ export default function TimeSchedule({
               background: "#fff",
               padding: "32px",
               borderRadius: "20px",
-              boxShadow: "0 25px 50px rgba(0,0,0,0.2)",
+              boxShadow: "0 25px 50px rgba(0,0,0,0.5)",
               width: "90%",
               maxWidth: "600px",
               maxHeight: "90vh",
               overflowY: "auto",
-              zIndex: 1000,
+              zIndex: 10000,
               fontFamily: "Segoe UI, sans-serif",
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Close Icon */}
-            <button
-              onClick={() => setSelectedEvent(null)}
-              style={{
-                position: "absolute",
-                top: "16px",
-                right: "16px",
-                background: "transparent",
-                border: "none",
-                cursor: "pointer",
-                padding: "4px",
-              }}
-              aria-label="Close"
-            ></button>
 
             {/* Header */}
             <div
@@ -654,6 +686,6 @@ export default function TimeSchedule({
           </div>
         </>
       )}
-    </div>
+    </>
   );
 }

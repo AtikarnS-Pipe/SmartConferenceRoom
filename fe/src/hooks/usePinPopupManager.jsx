@@ -59,7 +59,7 @@ const PinPopupManager = ({ events, onPinSuccess, closeSignal, bookingInProgress 
     }
   };
 
-  // จัดการ timeout 1 นาทีของ event
+  
   useEffect(() => {
     if (!currentEvent || pinVerified) {
       // ถ้าไม่มี event หรือ verified แล้ว ให้รีเซ็ตสถานะ
@@ -104,7 +104,7 @@ const PinPopupManager = ({ events, onPinSuccess, closeSignal, bookingInProgress 
     if (!closeSignal && isTemporarilyHidden && currentEvent && !pinVerified && !isExpired) {
       const start = new Date(currentEvent.start.dateTime + 'Z');
       const now = new Date();
-      const deadline = 100 * 60 * 1000; // 1 นาที
+      const deadline = 15 * 60 * 1000;
 
       if (now - start < deadline) {
         setPinVisible(true);
