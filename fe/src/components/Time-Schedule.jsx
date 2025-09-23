@@ -162,7 +162,7 @@ export default function TimeSchedule({
     // Reset timer on any interaction
     const resetTimer = () => {
       if (inactivityTimer) clearTimeout(inactivityTimer);
-      inactivityTimer = setTimeout(resetToDefaultView, 5000); // 60 seconds
+      inactivityTimer = setTimeout(resetToDefaultView, 60000); // 60 seconds
     };
 
     // Event handlers
