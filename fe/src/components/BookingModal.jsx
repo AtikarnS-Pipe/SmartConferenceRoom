@@ -25,6 +25,7 @@ const BookingModal = ({ isOpen, onClose, onSubmit }) => {
   const [targetEnd, setTargetEnd] = useState(null);
   const [countdown, setCountdown] = useState(COUNTDOWN_TIME);
   const [isModalInitialized, setIsModalInitialized] = useState(false);
+  const [pastTimeWarning, setPastTimeWarning] = useState('');
   const { floor, room } = useRoomData();
   const { events, loading: loadingEvents } = useEvents(floor, room);
   const roomId = `${floor}${room}`; // สร้าง roomId จาก floor และ room
@@ -115,12 +116,8 @@ const BookingModal = ({ isOpen, onClose, onSubmit }) => {
     let hours = Math.floor(roundedMinutes / 60) % 24; 
     const minutes = roundedMinutes % 60;
     
-    // Enforce business hours: 8:00 - 19:00
-    if (hours < 8) { 
-      hours = 8;
-    } else if (hours >= 19) {
-      hours = 8; // Reset to next day 8:00 if after 19:00
-    }
+    // Allow booking 24/7 - no time restrictions
+    // (เอาข้อจำกัดเวลา 8:00-19:00 ออก)
     
     const year = now.getFullYear();
     const month = String(now.getMonth() + 1).padStart(2, '0'); 
@@ -144,11 +141,11 @@ const BookingModal = ({ isOpen, onClose, onSubmit }) => {
     // เริ่มตรวจสอบจากเวลาที่กำหนด
     let checkTime = new Date(proposedStart);
     
-    // set time boundaries for today
+    // set time boundaries for today (24/7 availability)
     const startOfDay = new Date(today);
-    startOfDay.setHours(8, 0, 0, 0); // เริ่มที่ 8:00 ของวันนี้
+    startOfDay.setHours(0, 0, 0, 0); // เริ่มที่ 00:00 ของวันนี้
     const endOfDay = new Date(today);
-    endOfDay.setHours(19, 0, 0, 0); // จบที่ 19:00 ของวันนี้
+    endOfDay.setHours(23, 59, 59, 999); // จบที่ 23:59 ของวันนี้
     
     // console.log('📅 Time boundaries:', { 
     //   startOfDay: startOfDay.toLocaleTimeString(), 
@@ -156,7 +153,7 @@ const BookingModal = ({ isOpen, onClose, onSubmit }) => {
     //   checkTime: checkTime.toLocaleTimeString() 
     // });
     
-    // If no events, check if current time is within business hours
+    // If no events, check if current time is within the day
     if (!events || events.length === 0) {
       // console.log('📋 No events to check against');
       if (checkTime >= startOfDay && checkTime < endOfDay) {
@@ -167,12 +164,12 @@ const BookingModal = ({ isOpen, onClose, onSubmit }) => {
           return startTime;
         }
       }
-      // If current time is outside business hours, find next valid time
+      // If current time is outside valid range, adjust to valid time
       if (checkTime < startOfDay) {
-        // console.log('⏰ Before business hours, moving to 8:00 AM');
+        // console.log('⏰ Before start of day, moving to 00:00');
         checkTime = new Date(startOfDay);
       } else if (checkTime >= endOfDay) {
-        // console.log('⏰ After business hours, moving to 8:00 AM next day');
+        // console.log('⏰ After end of day, moving to 00:00 next day');
         checkTime = new Date(startOfDay);
       }
     }
@@ -184,7 +181,7 @@ const BookingModal = ({ isOpen, onClose, onSubmit }) => {
       (time, bound) => time < bound : 
       (time, bound) => time >= bound;
     
-    let maxIterations = 44; // 11 hours * 4 (15-min slots per hour)
+    let maxIterations = 96; // 24 hours * 4 (15-min slots per hour)
     let iterations = 0;
     
     // console.log(`🔄 Starting search loop (${direction}), max iterations: ${maxIterations}`);
@@ -321,37 +318,21 @@ const BookingModal = ({ isOpen, onClose, onSubmit }) => {
 
     let proposedStart, proposedEnd;
 
-    if (duration === 660) {
+    if (duration === 1440) { // All day booking (24 hours = 1440 minutes)
       // All day booking
       const baseDate = new Date(startTime);
       proposedStart = new Date(baseDate);
-      proposedStart.setHours(8, 0, 0, 0); // All day starts at 8:00
+      proposedStart.setHours(0, 0, 0, 0); // All day starts at 00:00
       
       proposedEnd = new Date(proposedStart);
-      proposedEnd.setHours(19, 0, 0, 0); // All day ends at 19:00
+      proposedEnd.setHours(23, 59, 59, 999); // All day ends at 23:59
     } else {
       // Regular booking
       proposedStart = new Date(startTime);
       proposedEnd = new Date(proposedStart);
       proposedEnd.setMinutes(proposedEnd.getMinutes() + duration);
       
-      // Check if booking exceeds business hours
-      const startHour = proposedStart.getHours();
-      const endHour = proposedEnd.getHours();
-      const endMinute = proposedEnd.getMinutes();
-      
-      // แก้ไข: อนุญาตให้จบที่ 19:00 พอดี แต่ห้ามเกิน 19:00
-      if (startHour < 8 || startHour >= 19 || endHour > 19) {
-        return true; // Conflict due to business hours violation
-      }
-    }
-
-    // ตรวจสอบว่าเวลาที่จองไม่ใช่เวลาในอดีต
-    const now = new Date();
-    // เพิ่ม buffer 1 นาที เพื่อให้สามารถจองเวลาปัจจุบันได้
-    const bufferTime = new Date(now.getTime() - 15 * 60 * 1000); // ลบ 1 นาที
-    if (proposedStart < bufferTime) {
-      return true; // Conflict: ไม่สามารถจองย้อนหลังได้
+      // No business hours restrictions - allow 24-hour booking
     }
 
     // ตรวจสอบการทับซ้อนกับ events ที่มีอยู่
@@ -368,22 +349,11 @@ const BookingModal = ({ isOpen, onClose, onSubmit }) => {
   // ตรวจสอบว่าสามารถจองได้หรือไม่
   const canBook = !checkTimeConflict(formData.startTime, formData.duration);
   
-  // ตรวจสอบว่าเป็นเวลาในอดีตหรือไม่ สำหรับแสดงข้อความปุ่ม
-  const isPastTime = () => {
-    if (!formData.startTime) return false;
-    const proposedStart = new Date(formData.startTime);
-    const now = new Date();
-    // เพิ่ม buffer 1 นาที เพื่อให้สามารถจองเวลาปัจจุบันได้
-    const bufferTime = new Date(now.getTime() - 15 * 60 * 1000);; // ลบ 1 นาที
-    return proposedStart < bufferTime;
-  };
-
   // ฟังก์ชันสำหรับกำหนดข้อความปุ่ม
   const getBookingButtonText = () => {
     if (loadingEvents) return 'Loading events...';
     if (loadingCreate) return 'Booking...';
     if (waitingEvent) return 'Waiting for confirmation...';
-    if (isPastTime()) return 'Past Time - Cannot Book';
     if (!canBook) return 'Time Conflict';
     return 'Book Now';
   };
@@ -395,32 +365,27 @@ const BookingModal = ({ isOpen, onClose, onSubmit }) => {
     if (bookedByEnabled && !formData.bookedBy.trim()) newErrors.bookedBy = 'Booked by is required';
     if (formData.duration < 15) newErrors.duration = 'Minimum duration is 15 minutes';
     
-    // ตรวจสอบการจองย้อนหลัง
-    if (formData.startTime) {
-      const proposedStart = new Date(formData.startTime);
-      const now = new Date();
-      // เพิ่ม buffer 1 นาที เพื่อให้สามารถจองเวลาปัจจุบันได้
-      const bufferTime = new Date(now.getTime() - 15 * 60 * 1000); // ลบ 1 นาที
-      if (proposedStart < bufferTime) {
-        newErrors.timeConflict = 'Cannot book for past time. Please select a future time.';
-      }
-    }
-    
     // เพิ่มการตรวจสอบการทับซ้อนเวลา
     if (checkTimeConflict(formData.startTime, formData.duration)) {
-      if (!newErrors.timeConflict) { // ถ้ายังไม่มี error จากการจองย้อนหลัง
-        newErrors.timeConflict = 'Selected time conflicts with existing booking';
-      }
+      newErrors.timeConflict = 'Selected time conflicts with existing booking';
     }
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  // อัปเดต timeline ให้แสดง existing events แบบละเอียด
+  // อัปเดต timeline ให้แสดง existing events แบบละเอียด (แสดงแค่ 12 ชั่วโมง)
   const generateTimelineData = () => {
-    const hours = Array.from({ length: 11 }, (_, i) => i + 8); // 8:00 - 18:00 (11 hours)
-    const currentHour = formData.startTime ? new Date(formData.startTime).getHours() : 14;
+    const currentHour = formData.startTime ? new Date(formData.startTime).getHours() : new Date().getHours();
+    
+    // สร้าง timeline 12 ชั่วโมง โดยให้ currentHour อยู่ตรงกลาง
+    const startHour = Math.max(0, currentHour - 6);
+    const endHour = Math.min(23, startHour + 11);
+    
+    // ถ้า endHour ติดขอบ ให้ปรับ startHour
+    const actualStartHour = Math.max(0, endHour - 11);
+    
+    const hours = Array.from({ length: 12 }, (_, i) => actualStartHour + i);
     const currentMinute = formData.startTime ? new Date(formData.startTime).getMinutes() : 0;
     const duration = formData.duration;
     
@@ -485,10 +450,9 @@ const BookingModal = ({ isOpen, onClose, onSubmit }) => {
         const proposedStart = new Date(formData.startTime);
         const proposedEnd = new Date(proposedStart);
         
-        if (duration === 660) {
-          // All day booking
-          proposedEnd.setDate(proposedEnd.getDate() + 1);
-          proposedEnd.setHours(0, 0, 0, 0);
+        if (duration === 1440) { // All day booking (24 hours = 1440 minutes)
+          // All day booking - ends at 23:59 of the same day
+          proposedEnd.setHours(23, 59, 59, 999);
         } else {
           proposedEnd.setMinutes(proposedEnd.getMinutes() + duration);
         }
@@ -549,14 +513,14 @@ const BookingModal = ({ isOpen, onClose, onSubmit }) => {
       try {
         let startDate, endDate;
 
-        if (formData.duration === 660) {
-          // กรณี All day → start เป็น 08:00:00 ของวันนั้น, end เป็น 19:00:00 ของวันเดียวกัน
+        if (formData.duration === 1440) { // All day = 24 hours = 1440 minutes
+          // กรณี All day → start เป็น 00:00:00 ของวันนั้น, end เป็น 23:59:59 ของวันเดียวกัน
           const baseDate = new Date(formData.startTime);
           startDate = new Date(baseDate);
-          startDate.setHours(8, 0, 0, 0);
+          startDate.setHours(0, 0, 0, 0);
 
           endDate = new Date(baseDate);
-          endDate.setHours(19, 0, 0, 0);
+          endDate.setHours(23, 59, 59, 999);
         } else {
           // Logic เดิม
           startDate = new Date(formData.startTime);
@@ -699,29 +663,46 @@ const BookingModal = ({ isOpen, onClose, onSubmit }) => {
       if (isNaN(currentTime.getTime())) return; // Check for Invalid Date
     
       const minutes = increment ? 15 : -15;
+      const proposedTime = new Date(currentTime);
+      proposedTime.setMinutes(proposedTime.getMinutes() + minutes);
+    
+      // ป้องกันการย้อนกลับไปเวลาอดีต (อนุญาตให้ย้อนได้ 1 gap = 15 นาที)
+      if (!increment) { // ถ้าเป็นการลดเวลา (กด -)
+        const now = new Date();
+        const oneGapBefore = new Date(now);
+        oneGapBefore.setMinutes(oneGapBefore.getMinutes() - 15);
+        
+        if (proposedTime < oneGapBefore) {
+          // แสดงข้อความแจ้งเตือนและซ่อนหลัง 3 วินาที
+          setPastTimeWarning('You can’t book more than 15 minutes in the past.');
+          setTimeout(() => setPastTimeWarning(''), 3000);
+          return; // ถ้าเวลาที่จะปรับไปน้อยกว่า 1 gap จากเวลาปัจจุบัน จะไม่ทำอะไร
+        }
+      }
+      
       currentTime.setMinutes(currentTime.getMinutes() + minutes);
     
       // Ensure we have a valid date after adjustment
       if (isNaN(currentTime.getTime())) return;
       
-      // Enforce business hours boundaries for start time
+      // Support 24-hour booking - no time restrictions
       let maxStartTime = new Date(currentTime);
       let minStartTime = new Date(currentTime);
-      minStartTime.setHours(8, 0, 0, 0);
-      maxStartTime.setHours(19, 0, 0, 0);
-      // If start time < 8:00, set to 8:00
-      if (currentTime < minStartTime) {
-        currentTime.setHours(8, 0, 0, 0);
-      }
-      // If end time > 19:00, set start time to latest possible
+      minStartTime.setHours(0, 0, 0, 0);
+      maxStartTime.setHours(23, 59, 59, 999);
+      
+      // Ensure booking doesn't exceed the day
       const proposedEnd = new Date(currentTime);
       proposedEnd.setMinutes(proposedEnd.getMinutes() + formData.duration);
-      if (proposedEnd > maxStartTime) {
-        // ปรับ start time ให้พอดี 19:00
-        const maxStartMinutes = 19 * 60 - formData.duration;
-        const maxStartHour = Math.floor(maxStartMinutes / 60);
-        const maxStartMin = maxStartMinutes % 60;
-        currentTime.setHours(maxStartHour, maxStartMin, 0, 0);
+      
+      // If end time goes beyond 23:59, adjust start time accordingly
+      if (proposedEnd.getHours() > 23 || (proposedEnd.getHours() === 23 && proposedEnd.getMinutes() > 59)) {
+        const maxStartMinutes = 23 * 60 + 59 - formData.duration;
+        if (maxStartMinutes >= 0) {
+          const maxStartHour = Math.floor(maxStartMinutes / 60);
+          const maxStartMin = maxStartMinutes % 60;
+          currentTime.setHours(maxStartHour, maxStartMin, 0, 0);
+        }
       }
     
       const year = currentTime.getFullYear();
@@ -754,14 +735,14 @@ const BookingModal = ({ isOpen, onClose, onSubmit }) => {
     const change = increment ? 15 : -15;
     let newDuration = Math.max(15, formData.duration + change);
     let startDate = formData.startTime ? new Date(formData.startTime) : null;
-    // Always enforce end time <= 19:00
+    // Support 24-hour booking - enforce end time <= 23:59
     if (startDate) {
       let proposedEndDate = new Date(startDate);
       proposedEndDate.setMinutes(proposedEndDate.getMinutes() + newDuration);
       const maxEndTime = new Date(startDate);
-      maxEndTime.setHours(19, 0, 0, 0);
+      maxEndTime.setHours(23, 59, 59, 999);
       if (proposedEndDate > maxEndTime) {
-        // ปรับ duration ให้พอดี 19:00
+        // ปรับ duration ให้พอดี 23:59
         const maxDuration = (maxEndTime.getTime() - startDate.getTime()) / (1000 * 60);
         newDuration = Math.max(15, Math.floor(maxDuration / 15) * 15);
         // ถ้า duration ไม่เปลี่ยน แสดงว่าไม่สามารถเพิ่มได้แล้ว
@@ -801,13 +782,24 @@ const BookingModal = ({ isOpen, onClose, onSubmit }) => {
     if (formData.startTime) {
       let newDuration = minutes;
       const startDate = new Date(formData.startTime);
+      
+      // Support 24-hour booking
+      if (minutes === 1440) { // All day booking
+        // Set start time to 00:00 of the selected date
+        const allDayStart = new Date(startDate);
+        allDayStart.setHours(0, 0, 0, 0);
+        setFormData(prev => ({ ...prev, duration: minutes, startTime: allDayStart.toISOString() }));
+        return;
+      }
+      
+      // For regular bookings, check if it fits within the day
       const maxEndTime = new Date(startDate);
-      maxEndTime.setHours(19, 0, 0, 0);
+      maxEndTime.setHours(23, 59, 59, 999);
       const proposedEndDate = new Date(startDate);
       proposedEndDate.setMinutes(proposedEndDate.getMinutes() + newDuration);
       
       if (proposedEndDate > maxEndTime) {
-        // คำนวณ duration สูงสุดที่เป็นไปได้
+        // คำนวณ duration สูงสุดที่เป็นไปได้ในวันนั้น
         const maxDuration = (maxEndTime.getTime() - startDate.getTime()) / (1000 * 60);
         const maxDurationRounded = Math.max(15, Math.floor(maxDuration / 15) * 15);
         
@@ -820,7 +812,7 @@ const BookingModal = ({ isOpen, onClose, onSubmit }) => {
           const newProposedEndDate = new Date(newStartDate);
           newProposedEndDate.setMinutes(newProposedEndDate.getMinutes() + minutes);
           const newMaxEndTime = new Date(newStartDate);
-          newMaxEndTime.setHours(19, 0, 0, 0);
+          newMaxEndTime.setHours(23, 59, 59, 999);
           
           if (newProposedEndDate <= newMaxEndTime) {
             // ถ้าเวลาใหม่รองรับได้ ให้ใช้
@@ -922,31 +914,8 @@ const BookingModal = ({ isOpen, onClose, onSubmit }) => {
     }
     
     if (formData.startTime) {
-      const proposedStart = new Date(formData.startTime);
-      const now = new Date();
-      
-      // ตรวจสอบการจองย้อนหลัง
-      if (proposedStart < now) {
-        // เพิ่ม buffer 1 นาที เพื่อให้สามารถจองเวลาปัจจุบันได้
-        const bufferTime = new Date(now.getTime() - 15 * 60 * 1000); // ลบ 1 นาที
-        if (proposedStart < bufferTime) {
-          return (
-            <div style={{
-              backgroundColor: '#fef2f2',
-              border: '1px solid #fecaca',
-              borderRadius: '0.5rem',
-              padding: '0.75rem',
-              marginBottom: '1rem',
-              color: '#DC2626'
-            }}>
-              ⚠️ Cannot book for past time. Please select current or future time.
-            </div>
-          );
-        }
-      }
-      
       // ตรวจสอบการทับซ้อนกับ events อื่น
-      if (checkTimeConflict(formData.startTime, formData.duration) && proposedStart > now) {
+      if (checkTimeConflict(formData.startTime, formData.duration)) {
         return (
           <div style={{
             backgroundColor: '#FEF2F2',
@@ -956,7 +925,7 @@ const BookingModal = ({ isOpen, onClose, onSubmit }) => {
             marginBottom: '1rem',
             color: '#DC2626'
           }}>
-            ⚠️ Selected time conflicts with existing booking or business hours
+            ⚠️ Selected time conflicts with existing booking
           </div>
         );
       }
@@ -1114,7 +1083,80 @@ const BookingModal = ({ isOpen, onClose, onSubmit }) => {
               {/* แสดง warning ถ้ามีการทับซ้อน */}
               {renderTimeConflictWarning()}
 
-              <div className="timeline">
+              {/* แสดงข้อความแจ้งเตือนเมื่อพยายามย้อนเวลาเกิน 15 นาที */}
+              {pastTimeWarning && (
+                <div style={{
+                  backgroundColor: '#FEF3C7',
+                  border: '1px solid #F59E0B',
+                  borderRadius: '0.5rem',
+                  padding: '0.75rem',
+                  marginBottom: '1rem',
+                  color: '#92400E',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem'
+                }}>
+                  ⚠️ {pastTimeWarning}
+                </div>
+              )}
+
+              <div className="timeline" style={{ position: 'relative' }}>
+                {/* Current Time Indicator */}
+                {(() => {
+                  const now = new Date();
+                  const currentHour = now.getHours();
+                  const currentMinute = now.getMinutes();
+                  
+                  // หาว่า currentHour อยู่ใน timeline หรือไม่
+                  const currentHourIndex = timelineData.findIndex(({ hour }) => hour === currentHour);
+                  
+                  if (currentHourIndex !== -1) {
+                    // คำนวณตำแหน่งของเส้นเวลาปัจจุบัน
+                    const percentageInHour = (currentMinute / 60) * 100;
+                    const leftPosition = (currentHourIndex * (100 / timelineData.length)) + (percentageInHour * (100 / timelineData.length) / 100);
+                    
+                    return (
+                      <div
+                        style={{
+                          position: 'absolute',
+                          left: `${leftPosition}%`,
+                          top: '-5px',
+                          bottom: '-5px',
+                          width: '3px',
+                          backgroundColor: '#EF4444',
+                          zIndex: 10,
+                          boxShadow: '0 0 6px rgba(239, 68, 68, 0.8)',
+                          borderRadius: '1px'
+                        }}
+                      >
+                        {/* Tooltip แสดงเวลาปัจจุบัน */}
+                        <div
+                          style={{
+                            position: 'absolute',
+                            top: '-25px',
+                            left: '50%',
+                            transform: 'translateX(-50%)',
+                            backgroundColor: '#EF4444',
+                            color: 'white',
+                            padding: '2px 6px',
+                            borderRadius: '4px',
+                            fontSize: '10px',
+                            fontWeight: 'bold',
+                            whiteSpace: 'nowrap'
+                          }}
+                        >
+                          {now.toLocaleTimeString('en-US', { 
+                            hour: 'numeric', 
+                            minute: '2-digit',
+                            hour12: true 
+                          })}
+                        </div>
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
+                
                 {timelineData.map(({ hour, isBooked, isCurrentSlot, hasExistingEvent, existingEventPercentage, existingEventStartPercent, proposedBookingPercentage, proposedBookingStartPercent, eventsInThisHour }) => (
                   <div
                     key={hour}
@@ -1370,8 +1412,8 @@ const BookingModal = ({ isOpen, onClose, onSubmit }) => {
                     </button>
                     <button 
                       type="button"
-                      onClick={() => setQuickDuration(660)}
-                      className={`quick-duration-btn ${formData.duration === 660 ? 'active' : ''}`}
+                      onClick={() => setQuickDuration(1440)}
+                      className={`quick-duration-btn ${formData.duration === 1440 ? 'active' : ''}`}
                       disabled={loadingCreate || waitingEvent || loadingEvents}
                       style={{
                         opacity: (loadingCreate || waitingEvent || loadingEvents) ? 0.3 : 1,
@@ -1392,10 +1434,10 @@ const BookingModal = ({ isOpen, onClose, onSubmit }) => {
                     handleSubmit(e);
                   }} 
                   className="submit-btn"
-                  disabled={loadingEvents || loadingCreate || !canBook || waitingEvent || isPastTime()}
+                  disabled={loadingEvents || loadingCreate || !canBook || waitingEvent}
                   style={{
-                    opacity: (loadingEvents || loadingCreate || !canBook || waitingEvent || isPastTime()) ? 0.5 : 1,
-                    cursor: (loadingEvents || loadingCreate || !canBook || waitingEvent || isPastTime()) ? 'not-allowed' : 'pointer'
+                    opacity: (loadingEvents || loadingCreate || !canBook || waitingEvent) ? 0.5 : 1,
+                    cursor: (loadingEvents || loadingCreate || !canBook || waitingEvent) ? 'not-allowed' : 'pointer'
                   }}
                 >
                   {getBookingButtonText()}
