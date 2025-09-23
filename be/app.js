@@ -72,6 +72,6 @@ app.listen(process.env.PORT, async () => {
   console.log(`Server running at http://localhost:${process.env.PORT}`);
   await connectToDatabase();
   await seedMqttRooms(); //set ค่า default state ห้องที่มีจอ
-  // await initMqtt(); // connect mqtt + door control (topic cmd)
-  // await initLogger(); // attach logger subscriber of mqtt (topic rssi)
+  await initMqtt(); // connect mqtt + door control (topic cmd)
+  await initLogger(); // attach logger subscriber of mqtt (topic rssi)
 });

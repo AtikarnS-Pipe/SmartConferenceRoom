@@ -256,7 +256,7 @@ async function verifyOTP(email, otpCode) {
 async function resetPassword(resetToken, newPassword) {
     try {
         const payload = jwt.verify(resetToken, RESET_SECRET);
-        const user = await userModel.findOne({ email: payload.email });
+        const user = await userModel.findOne({ email: payload.email, role: { $ne: 'Deactivate' } });
         if (!user) {
             return { success: false, message: "User not found!" };
         }

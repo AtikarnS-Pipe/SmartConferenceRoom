@@ -9,11 +9,7 @@ const DeviceSchema = new mongoose.Schema({
 // TTL index: ลบ document หลัง 90 วัน (90 * 24 * 60 * 60 วินาที)
 DeviceSchema.index({ createdAt: 1 }, { expireAfterSeconds: 90 * 24 * 60 * 60 });
 
-<<<<<<< HEAD
 module.exports = mongoose.model('Log_Device_Status', DeviceSchema, 'Log_Device_Status');
 
 
  
-=======
-module.exports = mongoose.model('Log_Device_Status', DeviceSchema, 'Log_Device_Status');
->>>>>>> 88dca10007980b12cfd998a87ccf45b03a398772

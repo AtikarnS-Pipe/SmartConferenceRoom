@@ -46,7 +46,7 @@ async function initMqtt() {
 
   client.on('message', async (topic, payload) => {
     const text = payload.toString();
-    console.log('MQTT Received data:', topic, text);
+    // console.log('MQTT Received data:', topic, text);
     
     if (topic === SUB_TOPIC) {
       // match pattern เช่น  "Check the status of room door 1-2"
