@@ -29,7 +29,11 @@ const BookingModal = ({ isOpen, onClose, onSubmit }) => {
   const { floor, room } = useRoomData();
   const { events, loading: loadingEvents } = useEvents(floor, room);
   const roomId = `${floor}${room}`; // สร้าง roomId จาก floor และ room
-
+  
+  useEffect(() => {
+    console.log("โหลดดดดด",loadingEvents)
+  },[loadingEvents]);
+  
   // ปิด modal อัตโนมัติหลัง 5 นาที ถ้าไม่มีการโต้ตอบ
   useEffect(() => {
   const timer = setTimeout(() => {
