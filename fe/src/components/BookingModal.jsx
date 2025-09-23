@@ -116,9 +116,15 @@ const BookingModal = ({ isOpen, onClose, onSubmit }) => {
     const totalMinutes = now.getHours() * 60 + now.getMinutes();
     const roundedMinutes = Math.ceil(totalMinutes / 15) * 15;
     
-    // Handle overflow (24:00 → next day 00:00)
-    let hours = Math.floor(roundedMinutes / 60) % 24; 
-    const minutes = roundedMinutes % 60;
+    // Handle overflow และจำกัดไม่เกิน 23:45
+    let hours = Math.floor(roundedMinutes / 60);
+    let minutes = roundedMinutes % 60;
+    
+    // ถ้าเกิน 24:00 (เที่ยงคืน) ให้ตั้งไว้ที่ 00:00 ของวันถัดไป หรือล็อกที่ 23:59
+    if (hours >= 24) {
+      hours = 23;
+      minutes = 59;
+    }
     
     // Allow booking 24/7 - no time restrictions
     // (เอาข้อจำกัดเวลา 8:00-19:00 ออก)
@@ -149,7 +155,7 @@ const BookingModal = ({ isOpen, onClose, onSubmit }) => {
     const startOfDay = new Date(today);
     startOfDay.setHours(0, 0, 0, 0); // เริ่มที่ 00:00 ของวันนี้
     const endOfDay = new Date(today);
-    endOfDay.setHours(23, 59, 59, 999); // จบที่ 23:59 ของวันนี้
+    endOfDay.setHours(24, 0, 0, 0); // จบที่ 24:00 (เที่ยงคืน) ของวันนี้
     
     // console.log('📅 Time boundaries:', { 
     //   startOfDay: startOfDay.toLocaleTimeString(), 
@@ -659,61 +665,58 @@ const BookingModal = ({ isOpen, onClose, onSubmit }) => {
   };
 
   const adjustTime = (increment) => {
-    handleUserInteraction(); // หยุด timer เมื่อผู้ใช้ปรับเวลา
+    handleUserInteraction();
     if (!formData.startTime) return;
     
     try {
       const currentTime = new Date(formData.startTime);
-      if (isNaN(currentTime.getTime())) return; // Check for Invalid Date
+      if (isNaN(currentTime.getTime())) return;
     
       const minutes = increment ? 15 : -15;
       const proposedTime = new Date(currentTime);
       proposedTime.setMinutes(proposedTime.getMinutes() + minutes);
     
       // ป้องกันการย้อนกลับไปเวลาอดีต (อนุญาตให้ย้อนได้ 1 gap = 15 นาที)
-      if (!increment) { // ถ้าเป็นการลดเวลา (กด -)
+      if (!increment) {
         const now = new Date();
         const oneGapBefore = new Date(now);
         oneGapBefore.setMinutes(oneGapBefore.getMinutes() - 15);
         
         if (proposedTime < oneGapBefore) {
-          // แสดงข้อความแจ้งเตือนและซ่อนหลัง 3 วินาที
-          setPastTimeWarning('You can’t book more than 15 minutes in the past.');
+          setPastTimeWarning('Cannot book more than 15 minutes in the past');
           setTimeout(() => setPastTimeWarning(''), 3000);
-          return; // ถ้าเวลาที่จะปรับไปน้อยกว่า 1 gap จากเวลาปัจจุบัน จะไม่ทำอะไร
+          return;
         }
       }
       
-      currentTime.setMinutes(currentTime.getMinutes() + minutes);
-    
-      // Ensure we have a valid date after adjustment
-      if (isNaN(currentTime.getTime())) return;
-      
-      // Support 24-hour booking - no time restrictions
-      let maxStartTime = new Date(currentTime);
-      let minStartTime = new Date(currentTime);
-      minStartTime.setHours(0, 0, 0, 0);
-      maxStartTime.setHours(23, 59, 59, 999);
-      
-      // Ensure booking doesn't exceed the day
-      const proposedEnd = new Date(currentTime);
-      proposedEnd.setMinutes(proposedEnd.getMinutes() + formData.duration);
-      
-      // If end time goes beyond 23:59, adjust start time accordingly
-      if (proposedEnd.getHours() > 23 || (proposedEnd.getHours() === 23 && proposedEnd.getMinutes() > 59)) {
-        const maxStartMinutes = 23 * 60 + 59 - formData.duration;
-        if (maxStartMinutes >= 0) {
-          const maxStartHour = Math.floor(maxStartMinutes / 60);
-          const maxStartMin = maxStartMinutes % 60;
-          currentTime.setHours(maxStartHour, maxStartMin, 0, 0);
+      // ป้องกันการเพิ่มเวลาให้ end time เกิน 24:00 (เที่ยงคืน)
+      if (increment) {
+        // ตรวจสอบไม่ให้ start time ข้ามไปวันถัดไป
+        const originalDate = new Date(formData.startTime);
+        const originalDay = originalDate.getDate();
+        const proposedDay = proposedTime.getDate();
+        
+        if (proposedDay !== originalDay) {
+          return; // หยุดไม่ให้เพิ่มเวลาถ้าข้ามไปวันถัดไป
+        }
+        
+        // คำนวณ end time ที่จะเกิดขึ้น
+        const proposedEndTime = new Date(proposedTime);
+        proposedEndTime.setMinutes(proposedEndTime.getMinutes() + formData.duration);
+        
+        // ตรวจสอบไม่ให้ end time ข้ามไปวันถัดไป
+        const proposedEndDay = proposedEndTime.getDate();
+        
+        if (proposedEndDay !== originalDay) {
+          return; // หยุดไม่ให้เพิ่มเวลาถ้า end time ข้ามไปวันถัดไป
         }
       }
-    
-      const year = currentTime.getFullYear();
-      const month = String(currentTime.getMonth() + 1).padStart(2, '0');
-      const day = String(currentTime.getDate()).padStart(2, '0');
-      const hours = String(currentTime.getHours()).padStart(2, '0');
-      const mins = String(currentTime.getMinutes()).padStart(2, '0');
+      
+      const year = proposedTime.getFullYear();
+      const month = String(proposedTime.getMonth() + 1).padStart(2, '0');
+      const day = String(proposedTime.getDate()).padStart(2, '0');
+      const hours = String(proposedTime.getHours()).padStart(2, '0');
+      const mins = String(proposedTime.getMinutes()).padStart(2, '0');
     
       const newTimeString = `${year}-${month}-${day}T${hours}:${mins}`;
       
@@ -727,26 +730,36 @@ const BookingModal = ({ isOpen, onClose, onSubmit }) => {
         // ถ้ามี conflict ให้หาเวลาว่างในทิศทางที่ผู้ใช้ต้องการ
         const direction = increment ? 'forward' : 'backward';
         const availableTime = findNextAvailableTime(newTimeString, formData.duration, direction);
-        setFormData(prev => ({ ...prev, startTime: availableTime }));
+        
+        // ตรวจสอบว่า availableTime ไม่ทำให้ end time เกิน 24:00
+        const availableEndTime = new Date(availableTime);
+        availableEndTime.setMinutes(availableEndTime.getMinutes() + formData.duration);
+        const availableMaxEndTime = new Date(availableTime);
+        availableMaxEndTime.setHours(24, 0, 0, 0);
+        
+        if (availableEndTime <= availableMaxEndTime) {
+          setFormData(prev => ({ ...prev, startTime: availableTime }));
+        }
       }
     } catch (error) {
       console.error('Error adjusting time:', error);
     }
   };
 
+
   const adjustDuration = (increment) => {
     handleUserInteraction(); // หยุด timer เมื่อผู้ใช้ปรับระยะเวลา
     const change = increment ? 15 : -15;
     let newDuration = Math.max(15, formData.duration + change);
     let startDate = formData.startTime ? new Date(formData.startTime) : null;
-    // Support 24-hour booking - enforce end time <= 23:59
+    // Support 24-hour booking - enforce end time <= 24:00 (midnight)
     if (startDate) {
       let proposedEndDate = new Date(startDate);
       proposedEndDate.setMinutes(proposedEndDate.getMinutes() + newDuration);
       const maxEndTime = new Date(startDate);
-      maxEndTime.setHours(23, 59, 59, 999);
+      maxEndTime.setHours(24, 0, 0, 0); // อนุญาตถึง 24:00 (เที่ยงคืน)
       if (proposedEndDate > maxEndTime) {
-        // ปรับ duration ให้พอดี 23:59
+        // ปรับ duration ให้พอดี 24:00
         const maxDuration = (maxEndTime.getTime() - startDate.getTime()) / (1000 * 60);
         newDuration = Math.max(15, Math.floor(maxDuration / 15) * 15);
         // ถ้า duration ไม่เปลี่ยน แสดงว่าไม่สามารถเพิ่มได้แล้ว
@@ -798,7 +811,7 @@ const BookingModal = ({ isOpen, onClose, onSubmit }) => {
       
       // For regular bookings, check if it fits within the day
       const maxEndTime = new Date(startDate);
-      maxEndTime.setHours(23, 59, 59, 999);
+      maxEndTime.setHours(24, 0, 0, 0); // อนุญาตถึง 24:00 (เที่ยงคืน)
       const proposedEndDate = new Date(startDate);
       proposedEndDate.setMinutes(proposedEndDate.getMinutes() + newDuration);
       
@@ -816,7 +829,7 @@ const BookingModal = ({ isOpen, onClose, onSubmit }) => {
           const newProposedEndDate = new Date(newStartDate);
           newProposedEndDate.setMinutes(newProposedEndDate.getMinutes() + minutes);
           const newMaxEndTime = new Date(newStartDate);
-          newMaxEndTime.setHours(23, 59, 59, 999);
+          newMaxEndTime.setHours(24, 0, 0, 0); // อนุญาตถึง 24:00
           
           if (newProposedEndDate <= newMaxEndTime) {
             // ถ้าเวลาใหม่รองรับได้ ให้ใช้
