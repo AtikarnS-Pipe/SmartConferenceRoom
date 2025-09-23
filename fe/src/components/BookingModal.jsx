@@ -86,7 +86,7 @@ const BookingModal = ({ isOpen, onClose, onSubmit }) => {
     // Cleanup timer เมื่อ modal ปิดหรือ component unmount
     return () => {
       if (countdownInterval) {
-        console.log('Clearing countdown interval');
+        // console.log('Clearing countdown interval');
         clearInterval(countdownInterval);
       }
     };
@@ -545,7 +545,7 @@ const BookingModal = ({ isOpen, onClose, onSubmit }) => {
         // Step 1: Create the event
         const response = await axios.post('/api2/user/ms/create', { createroomdata: payload })
         // console.log("Booking created successfully, waiting for events to update...");
-
+        console.log("Create response:", response.data);
         // Step 2: ตั้ง flag เพื่อรอ event จาก SSE
         setTargetStart(startDate);
         setTargetEnd(endDate);

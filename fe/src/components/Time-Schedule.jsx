@@ -15,6 +15,7 @@ export default function TimeSchedule({
   const [containerWidth, setContainerWidth] = useState(0);
   const baseWidth = 1200;
   const [hasScrolledToDefault, setHasScrolledToDefault] = useState(false);
+  const [isAtDefaultPosition, setIsAtDefaultPosition] = useState(true);
   const zoomMin = 0.5;
   const zoomMax = 4;
 
@@ -161,7 +162,7 @@ export default function TimeSchedule({
     // Reset timer on any interaction
     const resetTimer = () => {
       if (inactivityTimer) clearTimeout(inactivityTimer);
-      inactivityTimer = setTimeout(resetToDefaultView, 5000); // 30 seconds
+      inactivityTimer = setTimeout(resetToDefaultView, 5000); // 60 seconds
     };
 
     // Event handlers
@@ -326,6 +327,12 @@ export default function TimeSchedule({
     }
   }, [containerWidth]);
 
+  // Effective zoom level prioritizes default range zoom for initial view
+  const effectiveZoomLevel = Math.max(
+    zoomLevel,
+    hasScrolledToDefault ? getAdaptiveZoomLevel() : getDefaultRangeZoomLevel()
+  );
+
   // Auto-scroll to show 8:00 AM - 7:00 PM range on mount
   useEffect(() => {
     if (containerRef.current && !hasScrolledToDefault && containerWidth > 0) {
@@ -338,6 +345,7 @@ export default function TimeSchedule({
       // scrollLeft = ตำแหน่ง 8am
       container.scrollLeft = targetPosition;
       setHasScrolledToDefault(true);
+      setIsAtDefaultPosition(true);
     }
   }, [
     containerWidth,
@@ -348,11 +356,30 @@ export default function TimeSchedule({
     defaultRangeHours,
   ]);
 
-  // Effective zoom level prioritizes default range zoom for initial view
-  const effectiveZoomLevel = Math.max(
-    zoomLevel,
-    hasScrolledToDefault ? getAdaptiveZoomLevel() : getDefaultRangeZoomLevel()
-  );
+  // Monitor scroll position to detect if user scrolled away from default
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      if (!hasScrolledToDefault) return;
+
+      const scheduleWidth = baseWidth * effectiveZoomLevel;
+      const startHourPercent = defaultStartHour / 24;
+      const defaultPosition = startHourPercent * scheduleWidth;
+      const currentPosition = container.scrollLeft;
+
+      // Check if we're close to the default position (within 20px tolerance)
+      const isAtDefault = Math.abs(currentPosition - defaultPosition) < 20;
+      setIsAtDefaultPosition(isAtDefault);
+    };
+
+    container.addEventListener("scroll", handleScroll);
+
+    return () => {
+      container.removeEventListener("scroll", handleScroll);
+    };
+  }, [hasScrolledToDefault, effectiveZoomLevel, baseWidth, defaultStartHour]);
 
   const isFullDayEvent = useIsFullDayEvent();
 
@@ -363,6 +390,7 @@ export default function TimeSchedule({
         style={{
           width: "100%",
           overflowX: "auto",
+          overflowY: "hidden",
           position: "relative",
           zIndex: 1,
         }}
@@ -525,16 +553,66 @@ export default function TimeSchedule({
             </div>
           </div>
 
-          {/* Bottom Labels */}
+          {/* Bottom Labels - Conditional based on zoom level */}
           <div
             style={{
-              display: "flex",
-              justifyContent: "space-between",
+              position: "relative",
               marginTop: "4px",
+              height: "20px",
             }}
           >
-            <div style={{ fontSize: "16px", color: "#4E4E4E" }}>12:00 AM</div>
-            <div style={{ fontSize: "16px", color: "#4E4E4E" }}>11:00 PM</div>
+            {Math.abs(effectiveZoomLevel - getDefaultRangeZoomLevel()) < 0.1 &&
+            isAtDefaultPosition ? (
+              // Show default range labels when at default zoom AND default scroll position
+              <>
+                <div
+                  style={{
+                    position: "absolute",
+                    left: `${((8 + 0.3) / 24) * 100}%`,
+                    transform: "translateX(-50%)",
+                    fontSize: "16px",
+                    color: "#4E4E4E",
+                  }}
+                >
+                  8:00 AM
+                </div>
+                <div
+                  style={{
+                    position: "absolute",
+                    left: `${((18 + 0.7) / 24) * 100}%`,
+                    transform: "translateX(-50%)",
+                    fontSize: "16px",
+                    color: "#4E4E4E",
+                  }}
+                >
+                  7:00 PM
+                </div>
+              </>
+            ) : (
+              // Show full day labels at edges when zoomed in/out
+              <>
+                <div
+                  style={{
+                    position: "absolute",
+                    left: "0",
+                    fontSize: "16px",
+                    color: "#4E4E4E",
+                  }}
+                >
+                  12:00 AM
+                </div>
+                <div
+                  style={{
+                    position: "absolute",
+                    right: "0",
+                    fontSize: "16px",
+                    color: "#4E4E4E",
+                  }}
+                >
+                  12:00 AM
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -574,7 +652,6 @@ export default function TimeSchedule({
             }}
             onClick={(e) => e.stopPropagation()}
           >
-
             {/* Header */}
             <div
               style={{
