@@ -31,6 +31,43 @@ const BookingModal = ({ isOpen, onClose, onSubmit }) => {
   const { events, loading: loadingEvents } = useEvents(floor, room);
   const roomId = `${floor}${room}`; // สร้าง roomId จาก floor และ room
 
+  // Wrapper function for setFormData to validate time
+  const safeSetFormData = (updateFunction) => {
+    const newData = typeof updateFunction === 'function' 
+      ? updateFunction(formData) 
+      : updateFunction;
+    
+    // ตรวจสอบ startTime ก่อน set
+    if (newData.startTime && newData.startTime !== formData.startTime) {
+      const now = new Date();
+      const proposedTime = new Date(newData.startTime);
+      const nowLocalTime = now.getHours() * 60 + now.getMinutes();
+      const proposedLocalTime = proposedTime.getHours() * 60 + proposedTime.getMinutes();
+      const allowedMinutesBack = 15;
+      const earliestAllowedTime = nowLocalTime - allowedMinutesBack;
+
+      // อนุญาตให้ set ได้ถ้า:
+      // 1. เวลาที่จะ set ไม่เกิน 15 นาทีในอดีต หรือ
+      // 2. เป็นการย้ายจากอนาคตมาอนาคตที่เร็วกว่า (แต่ยังเป็นอนาคต)
+      const currentTime = formData.startTime ? new Date(formData.startTime) : null;
+      const currentLocalTime = currentTime ? currentTime.getHours() * 60 + currentTime.getMinutes() : 0;
+      const isMovingFromFutureToFuture = currentLocalTime > nowLocalTime && proposedLocalTime > nowLocalTime;
+
+      if (proposedLocalTime < earliestAllowedTime && !isMovingFromFutureToFuture) {
+        console.log('BLOCKED: Attempted to set time beyond 15-minute past limit');
+        console.log('Proposed time:', `${Math.floor(proposedLocalTime/60)}:${String(proposedLocalTime%60).padStart(2,'0')}`);
+        console.log('Earliest allowed:', `${Math.floor(earliestAllowedTime/60)}:${String(earliestAllowedTime%60).padStart(2,'0')}`);
+        console.log('Is moving future to future:', isMovingFromFutureToFuture);
+        
+        setPastTimeWarning("Cannot set time more than 15 minutes in the past");
+        setTimeout(() => setPastTimeWarning(""), 3000);
+        return; // ไม่อัปเดต formData
+      }
+    }
+    
+    setFormData(newData);
+  };
+
   useEffect(() => {
     console.log("โหลดดดดด", loadingEvents);
   }, [loadingEvents]);
@@ -143,7 +180,7 @@ const BookingModal = ({ isOpen, onClose, onSubmit }) => {
     ).padStart(2, "0")}`;
   };
 
-  // ฟังก์ชันหาเวลาว่างถัดไป (รองรับทั้งไปข้างหน้าและย้อนหลัง)
+  // ฟังก์ชันหาเวลาว่างถัดไป (รองรับทั้งไปข้างหน้าและย้อนหลังอย่างปลอดภัย)
   const findNextAvailableTime = (
     startTime,
     duration,
@@ -234,6 +271,17 @@ const BookingModal = ({ isOpen, onClose, onSubmit }) => {
       iterations++;
       // console.log(`🔄 Iteration ${iterations}: checking ${checkTime.toLocaleTimeString()}`);
 
+      // สำหรับ backward direction: ตรวจสอบว่าไม่กลับไปในอดีตเกิน 15 นาที
+      if (direction === "backward") {
+        const minAllowedTime = new Date(today);
+        minAllowedTime.setMinutes(minAllowedTime.getMinutes() - 15);
+        
+        if (checkTime < minAllowedTime) {
+          console.log('⏰ Time too far in past (> 15 min), stopping backward search at:', checkTime.toLocaleTimeString());
+          break;
+        }
+      }
+
       // ตรวจสอบว่าเวลานี้ว่างไหม
       const checkEnd = new Date(checkTime);
       checkEnd.setMinutes(checkEnd.getMinutes() + duration);
@@ -304,20 +352,54 @@ const BookingModal = ({ isOpen, onClose, onSubmit }) => {
       // console.log('🚀 Modal opened for first time, finding next available time...');
       // console.log('📅 Events available:', events?.length || 0);
 
-      const currentTime = getCurrentTime();
-      // console.log('⏰ Current time:', currentTime);
+      const rawCurrentTime = getCurrentTime();
+      // console.log('⏰ Raw current time:', rawCurrentTime);
+
+      // ตรวจสอบว่าเวลาปัจจุบันที่ได้มาไม่เกิน 15 นาทีในอดีตหรือไม่
+      const now = new Date();
+      const currentTimeObj = new Date(rawCurrentTime);
+      const nowLocalTime = now.getHours() * 60 + now.getMinutes();
+      const currentTimeLocal = currentTimeObj.getHours() * 60 + currentTimeObj.getMinutes();
+      const earliestAllowedTime = nowLocalTime - 15;
+
+      let validStartTime = rawCurrentTime;
+      
+      // ถ้าเวลาที่ได้มาเกิน 15 นาทีในอดีต ให้ปรับเป็นเวลาปัจจุบัน - 15 นาที
+      if (currentTimeLocal < earliestAllowedTime) {
+        console.log('Initial time is too far in past, adjusting to current time - 15 minutes');
+        const adjustedTime = new Date(now);
+        adjustedTime.setMinutes(adjustedTime.getMinutes() - 15);
+        
+        // ปัดเวลาให้เป็น 15 นาที
+        const totalMinutes = adjustedTime.getHours() * 60 + adjustedTime.getMinutes();
+        const roundedMinutes = Math.ceil(totalMinutes / 15) * 15;
+        let hours = Math.floor(roundedMinutes / 60);
+        let minutes = roundedMinutes % 60;
+        
+        if (hours >= 24) {
+          hours = 23;
+          minutes = 45;
+        }
+        
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, "0");
+        const day = String(now.getDate()).padStart(2, "0");
+        
+        validStartTime = `${year}-${month}-${day}T${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
+        console.log('Adjusted valid start time:', validStartTime);
+      }
 
       // Always try to find next available time, even if no events
       // console.log('🔍 Searching for available time...');
-      const availableTime = findNextAvailableTime(currentTime, 15, "forward");
+      const availableTime = findNextAvailableTime(validStartTime, 15, "forward");
       // console.log('✅ Available time result:', availableTime);
 
-      if (availableTime && availableTime !== currentTime) {
+      if (availableTime && availableTime !== validStartTime) {
         // console.log('🎯 Setting available time:', availableTime);
-        setFormData((prev) => ({ ...prev, startTime: availableTime }));
+        safeSetFormData((prev) => ({ ...prev, startTime: availableTime }));
       } else {
-        // console.log('⚠️ No better time found, using current time:', currentTime);
-        setFormData((prev) => ({ ...prev, startTime: currentTime }));
+        // console.log('⚠️ No better time found, using valid time:', validStartTime);
+        safeSetFormData((prev) => ({ ...prev, startTime: validStartTime }));
       }
     } else if (!isOpen) {
       // Reset when modal closes
@@ -357,7 +439,7 @@ const BookingModal = ({ isOpen, onClose, onSubmit }) => {
 
         if (availableTime !== formData.startTime) {
           // console.log('✅ Updating to conflict-free time:', availableTime);
-          setFormData((prev) => ({ ...prev, startTime: availableTime }));
+          safeSetFormData((prev) => ({ ...prev, startTime: availableTime }));
         }
       }
     }
@@ -388,14 +470,37 @@ const BookingModal = ({ isOpen, onClose, onSubmit }) => {
     }
 
     // ตรวจสอบการทับซ้อนกับ events ที่มีอยู่
-    return events.some((event) => {
+    const hasConflict = events.some((event) => {
       const eventStart = new Date(event.start.dateTime + "Z");
       const eventEnd = new Date(event.end.dateTime + "Z");
 
       // ตรวจสอบการทับซ้อน:
       // ทับซ้อนถ้า proposedStart < eventEnd และ proposedEnd > eventStart
-      return proposedStart < eventEnd && proposedEnd > eventStart;
+      const isConflict = proposedStart < eventEnd && proposedEnd > eventStart;
+      
+      if (isConflict) {
+        console.log('Conflict detected:', {
+          proposedStart: proposedStart.toISOString(),
+          proposedEnd: proposedEnd.toISOString(),
+          eventStart: eventStart.toISOString(),
+          eventEnd: eventEnd.toISOString(),
+          eventSubject: event.subject
+        });
+      }
+      
+      return isConflict;
     });
+    
+    console.log('checkTimeConflict result:', {
+      startTime,
+      duration,
+      proposedStart: proposedStart.toISOString(),
+      proposedEnd: proposedEnd.toISOString(),
+      eventsCount: events.length,
+      hasConflict
+    });
+    
+    return hasConflict;
   };
 
   // ตรวจสอบว่าสามารถจองได้หรือไม่
@@ -728,6 +833,34 @@ const BookingModal = ({ isOpen, onClose, onSubmit }) => {
       const newStartTime = field === "startTime" ? value : formData.startTime;
       const newDuration = field === "duration" ? value : formData.duration;
 
+      // ตรวจสอบ 15 นาทีในอดีตสำหรับ startTime
+      if (field === "startTime" && newStartTime) {
+        const now = new Date();
+        const proposedTime = new Date(newStartTime);
+        const nowLocalTime = now.getHours() * 60 + now.getMinutes();
+        const proposedLocalTime = proposedTime.getHours() * 60 + proposedTime.getMinutes();
+        const allowedMinutesBack = 15;
+        const earliestAllowedTime = nowLocalTime - allowedMinutesBack;
+
+        // อนุญาตให้ตั้งได้ถ้า:
+        // 1. เวลาที่จะตั้งไม่เกิน 15 นาทีในอดีต หรือ
+        // 2. เป็นการย้ายจากอนาคตมาอนาคตที่เร็วกว่า
+        const currentTime = formData.startTime ? new Date(formData.startTime) : null;
+        const currentLocalTime = currentTime ? currentTime.getHours() * 60 + currentTime.getMinutes() : 0;
+        const isMovingFromFutureToFuture = currentLocalTime > nowLocalTime && proposedLocalTime > nowLocalTime;
+
+        // Block เฉพาะเมื่อพยายามตั้งเวลาเกิน 15 นาทีในอดีต และไม่ใช่การย้ายจากอนาคตมาอนาคต
+        if (proposedLocalTime < earliestAllowedTime && !isMovingFromFutureToFuture) {
+          console.log('BLOCKED: Direct time change would exceed 15-minute past limit');
+          console.log('Current time:', currentLocalTime > 0 ? `${Math.floor(currentLocalTime/60)}:${String(currentLocalTime%60).padStart(2,'0')}` : 'None');
+          console.log('Proposed time:', `${Math.floor(proposedLocalTime/60)}:${String(proposedLocalTime%60).padStart(2,'0')}`);
+          console.log('Is future to future:', isMovingFromFutureToFuture);
+          setPastTimeWarning("Cannot set time more than 15 minutes in the past");
+          setTimeout(() => setPastTimeWarning(""), 3000);
+          return;
+        }
+      }
+
       if (newStartTime && newDuration) {
         const availableTime = findNextAvailableTime(
           newStartTime,
@@ -737,7 +870,7 @@ const BookingModal = ({ isOpen, onClose, onSubmit }) => {
         if (availableTime !== newStartTime && field === "startTime") {
           // แจ้งผู้ใช้ว่าเวลาถูกเลื่อน
           // console.log(`Time adjusted from ${formatDisplayTime(newStartTime)} to ${formatDisplayTime(availableTime)} due to conflict`);
-          setFormData((prev) => ({ ...prev, startTime: availableTime }));
+          safeSetFormData((prev) => ({ ...prev, startTime: availableTime }));
           return;
         } else if (field === "duration") {
           // เมื่อเปลี่ยน duration ให้ตรวจสอบและเลื่อนเวลาถ้าจำเป็น
@@ -770,21 +903,70 @@ const BookingModal = ({ isOpen, onClose, onSubmit }) => {
       const currentTime = new Date(formData.startTime);
       if (isNaN(currentTime.getTime())) return;
 
+      // ตรวจสอบเวลาปัจจุบันก่อนจะลดเวลา
+      if (!increment) {
+        const now = new Date();
+        const nowLocalTime = now.getHours() * 60 + now.getMinutes();
+        const currentStartTimeLocal = currentTime.getHours() * 60 + currentTime.getMinutes();
+        const allowedMinutesBack = 15;
+        const earliestAllowedTime = nowLocalTime - allowedMinutesBack;
+        
+        // คำนวณเวลาที่จะได้หลังจากลด 15 นาที
+        const proposedTimeAfterReduction = currentStartTimeLocal - 15;
+        
+        console.log('Pre-reduction check:', {
+          nowLocalTime: `${Math.floor(nowLocalTime/60)}:${String(nowLocalTime%60).padStart(2,'0')}`,
+          currentStartTime: `${Math.floor(currentStartTimeLocal/60)}:${String(currentStartTimeLocal%60).padStart(2,'0')}`,
+          proposedAfterReduction: `${Math.floor(proposedTimeAfterReduction/60)}:${String(proposedTimeAfterReduction%60).padStart(2,'0')}`,
+          earliestAllowed: `${Math.floor(earliestAllowedTime/60)}:${String(earliestAllowedTime%60).padStart(2,'0')}`,
+          isCurrentInFuture: currentStartTimeLocal > nowLocalTime,
+          wouldExceedLimit: proposedTimeAfterReduction < earliestAllowedTime && currentStartTimeLocal <= nowLocalTime
+        });
+        
+        // Block เฉพาะเมื่อ:
+        // 1. การลดจะทำให้เกิน 15 นาทีในอดีต AND
+        // 2. เวลาปัจจุบันไม่ได้อยู่ในอนาคต (ป้องกันการย้อนจากอดีตไปอดีตที่ไกลกว่า)
+        if (proposedTimeAfterReduction < earliestAllowedTime && currentStartTimeLocal <= nowLocalTime) {
+          console.log('BLOCKED: Reducing time would exceed 15-minute past limit from current time');
+          setPastTimeWarning("Cannot reduce time further - would exceed 15 minutes in the past");
+          setTimeout(() => setPastTimeWarning(""), 3000);
+          return;
+        }
+      }
+
       const minutes = increment ? 15 : -15;
       const proposedTime = new Date(currentTime);
       proposedTime.setMinutes(proposedTime.getMinutes() + minutes);
 
-      // ป้องกันการย้อนกลับไปเวลาอดีต (อนุญาตให้ย้อนได้ 1 gap = 15 นาที)
+      // ป้องกันการย้อนกลับไปเวลาอดีตเกินไป (ยืดหยุ่น 15 นาที) - เช็คสำหรับ proposedTime
       if (!increment) {
         const now = new Date();
-        const oneGapBefore = new Date(now);
-        oneGapBefore.setMinutes(oneGapBefore.getMinutes() - 15);
-
-        if (proposedTime < oneGapBefore) {
+        
+        // ใช้เวลา local ในการเปรียบเทียบ (เพื่อหลีกเลี่ยง timezone issues)
+        const nowLocalTime = now.getHours() * 60 + now.getMinutes();
+        const proposedLocalTime = proposedTime.getHours() * 60 + proposedTime.getMinutes();
+        const allowedMinutesBack = 15; // อนุญาตให้ย้อนหลัง 15 นาที
+        
+        // คำนวณเวลาเร็วสุดที่อนุญาต (ในนาทีของวัน)
+        const earliestAllowedTime = nowLocalTime - allowedMinutesBack;
+        
+        console.log('Time adjustment check (using minutes of day):', {
+          currentStartTime: formData.startTime,
+          nowLocalTime: `${Math.floor(nowLocalTime/60)}:${String(nowLocalTime%60).padStart(2,'0')}`,
+          proposedLocalTime: `${Math.floor(proposedLocalTime/60)}:${String(proposedLocalTime%60).padStart(2,'0')}`,
+          earliestAllowedTime: `${Math.floor(earliestAllowedTime/60)}:${String(earliestAllowedTime%60).padStart(2,'0')}`,
+          isProposedTooEarly: proposedLocalTime < earliestAllowedTime
+        });
+        
+        // ตรวจสอบว่า proposedTime ย้อนหลังเกินไป (เปรียบเทียบใน minutes of day)
+        if (proposedLocalTime < earliestAllowedTime) {
+          console.log('BLOCKED: Time would be too far in the past');
           setPastTimeWarning("Cannot book more than 15 minutes in the past");
           setTimeout(() => setPastTimeWarning(""), 3000);
           return;
         }
+        
+        console.log('ALLOWED: Time is within 15-minute flexibility');
       }
 
       // ป้องกันการเพิ่มเวลาให้ end time เกิน 24:00 (เที่ยงคืน)
@@ -824,27 +1006,68 @@ const BookingModal = ({ isOpen, onClose, onSubmit }) => {
       // ตรวจสอบว่าเวลาใหม่มี conflict หรือไม่
       const hasConflict = checkTimeConflict(newTimeString, formData.duration);
 
+      console.log('Time adjustment check:', {
+        newTimeString,
+        hasConflict,
+        increment,
+        duration: formData.duration
+      });
+
       if (!hasConflict) {
         // ถ้าไม่มี conflict ให้ใช้เวลานี้เลย
-        setFormData((prev) => ({ ...prev, startTime: newTimeString }));
+        console.log('No conflict, setting new time:', newTimeString);
+        safeSetFormData((prev) => ({ ...prev, startTime: newTimeString }));
       } else {
-        // ถ้ามี conflict ให้หาเวลาว่างในอนาคตเสมอ
-        const availableTime = findNextAvailableTime(
+        console.log('Has conflict, finding alternative time');
+        
+        // เลือกทิศทางการค้นหาตามการปรับเวลา
+        const direction = increment ? "forward" : "backward";
+        console.log(`Searching for alternative time in ${direction} direction`);
+        
+        let availableTime = findNextAvailableTime(
           newTimeString,
           formData.duration,
-          "forward"
+          direction
         );
 
-        // ตรวจสอบว่า availableTime ไม่ทำให้ end time เกิน 24:00
-        const availableEndTime = new Date(availableTime);
-        availableEndTime.setMinutes(
-          availableEndTime.getMinutes() + formData.duration
-        );
-        const availableMaxEndTime = new Date(availableTime);
-        availableMaxEndTime.setHours(24, 0, 0, 0);
+        if (availableTime) {
+          // ตรวจสอบว่า availableTime ไม่ทำให้ end time เกิน 24:00
+          const availableEndTime = new Date(availableTime);
+          availableEndTime.setMinutes(
+            availableEndTime.getMinutes() + formData.duration
+          );
+          const availableMaxEndTime = new Date(availableTime);
+          availableMaxEndTime.setHours(24, 0, 0, 0);
 
-        if (availableEndTime <= availableMaxEndTime) {
-          setFormData((prev) => ({ ...prev, startTime: availableTime }));
+          if (availableEndTime <= availableMaxEndTime) {
+            console.log(`Setting alternative time (${direction}):`, availableTime);
+            safeSetFormData((prev) => ({ ...prev, startTime: availableTime }));
+          } else {
+            console.log('Alternative time would exceed day limit, trying forward instead');
+            // ถ้า direction เดิมไม่ได้ ให้ลอง forward
+            if (direction === "backward") {
+              availableTime = findNextAvailableTime(newTimeString, formData.duration, "forward");
+              if (availableTime) {
+                console.log('Setting forward alternative time:', availableTime);
+                safeSetFormData((prev) => ({ ...prev, startTime: availableTime }));
+              }
+            }
+          }
+        } else {
+          console.log(`No available time found in ${direction} direction`);
+          // ถ้าหาไม่เจอในทิศทางที่ต้องการ ลองทิศทางตรงข้าม
+          const fallbackDirection = direction === "forward" ? "backward" : "forward";
+          console.log(`Trying fallback direction: ${fallbackDirection}`);
+          
+          availableTime = findNextAvailableTime(newTimeString, formData.duration, fallbackDirection);
+          if (availableTime) {
+            console.log(`Setting fallback time (${fallbackDirection}):`, availableTime);
+            safeSetFormData((prev) => ({ ...prev, startTime: availableTime }));
+          } else {
+            console.log('No available time found in either direction');
+            setConflictWarning("No available time slot found");
+            setTimeout(() => setConflictWarning(""), 3000);
+          }
         }
       }
     } catch (error) {
@@ -1098,8 +1321,38 @@ const BookingModal = ({ isOpen, onClose, onSubmit }) => {
     }));
   };
 
+  // ฟังก์ชันตรวจสอบว่าสามารถลดเวลาได้หรือไม่
+  const canReduceTime = () => {
+    if (!formData.startTime) return true;
+    
+    const now = new Date();
+    const currentTime = new Date(formData.startTime);
+    const nowLocalTime = now.getHours() * 60 + now.getMinutes();
+    const currentStartTimeLocal = currentTime.getHours() * 60 + currentTime.getMinutes();
+    const allowedMinutesBack = 15;
+    const earliestAllowedTime = nowLocalTime - allowedMinutesBack;
+    
+    // คำนวณเวลาที่จะได้หลังจากลด 15 นาที
+    const proposedTimeAfterReduction = currentStartTimeLocal - 15;
+    
+    // อนุญาตให้ลดได้ถ้า:
+    // 1. เวลาหลังจากลดยังไม่เกิน 15 นาทีในอดีต หรือ
+    // 2. เวลาปัจจุบันยังเป็นอนาคตอยู่ (กรณีลดจากอนาคตมาอนาคตที่เร็วกว่า)
+    const canReduce = proposedTimeAfterReduction >= earliestAllowedTime || currentStartTimeLocal > nowLocalTime;
+    
+    console.log('canReduceTime check:', {
+      currentStartTime: `${Math.floor(currentStartTimeLocal/60)}:${String(currentStartTimeLocal%60).padStart(2,'0')}`,
+      nowTime: `${Math.floor(nowLocalTime/60)}:${String(nowLocalTime%60).padStart(2,'0')}`,
+      proposedAfterReduction: `${Math.floor(proposedTimeAfterReduction/60)}:${String(proposedTimeAfterReduction%60).padStart(2,'0')}`,
+      earliestAllowed: `${Math.floor(earliestAllowedTime/60)}:${String(earliestAllowedTime%60).padStart(2,'0')}`,
+      isCurrentInFuture: currentStartTimeLocal > nowLocalTime,
+      canReduce
+    });
+    
+    return canReduce;
+  };
+
   const formatDisplayTime = (timeString) => {
-    if (!timeString) return "12:00 AM";
 
     try {
       const time = new Date(timeString);
@@ -1751,18 +2004,18 @@ const BookingModal = ({ isOpen, onClose, onSubmit }) => {
                 <div className="adjust-group">
                   <button
                     onClick={() => adjustTime(false)}
-                    disabled={loadingCreate || waitingEvent || loadingEvents}
+                    disabled={loadingCreate || waitingEvent || loadingEvents || !canReduceTime()}
                     style={{
                       opacity:
-                        loadingCreate || waitingEvent || loadingEvents
+                        loadingCreate || waitingEvent || loadingEvents || !canReduceTime()
                           ? 0.3
                           : 1,
                       cursor:
-                        loadingCreate || waitingEvent || loadingEvents
+                        loadingCreate || waitingEvent || loadingEvents || !canReduceTime()
                           ? "not-allowed"
                           : "pointer",
                       pointerEvents:
-                        loadingCreate || waitingEvent || loadingEvents
+                        loadingCreate || waitingEvent || loadingEvents || !canReduceTime()
                           ? "none"
                           : "auto",
                     }}
