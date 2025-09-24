@@ -17,6 +17,17 @@ let client;
 
 // ฟังก์ชันส่งข้อความ หา mqtt ให้ open/close door
 function sendMQTTMessage(topic, message) {
+  if (process.env.OPEN_MQTT !== "true" || !client) {
+    console.log(" [Mock MQTT disabled] Would send:", topic, message);
+    return Promise.resolve({
+      success: true,
+      mock: true,
+      topic,
+      message,
+      timestamp: new Date()
+    });
+  }
+
   return new Promise((resolve, reject) => {
     client.publish(topic, message, { qos: 1 }, (err) => {
       if (err) {
