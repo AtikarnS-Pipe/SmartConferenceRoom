@@ -21,7 +21,7 @@ const TimeWarningCard = ({ currentEvent, getTimeRemaining }) => {
       const remainingSeconds = Math.floor(diffMs / 1000);
 
       // Show card when 10 minutes remaining and hasn't been shown yet
-      if (remainingMinutes < 10 && remainingSeconds > 0 && !hasShown) {
+      if (remainingMinutes < 100 && remainingSeconds > 0 && !hasShown) {
         setShowCard(true);
         setHasShown(true);
         setIsSlideUp(false);

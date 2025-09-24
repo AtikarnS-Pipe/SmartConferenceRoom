@@ -1287,7 +1287,7 @@ input[type="text"]:disabled {
 .time-warning-overlay {
   position: fixed;
   top: 0;
-  left: 170px;
+  left: 230px;
   right: 0;
   z-index: 0;
   display: flex;
