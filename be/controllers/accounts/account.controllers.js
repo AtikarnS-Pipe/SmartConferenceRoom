@@ -8,10 +8,12 @@ const User = require('../../models/User');
 const { AddLogmonitoring } = require('../../utils/AddLogmonitoring');
 // const { GetTimeAPI } = require('../../utils/getTodaydatetime');
 
+const isDebug = (process.env.DEBUG_MODE || "true") === "true";
+
 const Auth = async (req, res) => { // admin sign-in
     console.log(`${req.ip} ${req.method} ${req.originalUrl}`)
     const { email, password } = req.body;
-    if(process.env.DEBUG_MODE) console.log("ready to auth", email, password);
+    if(isDebug) console.log("ready to auth", email, password);
     try{
       const user = await User.findOne({ email, role: { $in: ['Admin', 'Superadmin'] } });
       console.log("user find in Auth!");
@@ -134,7 +136,7 @@ const Createhousekeeper = async (req, res) => {
 const signout = async (req, res) => {
   const user = req.user; // จาก authorize middleware
   if (user.role !== 'Admin' && user.role !== 'Superadmin') {
-    if(process.env.DEBUG_MODE) console.log("Only admin can sign out");
+    if(isDebug) console.log("Only admin can sign out");
     return res.status(403).json({ message: 'Only admin can sign out' });
   }
   user.login_status = 'offline';

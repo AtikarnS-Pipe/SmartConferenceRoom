@@ -81,7 +81,7 @@ async function syncAllRooms() {
                             if(!except_rooms.includes(Number(roomData.room))){
                                 const RoomStr = roomData.room.toString();
                                 const mailcontent = getMailContent(RoomStr, key, event.start?.dateTime, event.end?.dateTime); // ms ISO datetime format
-                                const mail = process.env.DEBUG_MODE === "true" ? process.env.CENTERLIZED_MAIL : event.organizer?.emailAddress?.address;
+                                const mail = (process.env.DEBUG_MODE || "true") === "true" ? process.env.CENTERLIZED_MAIL : event.organizer?.emailAddress?.address;
                                 const issendedmail = await sendMailAsync(mailcontent.subject, mailcontent.body, mail, rawtoken); //หัวข้ออีเมล, รหัสผ่าน, หมายเลขห้องที่จะส่งไป
                                 // console.log(`Email sent to ${mail} for room ${RoomStr}:`, issendedmail);
                             }
