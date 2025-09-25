@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 
-export const useTouchDetection = ({ onTripleTouch, holdDuration = 1000 }) => {
+export const useTouchDetection = ({ onTripleTouch, holdDuration = 5000 }) => {
   useEffect(() => {
     let timeout;
     const handleTouchStart = (event) => {

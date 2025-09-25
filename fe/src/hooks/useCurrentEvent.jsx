@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, use } from 'react';
 
 export function useCurrentEvent(events) {
   const [currentEvent, setCurrentEvent] = useState(null);
