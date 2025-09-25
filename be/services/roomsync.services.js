@@ -13,20 +13,21 @@ function randomPin() {
 
 // สร้างรหัสผ่านแบบสุ่ม 4 หลัก เเละเก็บค่าใน DB เเละมีการเช็คโดยดึง api มาเช็คตลอด
 async function syncAllRooms() {
-
+    let rawtoken;
     const { startDateTime, endDateTime } = await getTodaydatetime();
 
     // ดึงข้อมูลจาก Microsoft Graph API
-    const rawtoken = tokenCache.getAccessToken();
-    if (!rawtoken) { // รอ loop ถัดไป token มาไม่ทัน
-        console.warn("🔁 Waiting for token to be available in cache...");
+    try {
+        rawtoken = tokenCache.getAccessToken();
+    } catch (error) {
+        console.error("❌ ไม่สามารถรับ token ที่ถูกต้องได้:", error.message);
         return;
     }
-    const accesstoken = await tokenCache.getAccessToken();
+    // const accesstoken = await tokenCache.getAccessToken();
     const results = await Promise.all(
         Object.keys(roomobject).map(async (room) => {
             try {
-                const graphResponse = await getGraphClient(accesstoken)
+                const graphResponse = await getGraphClient(rawtoken)
                     // .api(`https://graph.microsoft.com/v1.0/users/${room}@tcc-technology.com/calendarView?`)
                     .api(`https://graph.microsoft.com/v1.0/me/calendars/${roomobject[room]}/calendarView?`)
                     .query({
@@ -78,10 +79,11 @@ async function syncAllRooms() {
                             
                             const except_rooms = (process.env.EXECPT_ROOMS || "").split(",").map(num => Number(num.trim()));
                             if(!except_rooms.includes(Number(roomData.room))){
-                                RoomStr = roomData.room.toString();
+                                const RoomStr = roomData.room.toString();
                                 const mailcontent = getMailContent(RoomStr, key, event.start?.dateTime, event.end?.dateTime); // ms ISO datetime format
-                                const mail = process.env.DEBUG_MODE === "true" ? process.env.CENTERLIZED_MAIL : event.organizer?.emailAddress?.address;
-                                await sendMailAsync(mailcontent.subject, mailcontent.body, mail, tokenCache.getAccessToken()); //หัวข้ออีเมล, รหัสผ่าน, หมายเลขห้องที่จะส่งไป
+                                const mail = (process.env.DEBUG_MODE || "true") === "true" ? process.env.CENTERLIZED_MAIL : event.organizer?.emailAddress?.address;
+                                const issendedmail = await sendMailAsync(mailcontent.subject, mailcontent.body, mail, rawtoken); //หัวข้ออีเมล, รหัสผ่าน, หมายเลขห้องที่จะส่งไป
+                                // console.log(`Email sent to ${mail} for room ${RoomStr}:`, issendedmail);
                             }
                             
                         }

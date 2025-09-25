@@ -20,11 +20,14 @@ const bookingkey = require('../models/bookingkey')
 const sendMailAsync = require('../services/sendmail.services');
 const getMailData = require("../templates/mailcontent_warning");
 
+const isDebug = (process.env.DEBUG_MODE || "true") === "true";
+const except_rooms = (process.env.EXECPT_ROOMS || "").split(",").map(num => Number(num.trim()));
+
 const getuser = async (req, res) => {
     const floor = req.params.floors;
     const room = req.params.rooms;
     const RoomNumber = `${floor}${room}`;
-    if (process.env.DEBUG_MODE) console.log("RoomNumber:", RoomNumber)
+    if (isDebug) console.log("RoomNumber:", RoomNumber)
 
     res.set({
         'Content-Type': 'text/event-stream',
@@ -152,83 +155,93 @@ const adminKeyPin = async (req, res) => {
 
 // รับ eventId ของการประชุมที่ต้องการลบ
 const deleteroom = async (req, res) => {
-    if (process.env.DEBUG_MODE === "false") {
-        const except_rooms = (process.env.EXECPT_ROOMS || "").split(",").map(num => Number(num.trim()));
-        const { eventId, room_number } = req.body; // , eventId
-        if (except_rooms.includes(Number(room_number))) {
-            return res.status(200).json({ message: `Room ${room_number} is in the exception list, skip delete.` });
-        }
-        const AccessToken = tokenCache.getAccessToken();
-        if (!AccessToken) {
-            return res.status(401).json({ error: "No refresh token found. Please login again." });
-        }
-        try {
-            await getGraphClient(AccessToken)
-                .api(`/me/events/${eventId}`)
-                .delete();
-
-            console.log("Delete event success");
-            const falselist = await waitUntil(async () => {
-                const result = await bookingkey.findOneAndUpdate(
-                    { eventId },
-                    { isPinVerified: 'not access' },
-                    { new: true }
-                );
-                console.log("[WaitUntil] result:", result);
-                // ถ้ามี organizerMail แล้วถึงจะ return
-                if (result?.organizerMail) return result;
-                return null;
-            }, 30000, 3000);
-            const organizerEmail = falselist.organizerMail;
-
-            if (organizerEmail && organizerEmail !== process.env.CENTERLIZED_MAIL) {
-                // ใช้ upsert เพื่อสร้างใหม่หากไม่มี หรือ update หากมีอยู่แล้ว
-                const countbacklist = await pinstats.findOneAndUpdate(
-                    { organizerMail: organizerEmail }, // หาด้วย organizerMail
-                    {
-                        $inc: { pinMissCount: +1 }, // เพิ่มจำนวนครั้งที่ miss
-                        $push: {
-                            EventId: {
-                                eventId,
-                                missedAt: new Date(), //await GetTimeAPI('Asia/Bangkok'),
-                                RoomNumber: Number(falselist.room)
-                            }
-                        }
-                    },
-                    {
-                        new: true, // return document หลัง update
-                        upsert: true, // สร้างใหม่ถ้าไม่มี
-                        setDefaultsOnInsert: true // set default values เมื่อสร้างใหม่
-                    }
-                );
-
-                console.log(`Miss count for ${organizerEmail}: ${countbacklist.pinMissCount}`);
-
-                if (countbacklist.pinMissCount % 5 === 0) { // ส่งเมลเตือนถ้าครบ 5 ครั้ง
-                    await pinstats.findOneAndUpdate(
-                        { organizerMail: organizerEmail },
-                        { isBanned: true },
-                        { new: true }
-                    );
-
-                    try {
-                        const mailData = getMailData(organizerEmail, countbacklist);
-                        await sendMailAsync(mailData.subject, mailData.body, organizerEmail, AccessToken);
-                        console.log(`📧 Warning email sent to ${organizerEmail} (${countbacklist.pinMissCount} misses)`);
-                    } catch (emailError) {
-                        console.error("Error sending warning email:", emailError);
-                    }
-                }
-            }
-            res.status(200).json({ message: "Event deleted successfully" });
-        } catch (error) {
-            console.error("Error deleting event:", error);
-            res.status(500).json({ error: "Failed to delete event" });
-        }
-    } else {
+    if (isDebug) {
         return res.status(200).json({ message: "Debug mode - skip delete" });
     }
-}
+
+    const { eventId, room_number } = req.body; // eventId, room_number
+    if (except_rooms.includes(Number(room_number))) {
+        return res.status(200).json({ message: `Room ${room_number} is in the exception list, skip delete.` });
+    }
+    const AccessToken = tokenCache.getAccessToken();
+    if (!AccessToken) {
+        return res.status(401).json({ error: "No refresh token found. Please login again." });
+    }
+    try {
+        const eventRecord = await waitUntil(async () => {
+            const try_eventRecord = await bookingkey.findOne(
+                { eventId },
+                { isPinVerified: 1, organizerMail: 1, room: 1 }
+            );
+            // ถ้าหาข้อมูลเจอ แล้วถึงจะ return ไม่งั้นก็วนรอไปก่อน safety timeout
+            if (try_eventRecord) return try_eventRecord;
+            return null;
+        }, 10000, 2000);
+
+        if (!eventRecord) {
+            return res.status(404).json({ message: "Event not found in DB" });
+        }
+
+        // ถ้า verify แล้ว หรือลบเเล้ว → ไม่ต้องลบ
+        if (eventRecord.isPinVerified === true || eventRecord.isPinVerified === "true" || eventRecord.isPinVerified === "not access") {
+            return res.status(200).json({
+                message: `Event ${eventId} already verified by PIN or was deleted. Skip delete.`,
+            });
+        }
+        
+        await getGraphClient(AccessToken)
+            .api(`/me/events/${eventId}`)
+            .delete();
+
+        eventRecord.isPinVerified = "not access";
+        await eventRecord.save();   
+        const organizerEmail = eventRecord.organizerMail;
+
+        if (organizerEmail && organizerEmail !== process.env.CENTERLIZED_MAIL) {
+            // ใช้ upsert เพื่อสร้างใหม่หากไม่มี หรือ update หากมีอยู่แล้ว
+            const countbacklist = await pinstats.findOneAndUpdate(
+                { organizerMail: organizerEmail }, // หาด้วย organizerMail
+                {
+                    $inc: { pinMissCount: +1 }, // เพิ่มจำนวนครั้งที่ miss
+                    $push: {
+                        EventId: {
+                            eventId,
+                            missedAt: new Date(), //await GetTimeAPI('Asia/Bangkok'),
+                            RoomNumber: Number(eventRecord.room)
+                        }
+                    }
+                },
+                {
+                    new: true, // return document หลัง update
+                    upsert: true, // สร้างใหม่ถ้าไม่มี
+                    setDefaultsOnInsert: true // set default values เมื่อสร้างใหม่
+                }
+            );
+
+            console.log(`Miss count for ${organizerEmail}: ${countbacklist.pinMissCount}`);
+
+            if (countbacklist.pinMissCount % 5 === 0) { // ส่งเมลเตือนถ้าครบ 5 ครั้ง
+                await pinstats.findOneAndUpdate(
+                    { organizerMail: organizerEmail },
+                    { isBanned: true },
+                    { new: true }
+                );
+
+                try {
+                    const mailData = getMailData(organizerEmail, countbacklist);
+                    await sendMailAsync(mailData.subject, mailData.body, organizerEmail, AccessToken);
+                    console.log(`📧 Warning email sent to ${organizerEmail} (${countbacklist.pinMissCount} misses)`);
+                } catch (emailError) {
+                    console.error("Error sending warning email:", emailError);
+                }
+            }
+        }
+        res.status(200).json({ message: "Event deleted successfully" });
+    } catch (error) {
+        console.error("Error deleting event:", error);
+        res.status(500).json({ error: "Failed to delete event" });
+    }
+};
 
 const createroom = async (req, res) => {
     const { createroomdata } = req.body;

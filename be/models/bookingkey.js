@@ -17,6 +17,10 @@ const bookingKeySchema = new mongoose.Schema({
         default: Date.now,  
         index: { expires: '90d'} // TTL index to auto delete logs
     }
-});
+}, { timestamps: { createdAt: false, updatedAt: true }  });
+
+// bookingKeySchema.index({ room: 1, eventId: 1 });   // ใช้กับ findOne({ room, eventId })
+bookingKeySchema.index({ eventId: 1 });            // ใช้กับ findOneAndUpdate({ eventId })
+
 
 module.exports = mongoose.model('Bookingkey', bookingKeySchema, 'Event');

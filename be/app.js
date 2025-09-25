@@ -42,36 +42,12 @@ const sintervalId = setInterval(() => {
   syncAllRooms();
 }, 7000);
 
-// // mini API: รับข้อมูลจาก Node-RED เก็บลง database
-// app.post('/api2/device', async (req, res) => {
-//   try {
-//     const { Device_date, Device_room, Device_status } = req.body;
-
-//     // validation แบบง่าย
-//     if (!Device_room || !Device_status) {
-//       return res.status(400).json({ error: "Missing fields" });
-//     }
-
-//     const newDevice = await DeviceState.create({
-//       Device_date: Device_date || Date.now(),
-//       Device_room,
-//       Device_status
-//     });
-
-//     res.status(201).json({
-//       message: "Device state saved successfully",
-//       data: newDevice
-//     });
-//   } catch (err) {
-//     console.error("Error saving device:", err);
-//     res.status(500).json({ error: "Server error" });
-//   }
-// });
-
 app.listen(process.env.PORT, async () => {
   console.log(`Server running at http://localhost:${process.env.PORT}`);
   await connectToDatabase();
   await seedMqttRooms(); //set ค่า default state ห้องที่มีจอ
-  // await initMqtt(); // connect mqtt + door control (topic cmd)
-  // await initLogger(); // attach logger subscriber of mqtt (topic rssi)
+  if(process.env.OPEN_MQTT === "true"){
+    await initMqtt(); // connect mqtt + door control (topic cmd)
+    await initLogger(); // attach logger subscriber of mqtt (topic rssi)
+  }
 });

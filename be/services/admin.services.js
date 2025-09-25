@@ -32,7 +32,7 @@ async function GetScheduleData(actoken, Room, start, end) {
 
         const startDateTime = startTH.toISOString();
         const endDateTime = endTH.toISOString();
-        if (process.env.DEBUG_MODE) console.log("start query scedule(UTC):", startDateTime, endDateTime);
+
         if (!actoken) {
             throw new Error("No access token in schedule Page.")
         }
@@ -51,7 +51,6 @@ async function GetScheduleData(actoken, Room, start, end) {
             throw new Error(`No value in graphResponse for room ${Room}: ${JSON.stringify(graphResponse)}`);
         }
         const results = graphResponse.value
-        // if (process.env.DEBUG_MODE) console.log("admin scedule =>", results)
         return results;
 
     } catch (error) {
@@ -87,7 +86,6 @@ async function sendscheduledata(req, res) {
 async function getUserProfile(accessToken) {
     try {
         const profile = await getGraphClient(accessToken).api('https://graph.microsoft.com/v1.0/me').get();
-        if (process.env.DEBUG_MODE) console.log("getUserProfile profile:", profile.mail);
         return profile;
     } catch (error) {
         console.error('Error fetching user profile:', error);
@@ -256,7 +254,7 @@ async function verifyOTP(email, otpCode) {
 async function resetPassword(resetToken, newPassword) {
     try {
         const payload = jwt.verify(resetToken, RESET_SECRET);
-        const user = await userModel.findOne({ email: payload.email });
+        const user = await userModel.findOne({ email: payload.email, role: { $ne: 'Deactivate' } });
         if (!user) {
             return { success: false, message: "User not found!" };
         }

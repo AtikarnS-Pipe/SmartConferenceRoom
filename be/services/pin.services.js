@@ -24,7 +24,7 @@ async function compareKey({ eventId, pin }) {
         console.log(`Pin matched for event: ${eventId}`);
         const successlog = await bookingKey.findOneAndUpdate(
             { eventId },
-            { isPinVerified: true }, 
+            { isPinVerified: "true" }, 
             { new: true },
         )
         if (!successlog) throw new Error("Booking key not found for the given eventId");
