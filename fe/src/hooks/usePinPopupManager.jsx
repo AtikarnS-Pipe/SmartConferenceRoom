@@ -9,7 +9,7 @@ const PinPopupManager = ({
   closeSignal,
   bookingInProgress,
 }) => {
-  const { currentEvent, isOccupied } = useCurrentEvent(events);
+  const { currentEvent, isOccupied, nextBooking } = useCurrentEvent(events);
   const { floor, room } = useRoomData();
   const roomId = `${floor}${room}`;
 

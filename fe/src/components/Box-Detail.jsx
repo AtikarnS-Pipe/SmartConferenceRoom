@@ -1,18 +1,24 @@
-import { User, Clock, NotepadText, Check, X} from 'lucide-react';
+import { User, Clock, NotepadText, Check, X, Key} from 'lucide-react';
 import { useIsFullDayEvent } from '../hooks/useIsFullDayEvent.jsx';
 import BookingModal from './BookingModal';
+import PinPopup from './PinPopup';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useRoomData } from '../hooks/useRoomData';
+import { useCurrentEvent } from '../hooks/useCurrentEvent';
 
-export default function Boxdetail({ isOccupied, event, getTimeRemaining, loading, onSetBookingInProgress}) {
+export default function Boxdetail({ isOccupied, event, getTimeRemaining, loading, onSetBookingInProgress, events}) {
   const isFullDayEvent = useIsFullDayEvent();
+  const { nextBooking } = useCurrentEvent(events);
   const [showModal, setShowModal] = useState(false);
   const [isEnding, setIsEnding] = useState(false);
   const [showEndConfirmModal, setShowEndConfirmModal] = useState(false);
   const [showResultModal, setShowResultModal] = useState(false);
   const [resultMessage, setResultMessage] = useState('');
   const [isSuccess, setIsSuccess] = useState(false);
+  const [showEarlyAccessPin, setShowEarlyAccessPin] = useState(false);
+  const [pinError, setPinError] = useState('');
+  const [pinWaiting, setPinWaiting] = useState(false);
   const { floor, room } = useRoomData(); 
   const roomId = `${floor}${room}`;
 
@@ -35,6 +41,123 @@ const timeoutId = setTimeout(() => {
 
 return () => clearTimeout(timeoutId);
 }, [showResultModal]);
+
+  // ตรวจสอบว่าสามารถเข้าห้องก่อนเวลาได้หรือไม่
+  const canEarlyAccess = () => {
+    console.log('=== canEarlyAccess Debug ===');
+    console.log('nextBooking:', nextBooking);
+    
+    if (!nextBooking) {
+      console.log('❌ No nextBooking found');
+      return false;
+    }
+    
+    const now = new Date();
+    const bookingStartTime = new Date(nextBooking.start.dateTime + 'Z');
+    const timeDiff = bookingStartTime.getTime() - now.getTime();
+    const minutesDiff = Math.floor(timeDiff / (1000 * 60));
+    
+    console.log('Current time:', now.toISOString());
+    console.log('Booking start time:', bookingStartTime.toISOString());
+    console.log('Minutes until start:', minutesDiff);
+    
+    // สามารถเข้าได้ก่อนเวลา 15 นาที
+    if (minutesDiff > 15) {
+      console.log('❌ Too early (more than 15 minutes)');
+      return false;
+    }
+    if (minutesDiff < 0) {
+      console.log('❌ Too late (event already started)');
+      return false;
+    }
+    
+    // ตรวจสอบว่าไม่มีการจองติดกันก่อนหน้า
+    if (!events || events.length === 0) {
+      console.log('✅ No previous events, early access allowed');
+      return true;
+    }
+    
+    const previousBooking = events
+      .filter(e => new Date(e.end.dateTime + 'Z') <= bookingStartTime)
+      .sort((a, b) => new Date(b.end.dateTime + 'Z') - new Date(a.end.dateTime + 'Z'))[0];
+    
+    console.log('Previous booking:', previousBooking);
+    
+    if (previousBooking) {
+      const previousEndTime = new Date(previousBooking.end.dateTime + 'Z');
+      const gapMinutes = Math.floor((bookingStartTime.getTime() - previousEndTime.getTime()) / (1000 * 60));
+      
+      console.log('Previous end time:', previousEndTime.toISOString());
+      console.log('Gap between events (minutes):', gapMinutes);
+      
+      // ถ้ามี gap น้อยกว่า 15 นาที แสดงว่ามีการจองติดกัน
+      if (gapMinutes < 15) {
+        console.log('❌ Back-to-back booking (gap < 15 minutes)');
+        return false;
+      }
+    }
+    
+    console.log('✅ Early access allowed!');
+    return true;
+  };
+
+  // ตรวจสอบว่ามีการจองถัดไปหรือไม่ (สำหรับแสดงปุ่ม)
+  const hasUpcomingBooking = () => {
+    console.log('=== hasUpcomingBooking Debug ===');
+    console.log('nextBooking:', nextBooking);
+    console.log('Has upcoming booking:', !!nextBooking);
+    return !!nextBooking;
+  };
+
+  // Handle Early Access PIN submission
+  const handleEarlyAccessPin = async (pin) => {
+    setPinWaiting(true);
+    setPinError('');
+    
+    console.log('Early Access Debug:');
+    console.log('- Next booking from hook:', nextBooking);
+    console.log('- Event ID:', nextBooking?.id);
+    console.log('- Room ID:', roomId);
+    
+    if (!nextBooking) {
+      setPinError('No upcoming booking found');
+      setPinWaiting(false);
+      return;
+    }
+    
+    try {
+      const requestBody = {
+        eventId: nextBooking.id,
+        pin: pin,
+        room_number: roomId
+      };
+      console.log('Request body:', requestBody);
+      
+      const response = await fetch('/api2/user/key', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody),
+      });
+      
+      const result = await response.json();
+      console.log('Response:', response.status, result);
+      
+      if (result.pinValid) {
+        setPinError('Correct password');
+        setTimeout(() => {
+          setShowEarlyAccessPin(false);
+          setPinError('');
+        }, 2000);
+      } else {
+        setPinError(result.error || 'Incorrect password');
+      }
+    } catch (error) {
+      console.error('Early access error:', error);
+      setPinError('PIN verification failed');
+    } finally {
+      setPinWaiting(false);
+    }
+  };
 
   const handleEndMeeting = async () => {
     setIsEnding(true);
@@ -432,15 +555,59 @@ return () => clearTimeout(timeoutId);
         <div className="box-detail available">
           <div className="detail-content available">
             <div>( The room is currently available )</div>
-            <button
-              className="pin-button"
-              onClick={() => {
-                onSetBookingInProgress?.(true);
-                setShowModal(true);
-              }}
-            >
-              <span className="pin-text">Book Now</span>
-            </button>
+            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+              <button
+                className="pin-button"
+                onClick={() => {
+                  onSetBookingInProgress?.(true);
+                  setShowModal(true);
+                }}
+              >
+                <span className="pin-text">Book Now</span>
+              </button>
+              
+              {/* แสดงปุ่ม Early Access เสมอ แต่ disable ตามเงื่อนไข */}
+              {hasUpcomingBooking() && (
+                <button
+                  className="early-access-button"
+                  onClick={() => {
+                    if (canEarlyAccess()) {
+                      setShowEarlyAccessPin(true);
+                    }
+                  }}
+                  disabled={!canEarlyAccess()}
+                  style={{
+                    backgroundColor: canEarlyAccess() ? '#F59E0B' : '#9CA3AF',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '0.75rem',
+                    padding: '1rem 1.5rem',
+                    fontSize: '1.1rem',
+                    fontWeight: '600',
+                    cursor: canEarlyAccess() ? 'pointer' : 'not-allowed',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    transition: 'all 0.2s ease',
+                    opacity: canEarlyAccess() ? 1 : 0.6,
+                  }}
+                  onMouseOver={(e) => {
+                    if (canEarlyAccess()) {
+                      e.target.style.backgroundColor = '#D97706';
+                      e.target.style.transform = 'translateY(-2px)';
+                    }
+                  }}
+                  onMouseOut={(e) => {
+                    if (canEarlyAccess()) {
+                      e.target.style.backgroundColor = '#F59E0B';
+                      e.target.style.transform = 'translateY(0)';
+                    }
+                  }}
+                >
+                  Early Access
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -455,6 +622,37 @@ return () => clearTimeout(timeoutId);
           onSubmit={() => { }}
           event
         />
+      )}
+
+      {showEarlyAccessPin && (
+        <>
+          {/* Overlay สำหรับกดปิด popup */}
+          <div
+            style={{
+              position: 'fixed',
+              inset: 0,
+              backgroundColor: 'rgba(0,0,0,0.5)',
+              zIndex: 9998,
+            }}
+            onClick={() => {
+              setShowEarlyAccessPin(false);
+              setPinError('');
+            }}
+          />
+          
+          <PinPopup
+            onSubmit={handleEarlyAccessPin}
+            error={pinError}
+            waiting={pinWaiting}
+            title="Early Access PIN"
+            showIcon={true}
+            onClose={() => {
+              setShowEarlyAccessPin(false);
+              setPinError('');
+            }}
+            disableCountdown={false}
+          />
+        </>
       )}
 
       {showEndConfirmModal && <EndConfirmModal />}

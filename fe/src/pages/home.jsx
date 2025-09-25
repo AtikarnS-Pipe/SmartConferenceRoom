@@ -54,7 +54,7 @@ function Home() {
 
           {/* detail */}
           <div className="main-section">
-            <Boxdetail isOccupied={isOccupied} event={currentEvent} getTimeRemaining={getTimeRemaining} loading={loading} onSetBookingInProgress={setBookingInProgress} />
+            <Boxdetail isOccupied={isOccupied} event={currentEvent} getTimeRemaining={getTimeRemaining} loading={loading} onSetBookingInProgress={setBookingInProgress} events={events} />
           </div>
 
           {/* schedule */}
