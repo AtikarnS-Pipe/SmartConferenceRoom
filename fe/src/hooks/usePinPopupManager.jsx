@@ -8,6 +8,7 @@ const PinPopupManager = ({
   onPinSuccess,
   closeSignal,
   bookingInProgress,
+  earlyAccessVerifiedEvent, // ✅ รับ early access verified event ID
 }) => {
   const { currentEvent, isOccupied, nextBooking } = useCurrentEvent(events);
   const { floor, room } = useRoomData();
@@ -83,15 +84,28 @@ const PinPopupManager = ({
   // ✅ Reset state ทุกครั้งที่ currentEvent เปลี่ยน (สำหรับ event ติดกัน)
   useEffect(() => {
     if (currentEvent) {
-      // Reset state เฉพาะที่จำเป็นเมื่อ event เปลี่ยน
-      setPinVerified(false);
-      setIsExpired(false);
-      setIsTemporarilyHidden(false);
-      setError("");
-      setPendingError("");
+      // ✅ ตรวจสอบว่าเป็น event ที่ early access verify แล้วหรือไม่
+      const isEarlyAccessVerified =
+        earlyAccessVerifiedEvent === currentEvent.id;
+
+      if (isEarlyAccessVerified) {
+        // ถ้าเป็น event ที่ verify จาก early access แล้ว ให้ set verified state
+        setPinVerified(true);
+        verifiedEventRef.current = currentEvent.id;
+        setIsExpired(false);
+        setError("");
+        setPendingError("");
+      } else {
+        // Reset state เฉพาะที่จำเป็นเมื่อ event เปลี่ยนและยังไม่ verify
+        setPinVerified(false);
+        setIsExpired(false);
+        setIsTemporarilyHidden(false);
+        setError("");
+        setPendingError("");
+      }
       // ไม่ reset pinVisible เพราะจะถูกจัดการใน useEffect อื่น
     }
-  }, [currentEvent?.id]); // ใช้ currentEvent?.id เพื่อ trigger เฉพาะเมื่อ event เปลี่ยน
+  }, [currentEvent?.id, earlyAccessVerifiedEvent]); // ใช้ currentEvent?.id เพื่อ trigger เฉพาะเมื่อ event เปลี่ยน
 
   useEffect(() => {
     // Clear timeout เดิมก่อนเสมอ
@@ -235,7 +249,7 @@ const PinPopupManager = ({
         setError("");
         setPendingError("");
       }, 1200);
-      onPinSuccess?.(pin);
+      onPinSuccess?.(pin, currentEvent.id); // ✅ ส่ง eventId ด้วย
     } else {
       setPendingError("Incorrect password");
     }

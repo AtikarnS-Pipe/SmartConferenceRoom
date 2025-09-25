@@ -1,19 +1,30 @@
-import React, { useState, useEffect } from 'react';
-import {DoorClosedLocked,DoorOpen,ShieldUser} from 'lucide-react'
+import React, { useState, useEffect } from "react";
+import { DoorClosedLocked, DoorOpen, ShieldUser, X } from "lucide-react";
 
-const PinPopup = ({ onSubmit, error, waiting, title = 'Enter PIN Code', showIcon = true, showStaffIcon = false, onClose, disableCountdown = false }) => {
-  const [pin, setPin] = useState('');
+const PinPopup = ({
+  onSubmit,
+  error,
+  waiting,
+  title = "Enter PIN Code",
+  showIcon = true,
+  showStaffIcon = false,
+  onClose,
+  disableCountdown = false,
+  showCloseButton = false,
+  showOverlayClose = false,
+}) => {
+  const [pin, setPin] = useState("");
   const [blink, setBlink] = useState(false);
   const [countdown, setCountdown] = useState(30);
 
   useEffect(() => {
     if (pin.length === 4 && !waiting) {
       onSubmit(pin);
-      setPin('');
+      setPin("");
     }
   }, [pin, waiting]);
 
-// Reset countdown when component mounts
+  // Reset countdown when component mounts
   useEffect(() => {
     if (!disableCountdown) {
       setCountdown(30);
@@ -23,7 +34,7 @@ const PinPopup = ({ onSubmit, error, waiting, title = 'Enter PIN Code', showIcon
   // Auto-close timer with countdown (only if countdown is enabled)
   useEffect(() => {
     if (disableCountdown) return;
-    
+
     const timer = setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) {
@@ -45,7 +56,11 @@ const PinPopup = ({ onSubmit, error, waiting, title = 'Enter PIN Code', showIcon
   };
 
   useEffect(() => {
-    if (typeof error === 'string' && error !== 'Correct password' && error.trim() !== '') {
+    if (
+      typeof error === "string" &&
+      error !== "Correct password" &&
+      error.trim() !== ""
+    ) {
       setBlink(true);
       const timer = setTimeout(() => setBlink(false), 500);
       return () => clearTimeout(timer);
@@ -64,75 +79,133 @@ const PinPopup = ({ onSubmit, error, waiting, title = 'Enter PIN Code', showIcon
 
   const handleClear = () => {
     resetCountdown();
-    setPin('');
+    setPin("");
   };
 
   const renderDots = () => (
-    <div style={{
-      display: 'flex',
-      justifyContent: 'center',
-      gap: '1.5rem',
-      marginBottom: '2rem',
-    }}>
-      {[0, 1, 2, 3].map(i => (
-        <div key={i} style={{
-          width: '20px',
-          height: '20px',
-          borderRadius: '50%',
-          backgroundColor: pin.length > i ? '#1D4ED8' : '#D1D5DB',
-          transition: 'background-color 0.2s ease'
-        }} />
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "center",
+        gap: "1.5rem",
+        marginBottom: "2rem",
+      }}
+    >
+      {[0, 1, 2, 3].map((i) => (
+        <div
+          key={i}
+          style={{
+            width: "20px",
+            height: "20px",
+            borderRadius: "50%",
+            backgroundColor: pin.length > i ? "#1D4ED8" : "#D1D5DB",
+            transition: "background-color 0.2s ease",
+          }}
+        />
       ))}
     </div>
   );
 
-  const keypad = [1, 2, 3, 4, 5, 6, 7, 8, 9, 'Clr', 0, '←'];
+  const keypad = [1, 2, 3, 4, 5, 6, 7, 8, 9, "Clr", 0, "←"];
 
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0, left: 0,
-      width: '100%',
-      height: '100%',
-      backgroundColor: 'rgba(0,0,0,0.5)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 9999,
-      padding: '1rem',
-    }}>
-      <div style={{
-        background: '#fff',
-        padding: '2rem',
-        borderRadius: '1.5rem',
-        width: '100%',
-        maxWidth: '420px',
-        boxShadow: '0 20px 50px rgba(0,0,0,0.15)',
-        textAlign: 'center',
-      }}>
-        <h2 style={{
-          fontSize: '1.75rem',
-          marginBottom: '1.5rem',
-          fontWeight: 600,
-          color: '#111827',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '0.5rem'
-        }}>
+    <div
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        width: "100%",
+        height: "100%",
+        backgroundColor: "rgba(0,0,0,0.5)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 9999,
+        padding: "1rem",
+      }}
+      onClick={(e) => {
+        // ✅ ถ้าคลิกที่ overlay (ไม่ใช่ popup content) และอนุญาตให้ปิดด้วย overlay
+        if (e.target === e.currentTarget && showOverlayClose && onClose) {
+          onClose();
+        }
+      }}
+    >
+      <div
+        style={{
+          background: "#fff",
+          padding: "2rem",
+          borderRadius: "1.5rem",
+          width: "100%",
+          maxWidth: "420px",
+          boxShadow: "0 20px 50px rgba(0,0,0,0.15)",
+          textAlign: "center",
+          position: "relative", // ✅ เพิ่มเพื่อให้ปุ่ม X สามารถ position absolute ได้
+        }}
+      >
+        {/* ✅ ปุ่มปิด X สำหรับ Early Access เท่านั้น */}
+        {showCloseButton && onClose && (
+          <button
+            onClick={onClose}
+            style={{
+              position: "absolute",
+              top: "1rem",
+              right: "1rem",
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              padding: "0.5rem",
+              borderRadius: "50%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "#6B7280",
+              transition: "all 0.2s ease",
+            }}
+            onMouseOver={(e) => {
+              e.target.style.backgroundColor = "#F3F4F6";
+              e.target.style.color = "#374151";
+            }}
+            onMouseOut={(e) => {
+              e.target.style.backgroundColor = "transparent";
+              e.target.style.color = "#6B7280";
+            }}
+          >
+            <X size={24} />
+          </button>
+        )}
+
+        <h2
+          style={{
+            fontSize: "1.75rem",
+            marginBottom: "1.5rem",
+            fontWeight: 600,
+            color: "#111827",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "0.5rem",
+          }}
+        >
           {title}
           {showStaffIcon && <ShieldUser size={30} color="#000000" />}
-          {showIcon && (error === 'Correct password' ? <DoorOpen size={30} color="#000000" /> : <DoorClosedLocked size={30} color="#000000" />)}
+          {showIcon &&
+            (error === "Correct password" ? (
+              <DoorOpen size={30} color="#000000" />
+            ) : (
+              <DoorClosedLocked size={30} color="#000000" />
+            ))}
         </h2>
 
         {renderDots()}
 
         {waiting && (
-          <div style={{
-            fontSize: '1rem',
-            color: '#555',
-            marginBottom: '1rem'
-          }}>
+          <div
+            style={{
+              fontSize: "1rem",
+              color: "#555",
+              marginBottom: "1rem",
+            }}
+          >
             Checking...
           </div>
         )}
@@ -140,11 +213,11 @@ const PinPopup = ({ onSubmit, error, waiting, title = 'Enter PIN Code', showIcon
         {error && (
           <div
             style={{
-              color: error === 'Correct password' ? '#10B981' : '#EF4444',
-              fontSize: '20px',
+              color: error === "Correct password" ? "#10B981" : "#EF4444",
+              fontSize: "20px",
               fontWeight: 500,
-              marginBottom: '1.25rem',
-              animation: blink ? 'blink 0.5s ease-in-out 2' : 'none',
+              marginBottom: "1.25rem",
+              animation: blink ? "blink 0.5s ease-in-out 2" : "none",
             }}
           >
             {error}
@@ -157,35 +230,37 @@ const PinPopup = ({ onSubmit, error, waiting, title = 'Enter PIN Code', showIcon
           </div>
         )}
 
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(3, 1fr)',
-          gap: '1.5rem',
-          justifyItems: 'center',
-        }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(3, 1fr)",
+            gap: "1.5rem",
+            justifyItems: "center",
+          }}
+        >
           {keypad.map((key, idx) => (
             <button
               key={idx}
               style={{
-                width: '100px',
-                height: '100px',
-                borderRadius: '50%',
-                backgroundColor: '#F3F4F6',
-                border: 'none',
-                fontSize: '1.75rem',
+                width: "100px",
+                height: "100px",
+                borderRadius: "50%",
+                backgroundColor: "#F3F4F6",
+                border: "none",
+                fontSize: "1.75rem",
                 fontWeight: 500,
-                color: '#111827',
-                cursor: key !== '' && !waiting ? 'pointer' : 'default',
-                opacity: key === '' || waiting ? 0.4 : 1,
-                transition: 'all 0.2s ease-in-out'
+                color: "#111827",
+                cursor: key !== "" && !waiting ? "pointer" : "default",
+                opacity: key === "" || waiting ? 0.4 : 1,
+                transition: "all 0.2s ease-in-out",
               }}
               onClick={() => {
-                if (waiting || key === '') return;
-                if (key === '←') handleBackspace();
-                else if (key === 'Clr') handleClear();
+                if (waiting || key === "") return;
+                if (key === "←") handleBackspace();
+                else if (key === "Clr") handleClear();
                 else handlePress(key);
               }}
-              disabled={key === '' || waiting}
+              disabled={key === "" || waiting}
             >
               {key}
             </button>
