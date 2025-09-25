@@ -25,6 +25,8 @@ const PinPopupManager = ({
   const timeoutRef = useRef(null);
   const verifiedEventRef = useRef(null); // เก็บ event ID ที่ verify แล้ว
 
+  // console.log("eventverify", verifiedEventRef.current);
+
   // ฟังก์ชัน POST เช็ก PIN
   const sendPinToBackend = async ({ eventId, pin, room_number }) => {
     try {
@@ -78,7 +80,19 @@ const PinPopupManager = ({
     clearCurrentTimeout();
   };
 
-  
+  // ✅ Reset state ทุกครั้งที่ currentEvent เปลี่ยน (สำหรับ event ติดกัน)
+  useEffect(() => {
+    if (currentEvent) {
+      // Reset state เฉพาะที่จำเป็นเมื่อ event เปลี่ยน
+      setPinVerified(false);
+      setIsExpired(false);
+      setIsTemporarilyHidden(false);
+      setError("");
+      setPendingError("");
+      // ไม่ reset pinVisible เพราะจะถูกจัดการใน useEffect อื่น
+    }
+  }, [currentEvent?.id]); // ใช้ currentEvent?.id เพื่อ trigger เฉพาะเมื่อ event เปลี่ยน
+
   useEffect(() => {
     // Clear timeout เดิมก่อนเสมอ
     clearCurrentTimeout();

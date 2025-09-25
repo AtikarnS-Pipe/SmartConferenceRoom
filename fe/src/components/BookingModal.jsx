@@ -1371,14 +1371,40 @@ const BookingModal = ({ isOpen, onClose, onSubmit }) => {
 
     // Support 24-hour booking
     if (minutes === 1440) {
-      // All day booking - เริ่มที่ 00:00 ของวันนั้น
-      const today = new Date();
-      const allDayStart = new Date(today);
-      allDayStart.setHours(0, 0, 0, 0);
+      // All day booking - ใช้ logic เดียวกับปุ่มอื่น ๆ
+      if (!formData.startTime) {
+        handleChange("duration", minutes);
+        return;
+      }
+
+      // หาเวลาและ duration ที่ดีที่สุดสำหรับ All day (1440 นาที)
+      const bestOption = findBestTimeForDuration(minutes);
+
+      // แสดงข้อความแจ้งเตือนถ้า duration ถูกปรับลง
+      if (bestOption.duration < minutes) {
+        const requestedHours = Math.floor(minutes / 60);
+        const adjustedHours = Math.floor(bestOption.duration / 60);
+        const adjustedMinutes = bestOption.duration % 60;
+
+        let adjustedText = "";
+        if (adjustedHours > 0) adjustedText += `${adjustedHours}hr`;
+        if (adjustedMinutes > 0)
+          adjustedText += adjustedText
+            ? ` ${adjustedMinutes}min`
+            : `${adjustedMinutes}min`;
+
+        setDurationAdjustmentWarning(
+          `All day (${requestedHours}hr) not available. Adjusted to ${adjustedText}.`
+        );
+        setTimeout(() => setDurationAdjustmentWarning(""), 5000);
+      } else {
+        setDurationAdjustmentWarning("");
+      }
+
       setFormData((prev) => ({
         ...prev,
-        duration: minutes,
-        startTime: allDayStart.toISOString(),
+        duration: bestOption.duration,
+        startTime: bestOption.startTime,
       }));
       return;
     }
