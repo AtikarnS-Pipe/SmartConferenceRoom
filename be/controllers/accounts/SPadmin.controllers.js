@@ -15,26 +15,48 @@ const createadmin = async (req, res) => {
   }
 
   try {
-    const existingAdmin = await User.findOne({
+    // ตรวจสอบว่ามี account ที่ active (ไม่ใช่ Deactivate) และใช้ข้อมูลซ้ำกัน
+    const existingActiveAdmin = await User.findOne({
       role: { $ne: 'Deactivate' },
       $or: [{ email }, { pin }, { name }]
     });
 
-    if (existingAdmin) {
+    if (existingActiveAdmin) {
       const duplicatefield = [];
       let message = 'No duplicate';
 
-      if (existingAdmin.pin === pin) duplicatefield.push('pin');
-      if (existingAdmin.name === name) duplicatefield.push('name');
-      if (existingAdmin.email === email) duplicatefield.push('email');
+      if (existingActiveAdmin.pin === pin) duplicatefield.push('pin');
+      if (existingActiveAdmin.name === name) duplicatefield.push('name');
+      if (existingActiveAdmin.email === email) duplicatefield.push('email');
 
       if (duplicatefield.length === 1) {
-        message = `This ${duplicatefield[0]} is already in use. Please use a different one.`;
+        message = `This ${duplicatefield[0]} is already in use by an active account. Please use a different one.`;
       } else if (duplicatefield.length > 1) {
-        message = `These ${duplicatefield.join(' and ')} are already in use. Please use different values.`;
+        message = `These ${duplicatefield.join(' and ')} are already in use by an active account. Please use different values.`;
       }
 
       return res.status(400).json({ message });
+    }
+
+    // ตรวจสอบว่ามี account ที่ Deactivate และใช้ข้อมูลซ้ำกัน
+    const existingDeactivatedAdmin = await User.findOne({
+      role: 'Deactivate',
+      $or: [{ email }, { pin }, { name }]
+    });
+
+    // ถ้ามี account ที่ Deactivate ให้ลบออกก่อนสร้างใหม่
+    if (existingDeactivatedAdmin) {
+      await User.deleteOne({ _id: existingDeactivatedAdmin._id });
+      
+      // เพิ่ม log การลบ account เก่า
+      const deleteLogData = {
+        user_Id: existingDeactivatedAdmin._id,
+        L_status: 'Admin was deleted',
+        role: 'Admin',
+        Details: `Old Admin name: ${existingDeactivatedAdmin.name}, email: ${existingDeactivatedAdmin.email} - Replaced by new Admin`,
+        L_createdAt: new Date(),
+      };
+      await AddLogmonitoring(deleteLogData);
     }
 
     const salt = await bcrypt.genSalt(parseInt(process.env.BCRYPT_SALT_ROUNDS));
