@@ -1,3 +1,4 @@
+// เก็บสถานะปัจจุบันของห้องประชุมที่มีจอ ว่า 'open', 'closed', 'adminopen'
 const mongoose = require('mongoose');
 
 const MqttStateSchema = new mongoose.Schema({

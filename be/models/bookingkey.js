@@ -1,3 +1,4 @@
+// เก็บข้อมูลการจองห้องประชุมจาก Microsoft Graph API ที่มีรหัส, สถานะการยืนยันรหัส เพิ่มเติมเพื่อยืนยัน
 const mongoose = require('mongoose');
 
 const bookingKeySchema = new mongoose.Schema({

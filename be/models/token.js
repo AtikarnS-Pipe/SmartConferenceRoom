@@ -1,3 +1,4 @@
+// เก็บ token ของ Microsoft Graph API เเละสถานะของ token ว่าเป็นอย่างไร (สร้างใหม่, รีเฟรช, รีเฟรชไม่สำเร็จ)
 const mongoose = require('mongoose');
 
 const tokenSchema = new mongoose.Schema({

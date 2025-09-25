@@ -9,10 +9,12 @@ const lastValue = {};
 const currentState = {};
 
 // mapping topic → rooms
+const SUB_TOPIC_RSSI = process.env.MQTT_TOPIC_RSSI; 
+
 const TOPICS = {
-  "floor15/wifi/rssi/15>1-2": [1501, 1502],
-  "floor15/wifi/rssi/15>5-6": [1505, 1506],
-  "floor15/wifi/rssi/15>14-15": [1514, 1515],
+  [`${SUB_TOPIC_RSSI}15>1-2`]: [1501, 1502],
+  [`${SUB_TOPIC_RSSI}15>5-6`]: [1505, 1506],
+  [`${SUB_TOPIC_RSSI}15>14-15`]: [1514, 1515],
 };
 
 function initLogger() {

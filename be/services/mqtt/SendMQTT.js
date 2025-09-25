@@ -12,7 +12,7 @@ const mqttOptions = {
 
 const connectUrl = process.env.MQTT_BROKER_URL; 
 // Keywords
-const SUB_TOPIC = process.env.MQTT_TOPIC; 
+const SUB_TOPIC = process.env.MQTT_TOPIC_CMD; 
 let client;
 
 // ฟังก์ชันส่งข้อความ หา mqtt ให้ open/close door
@@ -60,7 +60,7 @@ async function initMqtt() {
     // console.log('MQTT Received data:', topic, text);
     
     if (topic === SUB_TOPIC) {
-      // match pattern เช่น  "Check the status of room door 1-2"
+      // match pattern เช่น  "Check the status of room door 15>1-2"
       const match = text.match(/Check the status of room door (\d+)>(\d+)-(\d+)/i);
       if (match) {
         const [_, floor, first, second] = match; // _ is not interest index 0 value, ex:  first=1, second=2
