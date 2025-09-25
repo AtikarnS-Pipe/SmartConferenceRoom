@@ -1,6 +1,7 @@
 // mqttLogger.js
 const { getClient } = require("./SendMQTT");
 const Log_Device_Status = require("../../models/Log_Device_Status");
+require('dotenv').config({ path: './config/.env' });
 
 const TIMEOUT = 20000; // 20 วินาที
 const lastUpdate = {}; // เก็บเวลา message ล่าสุดของแต่ละ topic
