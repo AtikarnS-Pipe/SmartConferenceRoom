@@ -107,7 +107,7 @@ const BookingModal = ({ isOpen, onClose, onSubmit }) => {
     if (!showPinModal) return;
     const timeoutId = setTimeout(() => {
       setShowPinModal(false);
-    }, 30000);
+    }, 60000);
 
     return () => clearTimeout(timeoutId);
   }, [showPinModal]);
