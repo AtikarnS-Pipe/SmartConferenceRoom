@@ -80,7 +80,7 @@ const keyPins = async (req, res) => {
         const isOpen = await sendMQTTMessage(process.env.MQTT_TOPIC_CMD, `open_${floor}>${room}`);
         const isUpdated = await MqttState.findOneAndUpdate(
             { Meeting_room: room_number },   // หา record ตามห้อง
-            { $set: { state: "open" } },     // อัพเดต state = open
+            { $set: { state: "open", adminOpenAt: null } },     // อัพเดต state = open และลบ adminOpenAt
             { new: true, upsert: true }      // upsert กันพลาด ถ้าไม่เจอให้สร้าง
         );
 
@@ -133,7 +133,7 @@ const adminKeyPin = async (req, res) => {
         const isOpen = await sendMQTTMessage(process.env.MQTT_TOPIC_CMD, `adminopen_${floor}>${room}`); 
         const isUpdated = await MqttState.findOneAndUpdate(
             { Meeting_room: room_number, state: { $ne: "open" } }, // หา record ตามห้อง
-            { $set: { state: "adminopen" } },  // อัพเดต state = adminopen
+            { $set: { state: "adminopen", adminOpenAt: new Date() } },  // อัพเดต state = adminopen และตั้งเวลา
             { new: true, upsert: true }       // upsert กันพลาด ถ้าไม่เจอให้สร้าง
         );
 
