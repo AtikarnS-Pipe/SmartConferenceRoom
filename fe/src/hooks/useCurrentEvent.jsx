@@ -51,38 +51,11 @@ export function useCurrentEvent(events) {
         const timeDiff = eventStart.getTime() - now.getTime();
         const totalSeconds = Math.floor(timeDiff / 1000);
 
-        // console.log('Event start time:', eventStart.toISOString());
-        // console.log('Total seconds until start:', totalSeconds);
-
         // ถ้าเหลือเวลาไม่เกิน 15 นาที (900 วินาที) และไม่เกินเวลาแล้ว
         if (totalSeconds <= 900 && totalSeconds >= 0) {
-          // ตรวจสอบว่าไม่มีการจองติดกันก่อนหน้า
-          if (!events || events.length === 0) {
-            canEarlyAccessResult = true;
-          } else {
-            const previousBooking = events
-              .filter((e) => new Date(e.end.dateTime + "Z") <= eventStart)
-              .sort(
-                (a, b) =>
-                  new Date(b.end.dateTime + "Z") -
-                  new Date(a.end.dateTime + "Z")
-              )[0];
-
-            if (previousBooking) {
-              const previousEndTime = new Date(
-                previousBooking.end.dateTime + "Z"
-              );
-              const gapMinutes = Math.floor(
-                (eventStart.getTime() - previousEndTime.getTime()) / (1000 * 60)
-              );
-
-              // ถ้ามี gap น้อยกว่า 15 นาที แสดงว่ามีการจองติดกัน
-              canEarlyAccessResult = gapMinutes >= 15;
-            } else {
-              canEarlyAccessResult = true;
-            }
-          }
+          canEarlyAccessResult = true; 
         }
+        
         console.log("Can early access:", canEarlyAccessResult);
       }
 

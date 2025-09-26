@@ -30,7 +30,7 @@ const StaffPinPopupManager = ({ showTestButton, closeUserPinPopup }) => {
         }
       });
     },
-    holdDuration: 1000
+    holdDuration: 5000
   });
 
   const handlePinSubmit = async (pin) => {
