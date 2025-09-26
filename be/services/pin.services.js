@@ -43,10 +43,10 @@ async function compareKey({ eventId, pin }) {
 async function adminCompareKey( pin, room_number ) {
     try {
         const user = await User.findOne({
-           pin: pin,
+            pin: pin,
         });
         if (!user) return { success: false, message: "User not found!"};
-        if (user.role === 'Deactivate') return { success: false, message: "User is Deactivated"};
+        if (user.role === 'Deactivate') return { success: false, message: "User not found!"};
         
         // logsmonitoring function
         const datalogs = {  

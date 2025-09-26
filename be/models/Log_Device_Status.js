@@ -1,3 +1,4 @@
+// Log ว่าขณะนี้ ESP32 มีการเชื่อมต่อเป็น online/offline สำหรับเเต่ละห้องบ้าง
 const mongoose = require('mongoose');
 
 const DeviceSchema = new mongoose.Schema({

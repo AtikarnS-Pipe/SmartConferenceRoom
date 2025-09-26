@@ -42,12 +42,32 @@ const sintervalId = setInterval(() => {
   syncAllRooms();
 }, 7000);
 
-app.listen(process.env.PORT, async () => {
-  console.log(`Server running at http://localhost:${process.env.PORT}`);
-  await connectToDatabase();
-  await seedMqttRooms(); //set ค่า default state ห้องที่มีจอ
-  if(process.env.OPEN_MQTT === "true"){
-    await initMqtt(); // connect mqtt + door control (topic cmd)
-    await initLogger(); // attach logger subscriber of mqtt (topic rssi)
+async function startServer() {
+  try {
+    // 1. เชื่อมต่อ Database ก่อน
+    await connectToDatabase();
+    console.log('✅ Database connected');
+    
+    // 2. set ค่า default state ห้องที่มีจอ for mqtt state
+    await seedMqttRooms(); 
+    console.log('✅ MQTT Rooms seeded');
+    
+    // 3. เริ่ม MQTT connection
+    if (process.env.OPEN_MQTT === "true") {
+      await initMqtt(); // connect mqtt + door control (topic cmd)
+      await initLogger(); // attach logger subscriber of mqtt (topic rssi)
+      console.log('✅ MQTT initialized');
+    }
+    
+    // 4. เริ่ม HTTP Server
+    app.listen(process.env.PORT, () => {
+      console.log(`✅ Server running on port ${process.env.PORT}`);
+    });
+    
+  } catch (error) {
+    console.error('❌ Server startup failed:', error);
+    process.exit(1);
   }
-});
+}
+
+startServer();

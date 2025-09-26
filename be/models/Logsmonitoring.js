@@ -1,3 +1,4 @@
+// Log ว่าผู้ใช้คนไหนทำอะไร(Logged in/logged out, create user, delete user, change pin, access room)
 const mongoose = require('mongoose');
 
 

@@ -3,6 +3,7 @@ const Token = require('../models/token');
 const tokenCache = require('../utils/tokenCache')
 const { getTodaydatetime } = require('../utils/getTodaydatetime');
 const userModel = require('../models/User');
+const bookingKey = require('../models/bookingkey');
 const sendMailAsync = require('../services/sendmail.services')
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
@@ -10,7 +11,7 @@ const { roomobject } = require('../utils/tokenCache');
 require('dotenv').config({ path: '../config/.env' });
 
 const RESET_SECRET = process.env.JWT_RESET_SECRET || "jwt-reset-secret";
-async function GetScheduleData(actoken, Room, start, end) {
+async function GetScheduleData(Room, start, end) {
     try {
         // start: 06072025
         // end: 12072025
@@ -33,25 +34,16 @@ async function GetScheduleData(actoken, Room, start, end) {
         const startDateTime = startTH.toISOString();
         const endDateTime = endTH.toISOString();
 
-        if (!actoken) {
-            throw new Error("No access token in schedule Page.")
-        }
-        const graphResponse = await getGraphClient(actoken)
-            .api(`https://graph.microsoft.com/v1.0/users/${Room}@tcc-technology.com/calendarView?`)
-            .query({
-                startDateTime: startDateTime,
-                endDateTime: endDateTime,
-                "$orderby": "start/dateTime",
-                "$top": 100, // default = 10 ,Limit max = 100 events, if more than 100 events, you need to use pagination
-                "$select": "organizer,subject,start,end,locations",
-                "$filter": "isCancelled eq false"
-            })
-            .get();
-        if (!graphResponse || !graphResponse.value) {
-            throw new Error(`No value in graphResponse for room ${Room}: ${JSON.stringify(graphResponse)}`);
-        }
-        const results = graphResponse.value
-        return results;
+        const booking_key = await bookingKey.find({ room: Room, startDateTime: { $gte: startDateTime }, endDateTime: { $lte: endDateTime } })
+        .select('room organizerMail	pin startDateTime endDateTime');
+        console.log("GetScheduleData booking_key:", booking_key);
+        return {
+            start: bookingKey.startDateTime,
+            end: bookingKey.endDateTime,
+            room: bookingKey.room,
+            organizer: bookingKey.organizerMail,
+            pin: bookingKey.pin
+        };
 
     } catch (error) {
         console.error("error:", error);
@@ -60,14 +52,14 @@ async function GetScheduleData(actoken, Room, start, end) {
 
 async function sendscheduledata(req, res) {
     try {
-        const Room = req.params.Room;
+        const Room = Number(req.params.Room);
         const startdate = req.params.startdate;
         const enddate = req.params.enddate;
         if (!Room || !startdate || !enddate) {
             throw new Error("Missing parameters: Room, startdate, or enddate");
         }
-        const accesstoken = tokenCache.getAccessToken();
-        const results = await GetScheduleData(accesstoken, Room, startdate, enddate);
+
+        const results = await GetScheduleData(Room, startdate, enddate);
         if (!results) {
             throw new Error("No results found!!");
         }
@@ -76,7 +68,6 @@ async function sendscheduledata(req, res) {
     } catch (error) {
         console.error("Error in sendscheduledata:", error.message);
         res.write(`event: error\ndata: ${JSON.stringify({ error: "Failed to fetch data (sendscheduledata)" })}\n\n`);
-        res.end();
         return;
     }
 }

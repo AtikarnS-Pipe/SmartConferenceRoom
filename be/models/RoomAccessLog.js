@@ -1,3 +1,4 @@
+// เเสดงรายชื่อคนที่ไม่มายืนยันห้องด้วยรหัส เป็นกี่ครั้งเเละ ถูกบันทึกไว้ใน log
 // models/RoomAccessLog.js
 const mongoose = require('mongoose');
 
