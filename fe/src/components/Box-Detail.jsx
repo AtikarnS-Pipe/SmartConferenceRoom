@@ -44,8 +44,7 @@ return () => clearTimeout(timeoutId);
 
   // ตรวจสอบว่าสามารถเข้าห้องก่อนเวลาได้หรือไม่
   const canEarlyAccess = () => {
-    console.log('=== canEarlyAccess Debug ===');
-    console.log('nextBooking:', nextBooking);
+
     
     if (!nextBooking) {
       console.log('❌ No nextBooking found');
@@ -56,10 +55,6 @@ return () => clearTimeout(timeoutId);
     const bookingStartTime = new Date(nextBooking.start.dateTime + 'Z');
     const timeDiff = bookingStartTime.getTime() - now.getTime();
     const minutesDiff = Math.floor(timeDiff / (1000 * 60));
-    
-    console.log('Current time:', now.toISOString());
-    console.log('Booking start time:', bookingStartTime.toISOString());
-    console.log('Minutes until start:', minutesDiff);
     
     // สามารถเข้าได้ก่อนเวลา 15 นาที
     if (minutesDiff > 15) {
