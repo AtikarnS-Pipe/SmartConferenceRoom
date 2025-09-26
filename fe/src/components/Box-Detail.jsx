@@ -17,7 +17,7 @@ export default function Boxdetail({
   onPinSuccess,
 }) {
   const isFullDayEvent = useIsFullDayEvent();
-  const { nextBooking } = useCurrentEvent(events);
+  const { nextBooking, canEarlyAccess } = useCurrentEvent(events);
   const [showModal, setShowModal] = useState(false);
   const [isEnding, setIsEnding] = useState(false);
   const [showEndConfirmModal, setShowEndConfirmModal] = useState(false);
@@ -56,76 +56,10 @@ export default function Boxdetail({
     setIsEarlyAccessVerified(false);
   }, [nextBooking?.id]);
 
-  // ตรวจสอบว่าสามารถเข้าห้องก่อนเวลาได้หรือไม่
-  const canEarlyAccess = () => {
-    console.log("=== canEarlyAccess Debug ===");
-    console.log("nextBooking:", nextBooking);
-
-    if (!nextBooking) {
-      console.log("❌ No nextBooking found");
-      return false;
-    }
-
-    const now = new Date();
-    const bookingStartTime = new Date(nextBooking.start.dateTime + "Z");
-    const timeDiff = bookingStartTime.getTime() - now.getTime();
-    const minutesDiff = Math.floor(timeDiff / (1000 * 60));
-
-    console.log("Current time:", now.toISOString());
-    console.log("Booking start time:", bookingStartTime.toISOString());
-    console.log("Minutes until start:", minutesDiff);
-
-    // สามารถเข้าได้ก่อนเวลา 15 นาที
-    if (minutesDiff > 15) {
-      console.log("❌ Too early (more than 15 minutes)");
-      return false;
-    }
-    if (minutesDiff < 0) {
-      console.log("❌ Too late (event already started)");
-      return false;
-    }
-
-    // ตรวจสอบว่าไม่มีการจองติดกันก่อนหน้า
-    if (!events || events.length === 0) {
-      console.log("✅ No previous events, early access allowed");
-      return true;
-    }
-
-    const previousBooking = events
-      .filter((e) => new Date(e.end.dateTime + "Z") <= bookingStartTime)
-      .sort(
-        (a, b) =>
-          new Date(b.end.dateTime + "Z") - new Date(a.end.dateTime + "Z")
-      )[0];
-
-    console.log("Previous booking:", previousBooking);
-
-    if (previousBooking) {
-      const previousEndTime = new Date(previousBooking.end.dateTime + "Z");
-      const gapMinutes = Math.floor(
-        (bookingStartTime.getTime() - previousEndTime.getTime()) / (1000 * 60)
-      );
-
-      console.log("Previous end time:", previousEndTime.toISOString());
-      console.log("Gap between events (minutes):", gapMinutes);
-
-      // ถ้ามี gap น้อยกว่า 15 นาที แสดงว่ามีการจองติดกัน
-      if (gapMinutes < 15) {
-        console.log("❌ Back-to-back booking (gap < 15 minutes)");
-        return false;
-      }
-    }
-
-    console.log("✅ Early access allowed!");
-    return true;
-  };
-
   // ตรวจสอบว่ามีการจองถัดไปหรือไม่ (สำหรับแสดงปุ่ม)
   const hasUpcomingBooking = () => {
-    console.log("=== hasUpcomingBooking Debug ===");
-    console.log("nextBooking:", nextBooking);
-    console.log("Has upcoming booking:", !!nextBooking);
-    return !!nextBooking;
+    // แสดงปุ่มตลอด ไม่ขึ้นอยู่กับว่ามี nextBooking หรือไม่
+    return true;
   };
 
   // Handle Early Access PIN submission
@@ -133,10 +67,10 @@ export default function Boxdetail({
     setPinWaiting(true);
     setPinError("");
 
-    console.log("Early Access Debug:");
-    console.log("- Next booking from hook:", nextBooking);
-    console.log("- Event ID:", nextBooking?.id);
-    console.log("- Room ID:", roomId);
+    // console.log("Early Access Debug:");
+    // console.log("- Next booking from hook:", nextBooking);
+    // console.log("- Event ID:", nextBooking?.id);
+    // console.log("- Room ID:", roomId);
 
     if (!nextBooking) {
       setPinError("No upcoming booking found");
@@ -150,7 +84,7 @@ export default function Boxdetail({
         pin: pin,
         room_number: roomId,
       };
-      console.log("Request body:", requestBody);
+      // console.log("Request body:", requestBody);
 
       const response = await fetch("/api2/user/key", {
         method: "POST",
@@ -175,11 +109,11 @@ export default function Boxdetail({
           setPinError("");
         }, 2000);
       } else {
-        setPinError(result.error || "Incorrect password");
+        setPinError("Incorrect password");
       }
     } catch (error) {
       console.error("Early access error:", error);
-      setPinError("PIN verification failed");
+      setPinError("Network error");
     } finally {
       setPinWaiting(false);
     }
@@ -647,47 +581,51 @@ export default function Boxdetail({
                 <span className="pin-text">Book Now</span>
               </button>
 
-              {/* แสดงปุ่ม Early Access เมื่อมีการจองถัดไปและยังไม่ได้ verify */}
-              {hasUpcomingBooking() && !isEarlyAccessVerified && (
-                <button
-                  className="early-access-button"
-                  onClick={() => {
-                    if (canEarlyAccess()) {
-                      setShowEarlyAccessPin(true);
-                    }
-                  }}
-                  disabled={!canEarlyAccess()}
-                  style={{
-                    backgroundColor: canEarlyAccess() ? "#F59E0B" : "#9CA3AF",
-                    color: "white",
-                    border: "none",
-                    borderRadius: "0.75rem",
-                    padding: "1rem 1.5rem",
-                    fontSize: "1.1rem",
-                    fontWeight: "600",
-                    cursor: canEarlyAccess() ? "pointer" : "not-allowed",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "0.5rem",
-                    transition: "all 0.2s ease",
-                    opacity: canEarlyAccess() ? 1 : 0.6,
-                  }}
-                  onMouseOver={(e) => {
-                    if (canEarlyAccess()) {
-                      e.target.style.backgroundColor = "#D97706";
-                      e.target.style.transform = "translateY(-2px)";
-                    }
-                  }}
-                  onMouseOut={(e) => {
-                    if (canEarlyAccess()) {
-                      e.target.style.backgroundColor = "#F59E0B";
-                      e.target.style.transform = "translateY(0)";
-                    }
-                  }}
-                >
-                  Early Access
-                </button>
-              )}
+              {/* แสดงปุ่ม Early Access ตลอดเวลา แต่ enable เฉพาะเมื่อถึงช่วง Early Access และยังไม่ได้ verify */}
+              <button
+                className="early-access-button"
+                onClick={() => {
+                  if (canEarlyAccess) {
+                    setShowEarlyAccessPin(true);
+                  }
+                }}
+                disabled={!canEarlyAccess || isEarlyAccessVerified}
+                style={{
+                  backgroundColor:
+                    canEarlyAccess && !isEarlyAccessVerified
+                      ? "#F59E0B"
+                      : "#9CA3AF",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "8px",
+                  padding: "1rem 1.5rem",
+                  fontSize: "1.1rem",
+                  fontWeight: "600",
+                  cursor:
+                    canEarlyAccess && !isEarlyAccessVerified
+                      ? "pointer"
+                      : "not-allowed",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.5rem",
+                  transition: "all 0.2s ease",
+                  opacity: canEarlyAccess && !isEarlyAccessVerified ? 1 : 0.6,
+                }}
+                onMouseOver={(e) => {
+                  if (canEarlyAccess && !isEarlyAccessVerified) {
+                    e.target.style.backgroundColor = "#D97706";
+                    e.target.style.transform = "translateY(-2px)";
+                  }
+                }}
+                onMouseOut={(e) => {
+                  if (canEarlyAccess && !isEarlyAccessVerified) {
+                    e.target.style.backgroundColor = "#F59E0B";
+                    e.target.style.transform = "translateY(0)";
+                  }
+                }}
+              >
+                Early Access
+              </button>
             </div>
           </div>
         </div>
@@ -710,7 +648,6 @@ export default function Boxdetail({
           onSubmit={handleEarlyAccessPin}
           error={pinError}
           waiting={pinWaiting}
-          title="Early Access PIN"
           showIcon={true}
           showCloseButton={true}
           showOverlayClose={true}

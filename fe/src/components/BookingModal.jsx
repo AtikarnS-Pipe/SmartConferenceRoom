@@ -19,6 +19,7 @@ const BookingModal = ({ isOpen, onClose, onSubmit }) => {
   const [bookedByEnabled, setBookedByEnabled] = useState(false); //ถ้าไม่ได้ใช้ลบออกด้วย
   const [showPinModal, setShowPinModal] = useState(false);
   const [bookingPin, setBookingPin] = useState("");
+  const [showPinWarning, setShowPinWarning] = useState(false);
   const [waitingEvent, setWaitingEvent] = useState(false);
   const [targetStart, setTargetStart] = useState(null);
   const [targetEnd, setTargetEnd] = useState(null);
@@ -102,7 +103,7 @@ const BookingModal = ({ isOpen, onClose, onSubmit }) => {
     return () => clearTimeout(timer);
   }, [loadingCreate]);
 
-  //ปิด pinmodal หลัง 30 วินาที
+  //ปิด pinmodal หลัง 60 วินาที
   useEffect(() => {
     if (!showPinModal) return;
     const timeoutId = setTimeout(() => {
@@ -814,6 +815,7 @@ const BookingModal = ({ isOpen, onClose, onSubmit }) => {
         return;
       }
       setBookingPin(Pin);
+      setShowPinWarning(false); // Reset warning state
       setShowPinModal(true);
       if (onSubmit) onSubmit(formData);
 
@@ -1554,13 +1556,39 @@ const BookingModal = ({ isOpen, onClose, onSubmit }) => {
             >
               {bookingPin}
             </div>
-            <p style={{ color: "#666", marginBottom: "2rem" }}>
+            <p style={{ color: "#666", marginBottom: "1rem" }}>
               Please save this PIN. You'll need it to access the room.
             </p>
+
+            {/* แสดง warning เมื่อกด Got it! ครั้งแรก */}
+            {showPinWarning && (
+              <div
+                style={{
+                  backgroundColor: "#FEF9C3", // เหลืองสดใสกว่า
+                  border: "1px solid #EAB308", // เหลืองทอง
+                  borderRadius: "0.5rem",
+                  padding: "0.5rem",
+                  marginBottom: "1rem",
+                  color: "#713F12", // น้ำตาลทองเข้ม (ข้อความ)
+                  fontSize: "0.9rem",
+                  fontWeight: "500",
+                }}
+              >
+                !! Save your PIN. It will not be shown again.
+              </div>
+            )}
+
             <button
               onClick={() => {
-                setShowPinModal(false);
-                onClose(); // ปิด modal หลัก เมื่อกด Got it!
+                if (!showPinWarning) {
+                  // ครั้งแรกที่กด - แสดง warning
+                  setShowPinWarning(true);
+                } else {
+                  // ครั้งที่สองที่กด - ปิด modal
+                  setShowPinModal(false);
+                  setShowPinWarning(false);
+                  onClose(); // ปิด modal หลัก เมื่อกด Got it! ครั้งที่สอง
+                }
               }}
               className="submit-btn"
             >
