@@ -136,6 +136,22 @@ async function syncAllRooms() {
                                         console.log(`📧 Email sent to ${mail} for room ${RoomStr}:`, issendedmail);
                                     }
                                 }
+                            }else {
+                                // กรณีมี booking อยู่แล้วให้ เช็คเวลา ถ้าไม่ตรงให้ update 
+                                const newStart = new Date(event.start?.dateTime + "Z");
+                                const newEnd   = new Date(event.end?.dateTime + "Z");
+
+                                if (
+                                    booking.startDateTime.getTime() !== newStart.getTime() ||
+                                    booking.endDateTime.getTime() !== newEnd.getTime()
+                                ) {
+                                    console.log(`✏️ Updating booking time for room ${roomData.room}, event ${event.id}`);
+
+                                    booking.startDateTime = newStart;
+                                    booking.endDateTime   = newEnd;
+                                    booking.organizerMail = event.organizer?.emailAddress?.address; // เผื่อเปลี่ยน organizer
+                                    await booking.save();
+                                }
                             }
                         }
                     }
