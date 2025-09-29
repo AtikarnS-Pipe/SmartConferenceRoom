@@ -35,20 +35,25 @@ async function GetScheduleData(Room, start, end) {
         const endDateTime = endTH.toISOString();
 
         const booking_key = await bookingKey.find({ room: Room, startDateTime: { $gte: startDateTime }, endDateTime: { $lte: endDateTime } })
-        .select('room organizerMail	pin startDateTime endDateTime');
+        .select('eventId isPinVerified room organizerMail pin startDateTime endDateTime');
         console.log("GetScheduleData booking_key:", booking_key);
-        return {
-            eventId: booking_key.eventId,
-            isPinVerified: booking_key.isPinVerified,
-            start: booking_key.startDateTime,
-            end: booking_key.endDateTime,
-            room: booking_key.room,
-            organizer: booking_key.organizerMail,
-            pin: booking_key.pin
-        };
+        
+        // map ข้อมูลออกมาเป็น array ที่พร้อมส่ง SSE
+        const result = booking_key.map(b => ({
+            eventId: b.eventId ?? null,
+            isPinVerified: b.isPinVerified ?? "false",
+            start: b.startDateTime,
+            end: b.endDateTime,
+            room: b.room,
+            organizer: b.organizerMail,
+            pin: b.pin
+        }));
+
+    return result;
 
     } catch (error) {
         console.error("error:", error);
+        return [];
     }
 }
 
