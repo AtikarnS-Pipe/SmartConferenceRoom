@@ -11,6 +11,7 @@ const { roomobject } = require('../utils/tokenCache');
 require('dotenv').config({ path: '../config/.env' });
 
 const RESET_SECRET = process.env.JWT_RESET_SECRET || "jwt-reset-secret";
+
 async function GetScheduleData(actoken, Room, start, end) {
   try {
     const tzOffset = 7 * 60; // Thailand UTC+7 (minutes)
@@ -51,23 +52,47 @@ async function GetScheduleData(actoken, Room, start, end) {
 
     const graphEvents = graphResponse.value;
 
-    // 2. Query local DB bookingKey เฉพาะช่วงเวลาเดียวกัน
+    // 2. แก้ไข Query DB - ใช้เงื่อนไขที่ถูกต้อง
     const bookingPins = await bookingKey.find({
         room: Room,
-        startDateTime: { $gte: startDateTime },
-        endDateTime: { $lte: endDateTime }
-    }).select("room organizerMail pin isPinVerified startDateTime endDateTime");
+        startDateTime: { $lte: endDateTime }, // event เริ่มก่อนที่ช่วงจะจบ กำหนด over lap เพราะด้านบนกำหนดเสี้ยววิไว้
+        endDateTime: { $gte: startDateTime }  // และ event จบหลังที่ช่วงเริ่ม
+    }).select("eventId room organizerMail pin isPinVerified startDateTime endDateTime");
+    
+    console.log("📋 DB Query Result:", bookingPins.length, "records found");
     console.log("admin booking pins =>", bookingPins);
 
-    // 3. Merge event + pin เเต่ถ้าไม่มีก็ใส่ค่าว่าง
+    // 3. normalize fn. ปรับรูปเเบบเวลาก่อนเปรียบเทียบ
+    const normalize = (dateStr) => {
+      if (typeof dateStr === 'string') {
+        // ตัด nanoseconds ออก แล้วแปลงเป็น Date
+        let cleanDateStr = dateStr.replace(/\.\d{7}/, '.000');
+        // เพิ่ม Z ถ้าไม่มี
+        if (!cleanDateStr.endsWith('Z')) {
+          cleanDateStr += 'Z';
+        }
+        return new Date(cleanDateStr).getTime();
+      }
+      return new Date(dateStr).getTime();
+    };
+
+    // 4. ปรับปรุงการ match - เพิ่มการเปรียบเทียบ eventId
     const mergedResults = graphEvents.map(ev => {
-        const matched = bookingPins.find(p =>
-            new Date(p.startDateTime).getTime() === new Date(ev.start.dateTime).getTime() &&
-            new Date(p.endDateTime).getTime() === new Date(ev.end.dateTime).getTime()
-        );
+        const graphStart = normalize(ev.start.dateTime);
+        const graphEnd = normalize(ev.end.dateTime);
+        
+        matched = bookingPins.find(p => {
+            const dbStart = normalize(p.startDateTime);
+            const dbEnd = normalize(p.endDateTime);
+
+            // ถ้า เวลาเริ่มและเวลาสิ้นสุดตรงกัน ตรงกัน ถือว่าแมทช์
+            const startMatch = Math.abs(dbStart - graphStart) === 0;
+            const endMatch = Math.abs(dbEnd - graphEnd) === 0;
+            return startMatch && endMatch;
+        });
 
         return {
-            eventId: matched ? matched.eventId : "",
+            eventId: matched ? matched.eventId : "" ,
             organizer: ev.organizer?.emailAddress?.address,
             start: ev.start.dateTime,
             end: ev.end.dateTime,
