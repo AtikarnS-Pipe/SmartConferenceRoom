@@ -78,18 +78,10 @@ async function GetScheduleData(actoken, Room, start, end) {
 
     // 4. ปรับปรุงการ match - เพิ่มการเปรียบเทียบ eventId
     const mergedResults = graphEvents.map(ev => {
-        const graphStart = normalize(ev.start.dateTime);
-        const graphEnd = normalize(ev.end.dateTime);
-        
-        matched = bookingPins.find(p => {
-            const dbStart = normalize(p.startDateTime);
-            const dbEnd = normalize(p.endDateTime);
-
-            // ถ้า เวลาเริ่มและเวลาสิ้นสุดตรงกัน ตรงกัน ถือว่าแมทช์
-            const startMatch = Math.abs(dbStart - graphStart) === 0;
-            const endMatch = Math.abs(dbEnd - graphEnd) === 0;
-            return startMatch && endMatch;
-        });
+        const matched = bookingPins.find(p =>
+            normalize(p.startDateTime) === normalize(ev.start.dateTime + 'Z') &&
+            normalize(p.endDateTime) === normalize(ev.end.dateTime + 'Z')
+        );
 
         return {
             eventId: matched ? matched.eventId : "" ,
