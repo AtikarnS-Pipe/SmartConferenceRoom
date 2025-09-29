@@ -11,50 +11,79 @@ const { roomobject } = require('../utils/tokenCache');
 require('dotenv').config({ path: '../config/.env' });
 
 const RESET_SECRET = process.env.JWT_RESET_SECRET || "jwt-reset-secret";
-async function GetScheduleData(Room, start, end) {
-    try {
-        // start: 06072025
-        // end: 12072025
-        // ถ้า 1 วันต้องเเก้ เเต่ถ้า 1 อาทิตย์ไม่ต้องเเก้
-        // console.log("GetScheduleData3333333333333:", Room, start, end);
-        const tzOffset = 7 * 60; // Thailand UTC+7 (minutes)
-        const startYear = parseInt(start.slice(4, 8), 10);
-        const startMonth = parseInt(start.slice(2, 4), 10) - 1; // subtract 1 for zero-based month
-        const startDay = parseInt(start.slice(0, 2), 10);
-        const endYear = parseInt(end.slice(4, 8), 10);
-        const endMonth = parseInt(end.slice(2, 4), 10) - 1;
-        const endDay = parseInt(end.slice(0, 2), 10);
+async function GetScheduleData(actoken, Room, start, end) {
+  try {
+    const tzOffset = 7 * 60; // Thailand UTC+7 (minutes)
+    const startYear = parseInt(start.slice(4, 8), 10);
+    const startMonth = parseInt(start.slice(2, 4), 10) - 1;
+    const startDay = parseInt(start.slice(0, 2), 10);
+    const endYear = parseInt(end.slice(4, 8), 10);
+    const endMonth = parseInt(end.slice(2, 4), 10) - 1;
+    const endDay = parseInt(end.slice(0, 2), 10);
 
-        // lost time for 1 ms
-        // Start of today in Thailand (00:00)
-        const startTH = new Date(Date.UTC(startYear, startMonth, startDay, 0, 0, 0, 1) - tzOffset * 60 * 1000);
-        // End of today in Thailand (23:59)
-        const endTH = new Date(Date.UTC(endYear, endMonth, endDay, 23, 59, 59, 999) - tzOffset * 60 * 1000);
+    const startTH = new Date(Date.UTC(startYear, startMonth, startDay, 0, 0, 0, 1) - tzOffset * 60 * 1000);
+    const endTH = new Date(Date.UTC(endYear, endMonth, endDay, 23, 59, 59, 999) - tzOffset * 60 * 1000);
 
-        const startDateTime = startTH.toISOString();
-        const endDateTime = endTH.toISOString();
+    const startDateTime = startTH.toISOString();
+    const endDateTime = endTH.toISOString();
 
-        const booking_key = await bookingKey.find({ room: Room, startDateTime: { $gte: startDateTime }, endDateTime: { $lte: endDateTime } })
-        .select('eventId isPinVerified room organizerMail pin startDateTime endDateTime');
-        console.log("GetScheduleData booking_key:", booking_key);
-        
-        // map ข้อมูลออกมาเป็น array ที่พร้อมส่ง SSE
-        const result = booking_key.map(b => ({
-            eventId: b.eventId ?? null,
-            isPinVerified: b.isPinVerified ?? "false",
-            start: b.startDateTime,
-            end: b.endDateTime,
-            room: b.room,
-            organizer: b.organizerMail,
-            pin: b.pin
-        }));
+    if (process.env.DEBUG_MODE)
+      console.log("start query schedule(UTC):", startDateTime, endDateTime);
 
-    return result;
+    if (!actoken) throw new Error("No access token in schedule Page.");
 
-    } catch (error) {
-        console.error("error:", error);
-        return [];
+    // 1. Query จาก Microsoft Graph API
+    const graphResponse = await getGraphClient(actoken)
+      .api(`https://graph.microsoft.com/v1.0/users/${Room}@tcc-technology.com/calendarView?`)
+      .query({
+        startDateTime: startDateTime,
+        endDateTime: endDateTime,
+        "$orderby": "start/dateTime",
+        "$top": 100,
+        "$select": "id,organizer,subject,start,end,locations",
+        "$filter": "isCancelled eq false"
+      })
+      .get();
+
+    if (!graphResponse || !graphResponse.value) {
+      throw new Error(`No value in graphResponse for room ${Room}: ${JSON.stringify(graphResponse)}`);
     }
+
+    const graphEvents = graphResponse.value;
+
+    // 2. Query local DB bookingKey เฉพาะช่วงเวลาเดียวกัน
+    const bookingPins = await bookingKey.find({
+        room: Room,
+        startDateTime: { $gte: startDateTime },
+        endDateTime: { $lte: endDateTime }
+    }).select("room organizerMail pin isPinVerified startDateTime endDateTime");
+    console.log("admin booking pins =>", bookingPins);
+
+    // 3. Merge event + pin เเต่ถ้าไม่มีก็ใส่ค่าว่าง
+    const mergedResults = graphEvents.map(ev => {
+        const matched = bookingPins.find(p =>
+            new Date(p.startDateTime).getTime() === new Date(ev.start.dateTime).getTime() &&
+            new Date(p.endDateTime).getTime() === new Date(ev.end.dateTime).getTime()
+        );
+
+        return {
+            eventId: matched ? matched.eventId : "",
+            organizer: ev.organizer?.emailAddress?.address,
+            start: ev.start.dateTime,
+            end: ev.end.dateTime,
+            room: Room,
+            pin: matched && matched.pin ? matched.pin : "",
+            isPinVerified: matched ? matched.isPinVerified : "",
+        };
+    });
+
+    console.log("admin schedule merged =>", mergedResults);
+    return mergedResults;
+
+  } catch (error) {
+    console.error("error in GetScheduleData:", error);
+    return [];
+  }
 }
 
 async function sendscheduledata(req, res) {
@@ -65,8 +94,8 @@ async function sendscheduledata(req, res) {
         if (!Room || !startdate || !enddate) {
             throw new Error("Missing parameters: Room, startdate, or enddate");
         }
-
-        const results = await GetScheduleData(Room, startdate, enddate);
+        const accesstoken = tokenCache.getAccessToken();
+        const results = await GetScheduleData(accesstoken, Room, startdate, enddate);
         if (!results) {
             throw new Error("No results found!!");
         }
@@ -75,6 +104,7 @@ async function sendscheduledata(req, res) {
     } catch (error) {
         console.error("Error in sendscheduledata:", error.message);
         res.write(`event: error\ndata: ${JSON.stringify({ error: "Failed to fetch data (sendscheduledata)" })}\n\n`);
+        res.end();
         return;
     }
 }
