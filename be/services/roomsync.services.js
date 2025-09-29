@@ -26,7 +26,6 @@ function getAllowedAttendees(event) {
             const email = att.emailAddress?.address?.toLowerCase() || "";
             // ไม่ส่งถ้าเป็นเมลห้องที่ระบุไว้
             if (exceptRoomEmails.includes(email)) {
-                console.log(`🚫 Skip room email: ${email}`);
                 return false;
             }
             // ✅ ส่งเฉพาะคนที่อยู่ในโดเมนที่อนุญาต
