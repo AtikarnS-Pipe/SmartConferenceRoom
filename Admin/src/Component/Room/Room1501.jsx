@@ -41,6 +41,7 @@ const Room1501 = () => {
   const [scheduleApi, setScheduleApi] = useState(null);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isDeleting, setIsDeleting] = useState(false);
   const { darkMode, toggleDarkMode } = useDarkMode();
   const { profile } = useProfile(); // ใช้ profile จาก Context
   
@@ -53,6 +54,53 @@ const Room1501 = () => {
   const [events, setEvents] = useState(location.state?.events || []);
 
   const handleBack = () => navigate(-1);
+
+  // Delete event function (ใช้ axios แทน fetch)
+  const handleDeleteEvent = async () => {
+    if (!selectedEvent) return;
+    setIsDeleting(true);
+    try {
+      // import axios แบบ dynamic เฉพาะตอนเรียกใช้ (ถ้ายังไม่ได้ import ด้านบน)
+      let axios;
+      try {
+        axios = require('axios');
+      } catch (e) {
+        axios = (await import('axios')).default;
+      }
+
+      console.log('Attempting to delete event:', {
+        eventId: selectedEvent.eventId,
+        room_number: selectedEvent.room
+      });
+
+      const res = await axios.delete('/api2/user/ms/delete', {
+        data: {
+          eventId: selectedEvent.eventId,
+          room_number: selectedEvent.room
+        },
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        validateStatus: () => true // รับทุก status code
+      });
+
+      console.log('Axios response:', res);
+      // ถ้า response ไม่มี data ให้ถือว่าลบสำเร็จถ้า status 200
+      if (res.status === 200) {
+        alert('Event deleted successfully!');
+        setSelectedEvent(null);
+        // window.location.reload();
+      } else {
+        alert(`Failed to delete event: ${res.data?.message || res.statusText || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Error deleting event:', error);
+      alert('Failed to delete event. Please try again.');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   // Handle window resize
   useEffect(() => {
@@ -317,7 +365,8 @@ const Room1501 = () => {
           startTime: rawStart.format('HH:mm'),
           endTime: adjustedEnd.format('HH:mm'),
           room: location || Room,
-          organizerName: organizer || 'No Name'
+          organizerName: organizer || 'No Name',
+          eventId: t.eventId || `${index}-${rawStart.unix()}` // เพิ่ม eventId สำหรับ delete
         };
       })
       .filter(event => {
@@ -912,13 +961,25 @@ const Room1501 = () => {
               <div className="mt-8 flex justify-end">
                 <div className="w-full flex flex-col sm:flex-row sm:justify-end gap-3">
                   <RefreshButton
-                    className={`w-full sm:w-auto px-6 sm:px-40 py-3 rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200 text-base sm:text-lg ${
+                    onClick={handleDeleteEvent}
+                    disabled={isDeleting}
+                    className={`w-full sm:w-auto px-6 sm:px-40 py-3 rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200 text-base sm:text-lg flex items-center justify-center gap-2 ${
                       darkMode 
-                        ? 'bg-gray-700 text-white hover:bg-gray-600' 
-                        : 'bg-red-700 text-white hover:bg-red-600'
+                        ? 'bg-red-700 text-white hover:bg-red-600 disabled:bg-gray-600 disabled:cursor-not-allowed' 
+                        : 'bg-red-700 text-white hover:bg-red-600 disabled:bg-gray-400 disabled:cursor-not-allowed'
                     }`}
+                    style={{ minWidth: 120 }}
                   >
-                    Delete
+                    <span className="flex items-center justify-center w-full" style={{ minWidth: 80 }}>
+                      {isDeleting ? (
+                        <>
+                          <CircularProgress size={16} color="inherit" style={{ marginRight: 8 }} />
+                          <span>Deleting...</span>
+                        </>
+                      ) : (
+                        'Delete'
+                      )}
+                    </span>
                   </RefreshButton>
                 </div>
               </div>
