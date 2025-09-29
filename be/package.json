@@ -26,7 +26,9 @@
     "mongoose": "^8.18.1",
     "morgan": "~1.9.1",
     "mqtt": "^5.13.2",
-    "msal": "^1.4.18"
+    "msal": "^1.4.18",
+    "swagger-ui-express": "^5.0.1",
+    "yamljs": "^0.3.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.10",
