@@ -1,3 +1,6 @@
+// swagger doc
+const setupSwagger = require('./swagger/swaggerUI');
+
 require('dotenv').config({ path: './config/.env'});
 const syncAllRooms = require('./services/roomsync.services');
 // เชื่อมต่อกับ MongoDB
@@ -44,6 +47,8 @@ const sintervalId = setInterval(() => {
 
 async function startServer() {
   try {
+    // 0. setup swagger
+    setupSwagger(app);
     // 1. เชื่อมต่อ Database ก่อน
     await connectToDatabase();
     console.log('✅ Database connected');

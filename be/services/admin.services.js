@@ -38,11 +38,13 @@ async function GetScheduleData(Room, start, end) {
         .select('room organizerMail	pin startDateTime endDateTime');
         console.log("GetScheduleData booking_key:", booking_key);
         return {
-            start: bookingKey.startDateTime,
-            end: bookingKey.endDateTime,
-            room: bookingKey.room,
-            organizer: bookingKey.organizerMail,
-            pin: bookingKey.pin
+            eventId: booking_key.eventId,
+            isPinVerified: booking_key.isPinVerified,
+            start: booking_key.startDateTime,
+            end: booking_key.endDateTime,
+            room: booking_key.room,
+            organizer: booking_key.organizerMail,
+            pin: booking_key.pin
         };
 
     } catch (error) {
