@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import dayjs from 'dayjs';
 import isBetween from 'dayjs/plugin/isBetween';
-import { ChevronLeft, ChevronRight, Home, Calendar, Clock, User, X, MapPin, Sun, Moon } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Home, Calendar, Clock, User, X, MapPin, Sun, Moon,KeyRound  } from 'lucide-react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import RefreshButton from '../../utils/refreshToken';
 import { useDarkMode } from '../Context/DarkModeContext';
@@ -113,14 +113,25 @@ const Room1501 = () => {
     }
     
     setIsLoading(true);
-    const eventSource = new EventSource(`/api1/admin/schedule/${Room}/${startdate}/${enddate}`);
+    const endpoint = `/api1/admin/schedule/${Room}/${startdate}/${enddate}`;
+    console.log("Connecting to SSE endpoint:", endpoint);
+    
+    const eventSource = new EventSource(endpoint);
+    
+    eventSource.onopen = (e) => {
+      console.log("SSE connection opened:", e);
+    };
     
     eventSource.onmessage = (e) => {
       try {
         const data = JSON.parse(e.data);
-        setScheduleApi(data.results);
-        if (data.results) {
-          setEvents(data.results);
+        console.log("Received SSE data:", data);
+        
+        // รองรับทั้งโครงสร้างเก่าและใหม่
+        const scheduleData = data.results || data;
+        setScheduleApi(scheduleData);
+        if (scheduleData) {
+          setEvents(scheduleData);
         }
         setIsLoading(false);
       } catch (err) {
@@ -131,6 +142,7 @@ const Room1501 = () => {
     
     eventSource.onerror = (err) => {
       console.error("SSE error:", err);
+      console.log("EventSource readyState:", eventSource.readyState);
       eventSource.close();
       setIsLoading(false);
     };
@@ -229,25 +241,62 @@ const Room1501 = () => {
 
   // Event rendering with proper sizing
   const renderEventsInCalendar = () => {
-    if (!scheduleApi) return null;
+    if (!scheduleApi || !Array.isArray(scheduleApi)) return null;
     
     const { start, end } = getViewRange();
-    const eventsFromApi = scheduleApi
-      .flat()
+    // แก้ไข flat() เป็น flatten แบบปลอดภัย
+    const flattenArray = (arr) => {
+      return arr.reduce((acc, val) => {
+        return Array.isArray(val) ? acc.concat(flattenArray(val)) : acc.concat(val);
+      }, []);
+    };
+    
+    const eventsFromApi = flattenArray(scheduleApi)
       .map((t, index) => {
-        const organizer = Array.isArray(t.organizer)
-          ? t.organizer[0]?.emailAddress?.name
-          : t.organizer?.emailAddress?.name;
+        // รองรับทั้งโครงสร้างเก่าและใหม่
+        let organizer, rawStart, rawEnd, isAllDay, subject, location, pin, isPinVerified;
+        
+        if (t.organizer && typeof t.organizer === 'string' && t.organizer.includes('@')) {
+          // โครงสร้างใหม่จาก backend
+          organizer = t.organizer.split('@')[0]; // เอาชื่อก่อน @ 
+          // แปลงจาก UTC เป็น local timezone (UTC+7)
+          rawStart = dayjs(t.start).add(7, 'hour');
+          rawEnd = dayjs(t.end).add(7, 'hour');
+          isAllDay = rawEnd.diff(rawStart, 'hour') >= 24;
+          subject = 'Meeting';
+          location = t.room;
+          pin = t.pin;
+          isPinVerified = t.isPinVerified === "true" || t.isPinVerified === true;
+        } else if (t.organizerMail) {
+          // โครงสร้างเก่าที่ใช้ organizerMail
+          organizer = t.organizerMail.split('@')[0];
+          rawStart = dayjs(t.startDateTime).add(7, 'hour');
+          rawEnd = dayjs(t.endDateTime).add(7, 'hour');
+          isAllDay = rawEnd.diff(rawStart, 'hour') >= 24;
+          subject = 'Meeting';
+          location = t.room;
+          pin = t.pin;
+          isPinVerified = t.isPinVerified || false;
+        } else {
+          // โครงสร้างเก่า (Microsoft Graph API)
+          organizer = Array.isArray(t.organizer)
+            ? t.organizer[0]?.emailAddress?.name
+            : t.organizer?.emailAddress?.name;
 
-        const rawStart = t.start.dateTime
-          ? dayjs(t.start.dateTime).add(7, 'hour')
-          : dayjs(t.start.date).startOf('day').add(7, 'hour');
+          rawStart = t.start.dateTime
+            ? dayjs(t.start.dateTime).add(7, 'hour')
+            : dayjs(t.start.date).startOf('day').add(7, 'hour');
 
-        const rawEnd = t.end.dateTime
-          ? dayjs(t.end.dateTime).add(7, 'hour')
-          : dayjs(t.end.date).startOf('day').add(7, 'hour');
+          rawEnd = t.end.dateTime
+            ? dayjs(t.end.dateTime).add(7, 'hour')
+            : dayjs(t.end.date).startOf('day').add(7, 'hour');
 
-        const isAllDay = rawEnd.diff(rawStart, 'hour') === 24 && rawStart.hour() === 7;
+          isAllDay = rawEnd.diff(rawStart, 'hour') === 24 && rawStart.hour() === 7;
+          subject = t.subject || 'Meeting';
+          location = t.location;
+          pin = t.pin || '----';
+          isPinVerified = t.ispinverified || false;
+        }
         
         // ✅ ปรับเวลาสิ้นสุดสำหรับ all day event ให้จบที่ 24:00 ของวันเดียวกัน
         const adjustedEnd = isAllDay ? rawStart.hour(24).minute(0).second(0) : rawEnd;
@@ -258,8 +307,17 @@ const Room1501 = () => {
           end: adjustedEnd,
           title: organizer || 'No Name',
           isAllDay,
-          subject: t.subject || 'Meeting',
-          location: t.location || 'Room ' + Room,
+          subject: subject,
+          location: location ? `Floor ${String(location).slice(0, 2)}, Room ${String(location).slice(2, 4)}` : `Floor ${Room.slice(0, 2)}, Room ${Room.slice(2, 4)}`,
+          pin: pin || '----',
+          isPinVerified: isPinVerified,
+          // เพิ่มข้อมูลเพิ่มเติม
+          startDate: rawStart.format('DD/MM/YYYY'),
+          endDate: adjustedEnd.format('DD/MM/YYYY'),
+          startTime: rawStart.format('HH:mm'),
+          endTime: adjustedEnd.format('HH:mm'),
+          room: location || Room,
+          organizerName: organizer || 'No Name'
         };
       })
       .filter(event => {
@@ -309,7 +367,7 @@ const Room1501 = () => {
         fontSize = isMobile ? '12px' : '14px';
       } else {
         eventPadding = isMobile ? 3 : Math.min(6, columnWidth * 0.05);
-        fontSize = columnWidth > 120 ? '12px' : columnWidth > 100 ? '11px' : '10px';
+        fontSize = columnWidth > 120 ? '14px' : columnWidth > 100 ? '11px' : '10px';
       }
       
       const eventWidth = Math.max(columnWidth - (eventPadding * 2), 40);
@@ -429,7 +487,7 @@ const Room1501 = () => {
                   <div className="flex items-center gap-2">
                     <MapPin className="h-4 w-4 sm:h-5 sm:w-5" />
                     <span className="text-base sm:text-lg font-bold whitespace-nowrap">
-                      Room {Room?.replace(/(\d{2})(\d{2})/, '$1/$2')}
+                     Room {Room?.slice(0, 2)}/{Room?.slice(2, 4)}
                     </span>
                   </div>
                 </div>
@@ -497,7 +555,7 @@ const Room1501 = () => {
                 <div className="flex items-center gap-2">
                   <MapPin className="h-4 w-4" />
                   <span className="text-sm font-bold whitespace-nowrap">
-                    Room {Room?.replace(/(\d{2})(\d{2})/, '$1/$2')}
+                    Floor {Room?.slice(0, 2)}/Room {Room?.slice(2, 4)}
                   </span>
                 </div>
               </div>
@@ -760,7 +818,7 @@ const Room1501 = () => {
                     }`}>Organizer</p>
                     <p className={`font-semibold transition-colors duration-300 truncate ${
                       darkMode ? 'text-white' : 'text-slate-800'
-                    }`}>{selectedEvent.title}</p>
+                    }`}>{selectedEvent.organizerName}</p>
                   </div>
                 </div>
                 
@@ -771,28 +829,24 @@ const Room1501 = () => {
                   <div className="min-w-0 flex-1">
                     <p className={`text-sm transition-colors duration-300 ${
                       darkMode ? 'text-gray-400' : 'text-slate-500'
-                    }`}>Subject</p>
+                    }`}>Start Date & Time</p>
                     <p className={`font-semibold transition-colors duration-300 truncate ${
                       darkMode ? 'text-white' : 'text-slate-800'
-                    }`}>{selectedEvent.subject}</p>
+                    }`}>{selectedEvent.startDate} {selectedEvent.startTime}</p>
                   </div>
                 </div>
                 
                 <div className="flex items-center gap-3">
-                  <Clock className={`h-5 w-5 flex-shrink-0 transition-colors duration-300 ${
+                  <Calendar className={`h-5 w-5 flex-shrink-0 transition-colors duration-300 ${
                     darkMode ? 'text-gray-400' : 'text-slate-500'
                   }`} />
                   <div className="min-w-0 flex-1">
                     <p className={`text-sm transition-colors duration-300 ${
                       darkMode ? 'text-gray-400' : 'text-slate-500'
-                    }`}>Time</p>
-                    <p className={`font-semibold transition-colors duration-300 ${
+                    }`}>End Date & Time</p>
+                    <p className={`font-semibold transition-colors duration-300 truncate ${
                       darkMode ? 'text-white' : 'text-slate-800'
-                    }`}>
-                      {selectedEvent.isAllDay
-                        ? 'All Day'
-                        : `${dayjs(selectedEvent.start).format('HH:mm')} - ${dayjs(selectedEvent.end).format('HH:mm')}`}
-                    </p>
+                    }`}>{selectedEvent.endDate} {selectedEvent.endTime}</p>
                   </div>
                 </div>
                 
@@ -803,25 +857,70 @@ const Room1501 = () => {
                   <div className="min-w-0 flex-1">
                     <p className={`text-sm transition-colors duration-300 ${
                       darkMode ? 'text-gray-400' : 'text-slate-500'
-                    }`}>Location</p>
+                    }`}>Room</p>
                     <p className={`font-semibold transition-colors duration-300 truncate ${
                       darkMode ? 'text-white' : 'text-slate-800'
                     }`}>{selectedEvent.location}</p>
                   </div>
                 </div>
+                
+                <div className="flex items-center gap-3">
+                  <KeyRound className={`h-5 w-5 flex-shrink-0 transition-colors duration-300 ${
+                    darkMode ? 'text-gray-400' : 'text-slate-500'
+                  }`} />
+                  <div className="min-w-0 flex-1">
+                    <p className={`text-sm transition-colors duration-300 ${
+                      darkMode ? 'text-gray-400' : 'text-slate-500'
+                    }`}>PIN</p>
+                    <p className={`font-semibold transition-colors duration-300 truncate ${
+                      darkMode ? 'text-white' : 'text-slate-800'
+                    }`}>{selectedEvent.pin}</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-3">
+                  <div className={`h-5 w-5 flex-shrink-0 transition-colors duration-300 ${
+                    selectedEvent.isPinVerified 
+                      ? 'text-green-500' 
+                      : 'text-red-500'
+                  }`}>
+                    {selectedEvent.isPinVerified ? (
+                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                    ) : (
+                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                      </svg>
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className={`text-sm transition-colors duration-300 ${
+                      darkMode ? 'text-gray-400' : 'text-slate-500'
+                    }`}>PIN Status</p>
+                    <p className={`font-normal transition-colors duration-300 truncate ${
+                      selectedEvent.isPinVerified 
+                        ? 'text-green-500' 
+                        : 'text-red-500'
+                    }`}>
+                      {selectedEvent.isPinVerified ? 'Verified' : 'Not Verified'}
+                    </p>
+                  </div>
+                </div>
               </div>
               
               <div className="mt-8 flex justify-end">
-                <RefreshButton
-                  onClick={() => setSelectedEvent(null)}
-                  className={`px-6 py-3 rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200 ${
-                    darkMode 
-                      ? 'bg-gray-700 text-white hover:bg-gray-600' 
-                      : 'bg-slate-800 text-white hover:bg-slate-700'
-                  }`}
-                >
-                  Close
-                </RefreshButton>
+                <div className="w-full flex flex-col sm:flex-row sm:justify-end gap-3">
+                  <RefreshButton
+                    className={`w-full sm:w-auto px-6 sm:px-40 py-3 rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-200 text-base sm:text-lg ${
+                      darkMode 
+                        ? 'bg-gray-700 text-white hover:bg-gray-600' 
+                        : 'bg-red-700 text-white hover:bg-red-600'
+                    }`}
+                  >
+                    Delete
+                  </RefreshButton>
+                </div>
               </div>
             </div>
           </div>
