@@ -16,8 +16,6 @@
 - [🔧 การกำหนดค่า Environment](#-การกำหนดค่า-environment)
 - [📁 โครงสร้างโปรเจกต์](#-โครงสร้างโปรเจกต์)
 - [🔍 Troubleshooting](#-troubleshooting)
-- [📚 เอกสารเพิ่มเติม](#-เอกสารเพิ่มเติม)
-
 
 ## 🌟 ภาพรวมโครงการ
 
@@ -50,7 +48,9 @@ graph TB
 ## 🛠️ การติดตั้งแบบ Development
 
 ### 📦 ขั้นตอนที่ 1: เตรียมโปรเจกต์
+
 โหลด initial.sh บน git branch main ที่ /script
+
 ```bash
 # To make a script executable
 chmod +x initial.sh
@@ -160,10 +160,12 @@ npm run dev
 
 ---
 
-## 🚀 การติดตั้งแบบ Production 
+## 🚀 การติดตั้งแบบ Production
 
 ### 📦 ขั้นตอนที่ 1: เตรียมเซิร์ฟเวอร์
+
 โหลด prod.sh บน git branch main ที่ /script
+
 ```bash
 # สร้าง folder สำหรับวางโปรเจค
 mkdir smart-conference-room/
@@ -308,14 +310,18 @@ server {
 }
 
 ```
+
 **หมายเหตุ**: ใส่ fullchain.pem เเละ privkey.pem จากโดเมนที่ได้รับ
 โครงสร้างไฟล์
+
+```
 nginx/
 ├── certs/
 |    ├── fullchain.pem
 |    ├── privkey.pem
-└── conf.d/   
-     └── reverse-proxy.conf       
+└── conf.d/
+     └── reverse-proxy.conf
+```
 
 ### 🐳 ขั้นตอนที่ 4: รัน Production Containers ที่ root
 
@@ -336,20 +342,20 @@ docker compose logs -f
 - Backend API (load balanced)
 - Admin Panel (production build)
 - User Frontend (production build)
-- Emqx broker 
+- Emqx broker
 - nodered for network logs
 
 ---
 
 ## 🔧 การกำหนดค่า Environment
 
-### 🔑 ตัวแปรสำคัญ
+### 🔑 ตัวแปรสำคัญ(มีผลกระทบต่อผู้ใช้งาน ถ้าตั้งค่าผิดพลาด)
 
-| Variable         | Development       | Production                 | Description                             |
-| ---------------- | ----------------- | -------------------------- | ----------------------------------------|
-| `DEBUG_MODE`     | `'true'`          | `'false'`                  | โหมด debug (ป้องกันการลบข้อมูลจริง การส่งเมล) |
-| `OPEN_MQTT`      | `false`           | `true`                     | การใช้งาน mqtt protocal                   |
-| `EXECPT_ROOMS`   | `1503,1504,1519,1520`                          | ยกเว้นห้องที่กำหนด เช่น การส่งเมลรยืนยันรหัส ลบห้อง|
+| Variable       | Development           | Production                                          | Description                                   |
+| -------------- | --------------------- | --------------------------------------------------- | --------------------------------------------- |
+| `DEBUG_MODE`   | `'true'`              | `'false'`                                           | โหมด debug (ป้องกันการลบข้อมูลจริง การส่งเมล) |
+| `OPEN_MQTT`    | `false`               | `true`                                              | การใช้งาน mqtt protocal                       |
+| `EXECPT_ROOMS` | `1503,1504,1519,1520` | ยกเว้นห้องที่กำหนด เช่น การส่งเมลรยืนยันรหัส ลบห้อง |
 
 ### 📧 Microsoft Integration
 
@@ -380,12 +386,12 @@ MQTT_TOPIC_CMD='smartconf/example/cmd' #
 EXECPT_ROOMS=1503,1504,1519,1520
 ```
 
-> 📖 **อ่านเพิ่มเติม**: [Environment Configuration Guide](conf_backend/be/env-config-guide.md)
-
 ---
 
 ## 📁 โครงสร้างโปรเจกต์
+
 Development
+
 ```
 smart-conference-room/
 ├── 📄 initial.sh                 # Setup script
@@ -418,6 +424,7 @@ smart-conference-room/
 ```
 
 Production
+
 ```
 smart-conference-room/
 ├── 📄 prod.sh                 # Setup script
@@ -450,6 +457,7 @@ smart-conference-room/
     ├── 🔄 src/hooks/             # Custom React hooks
     └── ⚡ vite.config.js         # Vite configuration
 ```
+
 ---
 
 ## 🔍 Troubleshooting
@@ -583,4 +591,3 @@ docker system prune -af
 ---
 
 **Made with ❤️ by the Smart Conference Team**
-
