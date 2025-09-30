@@ -1,6 +1,8 @@
 # Environment Configuration Guide
 
 This document explains how to configure environment variables for the Smart Conference Display System backend. Both in production and development
+conf_frontend Setup
+conf_backend Setup
 
 ## Frontend .env setup (conf_frontend/fe)
 This .env use to setup access_token for light control in light_container.jsx
@@ -90,7 +92,7 @@ SCOPE5=
 ```
 
 ### 🗄️ Database Configuration
-# Pattern: DB_URI="mongodb://username:password@host1:port1,host2:port2/database?option1=value1&option2=value2"
+Pattern: DB_URI="mongodb://username:password@host1:port1,host2:port2/database?option1=value1&option2=value2"
 ```bash
 # MongoDB Connection
 DB_URI="mongodb://MONGO_INITDB_ROOT_USERNAME:MONGO_INITDB_ROOT_PASSWORD@HOST:PORT/MONGO_INITDB_DATABASE?authSource=admin"
@@ -175,12 +177,18 @@ DB_URI='mongodb+srv://username:password@cluster.mongodb.net/database'
 - `JWT_SECRET` must be at least 32 characters
 - Check token expiration settings
 
-## File Structure
+## File Structure(Backend .env)
 
 ```
 config/
 ├── .env.example    # Template file (committed to git)
 └── .env           # Your actual config (DO NOT commit)
+```
+## File Structure(conf_frontend .env)
+
+```
+fe/
+└── .env # Your actual config (DO NOT commit)
 ```
 
 ## Environment Validation
