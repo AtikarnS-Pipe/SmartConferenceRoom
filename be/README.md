@@ -1,4 +1,4 @@
-# 🏢 Smart Conference Display System
+# Smart Conference Display System
 
 > ระบบจัดการห้องประชุมอัจฉริยะที่เชื่อมต่อกับ Microsoft Calendar และควบคุมผ่าน IoT
 
@@ -11,7 +11,6 @@
 
 - [🌟 ภาพรวมโครงการ](#-ภาพรวมโครงการ)
 - [🏗️ สถาปัตยกรรมระบบ](#️-สถาปัตยกรรมระบบ)
-- [⚡ Quick Start](#-quick-start)
 - [🛠️ การติดตั้งแบบ Development](#️-การติดตั้งแบบ-development)
 - [🚀 การติดตั้งแบบ Production](#-การติดตั้งแบบ-production)
 - [🔧 การกำหนดค่า Environment](#-การกำหนดค่า-environment)
@@ -19,16 +18,19 @@
 - [🔍 Troubleshooting](#-troubleshooting)
 - [📚 เอกสารเพิ่มเติม](#-เอกสารเพิ่มเติม)
 
+
 ## 🌟 ภาพรวมโครงการ
 
 Smart Conference Display System เป็นระบบจัดการห้องประชุมแบบ All-in-one ที่ประกอบด้วย:
 
 - **🖥️ Backend API**: Node.js/Express server พร้อม Microsoft Graph integration
-- **👥 Admin Panel**: React-based interface สำหรับจัดการระบบ
-- **📺 Display Frontend**: หน้าจอแสดงสถานะห้องประชุมแบบ real-time
+- **👥 Admin Panel**: React + with vite.js
+- **📺 Display Frontend**: React + with vite.js
 - **🔐 Authentication**: Azure AD integration และ JWT-based auth
 - **📊 Database**: MongoDB สำหรับจัดเก็บข้อมูล
-- **🏠 IoT Integration**: MQTT protocol สำหรับควบคุมประตูและอุปกรณ์
+- **🏠 IoT Integration**: MQTT protocol สำหรับควบคุมประตูและอุปกรณ์โดยใช้ EMQX Broker
+
+![alt text](image.png)
 
 ## 🏗️ สถาปัตยกรรมระบบ
 
@@ -43,28 +45,16 @@ graph TB
     H[Azure AD] --> B
 ```
 
-## ⚡ Quick Start
-
-> **Prerequisites**: Node.js 18+, Docker Desktop, Git
-
-```bash
-# 1. Clone และ setup โปรเจกต์
-./initial.sh
-
-# 2. Development mode
-npm run dev:all
-
-# 3. Production mode  
-docker compose up -d --build
-```
-
 ---
 
 ## 🛠️ การติดตั้งแบบ Development
 
 ### 📦 ขั้นตอนที่ 1: เตรียมโปรเจกต์
-
+โหลด initial.sh บน git branch main ที่ /script
 ```bash
+# To make a script executable
+chmod +x initial.sh
+
 # โหลดโปรเจกต์และติดตั้ง dependencies
 ./initial.sh
 ```
@@ -75,41 +65,37 @@ docker compose up -d --build
 - Clone repositories ทั้งหมด
 - ติดตั้ง npm dependencies
 - Setup default configuration files
-- ตรวจสอบ system requirements
 
 </details>
 
 ### 🔧 ขั้นตอนที่ 2: กำหนดค่า Environment
 
 **Backend Environment:**
-```bash
-# สร้างไฟล์ .env สำหรับ backend
-cp conf_backend/be/config/.env.example conf_backend/be/config/.env
-```
 
-**Frontend Environment:**
-```bash
-# สร้างไฟล์ .env สำหรับ admin panel
-cp conf_admin/admin/.env.example conf_admin/admin/.env
+- มี 2 ไฟล์ อยู่ที่ /be/.env เเละ be/config/.env
 
-# สร้างไฟล์ .env สำหรับ user frontend
-cp conf_frontend/fe/.env.example conf_frontend/fe/.env
-```
+**User Display Environment:**
+
+- มี 1 ไฟล์ อยู่ที่ fe/.env
 
 > 📝 **หมายเหตุ**: แก้ไขค่าใน `.env` ให้เหมาะสมกับสภาพแวดล้อม dev ของคุณ
 
+### 🗄️ ขั้นตอนที่ 3: Setup Database
+
 **เปิด Docker Desktop:**
+
 - ตรวจสอบให้แน่ใจว่า Docker Engine กำลังทำงาน
 - Windows: เปิดแอป Docker Desktop
 - macOS/Linux: `sudo systemctl start docker`
 
-### 🗄️ ขั้นตอนที่ 3: Setup Database
+**รัน Docker Compose**
+ตรวจสอบ .env ก่อนรัน
 
 ```bash
 # เข้าไปในโฟลเดอร์ backend
 cd conf_backend/be
 
-# รัน MongoDB container
+# Run MongoDB container and Mongo-Express
 docker compose up -d --build
 
 # ตรวจสอบสถานะ container
@@ -117,9 +103,11 @@ docker compose ps
 ```
 
 **ผลลัพธ์ที่คาดหวัง:**
+
 ```
-NAME                IMAGE               STATUS
-smartconf_mongodb   mongo:6.0          Up 2 minutes
+NAME                IMAGE                       STATUS
+mongo               mongo:7                   Up 2 minutes
+mongo-express       mongo-express:latest      Up 2 minutes
 ```
 
 ### 🚀 ขั้นตอนที่ 4: รัน Backend Server
@@ -130,6 +118,7 @@ node app.js
 ```
 
 **Output ที่ถูกต้อง:**
+
 ```
 ✅ MongoDB Connected Successfully
 ✅ Server running on port 4000
@@ -141,9 +130,6 @@ node app.js
 ```bash
 # เปิด terminal ใหม่
 cd conf_admin/admin
-
-# ติดตั้ง dependencies (ถ้ายังไม่ได้ทำ)
-npm install
 
 # รัน development server
 npm run dev
@@ -157,143 +143,185 @@ npm run dev
 # เปิด terminal ใหม่อีกครั้g
 cd conf_frontend/fe
 
-# ติดตั้ง dependencies (ถ้ายังไม่ได้ทำ)
-npm install
-
 # รัน development server
 npm run dev
 ```
 
-**เข้าถึงได้ที่:** `http://localhost:5173`
+**เข้าถึงได้ที่:** `http://localhost:5173/user/users/api/<floor>/<room>`
 
 ### ✅ ตรวจสอบการติดตั้ง
 
-| Service | URL | Status Check |
-|---------|-----|--------------|
-| Backend API | `http://localhost:4000` | GET `/health` |
-| Admin Panel | `http://localhost:5170` | หน้า Login |
-| User Display | `http://localhost:5173` | หน้า Room Status |
-| API Docs | `http://localhost:4000/api-docs` | Swagger UI |
+| Service      | URL                                          | Status Check     |
+| ------------ | -------------------------------------------- | ---------------- |
+| Backend API  | `http://localhost:4000`                      | Welcome Message  |
+| Admin Panel  | `http://localhost:5170`                      | หน้า Login       |
+| User Display | `http://localhost:5173/user/users/api/15/20` | หน้า Room Status |
+| API Docs     | `http://localhost:4000/api-docs`             | Swagger UI       |
 
 ---
 
-## 🚀 การติดตั้งแบบ Production
+## 🚀 การติดตั้งแบบ Production 
 
 ### 📦 ขั้นตอนที่ 1: เตรียมเซิร์ฟเวอร์
-
+โหลด prod.sh บน git branch main ที่ /script
 ```bash
+# สร้าง folder สำหรับวางโปรเจค
+mkdir smart-conference-room/
+
+cd smart-conference-room/
+
+# To make a script executable
+chmod +x initial.sh
+
 # บนเซิร์ฟเวอร์ production
 ./initial.sh
 ```
 
 ### 🔐 ขั้นตอนที่ 2: กำหนดค่า Production Environment
 
-**Backend (.env):**
-```bash
-# สำคัญ: ตั้งค่าโหมด production
-DEBUG_MODE='false'
-JWT_SECRET='your-super-secure-production-secret'
-DB_URI='mongodb://mongodb:27017/smartconf_prod'
-FRONTEND_ADMIN='https://admin.yourcompany.com'
-FRONTEND_USERS='https://display.yourcompany.com'
-```
+**Backend Environment:**
 
-**Frontend Environment:**
-```bash
-# Admin Panel (.env)
-VITE_API_URL='https://api.yourcompany.com'
-VITE_APP_TITLE='Smart Conference Admin'
+- มี 2 ไฟล์ อยู่ที่ /be/.env เเละ be/config/.env
 
-# User Display (.env)  
-VITE_API_URL='https://api.yourcompany.com'
-VITE_DISPLAY_MODE='production'
-```
+**User Display Environment:**
+
+- มี 1 ไฟล์ อยู่ที่ fe/.env
+
+> 📝 **หมายเหตุ**: แก้ไขค่าใน `.env` ให้เหมาะสมกับสภาพแวดล้อม dev ของคุณ
 
 ### 🌐 ขั้นตอนที่ 3: Setup Reverse Proxy
 
-**Nginx Configuration (`/etc/nginx/sites-available/smartconf`):**
+**Nginx Configuration: reverse-proxy.conf**
 
 ```nginx
-# Backend API
+# Redirect HTTP to HTTPS
 server {
-    listen 443 ssl http2;
-    server_name api.yourcompany.com;
-    
-    ssl_certificate /path/to/ssl/cert.pem;
-    ssl_certificate_key /path/to/ssl/key.pem;
-    
+    listen 80;
+    server_name smartconf.tcc-technology.com;
+    return 301 https://$server_name$request_uri;
+}
+
+# จัดการ Connection อัตโนมัติ
+map $http_upgrade $connection_upgrade {
+    default upgrade;
+    ''      close;
+}
+
+server {
+    listen 443 ssl;
+    server_name smartconf.tcc-technology.com;
+
+    ssl_certificate     /etc/nginx/certs/fullchain.pem;
+    ssl_certificate_key /etc/nginx/certs/privkey.pem;
+
+    # SSL optimization
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers HIGH:!aNULL:!MD5;
+    ssl_prefer_server_ciphers on;
+
     location / {
-        proxy_pass http://localhost:4000;
+       return 301 /admin/;
+    }
+
+    # ************ User frontend  ************
+    location /api2/ {
+        proxy_pass http://backend:4000/api2/;
+        proxy_redirect off;
+
+        # Headers สำคัญสำหรับ SSE
         proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
+        proxy_set_header Connection "";
+        proxy_buffering off;
+        proxy_cache off;
+        proxy_read_timeout 24h;
+        proxy_send_timeout 24h;
+        chunked_transfer_encoding off;
+
+        # Headers สำหรับ CORS
+        # add_header Access-Control-Allow-Origin "$http_origin" always;
+        add_header Access-Control-Allow-Origin "https://smartconf.tcc-technology.com" always;
+        add_header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS" always;
+        add_header Access-Control-Allow-Headers "Authorization, Content-Type, Accept" always;
+        add_header Access-Control-Allow-Credentials "true" always;
+
+        # Handle preflight requests
+        if ($request_method = 'OPTIONS') {
+            add_header Access-Control-Allow-Origin "$http_origin";
+            add_header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS";
+            add_header Access-Control-Allow-Headers "Authorization, Content-Type, Accept";
+            add_header Access-Control-Allow-Credentials "true";
+            add_header Content-Length 0;
+            return 204;
+        }
+    }
+
+     # user frontend
+    location /user/ {
+        proxy_pass http://frontenduser:80/;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_cache_bypass $http_upgrade;
     }
-    
-    # SSE endpoints
-    location /api1/admin/sse {
-        proxy_pass http://localhost:4000;
+
+
+    # ************ Admin Panel ************
+    location /api1/ {
+        proxy_pass http://backend:4000/api1/;
+        proxy_redirect off;
+
+        # Headers สำคัญสำหรับ SSE
+        proxy_http_version 1.1;
+        proxy_set_header Connection "";
         proxy_buffering off;
         proxy_cache off;
-        proxy_set_header Connection '';
-        proxy_http_version 1.1;
+        proxy_read_timeout 24h;
+        proxy_send_timeout 24h;
         chunked_transfer_encoding off;
-    }
-}
 
-# Admin Panel
-server {
-    listen 443 ssl http2;
-    server_name admin.yourcompany.com;
-    
-    ssl_certificate /path/to/ssl/cert.pem;
-    ssl_certificate_key /path/to/ssl/key.pem;
-    
-    location / {
-        proxy_pass http://localhost:5170;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
+        # ส่ง cookies ไปให้ backend
+        proxy_set_header Cookie $http_cookie;
+        proxy_pass_header Set-Cookie;
+
+        # Headers สำหรับ CORS
+        # add_header Access-Control-Allow-Origin "$http_origin" always;
+        add_header Access-Control-Allow-Origin "https://smartconf.tcc-technology.com" always;
+        add_header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS" always;
+        add_header Access-Control-Allow-Headers "Authorization, Content-Type, Accept" always; # allow token
+        add_header Access-Control-Allow-Credentials "true" always; # allow cookies
+
+        # Handle preflight requests
+        if ($request_method = 'OPTIONS') { # ถ้าเป็น preflight request(not post,get จะส่ง options มา) เพื่อเช็คว่า server รองรับ method ไหนบ้าง เราเลยตอบไป...
+            add_header Content-Length 0;
+            return 204;
+        }
+    }
+
+     # Admin frontend
+    location /admin/ {
+        proxy_pass http://frontendadmin:80/;
         proxy_set_header Host $host;
-        proxy_cache_bypass $http_upgrade;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
     }
 }
 
-# User Display
-server {
-    listen 443 ssl http2;
-    server_name display.yourcompany.com;
-    
-    ssl_certificate /path/to/ssl/cert.pem;
-    ssl_certificate_key /path/to/ssl/key.pem;
-    
-    location / {
-        proxy_pass http://localhost:5173;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_cache_bypass $http_upgrade;
-    }
-}
 ```
+**หมายเหตุ**: ใส่ fullchain.pem เเละ privkey.pem จากโดเมนที่ได้รับ
+โครงสร้างไฟล์
+nginx/
+├── certs/
+|    ├── fullchain.pem
+|    ├── privkey.pem
+└── conf.d/   
+     └── reverse-proxy.conf       
 
-**เปิดใช้งาน:**
-```bash
-sudo ln -s /etc/nginx/sites-available/smartconf /etc/nginx/sites-enabled/
-sudo nginx -t
-sudo systemctl reload nginx
-```
-
-### 🐳 ขั้นตอนที่ 4: รัน Production Containers
+### 🐳 ขั้นตอนที่ 4: รัน Production Containers ที่ root
 
 ```bash
 # รัน production stack
-docker compose -f docker-compose.prod.yml up -d --build
+docker compose up -d --build
 
 # ตรวจสอบสถานะ
 docker compose ps
@@ -303,11 +331,13 @@ docker compose logs -f
 ```
 
 **Production Stack:**
+
 - MongoDB (พร้อม persistent volume)
 - Backend API (load balanced)
 - Admin Panel (production build)
 - User Frontend (production build)
-- Redis (สำหรับ session management)
+- Emqx broker 
+- nodered for network logs
 
 ---
 
@@ -315,12 +345,11 @@ docker compose logs -f
 
 ### 🔑 ตัวแปรสำคัญ
 
-| Variable | Development | Production | Description |
-|----------|-------------|------------|-------------|
-| `DEBUG_MODE` | `'true'` | `'false'` | โหมด debug (ป้องกันการลบข้อมูลจริง) |
-| `JWT_SECRET` | `dev-secret` | `strong-secret-32+chars` | คีย์สำหรับ JWT |
-| `DB_URI` | `localhost:27017` | `mongodb:27017` | MongoDB connection |
-| `FRONTEND_ADMIN` | `localhost:5170` | `https://admin.domain.com` | Admin panel URL |
+| Variable         | Development       | Production                 | Description                             |
+| ---------------- | ----------------- | -------------------------- | ----------------------------------------|
+| `DEBUG_MODE`     | `'true'`          | `'false'`                  | โหมด debug (ป้องกันการลบข้อมูลจริง การส่งเมล) |
+| `OPEN_MQTT`      | `false`           | `true`                     | การใช้งาน mqtt protocal                   |
+| `EXECPT_ROOMS`   | `1503,1504,1519,1520`                          | ยกเว้นห้องที่กำหนด เช่น การส่งเมลรยืนยันรหัส ลบห้อง|
 
 ### 📧 Microsoft Integration
 
@@ -329,7 +358,7 @@ docker compose logs -f
 CLIENT_ID='your-azure-app-id'
 TENANT_ID='your-tenant-id'
 CLIENT_SECRET='your-client-secret'
-REDIRECT_URI='https://admin.yourcompany.com/callback'
+REDIRECT_URI='https://admin.yourcompany.com/callback' # ปรับเปลี่ยนตาม azure ad
 
 # Microsoft Graph Scopes
 SCOPE1='openid'
@@ -345,27 +374,60 @@ SCOPE5='offline_access'
 # MQTT Broker (สำหรับ door control)
 OPEN_MQTT='true'
 MQTT_BROKER_URL='mqtt://localhost:1883'
-MQTT_TOPIC_CMD='smartconf/door/cmd'
+MQTT_TOPIC_CMD='smartconf/example/cmd' #
 
 # Exception Rooms (ห้องที่ยกเว้นจากการลบอัตโนมัติ)
 EXECPT_ROOMS=1503,1504,1519,1520
 ```
 
-> 📖 **อ่านเพิ่มเติม**: [Environment Configuration Guide](conf_backend/be/config/README.md)
+> 📖 **อ่านเพิ่มเติม**: [Environment Configuration Guide](conf_backend/be/env-config-guide.md)
 
 ---
 
 ## 📁 โครงสร้างโปรเจกต์
-
+Development
 ```
-SmartConfLocal/
+smart-conference-room/
 ├── 📄 initial.sh                 # Setup script
-├── 🐳 docker-compose.yml         # Development containers
-├── 🐳 docker-compose.prod.yml    # Production containers
 │
-├── 🔧 conf_backend/be/            # Backend API
+├── 📁 conf_backend/be/            # Backend API
 │   ├── 📝 app.js                 # Main server file
 │   ├── ⚙️ config/                # Environment config
+│   ├── ⚙️ .env                   # Environment config for Database images
+│   ├── 🎮 controllers/           # Route controllers
+│   ├── 🗄️ database/              # Database connection
+│   ├── 🔐 middlewares/           # Auth & validation
+│   ├── 📊 models/                # MongoDB models
+│   ├── 🛣️ routes/                # API routes
+│   ├── 🔧 services/              # Business logic
+│   ├── 📚 swagger/               # API documentation
+│   └── 🛠️ utils/                 # Helper functions
+│   └── 🐳 docker-compose.yml     # development containers(DB service)
+├── 📁 conf_admin/admin/           # Admin Panel (React)
+│   ├── 📱 src/components/        # React components
+│   ├── 📄 src/pages/             # Page components
+│   ├── 🎨 src/styles/            # CSS & styling
+│   └── ⚡ vite.config.js         # Vite configuration
+│
+└── 📁 conf_frontend/fe/           # User Display (React)
+    ├── 📱 src/components/        # Display components
+    ├── 🎨 src/assets/            # Images & icons
+    ├── ⚙️ .env                   # Environment config for Light-Ring api
+    ├── 🔄 src/hooks/             # Custom React hooks
+    └── ⚡ vite.config.js         # Vite configuration
+```
+
+Production
+```
+smart-conference-room/
+├── 📄 prod.sh                 # Setup script
+├── 🐳 docker-compose.yml         # production containers
+|
+│
+├── 📁 conf_backend/be/            # Backend API
+│   ├── 📝 app.js                 # Main server file
+│   ├── ⚙️ config/                # Environment config
+│   ├── ⚙️ .env                   # Environment config for Database images
 │   ├── 🎮 controllers/           # Route controllers
 │   ├── 🗄️ database/              # Database connection
 │   ├── 🔐 middlewares/           # Auth & validation
@@ -375,19 +437,19 @@ SmartConfLocal/
 │   ├── 📚 swagger/               # API documentation
 │   └── 🛠️ utils/                 # Helper functions
 │
-├── 👑 conf_admin/admin/           # Admin Panel (React)
+├── 📁 conf_admin/admin/           # Admin Panel (React)
 │   ├── 📱 src/components/        # React components
 │   ├── 📄 src/pages/             # Page components
 │   ├── 🎨 src/styles/            # CSS & styling
 │   └── ⚡ vite.config.js         # Vite configuration
 │
-└── 📺 conf_frontend/fe/           # User Display (React)
+└── 📁 conf_frontend/fe/           # User Display (React)
     ├── 📱 src/components/        # Display components
+    ├── ⚙️ .env                   # Environment config for Light-Ring api
     ├── 🎨 src/assets/            # Images & icons
     ├── 🔄 src/hooks/             # Custom React hooks
     └── ⚡ vite.config.js         # Vite configuration
 ```
-
 ---
 
 ## 🔍 Troubleshooting
@@ -400,6 +462,7 @@ SmartConfLocal/
 **อาการ:** `MongoNetworkError: failed to connect to server`
 
 **วิธีแก้:**
+
 ```bash
 # ตรวจสอบ Docker container
 docker ps | grep mongo
@@ -413,6 +476,7 @@ docker compose logs mongodb
 ```
 
 **การป้องกัน:**
+
 - ตรวจสอบ port 27017 ว่าถูกใช้งานหรือไม่
 - ตรวจสอบ disk space เพียงพอ
 - ใช้ connection string ที่ถูกต้อง
@@ -424,7 +488,9 @@ docker compose logs mongodb
 **อาการ:** `Error: invalid_client` หรือ `AADSTS7000215`
 
 **วิธีแก้:**
+
 1. ตรวจสอบ Azure AD configuration:
+
    ```bash
    # ตรวจสอบ environment variables
    echo $CLIENT_ID
@@ -436,6 +502,7 @@ docker compose logs mongodb
 3. ตรวจสอบ API permissions ได้รับการ grant แล้ว
 
 **การป้องกัน:**
+
 - บันทึก credentials อย่างปลอดภัย
 - ตรวจสอบ expiry date ของ client secret
 - ใช้ HTTPS ใน production
@@ -447,6 +514,7 @@ docker compose logs mongodb
 **อาการ:** `Error: listen EADDRINUSE: address already in use :::4000`
 
 **วิธีแก้:**
+
 ```bash
 # หา process ที่ใช้ port
 lsof -ti:4000
@@ -457,6 +525,7 @@ kill $(lsof -ti:4000)
 # หรือเปลี่ยน port ในไฟล์ .env
 PORT=4001
 ```
+
 </details>
 
 <details>
@@ -465,6 +534,7 @@ PORT=4001
 **อาการ:** Build errors หรือ container ไม่ start
 
 **วิธีแก้:**
+
 ```bash
 # ลบ containers และ images เก่า
 docker compose down --volumes --remove-orphans
@@ -476,6 +546,7 @@ docker compose up -d --build --force-recreate
 # ดู detailed logs
 docker compose logs -f
 ```
+
 </details>
 
 ### 🛠️ คำสั่งที่มีประโยชน์
@@ -506,58 +577,10 @@ docker system prune -af
 ## 📚 เอกสารเพิ่มเติม
 
 ### 📖 API Documentation
+
 - **Swagger UI**: `http://localhost:4000/api-docs`
-- **Postman Collection**: [Download](docs/SmartConf.postman_collection.json)
-
-### 🔧 Configuration Guides
-- [Environment Variables](conf_backend/be/config/README.md)
-- [Microsoft Azure Setup](docs/azure-setup.md)
-- [MQTT Configuration](docs/mqtt-setup.md)
-- [Nginx Configuration](docs/nginx-setup.md)
-
-### 🎯 Development Guides
-- [Contributing Guidelines](CONTRIBUTING.md)
-- [Code Style Guide](docs/code-style.md)
-- [Testing Guide](docs/testing.md)
-
-### 🚀 Deployment Guides
-- [Production Deployment](docs/production-deployment.md)
-- [CI/CD Pipeline](docs/cicd.md)
-- [Monitoring & Logging](docs/monitoring.md)
-
----
-
-## 🤝 การสนับสนุน
-
-### 💬 ช่องทางติดต่o
-- **Issues**: [GitHub Issues](../../issues)
-- **Discussions**: [GitHub Discussions](../../discussions)
-- **Email**: smartconf-support@yourcompany.com
-
-### 🎯 Roadmap
-- [ ] Real-time room occupancy detection
-- [ ] Mobile app for iOS/Android
-- [ ] Advanced analytics dashboard
-- [ ] Multi-language support
-- [ ] Integration with more calendar systems
-
----
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
----
-
-## 🙏 Acknowledgments
-
-- Microsoft Graph API team
-- React and Node.js communities
-- Docker and MongoDB teams
-- All contributors and testers
 
 ---
 
 **Made with ❤️ by the Smart Conference Team**
 
-> หากมีคำถามหรือพบปัญหา อย่าลืม[เปิด Issue](../../issues/new) หรือติดต่อทีมพัฒนา!
