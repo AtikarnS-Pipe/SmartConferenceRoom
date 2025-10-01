@@ -88,7 +88,7 @@ chmod +x initial.sh
 - Windows: เปิดแอป Docker Desktop
 - macOS/Linux: `sudo systemctl start docker`
 
-**รัน Docker Compose**
+**รัน Docker Compose**<br>
 ตรวจสอบ .env ก่อนรัน
 
 ```bash
