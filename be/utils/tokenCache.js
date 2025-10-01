@@ -47,7 +47,7 @@ async function monitorToken() {
     }
 
     const now = new Date();
-    const buffer = 5 * 60 * 1000;
+    const buffer = 10 * 60 * 1000;
 
     if (now >= new Date(expiryDate.getTime() - buffer)) {
       try {

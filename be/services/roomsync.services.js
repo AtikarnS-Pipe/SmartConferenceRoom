@@ -30,9 +30,9 @@ function getAllowedAttendees(event) {
             }
             // ✅ ส่งเฉพาะคนที่อยู่ในโดเมนที่อนุญาต
             const isAllowed = allowedDomains.some(domain => email.endsWith(domain));
-            if (!isAllowed) {
-                console.log(`🚫 Skip external email: ${email}`);
-            }
+            // if (!isAllowed) {
+            //     console.log(`🚫 Skip external email: ${email}`);
+            // }
             return isAllowed;
         })
         .map(att => att.emailAddress.address);
@@ -86,7 +86,7 @@ async function syncAllRooms() {
             if (roomData && roomData.events && roomData.events.length > 0) {
                 for (const event of roomData.events) {
                     if (event.organizer?.emailAddress?.address !== process.env.CENTERLIZED_MAIL) {
-                        // ✅ เอาเฉพาะ attendees ที่อนุญาต
+                        //  เอาเฉพาะ attendees ในองค์กรณ์ 
                         const attendeesToNotify = getAllowedAttendees(event);
 
                         if (attendeesToNotify.length > 0) {
