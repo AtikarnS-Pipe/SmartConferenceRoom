@@ -83,7 +83,7 @@ const GeteventId = async (accessToken, roomnumber, email, startdatetime, enddate
 const createMSEvent = async (AccessToken, createroomdata) => {
   try {
     const newEvent = {
-      subject: `Meeting in Room ${createroomdata.RoomNumber}`,
+      subject: `${createroomdata.subject}` || `Meeting in Room ${createroomdata.RoomNumber}`,
       start: { dateTime: createroomdata.startdatetime, timeZone: "UTC" },
       end: { dateTime: createroomdata.enddatetime, timeZone: "UTC" },
       attendees: [

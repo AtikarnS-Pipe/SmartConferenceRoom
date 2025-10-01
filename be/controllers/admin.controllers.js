@@ -161,7 +161,7 @@ const getschedule = async (req, res) => {
     sendscheduledata(req, res)
     const intervalId = setInterval(async () => {
         sendscheduledata(req, res)
-    }, 10000);
+    }, 8000);
 
     // *** สำคัญ: จัดการ cleanup เมื่อ client disconnect ***
     // ปิด connection
