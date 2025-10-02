@@ -86,6 +86,15 @@ const Room1501 = () => {
       });
 
       console.log('Axios response:', res);
+      if (res.status !== 200) {
+        // เพิ่ม log รายละเอียด error
+        console.error('Delete event error details:', {
+          status: res.status,
+          statusText: res.statusText,
+          data: res.data,
+          headers: res.headers
+        });
+      }
       // ถ้า response ไม่มี data ให้ถือว่าลบสำเร็จถ้า status 200
       if (res.status === 200) {
         alert('Event deleted successfully!');
@@ -311,7 +320,7 @@ const Room1501 = () => {
           rawStart = dayjs(t.start).add(7, 'hour');
           rawEnd = dayjs(t.end).add(7, 'hour');
           isAllDay = rawEnd.diff(rawStart, 'hour') >= 24;
-          subject = 'Meeting';
+          subject = t.subject || 'Meeting';
           location = t.room;
           pin = t.pin;
           isPinVerified = t.isPinVerified === "true" || t.isPinVerified === true;
@@ -321,7 +330,7 @@ const Room1501 = () => {
           rawStart = dayjs(t.startDateTime).add(7, 'hour');
           rawEnd = dayjs(t.endDateTime).add(7, 'hour');
           isAllDay = rawEnd.diff(rawStart, 'hour') >= 24;
-          subject = 'Meeting';
+          subject = t.subject || 'Meeting';
           location = t.room;
           pin = t.pin;
           isPinVerified = t.isPinVerified || false;
@@ -353,7 +362,7 @@ const Room1501 = () => {
           id: index,
           start: rawStart,
           end: adjustedEnd,
-          title: organizer || 'No Name',
+          title: subject || 'Meeting',
           isAllDay,
           subject: subject,
           location: location ? `Floor ${String(location).slice(0, 2)}, Room ${String(location).slice(2, 4)}` : `Floor ${Room.slice(0, 2)}, Room ${Room.slice(2, 4)}`,
@@ -366,6 +375,7 @@ const Room1501 = () => {
           endTime: adjustedEnd.format('HH:mm'),
           room: location || Room,
           organizerName: organizer || 'No Name',
+          subjectName: subject || 'Meeting',
           eventId: t.eventId || `${index}-${rawStart.unix()}` // เพิ่ม eventId สำหรับ delete
         };
       })
@@ -864,10 +874,10 @@ const Room1501 = () => {
                   <div className="min-w-0 flex-1">
                     <p className={`text-sm transition-colors duration-300 ${
                       darkMode ? 'text-gray-400' : 'text-slate-500'
-                    }`}>Organizer</p>
+                    }`}>Subject</p>
                     <p className={`font-semibold transition-colors duration-300 truncate ${
                       darkMode ? 'text-white' : 'text-slate-800'
-                    }`}>{selectedEvent.organizerName}</p>
+                    }`}>{selectedEvent.subjectName}</p>
                   </div>
                 </div>
                 
