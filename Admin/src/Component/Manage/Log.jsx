@@ -53,7 +53,7 @@ function Log() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setLoading(false);
-    }, 200); // แสดง loading 1.5 วินาที
+    }, 500); // แสดง loading 0.5 วินาที
 
     return () => clearTimeout(timer);
   }, []);
