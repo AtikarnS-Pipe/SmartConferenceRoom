@@ -30,7 +30,7 @@ export default defineConfig({
       '/api1/account/me': backend,
       '/api1/superadmin/createadmin': backend,
       '/api1/superadmin/deleteadmin': backend,
-      '/api2/user/ms/delete': backend,
+      '/api1/admin/delete': backend,
     },
     allowedHosts: [
       'smartconf.tcc-technology.com',

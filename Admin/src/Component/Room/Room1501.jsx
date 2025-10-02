@@ -12,7 +12,7 @@ import { ArrowLeft } from 'lucide-react';
 
 dayjs.extend(isBetween);
 
-const HOURS_START = 7;
+const HOURS_START = 0;
 const HOURS_END = 24;
 const PIXELS_PER_HOUR = 60;
 const MIN_DAY_WIDTH = 200;
