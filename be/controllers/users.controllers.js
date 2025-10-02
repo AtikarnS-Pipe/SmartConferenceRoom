@@ -40,7 +40,7 @@ const getuser = async (req, res) => {
     getuserdatabyroom(res, RoomNumber);
     const intervalId = setInterval(async () => {
         getuserdatabyroom(res, RoomNumber);
-    // }, 4000);
+        // }, 4000);
     }, getInterval());
 
     // จัดการ cleanup 
@@ -105,7 +105,7 @@ const adminKeyPin = async (req, res) => {
         console.log(`${req.method} ${req.originalUrl}`);
 
         const { pin, room_number } = req.body;
-        console.log("Pin:", pin, "Room Number:", room_number); 
+        console.log("Pin:", pin, "Room Number:", room_number);
         if (!pin || !room_number) {
             return res.status(200).json({ message: "Missing required fields! " });
         }
@@ -123,14 +123,14 @@ const adminKeyPin = async (req, res) => {
 
         if (currentState && currentState.state === "open") {
             console.log(`Room ${room_number} is already open. Skipping MQTT send.`);
-            return res.status(200).json({ 
-                success: true, 
-                message: `Room ${room_number} is already open` 
+            return res.status(200).json({
+                success: true,
+                message: `Room ${room_number} is already open`
             });
         }
         console.log("Admin pin valid, sending MQTT command to open door");
 
-        const isOpen = await sendMQTTMessage(process.env.MQTT_TOPIC_CMD, `adminopen_${floor}>${room}`); 
+        const isOpen = await sendMQTTMessage(process.env.MQTT_TOPIC_CMD, `adminopen_${floor}>${room}`);
         const isUpdated = await MqttState.findOneAndUpdate(
             { Meeting_room: room_number, state: { $ne: "open" } }, // หา record ตามห้อง
             { $set: { state: "adminopen", adminOpenAt: new Date() } },  // อัพเดต state = adminopen และตั้งเวลา
@@ -153,7 +153,7 @@ const adminKeyPin = async (req, res) => {
     }
 }
 
-// รับ eventId ของการประชุมที่ต้องการลบ
+// รับ eventId, room_number ของการประชุมที่ต้องการลบ
 const deleteroom = async (req, res) => {
     if (isDebug) {
         return res.status(200).json({ message: "Debug mode - skip delete" });
@@ -170,7 +170,7 @@ const deleteroom = async (req, res) => {
     try {
         const eventRecord = await waitUntil(async () => {
             const try_eventRecord = await bookingkey.findOne(
-                { eventId },
+                { eventId, room: room_number },
                 { isPinVerified: 1, organizerMail: 1, room: 1 }
             );
             // ถ้าหาข้อมูลเจอ แล้วถึงจะ return ไม่งั้นก็วนรอไปก่อน safety timeout
@@ -188,13 +188,13 @@ const deleteroom = async (req, res) => {
                 message: `Event ${eventId} already verified by PIN or was deleted. Skip delete.`,
             });
         }
-        
+
         await getGraphClient(AccessToken)
             .api(`/me/events/${eventId}`)
             .delete();
 
         eventRecord.isPinVerified = "not access";
-        await eventRecord.save();   
+        await eventRecord.save();
         const organizerEmail = eventRecord.organizerMail;
 
         if (organizerEmail && organizerEmail !== process.env.CENTERLIZED_MAIL) {
@@ -244,7 +244,7 @@ const deleteroom = async (req, res) => {
 };
 
 const createroom = async (req, res) => {
-    const { createroomdata } = req.body;
+    const { createroomdata } = req.body; // createroomdata = {RoomNumber, startdatetime, enddatetime, subject}
 
     if (!createroomdata ||
         !createroomdata.RoomNumber ||
@@ -263,7 +263,7 @@ const createroom = async (req, res) => {
         setIntervalMs(3000, 15000); // ปรับเป็น 3000 วินาที และรีเซ็ตหลัง 20 วินาที
         const isCreated = await createMSEvent(AccessToken, createroomdata);
         if (!isCreated) return res.status(400).json({ success: false, error: "Event creation failed." });
-        
+
         console.log(`Booking created for room ${createroomdata.RoomNumber}`);
         return res.status(200).json({ success: true });
     } catch (error) {
@@ -287,8 +287,8 @@ const createsearchpin = async (req, res) => {
             eventId: pindata.eventId,
             organizerMail: pindata.organizerMail,
             pin: pindata.pin,
-            startDateTime: new Date(pindata.startDateTime),
-            endDateTime: new Date(pindata.endDateTime),
+            startDateTime: new Date(pindata.startDateTime + "Z"),
+            endDateTime: new Date(pindata.endDateTime + "Z"),
             B_createdAt: new Date()
         });
         // const booking = await bookingkey.findOne({ eventId, room: room_number });
@@ -343,7 +343,7 @@ const endmeeting = async (req, res) => {
                 },
             })
         console.log("Update event success");
-        
+
         // const floor = parseInt(endmeetingdata.room_number.slice(0, 2), 10);
         // const room = parseInt(endmeetingdata.room_number.slice(2, 4), 10);
         // console.log("Room for close door:", room);

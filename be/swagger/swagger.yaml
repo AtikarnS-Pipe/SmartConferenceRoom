@@ -21,14 +21,71 @@ tags:
     description: API สำหรับผู้ใช้งานห้องประชุม
   - name: Superadmin
     description: API สำหรับจัดการผู้ดูแลระดับสูง
+  - name: LED status indicator
+    description: API สำหรับจัดการการแสดงผลไฟสถานะ LED ที่ขอบจอหน้าห้องประชุม
 
 paths:
+  ########################################################
+  # LED status indicator
+  ########################################################
+  /api1/led-status:
+    get:
+      summary: "Get LED Status"
+      description: |
+        This endpoint retrieves the current LED status of the light ring around the meeting room display.
+        Useful for monitoring room availability via visual indicators (e.g., green for available, red for occupied).
+      tags: [LED status indicator]
+      parameters:
+        - name: access_token
+          in: query
+          required: true
+          description: Token used to authenticate and access the LED status of the device.
+          schema:
+            type: string
+            example: "your-access-token"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string, example: "frame" }
+                brightness: { type: string, example: "1" }
+                color: { type: string, example: "#FF0000" }
+
+      responses:
+        '200':
+          description: "Successfully retrieved LED status"
+          content:
+            application/json:
+              schema: 
+                type: object
+                properties:
+                  room:
+                    type: string
+                    example: "1501"
+                  ip:
+                    type: string
+                    example: "19.1.56.110"
+                  status:
+                    type: string
+                    enum: [available, occupied]
+                    example: "occupied"
+                  color:
+                    type: string
+                    example: "#FF0000"
+        '404':
+          description: "Room not found or LED status unavailable"
+        '500':
+          description: "Internal server error"
+
   ########################################################
   # Admin Panel
   ########################################################
   /api1/admin/sse:
     get:
-      summary: รับข้อมูลการประชุมในวันนั้นทั้งหมด 10 ห้องประชุมบนชั้น 15 จาก microsoft แบบ SSE
+      summary: "รับข้อมูลการประชุมในวันนั้นทั้งหมด 10 ห้องประชุมบนชั้น 15 จาก microsoft แบบ SSE"
       description: |
         Endpoint นี้สตรีมข้อมูลการประชุมในวันนั้นทั้งหมดจาก microsoft ออกมาแบบ Server‑Sent Events (SSE)
         ให้ใช้เฉพาะสำหรับรับข้อมูลที่อัพเดตตลอดเวลา; Swagger UI จะแสดงเพียง Response header
@@ -53,26 +110,38 @@ paths:
 
   /api1/admin/login:
     get:
-      summary: เข้าสู่ระบบด้วย Microsoft Account (หลังจาก login local success)
+      summary: "เข้าสู่ระบบด้วย Microsoft Account (หลังจาก login local success)"
       description: |
-        Endpoint นี้ใช้สำหรับเข้าสู่ระบบด้วย Microsoft Account.
-        เมื่อสำเร็จ ระบบจะ redirect ไปยัง redirect_uri พร้อมแนบ `code` ใน query string.
-        เช่น:
+        Endpoint นี้ใช้สำหรับเข้าสู่ระบบด้วย Microsoft Account หลังจากที่ทำการ authenticate ในระบบภายในเรียบร้อยแล้ว.
+        
+        **ขั้นตอนการทำงาน:**
+        1. ตรวจสอบ email และ password กับฐานข้อมูลภายใน
+        2. ถ้าถูกต้อง จะสร้าง JWT token สำหรับ session
+        3. Redirect ไปยัง Microsoft OAuth เพื่อขอสิทธิ์เข้าถึง Microsoft Graph API
+        4. เมื่อสำเร็จ Microsoft จะ redirect กลับมาพร้อม authorization code
+        
+        **ตัวอย่าง Redirect URL:**
         ```
-        https://your-frontend-app.com/callback?code=123456
+        https://your-frontend-app.com/callback?code=M.C507_BAY.2.U.2174c3e1-8c2d-4b4e-9b4c-8d3e2174c3e1
         ```
       tags: [Admin Panel]
       parameters:
         - name: mail
+          in: query
           required: true
           schema:
             type: string
-          description: Organizer Mail 
+            format: email
+            example: "admin@tcc-technology.com"
+          description: อีเมลของผู้ดูแลระบบที่ต้องการเข้าสู่ระบบ
         - name: password
+          in: query
           required: true
           schema:
             type: string
-          description: Password
+            format: password
+            example: "admin123"
+          description: รหัสผ่านของผู้ดูแลระบบ
       responses:
         '302':
           description: Redirect ไปยัง redirect_uri พร้อม code แนบใน query string
@@ -100,11 +169,19 @@ paths:
 
   /api1/admin/schedule/{Room}/{startdate}/{enddate}:
     get:
-      summary: ดึงตารางการใช้งานห้อง
+      summary: "ดึงตารางการใช้งานห้อง"
       description: |
         คืนข้อมูลตารางการจองของห้องประชุมภายในช่วงวันกำหนด (โดยสตรีมผ่าน SSE).
         route นี้จะส่งข้อมูลแบบ Server‑Sent Events ไปยังผู้ใช้ทุก ๆ 10 วินาที
         เพื่อแจ้งเตือนการเปลี่ยนแปลงของตารางประชุมแบบเรียลไทม์.
+        
+        **ข้อมูลที่ส่งกลับ:**
+        - `eventId`: รหัสการประชุมจาก Microsoft Graph
+        - `room`: หมายเลขห้องประชุม
+        - `start`: เวลาเริ่มต้นการประชุม (ISO 8601 format)
+        - `end`: เวลาสิ้นสุดการประชุม (ISO 8601 format)
+        - `subject`: หัวข้อการประชุม
+        - `organizer`: ผู้จัดการประชุม
       tags: [Admin Panel]
       parameters:
         - name: Room
@@ -112,88 +189,119 @@ paths:
           required: true
           schema:
             type: string
-          description: หมายเลขห้องประชุม
+            pattern: '^[0-9]{4}$'
+            example: "1501"
+          description: หมายเลขห้องประชุม (4 หลัก เช่น 1501, 1502)
         - name: startdate
           in: path
           required: true
           schema:
             type: string
             format: date
-          description: วันที่เริ่มต้นของช่วงที่ต้องการค้นหา (YYYY-MM-DD)
+            example: "2025-09-30"
+          description: วันที่เริ่มต้นของช่วงที่ต้องการค้นหา (รูปแบบ YYYY-MM-DD)
         - name: enddate
           in: path
           required: true
           schema:
             type: string
             format: date
-          description: วันที่สิ้นสุดของช่วงที่ต้องการค้นหา (YYYY-MM-DD)
+            example: "2025-09-30"
+          description: วันที่สิ้นสุดของช่วงที่ต้องการค้นหา (รูปแบบ YYYY-MM-DD)
       responses:
         '200':
-          description: ตารางการใช้งานห้องเป็นสตรีม
+          description: ตารางการใช้งานห้องเป็นสตรีม - ข้อมูลจะถูกส่งทุก 10 วินาทีแบบ Server-Sent Events
           content:
             text/event-stream:
               schema:
                 type: string
                 example: |
-                  data: {"eventId":"abc123","room":"0701","start":"2025-01-01T09:00:00Z","end":"2025-01-01T10:00:00Z"}\n\n
-        get:
-          summary: ดึงตารางการใช้งานห้อง
-          description: |
-            คืนข้อมูลตารางการจองห้องประชุมภายในช่วงวันกำหนดแบบ SSE
-          tags: [Admin Panel]
-          parameters:
-            - name: Room
-              in: path
-              required: true
+                  event: scheduleUpdate
+                  data: {"eventId":"AAMkAGZkODA4MTA2LTBjZjAtNDBhNC1hMDE5LWEyZTQzOGJhMDA1MABGAAAA","room":"1501","subject":"Weekly Team Meeting","start":"2025-09-30T09:00:00Z","end":"2025-09-30T10:00:00Z","organizer":{"name":"John Doe","email":"john@tcc-technology.com"}}
+        '400':
+          description: รูปแบบข้อมูลไม่ถูกต้อง
+          content:
+            application/json:
               schema:
-                type: string
-            - name: startdate
-              in: path
-              required: true
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: ไม่พบห้องที่ระบุ
+          content:
+            application/json:
               schema:
-                type: string
-                format: date
-            - name: enddate
-              in: path
-              required: true
-              schema:
-                type: string
-                format: date
-          responses:
-            '200':
-              description: ตารางห้อง (stream)
-              content:
-                text/event-stream:
-                  schema:
-                    type: string
-                    example: |
-                      data: {"eventId":"abc123","room":"0701","start":"2025-01-01T09:00:00Z"}\n\n
+                $ref: '#/components/schemas/NotFoundResponse'
 
   ########################################################
   # Account
   ########################################################
   /api1/account/me:
     get:
-      summary: ดึงโปรไฟล์ผู้ใช้งาน
+      summary: "ดึงโปรไฟล์ผู้ใช้งาน"
+      description: |
+        ดึงข้อมูลโปรไฟล์ของผู้ใช้งานปัจจุบันจาก JWT token ที่ส่งมา
+        ใช้สำหรับตรวจสอบข้อมูลผู้ใช้และสิทธิ์การเข้าถึง
       tags: [Account]
       security:
         - bearerAuth: []
       responses:
         '200':
-          description: โปรไฟล์ผู้ใช้
+          description: ข้อมูลโปรไฟล์ผู้ใช้งานปัจจุบัน
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  id: { type: string }
-                  name: { type: string }
-                  email: { type: string }
-                  role: { type: string }
-
+                $ref: '#/components/schemas/UserProfile'
+              examples:
+                admin_user:
+                  summary: "ตัวอย่างผู้ใช้ Admin"
+                  value:
+                    id: "66f60c5b8ffb8a8e2c1cdb5d"
+                    name: "Admin User"
+                    email: "admin@tcc-technology.com"
+                    role: "Admin"
+                    pin: "1234"
+                    login_status: "online"
+                    createdAt: "2025-09-20T10:30:00.000Z"
+                    updatedAt: "2025-09-30T14:20:00.000Z"
+        '401':
+          description: ไม่มีสิทธิ์เข้าถึง - JWT token ไม่ถูกต้องหรือหมดอายุ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalid_token:
+                  value:
+                    error: "Invalid or expired token"
+        '404':
+          description: ไม่พบผู้ใช้งาน
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundResponse'
+              examples:
+                user_not_found:
+                  value:
+                    message: "User not found"
+        '500':
+          description: เกิดข้อผิดพลาดภายในเซิร์ฟเวอร์
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /api1/account/auth:
     post:
-      summary: เข้าสู่ระบบผู้ดูแล
+      summary: "เข้าสู่ระบบเฉพาะ Admin, SuperAdmin "
+      description: |
+        Endpoint สำหรับการ authentication ของผู้ใช้ที่มี role Admin หรือ SuperAdmin
+        
+        **ขั้นตอนการทำงาน:**
+        1. ตรวจสอบ email และ password กับฐานข้อมูล
+        2. ตรวจสอบ role ว่าเป็น Admin หรือ SuperAdmin
+        3. สร้าง JWT token พร้อม refresh token
+        4. อัปเดตสถานะ login_status เป็น "online"
+        5. บันทึก log การเข้าสู่ระบบ
+        
+        **หมายเหตุ:** ใช้สำหรับ Admin Panel และ SuperAdmin Panel เท่านั้น
       tags: [Account]
       requestBody:
         required: true
@@ -214,12 +322,35 @@ paths:
                 properties:
                   token: { type: string }
                   name: { type: string }
+                  pin: { type: string }
                   role: { type: string }
+        '404':
+          description: User not found
+        '400':
+          description: Invalid credentials
+        '500':
+          description: Internal server error
 
   /api1/account/changeadminpw:
     patch:
-      summary: เปลี่ยน PIN ผู้ดูแล
+      summary: "เปลี่ยน PIN ผู้ดูแล"
+      description: |
+        เปลี่ยน PIN ของผู้ดูแลระบบ (Admin) โดยผู้ใช้งานปัจจุบัน
+        
+        **ข้อจำกัด:**
+        - ต้องมี JWT token ที่ถูกต้อง
+        - PIN ใหม่ต้องมี 4 หลัก
+        - เฉพาะ Admin เท่านั้นที่สามารถเปลี่ยน PIN ของตนเองได้
+        
+        **การใช้งาน:** ใช้เมื่อต้องการเปลี่ยน PIN สำหรับการเข้าถึงห้องประชุม
       tags: [Account]
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          description: 'JWT token แบบ Bearer — ตัวอย่าง: "Bearer eyJhbGciOiJI..."'
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -230,12 +361,41 @@ paths:
                 newpin: { type: string }
       responses:
         '200':
-          description: สำเร็จ
+          description: เปลี่ยนรหัสผ่านตัวเองที่เป็น role admin สำเร็จ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  NewPin: { type: string, example: "1234" }
+                  message: { type: string, example: "PIN updated successfully" }
+        '400':
+          description: Invalid request
+        '500':
+          description: Internal server error
 
   /api1/account/createhousekeeper:
     post:
-      summary: เพิ่มแม่บ้าน
+      summary: "เพิ่มแม่บ้าน"
+      description: |
+        สร้างบัญชีแม่บ้านใหม่ในระบบ
+        
+        **สิทธิ์:** เฉพาะ Admin หรือ SuperAdmin เท่านั้น
+        
+        **ข้อมูลที่ต้องการ:**
+        - ชื่อ (name): ต้องไม่ซ้ำกับที่มีอยู่แล้ว
+        - PIN (pin): รหัส 4 หลักสำหรับเข้าถึงระบบ ต้องไม่ซ้ำ
+        
+        **การใช้งาน:** แม่บ้านจะใช้ PIN นี้เพื่อเข้าถึงห้องประชุมเพื่อทำความสะอาด
       tags: [Account]
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          description: 'JWT token แบบ Bearer — ตัวอย่าง: "Bearer eyJhbGciOiJI..."'
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -247,12 +407,27 @@ paths:
                 pin: { type: string }
       responses:
         '201':
-          description: สร้างแม่บ้านสำเร็จ
-
+          description: Housekeeper created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  message: { type: string, example: "Housekeeper created successfully" }
+                  data: { type: object, example: { id: "123", name: "Housekeeper Name", pin: "1234", role: "housekeeper", createdBy: "22313",login_status: 'no permission'  } }
+         
   /api1/account/edithousekeeper:
     patch:
-      summary: แก้ไข PIN แม่บ้าน
+      summary: "แก้ไข PIN แม่บ้าน"
       tags: [Account]
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          description: 'JWT token แบบ Bearer — ตัวอย่าง: "Bearer eyJhbGciOiJI..."'
+          schema:
+            type: string
       requestBody:
         required: true
         content:
@@ -268,8 +443,17 @@ paths:
 
   /api1/account/deletehousekeeper:
     delete:
-      summary: ลบแม่บ้าน
+      summary: "ลบแม่บ้าน"
       tags: [Account]
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          description: 'JWT token แบบ Bearer — ตัวอย่าง: "Bearer eyJhbGciOiJI..."'
+          schema:
+            type: string
+      security:
+        - bearerAuth: []
       requestBody:
         required: true
         content:
@@ -281,34 +465,57 @@ paths:
       responses:
         '200':
           description: สำเร็จ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  message: { type: string, example: "Housekeeper's name ..., has been deleted successfully" }
 
   /api1/account/refreshtoken:
     post:
-      summary: รีเฟรชโทเคนผู้ดูแล
+      summary: "รีเฟรชโทเคนผู้ดูแล (ไม่ต้องใช้ Bearer) ใช้ cookie 'refreshtoken'"
       tags: [Account]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                refreshToken: { type: string }
+      security: []   # ไม่ต้องใช้ bearer
       responses:
         '200':
-          description: สำเร็จ
+          description: "refreshtoken"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  refreshSuccess: { type: boolean, example: true }
+                  accessToken: { type: string, example: "eyJhbGciOiJIUzI1Ni..." }
+        '401':
+          description: ไม่มี refresh token หรือไม่ถูกต้อง
 
   /api1/account/signout:
     post:
-      summary: ออกจากระบบผู้ดูแล
+      summary: ออกจากระบบผู้ดูแล เเละลบ cookie "refreshtoken"
       tags: [Account]
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          description: 'JWT token แบบ Bearer — ตัวอย่าง: "Bearer eyJhbGciOiJI..."'
+          schema:
+            type: string
       responses:
         '200':
-          description: สำเร็จ
+          description: clear cookie "refreshtoken"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  message: { type: string, example: "User signed out successfully" }
 
   /api1/account/otp/send:
     post:
-      summary: ส่งรหัส OTP
+      summary: "ขั้นตอนที่ 1 การลืมรหัส: ส่งรหัส OTP ไปใน outlook mail"
       tags: [Account]
       requestBody:
         required: true
@@ -321,10 +528,16 @@ paths:
       responses:
         '200':
           description: ส่ง OTP สำเร็จ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string, example: "If the email exists in our system, an OTP has been sent." }
 
   /api1/account/otp/verify:
     post:
-      summary: ยืนยันรหัส OTP
+      summary: "ขั้นตอนที่ 2 การลืมรหัส: ยืนยันรหัส OTP ที่ได้จาก outlook mail"  
       tags: [Account]
       requestBody:
         required: true
@@ -341,7 +554,7 @@ paths:
 
   /api1/account/otp/reset:
     post:
-      summary: รีเซ็ตรหัสผ่าน
+      summary: "ขั้นตอนที่ 3 การลืมรหัส: รีเซ็ตรหัสผ่านใหม่"
       tags: [Account]
       requestBody:
         required: true
@@ -350,41 +563,70 @@ paths:
             schema:
               type: object
               properties:
-                email: { type: string }
+                reset_token: { type: string }
+                new_password: { type: string }
       responses:
         '200':
           description: สำเร็จ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  message: { type: string, example: "Password has been reset." }
 
   /api1/account/member:
     get:
-      summary: สตรีมรายชื่อสมาชิก
+      summary: "สตรีมรายชื่อสมาชิก role: Admin ทุก 5 วินาที"
       tags: [Account]
       responses:
         '200':
-          description: stream
+          description: stream Admin List
+          content:
+            text/event-stream:
+              schema:
+                type: string
+                example: |
+                  event: adminList
+                  data: [{"_id":"688d","email":"example@mail.com","name":"mail","role":"Admin","login_status":"online","updatedAt":"2025-09-24T03:41:08.322Z"}]
 
   /api1/account/housekeepers:
     get:
-      summary: สตรีมรายชื่อแม่บ้าน
+      summary: "สตรีมรายชื่อแม่บ้าน role: Housekeeper ทุก 5 วินาที"
       tags: [Account]
       responses:
         '200':
-          description: stream
+          description: stream Housekeeper List
+          content:
+            text/event-stream:
+              schema:
+                type: string
+                example: |
+                  event: HousekeeperList
+                  data: [{"_id":"68dabb655cf111ba29b09682","name":"housekeeper-01","role":"Housekeeper","pin":"1010"}]  
 
   /api1/account/logsmonitoring:
     get:
-      summary: สตรีม logs การใช้งาน
+      summary: "สตรีม Log role: Admin, Housekeeper ทุก 10 Sec ว่าผู้ใช้คนไหนทำอะไร Logged in/logged out, create user, delete user, change pin, การ access room"
       tags: [Account]
       responses:
         '200':
-          description: stream
-
+          description: stream Logsmonitoring
+          content:
+            text/event-stream:
+              schema:
+                type: string
+                example: |
+                  event: Logsmonitoring
+                  data: [{"_id":"68cb80f155449c733a30d114","user_Id":"688df875ac82ce4bee989f00","L_status":"Admin Logged in","role":"Admin","Details":"Admin name: monitor","L_createdAt":"2025-09-18T03:48:01.889Z","__v":0}]
+                  
   ########################################################
   # User
   ########################################################
   /api2/user/sse/{floors}/{rooms}:
     get:
-      summary: สตรีมข้อมูลผู้ใช้ตามห้อง
+      summary: "สตรีมข้อมูล Microsoft event ผู้ใช้ตามห้อง แสดงที่จอหน้าห้องประชุม ซึ่งปกติจะดึงทุก 6 วินาทีแต่เมื่อมีการจองจะดึงไวขึ้นเป็นทุก 3 วินาที ชั่วคราว"
       tags: [User]
       parameters:
         - name: floors
@@ -398,28 +640,106 @@ paths:
       responses:
         '200':
           description: stream
+          content:
+            text/event-stream:
+              schema:
+                type: string
+                example: |
+                  data: {"results":[{"@odata.etag":"W/\"OSKGJxgwRX0etlQAAAHMkxQ==\"","id":"AAMkAG...","subject":"L...chaeng ","isAllDay":false,"responseStatus":{"response":"accepted","time":"2025-05-19T09:43:34.1564391Z"},"start":{"dateTime":"2025-09-30T02:00:00.0000000","timeZone":"UTC"},"end":{"dateTime":"2025-09-30T05:00:00.0000000","timeZone":"UTC"},"locations":[{"displayName":"Microsoft Teams Meeting","locationType":"default","uniqueId":"Microsoft Teams Meeting","uniqueIdType":"private"},{"displayName":"DTG Meeting Room L : \\15>15","locationUri":"1515@tcc-technology.com","locationType":"conferenceRoom","uniqueId":"1515@tcc-technology.com","uniqueIdType":"directory","address":{"street":"","city":"","state":"","countryOrRegion":"","postalCode":""},"coordinates":{}}],"organizer":{"emailAddress":{"name":"L...ng","address":"mail@mail.com"}}},
 
   /api2/user/key:
     post:
-      summary: ตรวจสอบ PIN ผู้ใช้
+      summary: "ตรวจสอบ PIN ผู้ใช้ เมื่อกรอกเพื่อยืนยันการเปิดประตูห้องประชุม"
+      description: |
+        ตรวจสอบความถูกต้องของ PIN ที่ผู้ใช้กรอกเพื่อเข้าถึงห้องประชุม
+        
+        **ขั้นตอนการทำงาน:**
+        1. ตรวจสอบว่า eventId มีอยู่ในระบบหรือไม่
+        2. ตรวจสอบ PIN กับฐานข้อมูล bookingkey
+        3. ถ้าถูกต้อง จะอัปเดตสถานะ isPinVerified และเปิดประตู
+        4. บันทึก log การเข้าถึงห้อง
+        
+        **หมายเหตุ:** PIN ที่ใช้จะต้องตรงกับ PIN ที่ตั้งไว้ตอนจองห้อง
       tags: [User]
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                eventId: { type: string }
-                pin: { type: string }
-                room_number: { type: string }
+              $ref: '#/components/schemas/PinValidationRequest'
+            examples:
+              with_event:
+                summary: "ตรวจสอบ PIN พร้อม Event ID"
+                value:
+                  eventId: "AAMkAGZkODA4MTA2LTBjZjAtNDBhNC1hMDE5LWEyZTQzOGJhMDA1MABGAAAA"
+                  pin: "1234"
+                  room_number: "1501"
       responses:
         '200':
-          description: สำเร็จ
+          description: PIN ถูกต้อง - ประตูห้องจะถูกเปิด
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [pinValid, message]
+                properties:
+                  pinValid:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "PIN verified successfully. Door opened."
+                  roomAccessed:
+                    type: string
+                    example: "1501"
+                  accessTime:
+                    type: string
+                    format: date-time
+                    example: "2025-09-30T14:30:00.000Z"
+        '400':
+          description: ข้อมูลไม่ครบหรือไม่ถูกต้อง
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                missing_fields:
+                  value:
+                    error: "Missing required fields: pin, room_number"
+                invalid_pin:
+                  value:
+                    error: "Invalid PIN"
+        '404':
+          description: ไม่พบข้อมูลการจองหรือห้องประชุม
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundResponse'
+              examples:
+                event_not_found:
+                  value:
+                    message: "Event not found or already accessed"
+        '500':
+          description: เกิดข้อผิดพลาดภายในเซิร์ฟเวอร์
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
   /api2/user/admin-key:
     post:
-      summary: เปิดประตูด้วย PIN แอดมิน
+      summary: "เปิดประตูด้วย PIN แอดมิน"
+      description: |
+        ใช้ PIN ของ Admin หรือ Housekeeper เพื่อเปิดประตูห้องประชุม
+        
+        **กรณีการใช้งาน:**
+        - Admin ต้องการเข้าห้องเพื่อตรวจสอบหรือจัดเตรียม
+        - Housekeeper เข้าห้องเพื่อทำความสะอาด
+        - กรณีฉุกเฉินที่ต้องการเข้าห้องโดยไม่มีการจอง
+        
+        **ความปลอดภัย:** 
+        - บันทึก log การเข้าถึงทุกครั้ง
+        - ตรวจสอบ PIN กับฐานข้อมูลผู้ใช้
       tags: [User]
       requestBody:
         required: true
@@ -433,10 +753,17 @@ paths:
       responses:
         '200':
           description: สำเร็จ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  message: { type: string, example: "Password match!" }
 
   /api2/user/search-pin:
     post:
-      summary: ค้นหาหมายเลข PIN
+      summary: "Booking Meeting ขั้นตอนที่ 2: ค้นหาหรือสร้างหมายเลข PIN สำหรับการประชุม"
       tags: [User]
       requestBody:
         required: true
@@ -445,14 +772,91 @@ paths:
             schema:
               type: object
               properties:
-                keyword: { type: string }
+                pindata:
+                  type: object
+                  required:
+                    - eventId
+                    - room_number
+                    - organizerMail
+                    - pin
+                    - startDateTime
+                    - endDateTime
+                  properties:
+                    eventId:
+                      type: string
+                      description: Microsoft Graph Event ID
+                      example: "AAMkAGZkODA4MTA2LTBjZjAtNDBhNC1hMDE5LWEyZTQzOGJhMDA1MAFRAAA="
+                    room_number:
+                      type: integer
+                      description: หมายเลขห้องประชุม
+                      example: 1501
+                    organizerMail:
+                      type: string
+                      description: อีเมลของผู้จัดประชุม
+                      example: "organizer@t...gy.com"
+                    pin:
+                      type: string
+                      description: หมายเลข PIN สำหรับการยืนยัน
+                      example: "1234"
+                    startDateTime:
+                      type: string
+                      format: date-time
+                      description: วันและเวลาเริ่มการประชุม
+                      example: "2025-09-29T02:00:00Z"
+                    endDateTime:
+                      type: string
+                      format: date-time
+                      description: วันและเวลาสิ้นสุดการประชุม
+                      example: "2025-09-29T03:00:00Z"
       responses:
         '200':
-          description: สำเร็จ
+          description: สร้างหรือค้นหา PIN สำเร็จ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+        '400':
+          description: ข้อมูลไม่ครบหรือไม่พบ eventId
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "All fields are required"
+        '500':
+          description: Server error - ไม่สามารถค้นหาหรือสร้าง PIN ได้
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  error:
+                    type: string
+                    example: "Failed to search pin by event ID"
+
 
   /api2/user/endmeeting:
     patch:
-      summary: สิ้นสุดการประชุม
+      summary: "สิ้นสุดการประชุม (Update event) การประชุมปัจจุบันให้มีเวลาสิ้นสุดการประชุมเป็นเวลาปัจจุบัน"
+      description: |
+        อัปเดตเวลาสิ้นสุดของการประชุมใน Microsoft Calendar ให้เป็นเวลาปัจจุบัน
+        
+        **ขั้นตอนการทำงาน:**
+        1. ดึงข้อมูล Event จาก Microsoft Graph API
+        2. อัปเดตเวลาสิ้นสุด (endDateTime) เป็นเวลาปัจจุบัน
+        3. บันทึกการเปลี่ยนแปลงใน Microsoft Calendar
+        4. อัปเดตสถานะในฐานข้อมูลภายใน
+        
+        **การใช้งาน:** ใช้เมื่อการประชุมสิ้นสุดก่อนเวลาที่กำหนดไว้เดิม
       tags: [User]
       requestBody:
         content:
@@ -460,15 +864,39 @@ paths:
             schema:
               type: object
               properties:
-                eventId: { type: string }
-                room_number: { type: string }
+                endmeetingdata: 
+                  type: object
+                  properties:
+                    eventId:
+                      type: string
+                      example: "AAMkAGZkODA4MTA2LTBjZjAtNDBhNC1hMDE5LWEyZTQzOGJhMDA1MABGAAAA"
+                    startdatetime:
+                      type: string
+                      format: date-time
+                      example: "2025-09-30T09:00:00Z"
+                    isAllDay:
+                      type: boolean
+                      example: false
       responses:
         '200':
-          description: สำเร็จ
+          description: Update event successfully
 
   /api2/user/closedoor:
     post:
-      summary: ปิดประตูห้องประชุม
+      summary: "ปิดประตูห้องประชุม ตามห้องที่ระบุพร้อมเก็บ log การปิดประตู"
+      description: |
+        สั่งปิดประตูห้องประชุมด้วยระบบอิเล็กทรอนิกส์
+        
+        **ขั้นตอนการทำงาน:**
+        1. ตรวจสอบหมายเลขห้องประชุม
+        2. ส่งสัญญาณปิดประตูไปยังระบบควบคุม
+        3. บันทึก log การปิดประตูพร้อมเวลา
+        4. อัปเดตสถานะประตูในฐานข้อมูล
+        
+        **การใช้งาน:** 
+        - หลังจากการประชุมสิ้นสุด
+        - เมื่อต้องการรักษาความปลอดภัย
+        - กรณีฉุกเฉิน
       tags: [User]
       requestBody:
         content:
@@ -480,27 +908,98 @@ paths:
       responses:
         '200':
           description: สำเร็จ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  message: { type: string, example: "Door for room 1515 closed successfully" }
 
   /api2/user/ms/delete:
     delete:
-      summary: ลบการจอง Microsoft
+      summary: "ลบการจอง Microsoft"
+      description: |
+        ลบ Event ใน Microsoft Graph ตาม eventId และอัปเดตสถานะใน DB:
+        - ถ้าอยู่ในโหมด debug → ข้ามการลบ
+        - ถ้าห้องอยู่ในรายการยกเว้น (exception list) → ข้ามการลบ
+        - ถ้า Event ใน DB ถูก verify PIN ไปแล้ว หรือถูกลบไปก่อนหน้า → ข้ามการลบ
+        - มิฉะนั้น ทำการลบ Event ที่ MS Graph แล้ว mark isPinVerified = "not access"
+        - `หมายเหตุ`: ถ้ามีห้องไหนถูกลบจะถูกเพิ่มจำนวนครั้งที่พลาดลง DB เเละเมื่อครบ 5 ครั้งจะส่งเมลเตือน
       tags: [User]
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                eventId: { type: string }
-                room_number: { type: string }
+              $ref: '#/components/schemas/DeleteMsBookingRequest'
+            examples:
+              default:
+                value:
+                  eventId: "AAMkAGZkODA4MTA2LTBjZjAtNDBhNC1hMDE5LWEyZTQzOGJhMDA1MABGAAAA..."
+                  room_number: "1502"
       responses:
         '200':
-          description: สำเร็จ
+          description: สำเร็จหรือถูกข้ามตามเงื่อนไข (debug / exception / already verified / already deleted)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteMsBookingSuccess'
+              examples:
+                deleted:
+                  summary: "ลบสำเร็จ"
+                  value: { message: "Event deleted successfully" }
+                debug_skip:
+                  summary: "โหมด debug ข้ามการลบ"
+                  value: { message: "Debug mode - skip delete" }
+                except_room_skip:
+                  summary: "ห้องอยู่ในรายการยกเว้น"
+                  value: { message: "Room 1502 is in the exception list, skip delete." }
+                verified_skip:
+                  summary: "เคย verify PIN หรือถูกลบไปแล้ว"
+                  value: { message: "Event AAMkAG... already verified by PIN or was deleted. Skip delete." }
+        '401':
+          description: ไม่มี access token ภายในระบบ (ฝั่งเซิร์ฟเวอร์ไม่เจอ token ใน cache)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                no_token:
+                  value: { error: "No refresh token found. Please login again." }
+        '404':
+          description: ไม่พบ Event ในฐานข้อมูลภายใน (bookingKey)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundResponse'
+              examples:
+                not_found:
+                  value: { message: "Event not found in DB" }
+        '500':
+          description: ล้มเหลวจากสาเหตุอื่น (เช่น MS Graph ล้มเหลว / DB error)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                generic:
+                  value: { error: "Failed to delete event" }
+
 
   /api2/user/ms/create:
     post:
-      summary: สร้างการจอง Microsoft
+      summary: "ขั้นตอนที่ 1 Booking Meeting: สร้างการจองห้องประชุม Microsoft"
+      description: |
+        สร้างการจองห้องประชุมใหม่ผ่าน Microsoft Graph API
+        
+        **ขั้นตอนการทำงาน:**
+        1. ตรวจสอบความพร้อมใช้งานของห้อง
+        2. สร้าง Event ใน Microsoft Calendar
+        3. ส่งการเชิญไปยังห้องประชุม
+        4. บันทึกข้อมูลการจองในฐานข้อมูลภายใน
+        
+        **หมายเหตุ:** ต้องมี Microsoft Graph API access token ที่ถูกต้อง
       tags: [User]
       requestBody:
         required: true
@@ -508,50 +1007,252 @@ paths:
           application/json:
             schema:
               type: object
+              required: [createroomdata]
               properties:
-                room_number: { type: string }
-                start: { type: string, format: date-time }
-                end: { type: string, format: date-time }
-                organizer: { type: string }
+                createroomdata:
+                  $ref: '#/components/schemas/CreateMeetingRequest'
+            examples:
+              standard_meeting:
+                summary: "การจองห้องประชุมทั่วไป"
+                value:
+                  createroomdata:
+                    RoomNumber: "1501"
+                    startdatetime: "2025-09-30T09:00:00Z"
+                    enddatetime: "2025-09-30T10:00:00Z"
+                    subject: "Weekly Team Meeting"
+              long_meeting:
+                summary: "การจองห้องประชุมแบบยาว"
+                value:
+                  createroomdata:
+                    RoomNumber: "1514"
+                    startdatetime: "2025-09-30T13:00:00Z"
+                    enddatetime: "2025-09-30T17:00:00Z"
+                    subject: "Quarterly Review Meeting"
       responses:
-        '201':
-          description: สำเร็จ
+        '200':
+          description: สร้างการจองสำเร็จ - Event ถูกสร้างใน Microsoft Calendar แล้ว
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success, data]
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Meeting created successfully"
+                  data:
+                    type: object
+                    properties:
+                      eventId:
+                        type: string
+                        description: Microsoft Graph Event ID ที่สร้างขึ้น
+                        example: "AAMkAGZkODA4MTA2LTBjZjAtNDBhNC1hMDE5LWEyZTQzOGJhMDA1MABGAAAA"
+                      room:
+                        type: string
+                        example: "1501"
+                      startTime:
+                        type: string
+                        format: date-time
+                        example: "2025-09-30T09:00:00Z"
+                      endTime:
+                        type: string
+                        format: date-time
+                        example: "2025-09-30T10:00:00Z"
+                      nextStep:
+                        type: string
+                        example: "Please proceed to step 2: Set PIN for room access"
+        '400':
+          description: ข้อมูลไม่ครบหรือไม่ถูกต้อง
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                missing_fields:
+                  value:
+                    error: "Missing required fields: RoomNumber, startdatetime, enddatetime"
+                invalid_time:
+                  value:
+                    error: "Invalid time range: End time must be after start time"
+                room_not_available:
+                  value:
+                    error: "Room 1501 is not available during the requested time"
+        '401':
+          description: ไม่มีสิทธิ์เข้าถึง Microsoft Graph API
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                no_token:
+                  value:
+                    error: "No access token found. Please login again."
+        '409':
+          description: ห้องถูกจองแล้วในช่วงเวลาที่ระบุ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Room 1501 is already booked from 09:00 to 10:00"
+                  conflictingEvents:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MeetingEvent'
+        '500':
+          description: เกิดข้อผิดพลาดภายในเซิร์ฟเวอร์
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                ms_graph_error:
+                  value:
+                    error: "Failed to create event in Microsoft Graph"
+                db_error:
+                  value:
+                    error: "Failed to save booking information to database"
 
   ########################################################
   # Superadmin
   ########################################################
   /api1/superadmin/createadmin:
     post:
-      summary: สร้างผู้ดูแลระดับสูง
+      summary: "สร้างผู้ดูแลระดับสูง (Admin)"
+      description: |
+        Endpoint สำหรับ Superadmin เท่านั้น  
+        ใช้สร้างผู้ใช้ใหม่ที่มี role = "Admin"  
+        จะมีการตรวจสอบไม่ให้ซ้ำกับ email, name, หรือ pin ที่มีอยู่แล้ว
       tags: [Superadmin]
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          description: 'JWT token แบบ Bearer — ตัวอย่าง: "Bearer eyJhbGciOiJI..."'
+          schema:
+            type: string
+      security:
+        - bearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
+              required: [email, password, name, pin]
               properties:
-                username: { type: string }
-                password: { type: string }
+                email: { type: string, example: "admin01@domain.com" }
+                password: { type: string, format: password, example: "StrongPass123!" }
+                name: { type: string, example: "Admin01" }
+                pin: { type: string, example: "1234" }
       responses:
         '201':
           description: สำเร็จ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  message: { type: string, example: "Create Admin successfully" }
+                  data:
+                    type: object
+                    properties:
+                      user:
+                        type: object
+                        properties:
+                          id: { type: string }
+                          email: { type: string }
+                          role: { type: string, example: "Admin" }
+                          name: { type: string }
+                          pin: { type: string }
+        '400':
+          description: ซ้ำกับข้อมูลที่มีอยู่แล้ว
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string, example: "This email is already in use. Please use a different one." }
+        '403':
+          description: ไม่ใช่ Superadmin
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string, example: "Only SuperAdmin can create admin" }
+        '500':
+          description: Internal error
 
   /api1/superadmin/deleteadmin:
     delete:
-      summary: ลบผู้ดูแลระดับสูง
+      summary: "ลบผู้ดูแลระดับสูง (Admin)"
+      description: |
+        Endpoint สำหรับ Superadmin เท่านั้น  
+        ใช้ลบผู้ใช้ที่มี role = "Admin" โดยเปลี่ยน role เป็น "Deactivate"  
+        และบันทึก Log การลบ
+      security:
+        - bearerAuth: []
       tags: [Superadmin]
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          description: 'JWT token แบบ Bearer — ตัวอย่าง: "Bearer eyJhbGciOiJI..."'
+          schema:
+            type: string
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
+              required: [id]
               properties:
-                username: { type: string }
+                id: { type: string, example: "66f60c5b8ffb8a8e2c1cdb5d" }
       responses:
         '200':
           description: สำเร็จ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  message: { type: string, example: "Admin's ID 66f60c5b8ffb8a8e2c1cdb5d has been deleted successfully" }
+        '400':
+          description: ไม่มี ID
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string, example: "Admin's ID is required" }
+        '403':
+          description: ไม่ใช่ Superadmin
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string, example: "Only SuperAdmin can delete admin" }
+        '404':
+          description: ไม่พบ Admin ในเอกสาร
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string, example: "Admin is not found in Documents" }
+        '500':
+          description: Internal error
+
 
 components:
   securitySchemes:
@@ -559,3 +1260,243 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
+      description: |
+        JWT token ที่ได้จากการ login สำเร็จ
+        รูปแบบ: `Bearer <token>`
+
+  schemas:
+    # ─────────────────────────────
+    # Generic / Common Schemas
+    # ─────────────────────────────
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+          description: รายละเอียดของข้อผิดพลาด
+          example: "Failed to delete event"
+
+    NotFoundResponse:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
+          description: ข้อความแจ้งว่าไม่พบข้อมูล
+          example: "Event not found in DB"
+
+    SuccessMessage:
+      type: object
+      required: [success, message]
+      properties:
+        success:
+          type: boolean
+          description: สถานะความสำเร็จของการดำเนินการ
+          example: true
+        message:
+          type: string
+          description: ข้อความแจ้งผลการดำเนินการ
+          example: "Operation completed successfully"
+
+    # ─────────────────────────────
+    # User & Account Schemas
+    # ─────────────────────────────
+    UserProfile:
+      type: object
+      required: [id, name, role, pin]
+      properties:
+        id:
+          type: string
+          description: รหัสผู้ใช้งาน (MongoDB ObjectId)
+          example: "66f60c5b8ffb8a8e2c1cdb5d"
+        name:
+          type: string
+          description: ชื่อผู้ใช้งาน
+          example: "Admin User"
+        email:
+          type: string
+          format: email
+          description: อีเมลผู้ใช้งาน (เฉพาะ role Admin เท่านั้น)
+          example: "admin@tcc-technology.com"
+        role:
+          type: string
+          enum: ["Admin", "Housekeeper", "SuperAdmin", "Deactivate"]
+          description: บทบาทของผู้ใช้งาน
+          example: "Admin"
+        pin:
+          type: string
+          description: รหัส PIN สำหรับยืนยันตัวตน
+          example: "1234"
+        login_status:
+          type: string
+          enum: ["online", "offline", "no permission"]
+          description: สถานะการเข้าสู่ระบบ
+          example: "online"
+        createdAt:
+          type: string
+          format: date-time
+          description: วันที่สร้างบัญชี
+          example: "2025-09-20T10:30:00.000Z"
+        updatedAt:
+          type: string
+          format: date-time
+          description: วันที่อัปเดตล่าสุด
+          example: "2025-09-30T14:20:00.000Z"
+
+    # ─────────────────────────────
+    # Meeting & Event Schemas
+    # ─────────────────────────────
+    MeetingEvent:
+      type: object
+      required: [eventId, room, start, end]
+      properties:
+        eventId:
+          type: string
+          description: รหัสการประชุมจาก Microsoft Graph API
+          example: "AAMkAGZkODA4MTA2LTBjZjAtNDBhNC1hMDE5LWEyZTQzOGJhMDA1MABGAAAA"
+        room:
+          type: string
+          description: หมายเลขห้องประชุม
+          example: "1501"
+        subject:
+          type: string
+          description: หัวข้อการประชุม
+          example: "Weekly Team Meeting"
+        start:
+          type: string
+          format: date-time
+          description: เวลาเริ่มต้นการประชุม (UTC)
+          example: "2025-09-30T09:00:00.0000000Z"
+        end:
+          type: string
+          format: date-time
+          description: เวลาสิ้นสุดการประชุม (UTC)
+          example: "2025-09-30T10:00:00.0000000Z"
+        organizer:
+          type: object
+          description: ข้อมูลผู้จัดการประชุม
+          properties:
+            name:
+              type: string
+              example: "John Doe"
+            email:
+              type: string
+              format: email
+              example: "john@tcc-technology.com"
+        location:
+          type: object
+          description: สถานที่ประชุม
+          properties:
+            displayName:
+              type: string
+              example: "DTG Meeting Room L : \\15>01"
+            locationUri:
+              type: string
+              example: "1501@tcc-technology.com"
+
+    # ─────────────────────────────
+    # PIN & Booking Schemas
+    # ─────────────────────────────
+    PinValidationRequest:
+      type: object
+      required: [pin, room_number]
+      properties:
+        eventId:
+          type: string
+          description: รหัสการประชุม (optional สำหรับการตรวจสอบ PIN ผู้ใช้)
+          example: "AAMkAGZkODA4MTA2LTBjZjAtNDBhNC1hMDE5LWEyZTQzOGJhMDA1MABGAAAA"
+        pin:
+          type: string
+          description: รหัส PIN ที่ผู้ใช้กรอก
+          example: "1234"
+        room_number:
+          type: string
+          description: หมายเลขห้องประชุม
+          example: "1501"
+
+    # ─────────────────────────────
+    # Microsoft Graph API Schemas
+    # ─────────────────────────────
+    DeleteMsBookingRequest:
+      type: object
+      required: [eventId, room_number]
+      properties:
+        eventId:
+          type: string
+          description: Microsoft Graph Event ID ที่ต้องการลบ
+          example: "AAMkAGZkODA4MTA2LTBjZjAtNDBhNC1hMDE5LWEyZTQzOGJhMDA1MABGAAAA"
+        room_number:
+          type: string
+          description: หมายเลขห้อง (ใช้สำหรับตรวจสอบ exception list)
+          example: "1502"
+
+    DeleteMsBookingSuccess:
+      type: object
+      properties:
+        message:
+          type: string
+          description: ข้อความแจ้งผลการลบ
+          example: "Event deleted successfully"
+
+    CreateMeetingRequest:
+      type: object
+      required: [RoomNumber, startdatetime, enddatetime]
+      properties:
+        RoomNumber:
+          type: string
+          pattern: '^[0-9]{4}$'
+          description: หมายเลขห้องที่ต้องการจอง (4 หลัก)
+          example: "1501"
+        startdatetime:
+          type: string
+          format: date-time
+          description: วันและเวลาเริ่มการประชุม (ISO 8601 format)
+          example: "2025-09-30T09:00:00Z"
+        enddatetime:
+          type: string
+          format: date-time
+          description: วันและเวลาสิ้นสุดการประชุม (ISO 8601 format)
+          example: "2025-09-30T10:00:00Z"
+        organizer:
+          type: string
+          format: email
+          description: อีเมลผู้จัดประชุม
+          example: "user@tcc-technology.com"
+        subject:
+          type: string
+          description: หัวข้อการประชุม
+          example: "Team Meeting"
+
+    # ─────────────────────────────
+    # Log & Monitoring Schemas
+    # ─────────────────────────────
+    LogEntry:
+      type: object
+      properties:
+        _id:
+          type: string
+          description: รหัส Log entry
+          example: "68cb80f155449c733a30d114"
+        user_Id:
+          type: string
+          description: รหัสผู้ใช้ที่ทำการ
+          example: "688df875ac82ce4bee989f00"
+        L_status:
+          type: string
+          description: สถานะของ Log
+          example: "Admin Logged in"
+        role:
+          type: string
+          description: บทบาทของผู้ใช้
+          example: "Admin"
+        Details:
+          type: string
+          description: รายละเอียดของการกระทำ
+          example: "Admin name: monitor"
+        L_createdAt:
+          type: string
+          format: date-time
+          description: เวลาที่เกิดเหตุการณ์
+          example: "2025-09-18T03:48:01.889Z"
+

@@ -1,13 +1,16 @@
-require('dotenv').config({ path: './config/.env'});
+require('dotenv').config({ path: './config/.env' });
 const { getTokenByCode } = require("../utils/AuthProvider");
 const tokenCache = require('../utils/tokenCache')
-const {encryptToken} = require('../utils/encode')
+const { encryptToken } = require('../utils/encode')
 const {
-    addCacheandDB, 
-    sendscheduledata, 
+    addCacheandDB,
+    sendscheduledata,
     fetchAllRoom,
     getUserProfile,
-    } = require('../services/admin.services')
+    deleteEventByAdminService
+} = require('../services/admin.services')
+
+const isDebug = (process.env.DEBUG_MODE || "true") === "true";
 
 const getAllusers = async (req, res) => {
     const code = req.query.code;
@@ -31,14 +34,15 @@ const getAllusers = async (req, res) => {
             tokenResponse = await getTokenByCode(code);
             // ตรวจสอบว่าเป็น email ที่ถูกต้องหรือไม่
             const userProfile = await getUserProfile(tokenResponse.access_token);
-            
-            
+
+
             if (userProfile.mail !== 'meetingroom@tcc-technology.com') {
                 console.error(`💥 Unauthorized email: ${userProfile.mail} `);
                 console.log("📤 Sending forceLogout event to frontend");
-                res.write(`event: forceLogout\ndata: ${JSON.stringify({ 
-                error: `Unauthorized email: ${userProfile.mail}`})}\n\n`);
-                
+                res.write(`event: forceLogout\ndata: ${JSON.stringify({
+                    error: `Unauthorized email: ${userProfile.mail}`
+                })}\n\n`);
+
                 console.log("⏰ Waiting 1 second before closing connection...");
                 setTimeout(() => {
                     console.log("🔚 Closing SSE connection after unauthorized email");
@@ -50,7 +54,7 @@ const getAllusers = async (req, res) => {
 
             // เข้ารหัสและบันทึก token
             const encryptedRefreshToken = encryptToken(tokenResponse.refresh_token);
-            
+
             const tokenData = {
                 accessToken: tokenResponse.access_token, //encryptedAccessToken,
                 refreshToken: encryptedRefreshToken,
@@ -63,9 +67,9 @@ const getAllusers = async (req, res) => {
             accessToken = tokenResponse.access_token;
         } catch (err) {
             console.error("Error!!", err);
-            res.write(`event: error\ndata: ${JSON.stringify({ 
-                error: "Authentication failed", 
-                detail: err.message 
+            res.write(`event: error\ndata: ${JSON.stringify({
+                error: "Authentication failed",
+                detail: err.message
             })}\n\n`);
             res.end();
             return;
@@ -74,7 +78,7 @@ const getAllusers = async (req, res) => {
         try {
             // ไม่มี code
             console.log("No code provided, fetching token...");
-            
+
             // เอา Access token ล่าสุดจาก cache 
             const latestAccessToken = tokenCache.getAccessToken();
             if (!latestAccessToken) {
@@ -85,14 +89,14 @@ const getAllusers = async (req, res) => {
             // ⭐ ตรวจสอบ email อีกครั้งแม้ว่าจะใช้ cached token
             console.log("🔍 Verifying email with cached token...");
             const userProfile = await getUserProfile(latestAccessToken);
-            
+
             if (userProfile.mail !== 'meetingroom@tcc-technology.com') {
                 console.error(`💥 Unauthorized email with cached token: ${userProfile.mail}`);
                 console.log("📤 Sending forceLogout event to frontend");
-                res.write(`event: forceLogout\ndata: ${JSON.stringify({ 
-                    error: `Unauthorized email: ${userProfile.mail}` 
+                res.write(`event: forceLogout\ndata: ${JSON.stringify({
+                    error: `Unauthorized email: ${userProfile.mail}`
                 })}\n\n`);
-                
+
                 console.log("⏰ Waiting 1 second before closing connection...");
                 setTimeout(() => {
                     console.log("🔚 Closing SSE connection after unauthorized email (cached token)");
@@ -100,7 +104,7 @@ const getAllusers = async (req, res) => {
                 }, 1000);
                 return;
             }
-            
+
             console.log("✅ Email verified with cached token:", userProfile.mail);
             accessToken = latestAccessToken;
             // console.log("get accessToken from cache:", accessToken);
@@ -110,7 +114,7 @@ const getAllusers = async (req, res) => {
             res.end();
             return;
         }
-    }   
+    }
     // เริ่มดึงข้อมูล room และส่ง SSE
     await fetchAllRoom(res, accessToken);
     intervalId = setInterval(async () => {
@@ -132,7 +136,7 @@ const getAllusers = async (req, res) => {
         clearInterval(intervalId);
         // console.log(`Response finished for admin`);
     });
-           
+
 
 };
 
@@ -156,12 +160,12 @@ const getschedule = async (req, res) => {
         'Access-Control-Allow-Credentials': 'true',
         'Access-Control-Allow-Origin': process.env.FRONTEND_ADMIN
     });
-    
+
     // res.flushHeaders();
     sendscheduledata(req, res)
     const intervalId = setInterval(async () => {
         sendscheduledata(req, res)
-    }, 8000);
+    }, 10000);
 
     // *** สำคัญ: จัดการ cleanup เมื่อ client disconnect ***
     // ปิด connection
@@ -182,7 +186,31 @@ const getschedule = async (req, res) => {
     });
 }
 
+const deleteeventbyadmin = async (req, res) => {
+    if (isDebug) {
+        return res.status(200).json({ message: "Debug mode - skip delete" });
+    }
+
+    const { eventId, room_number } = req.body; // eventId, room_number
+
+    const AccessToken = tokenCache.getAccessToken();
+    if (!AccessToken) {
+        return res.status(401).json({ error: "No refresh token found. Please login again." });
+    }
+
+    try {
+        const result = await deleteEventByAdminService(eventId, room_number, AccessToken);
+
+        if (!result.success) {
+            return res.status(result.status).json({ error: result.message });
+        }
+
+        return res.status(200).json({ message: result.message });
+    } catch (error) {
+        console.error("Error deleting event by admin:", error);
+        return res.status(500).json({ error: "Failed to delete event by admin" });
+    }
+};
 
 
-        
-module.exports = { getAllusers, Login, getschedule };
+module.exports = { getAllusers, Login, getschedule, deleteeventbyadmin };
