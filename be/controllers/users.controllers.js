@@ -78,17 +78,6 @@ const keyPins = async (req, res) => {
         }
 
         const isOpen = await sendMQTTMessage(process.env.MQTT_TOPIC_CMD, `open_${floor}>${room}`);
-        const isUpdated = await MqttState.findOneAndUpdate(
-            { Meeting_room: room_number },   // หา record ตามห้อง
-            { $set: { state: "open", adminOpenAt: null } },     // อัพเดต state = open และลบ adminOpenAt
-            { new: true, upsert: true }      // upsert กันพลาด ถ้าไม่เจอให้สร้าง
-        );
-
-        console.log("MQTT message sent:", isOpen);
-        if (!isUpdated) {
-            console.error("Failed to update MQTT state");
-            return res.status(500).json({ error: "Failed to update MQTT state" });
-        }
         if (!isOpen.success) {
             console.error(`Failed to send MQTT message: ${isOpen.error}`);
             return res.status(500).json({ error: "Failed to send MQTT message" });
@@ -131,17 +120,6 @@ const adminKeyPin = async (req, res) => {
         console.log("Admin pin valid, sending MQTT command to open door");
 
         const isOpen = await sendMQTTMessage(process.env.MQTT_TOPIC_CMD, `adminopen_${floor}>${room}`);
-        const isUpdated = await MqttState.findOneAndUpdate(
-            { Meeting_room: room_number, state: { $ne: "open" } }, // หา record ตามห้อง
-            { $set: { state: "adminopen", adminOpenAt: new Date() } },  // อัพเดต state = adminopen และตั้งเวลา
-            { new: true, upsert: true }       // upsert กันพลาด ถ้าไม่เจอให้สร้าง
-        );
-
-        console.log("MQTT message sent:", isOpen);
-        if (!isUpdated) {
-            console.error("Failed to update MQTT state");
-            return res.status(500).json({ error: "Failed to update MQTT state" });
-        }
         if (!isOpen.success) {
             console.error(`Failed to send MQTT message: ${isOpen.error}`);
             return res.status(500).json({ error: "Failed to send MQTT message" });
@@ -343,23 +321,6 @@ const endmeeting = async (req, res) => {
                 },
             })
         console.log("Update event success");
-
-        // const floor = parseInt(endmeetingdata.room_number.slice(0, 2), 10);
-        // const room = parseInt(endmeetingdata.room_number.slice(2, 4), 10);
-        // console.log("Room for close door:", room);
-        // const isClosed = await sendMQTTMessage(process.env.MQTT_TOPIC_CMD, `close_${floor}>${room}`);
-        // const isUpdated = await MqttState.findOneAndUpdate(
-        //     { Meeting_room: endmeetingdata.room_number }, // หา record ตามห้อง
-        //     { $set: { state: "close" } },     // อัพเดต state = open
-        //     { new: true, upsert: true }      // upsert กันพลาด ถ้าไม่เจอให้สร้าง
-        // );
-        // if (!isUpdated) {
-        //     console.error("Failed to update MQTT state");
-        //     return res.status(500).json({ error: "Failed to update MQTT state" });
-        // }
-        // console.log(`MQTT message sent: ${isClosed}`);
-        // if(!isClosed.success) throw new Error(isClosed.error);
-
         res.status(200).json({ message: "Update event successfully" });
     } catch (error) {
         console.error("Error in endtask:", error);
@@ -375,17 +336,6 @@ const closedoor = async (req, res) => {
     console.log("Room for close door:", room);
     try {
         const isClosed = await sendMQTTMessage(process.env.MQTT_TOPIC_CMD, `close_${floor}>${room}`);
-        const isUpdated = await MqttState.findOneAndUpdate(
-            { Meeting_room: room_number },          // หา record ตามห้อง
-            { $set: { state: "close" } },     // อัพเดต state = close
-            { new: true, upsert: true }      // upsert กันพลาด ถ้าไม่เจอให้สร้าง
-        );
-
-        if (!isUpdated) {
-            console.error("Failed to update MQTT state");
-            return res.status(500).json({ error: "Failed to update MQTT state" });
-        }
-        console.log(`MQTT message sent: ${isClosed}`);
         if (!isClosed.success) throw new Error(isClosed.error);
         return res.status(200).json({ success: true, message: `Door for room ${room_number} closed successfully` });
     } catch (error) {

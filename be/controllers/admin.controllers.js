@@ -189,7 +189,7 @@ const getschedule = async (req, res) => {
 const deleteeventbyadmin = async (req, res) => {
     if (isDebug) {
         return res.status(200).json({ message: "Debug mode - skip delete" });
-    }
+    }    
 
     const { eventId, room_number } = req.body; // eventId, room_number
 
@@ -199,6 +199,7 @@ const deleteeventbyadmin = async (req, res) => {
     }
 
     try {
+        
         const result = await deleteEventByAdminService(eventId, room_number, AccessToken);
 
         if (!result.success) {

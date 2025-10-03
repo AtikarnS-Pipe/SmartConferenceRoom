@@ -78,7 +78,6 @@
             const DB_room2 = await MqttState.findOne({ Meeting_room: room2 });
 
             // ส่งออก MQTT ตาม state ที่เจอ
-
             if (DB_room1) {
               let statusMsg = `room ${roomdash1} is ${DB_room1.state}`;
               let isTimeout = false;
@@ -94,17 +93,16 @@
                 statusMsg += ` ${timeString}`; // append เวลา
                 console.log("ข้อความadminopen : ", statusMsg);
                 isTimeout = diffSec >= 15*60;
-                if(isTimeout && DB_room1.state === 'adminopen'){ // หากมากกว่า 15 min และยังเป็น adminopen ให้ไปบอก mqtt ปิดประตู
-                  console.log(`🔒 Admin timeout: Closing room ${roomdash1} after ${timeString}`);
-                  await sendMQTTMessage(SUB_TOPIC, `close_${floor}>${first}`); // ex. close_1
-                  const isUpdated = await MqttState.findOneAndUpdate(
-                      { Meeting_room: room1 },   // หา record ตามห้อง
-                      { $set: { state: "close", adminOpenAt: null } },     // อัพเดต state = close และลบ adminOpenAt
-                      { new: true, upsert: true }      // upsert กันพลาด ถ้าไม่เจอให้สร้าง
-                  );
-                  if (!isUpdated) {
-                      console.error("Failed to update MQTT state of admin");
-                  }
+                if(isTimeout && DB_room1.state === 'adminopen'){ // กันกรณีใส่รหัสเเอดมินเเล้วมีคนใส่ user ต่อ เเละหากมากกว่า 15 min และยังเป็น adminopen ให้ไปบอก mqtt ปิดประตู
+                  await sendMQTTMessage(SUB_TOPIC, `close_${floor}>${first}`); 
+                  // const isUpdated = await MqttState.findOneAndUpdate(
+                  //     { Meeting_room: room1 },   // หา record ตามห้อง
+                  //     { $set: { adminOpenAt: null } },     // อัพเดต state = close และลบ adminOpenAt
+                  //     { new: true, upsert: true }      // upsert กันพลาด ถ้าไม่เจอให้สร้าง
+                  // );
+                  // if (!isUpdated) {
+                  //     console.error("Failed to update MQTT state of admin");
+                  // }
                 }
               }
 
@@ -128,16 +126,15 @@
                 console.log("ข้อความadminopen : ", statusMsg);
                 isTimeout = diffSec >= 15*60;
                 if(isTimeout && DB_room2.state === 'adminopen'){ // หากมากกว่า 15 min และยังเป็น adminopen ให้ไปบอก mqtt ปิดประตู
-                  console.log(`🔒 Admin timeout: Closing room ${roomdash2} after ${timeString}`);
-                  await sendMQTTMessage(SUB_TOPIC, `close_${floor}>${second}`); // ex. close_2
-                  const isUpdated = await MqttState.findOneAndUpdate(
-                      { Meeting_room: room2 },   // หา record ตามห้อง
-                      { $set: { state: "close", adminOpenAt: null } },     // อัพเดต state = close และลบ adminOpenAt
-                      { new: true, upsert: true }      // upsert กันพลาด ถ้าไม่เจอให้สร้าง
-                  );
-                  if (!isUpdated) {
-                      console.error("Failed to update MQTT state of admin");
-                  }
+                  await sendMQTTMessage(SUB_TOPIC, `close_${floor}>${second}`); 
+                  // const isUpdated = await MqttState.findOneAndUpdate(
+                  //     { Meeting_room: room2 },   // หา record ตามห้อง
+                  //     { $set: { adminOpenAt: null } },  // อัพเดต state = close และลบ adminOpenAt
+                  //     { new: true, upsert: true }      // upsert กันพลาด ถ้าไม่เจอให้สร้าง
+                  // );
+                  // if (!isUpdated) {
+                  //     console.error("Failed to update MQTT state of admin");
+                  // }
                 }
               }
 
@@ -151,31 +148,49 @@
         // match pattern เช่น  "open_15>1 close_15>1 adminopen_15>20"
         const match_dev = text.match(/^(adminopen|open|close)_(\d+)>(\d+)/i);
         if (match_dev) {
-          const [_, status, floor, room] = match_dev;
-          const meeting_floor = parseInt(floor, 10)*100 + parseInt(room, 10);
-          
-          // เตรียม update object - ไม่ตั้ง adminOpenAt ที่นี่ ให้ Web API จัดการเอง
-          let updateData = { state: status };
-          
-          // ถ้าเป็น open หรือ close ให้ลบ adminOpenAt (เคลียร์เฉพาะเมื่อไม่ใช่ adminopen)
-          if (status !== 'adminopen') {
-            updateData.adminOpenAt = null;
-          } 
-          
-          const isUpdated = await MqttState.findOneAndUpdate(
-              { Meeting_room: meeting_floor },   // หา record ตามห้อง
-              { $set: updateData },              // อัพเดต state และ adminOpenAt
-              { new: true, upsert: true }        // upsert กันพลาด ถ้าไม่เจอให้สร้าง
-          );
-          
-          if (isUpdated) {
-            // เก็บ log ทุกรอบ เอาไว้ดูย้อนหลัง 
-            await Log_Door_State.create({
-              Device_room: meeting_floor,
-              Device_status: status 
-            });
-          } else {
-            console.error("Failed to update MQTT state", meeting_floor);
+          const [_, status, floorStr, roomStr] = match_dev;
+          const floor = parseInt(floorStr, 10);
+          const room = parseInt(roomStr, 10);
+          const meetingRoom = floor * 100 + room;
+
+          try {
+            let filter = { Meeting_room: meetingRoom };
+            let update = {};
+            let options = { new: true, upsert: false }; // default
+
+            if (status === 'adminopen') {
+              // อนุญาตเมื่อยังไม่ open (กันทับการเปิดด้วย user)
+              filter = { Meeting_room: meetingRoom, state: { $ne: 'open' } };
+              update = { $set: { state: 'adminopen', adminOpenAt: new Date() } };
+              options.upsert = true; // เคยไม่มี record ก็สร้างได้
+            }
+
+            else if (status === 'open') {
+              // เปิดแบบ user → เคลียร์ adminOpenAt; ลด write ซ้ำซ้อน
+              filter = { Meeting_room: meetingRoom, state: { $ne: 'open' } };
+              update = { $set: { state: 'open', adminOpenAt: null } };
+              options.upsert = true;
+            }
+
+            else if (status === 'close') {
+              // ปิดได้เมื่อเดิมเป็น adminopen หรือ open เท่านั้น
+              filter = { Meeting_room: meetingRoom, state: { $in: ['adminopen', 'open'] } };
+              update = { $set: { state: 'close', adminOpenAt: null } };
+              options.upsert = false; // ❗อย่า upsert กรณี close
+            }
+
+            const doc = await MqttState.findOneAndUpdate(filter, update, options);
+
+            if (doc) {
+              await Log_Door_State.create({
+                Device_room: meetingRoom,
+                Device_status: status,
+                at: new Date()
+              });
+            }
+
+          } catch (err) {
+            console.error('Failed to update MQTT state:', err);
           }
         }
 
