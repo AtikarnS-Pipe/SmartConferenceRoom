@@ -15,7 +15,7 @@ async function seedMqttRooms() {
   for (let r of rooms) {
     await MqttState.updateOne(
       { Meeting_room: r },
-      { $set: { state: 'open', B_createdAt: new Date() } }, // $setOnInsert ถ้าอยากให้เพิ่มเมื่อไม่มีเท่านั้น
+      { $set: { state: 'close', B_createdAt: new Date() } }, // $setOnInsert ถ้าอยากให้เพิ่มเมื่อไม่มีเท่านั้น
       { upsert: true } // ถ้ายังไม่มี -> insert
     );
   }

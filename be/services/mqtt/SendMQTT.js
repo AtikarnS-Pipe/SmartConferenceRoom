@@ -83,17 +83,18 @@ async function updateRoomState(status, floor, room) {
 
   switch (status) {
     case 'adminopen':
-      filter = { Meeting_room: meetingRoom, state: { $ne: 'open' } };
+      // filter = { Meeting_room: meetingRoom, state: { $ne: 'open' } };
+      filter = { Meeting_room: meetingRoom };
       update = { $set: { state: 'adminopen', adminOpenAt: new Date() } };
-      options.upsert = true;
+      options.upsert = false;
       break;
     case 'open':
-      filter = { Meeting_room: meetingRoom, state: { $ne: 'open' } };
+      filter = { Meeting_room: meetingRoom };
       update = { $set: { state: 'open', adminOpenAt: null } };
-      options.upsert = true;
+      options.upsert = false;
       break;
     case 'close':
-      filter = { Meeting_room: meetingRoom, state: { $in: ['adminopen', 'open'] } };
+      filter = { Meeting_room: meetingRoom };
       update = { $set: { state: 'close', adminOpenAt: null } };
       break;
   }
@@ -145,6 +146,7 @@ async function initMqtt() {
       const floor = parseInt(floorStr, 10);
       const room = parseInt(roomStr, 10);
       queueRoomAction(`${floor}-${room}`, () => updateRoomState(status, floor, room));
+      
       return;
     }
 

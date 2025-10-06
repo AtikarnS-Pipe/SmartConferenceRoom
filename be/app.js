@@ -29,8 +29,6 @@ app.use(cors({
 app.use(express.json()); // เเปลง http body เป็น json
 app.use(cookieParser());
 
-monitorToken(); // เริ่ม monitor token loop
-
 app.use("/api1/admin", Adminrouter);
 app.use("/api2/user", Userrouter);
 app.use("/api1/account", Accountrouter);
@@ -53,18 +51,21 @@ async function startServer() {
     await connectToDatabase();
     console.log('✅ Database connected');
 
-    // 2. set ค่า default state ห้องที่มีจอ for mqtt state
+    // 2.เริ่ม monitor token หลังจาก DB พร้อมแล้วเท่านั้น
+    monitorToken(); // เริ่ม monitor token loop
+
+    // 3. set ค่า default state ห้องที่มีจอ for mqtt state
     await seedMqttRooms();
     console.log('✅ MQTT Rooms seeded');
 
-    // 3. เริ่ม MQTT connection
+    // 4. เริ่ม MQTT connection
     if (process.env.OPEN_MQTT === "true") {
       await initMqtt(); // connect mqtt + door control (topic cmd)
       await initLogger(); // attach logger subscriber of mqtt (topic rssi)
       console.log('✅ MQTT initialized');
     }
 
-    // 4. เริ่ม HTTP Server
+    // 5. เริ่ม HTTP Server
     app.listen(process.env.PORT, () => {
       console.log(`✅ Server running on port ${process.env.PORT}`);
     });
