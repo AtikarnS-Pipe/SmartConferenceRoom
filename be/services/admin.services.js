@@ -346,7 +346,7 @@ async function deleteEventByAdminService(eventId, room_number, AccessToken) {
         };
     }
 
-    return { success: true, status: 200, message: "Event deleted by admin successfully" };
+    return { success: true, status: 200, eventRecord, message: "Event deleted by admin successfully" };
 }
 
 module.exports = {

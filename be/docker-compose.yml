@@ -1,8 +1,6 @@
 services:
   mongo:
     image: mongo:7
-    build:
-      context: .
     container_name: mongo
     restart: always
     ports:
