@@ -34,7 +34,7 @@ import Header from "../Header";
 function Log() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedLevel, setSelectedLevel] = useState("all");
-  const [selectedSource, setSelectedSource] = useState("all");
+  const [selectedRole, setSelectedRole] = useState("all");
   const [logs, setLogs] = useState([]);
   const [show, setShow] = useState(false);
   const [statusPopup, setStatusPopup] = useState(null);
@@ -70,6 +70,8 @@ function Log() {
 
         if (Array.isArray(data)) {
           setLogs(data);
+          // Debug: แสดง role ที่ได้จาก backend
+          console.log("Roles from backend:", [...new Set(data.map(log => log.role).filter(Boolean))]);
         } else {
           console.warn("Unexpected data format:", data);
         }
@@ -114,47 +116,59 @@ function Log() {
   };
 
   const filteredLogs = logs.filter((log) => {
-    const message = log.message || log.Details || "";
-    const source = log.source || log.role || "";
-    const level = log.level || log.L_status || "";
-    const id = log.user_Id ? log.user_Id.toString() : ""; // แปลง ObjectId เป็น string
-    const timestamp = formatTimestamp(log.L_createdAt || log.timestamp); // เพิ่ม timestamp สำหรับ search
+    const message = log.message || log.detail || "";
+    const role = log.role || "";
+    const level = log.level || log.status || "";
+    const id = log._id ? log._id.toString() : ""; // แปลง ObjectId เป็น string
+    const timestamp = formatTimestamp(log.timestamp || log.L_createdAt); // เพิ่ม timestamp สำหรับ search
 
     const matchesSearch =
       message.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      source.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      role.toLowerCase().includes(searchTerm.toLowerCase()) ||
       id.includes(searchTerm) ||
       timestamp.toLowerCase().includes(searchTerm.toLowerCase()); // เพิ่มการ search timestamp
 
     const matchesLevel = selectedLevel === "all" || level === selectedLevel;
-    const matchesSource = selectedSource === "all" || source === selectedSource;
+    // ทำให้ filter role เป็น exact match และ case sensitive
+    const matchesRole = selectedRole === "all" || role === selectedRole;
 
-    return matchesSearch && matchesLevel && matchesSource;
+    return matchesSearch && matchesLevel && matchesRole;
   });
 
   // Sort filteredLogs by timestamp (latest first) before paginating
   const sortedFilteredLogs = [...filteredLogs].sort(
     (a, b) =>
-      new Date(b.L_createdAt || b.timestamp) -
-      new Date(a.L_createdAt || a.timestamp)
+      new Date(b.timestamp || b.L_createdAt) -
+      new Date(a.timestamp || a.L_createdAt)
   );
 
-  const totalPages = Math.ceil(filteredLogs.length / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(sortedFilteredLogs.length / ITEMS_PER_PAGE);
 
   const paginatedLogs = sortedFilteredLogs.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
   );
 
-  const sortedLogs = [...paginatedLogs].sort(
-    (a, b) =>
-      new Date(b.L_createdAt || b.timestamp) -
-      new Date(a.L_createdAt || a.timestamp)
+  const uniqueRoles = Array.from(
+    new Set(logs.map((log) => log.role).filter(Boolean))
   );
 
-  const uniqueSources = Array.from(
-    new Set(logs.map((log) => log.source || log.role).filter(Boolean))
-  );
+  // Debug: แสดงข้อมูล logs ตัวอย่างเพื่อดู structure
+  useEffect(() => {
+    if (logs.length > 0) {
+      console.log("Sample log:", logs[0]);
+      console.log("All unique roles found:", uniqueRoles);
+      console.log("Selected role:", selectedRole);
+      console.log("Filtered logs count:", filteredLogs.length);
+      
+      // เช็ค duplicate _id
+      const ids = logs.map(log => log._id);
+      const duplicateIds = ids.filter((id, index) => ids.indexOf(id) !== index);
+      if (duplicateIds.length > 0) {
+        console.warn("Duplicate IDs found:", duplicateIds);
+      }
+    }
+  }, [logs, uniqueRoles, selectedRole, filteredLogs.length]);
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -355,9 +369,9 @@ function Log() {
                       }`}
                     />
                     <select
-                      value={selectedSource}
+                      value={selectedRole}
                       onChange={(e) => {
-                        setSelectedSource(e.target.value); // เปลี่ยน filter
+                        setSelectedRole(e.target.value); // เปลี่ยน filter
                         setCurrentPage(1); // รีเซ็ตกลับหน้า 1
                       }}
                       className={`pl-10 pr-8 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 appearance-none min-w-full ${
@@ -367,22 +381,22 @@ function Log() {
                       }`}
                     >
                       <option value="all">Filter Role</option>
-                      {uniqueSources.map((source) => (
-                        <option key={source} value={source}>
-                          {source}
+                      {uniqueRoles.map((role) => (
+                        <option key={role} value={role}>
+                          {role}
                         </option>
                       ))}
                     </select>
                   </div>
                   <RefreshButton
                     onClick={() => {
-                      setSelectedSource("all");
+                      setSelectedRole("all");
                       setSearchTerm("");
                       setCurrentPage(1);
                     }}
-                    disabled={selectedSource === "all" && searchTerm === ""}
+                    disabled={selectedRole === "all" && searchTerm === ""}
                     className={`px-7 py-2 border rounded-lg transition-colors duration-300 ${
-                      selectedSource === "all" && searchTerm === ""
+                      selectedRole === "all" && searchTerm === ""
                         ? `cursor-not-allowed ${
                             darkMode
                               ? "bg-gray-600 border-gray-500 text-gray-400"
@@ -405,7 +419,7 @@ function Log() {
                       darkMode ? "bg-gray-600" : "bg-black"
                     }`}
                   >
-                    Total Logs : {filteredLogs.length}
+                    Total Logs : {sortedFilteredLogs.length}
                   </div>
                 </div>
               </div>
@@ -477,7 +491,7 @@ function Log() {
                   ) : (
                     paginatedLogs.map((log, index) => (
                       <tr
-                        key={log._id || index}
+                        key={`${log._id}-${index}-${currentPage}`}
                         className={darkMode ? "border-gray-700" : ""}
                       >
                         <td
@@ -485,35 +499,35 @@ function Log() {
                             darkMode ? "text-gray-300" : "text-gray-800"
                           }`}
                         >
-                          {log.L_status || log.level || "N/A"}
+                          {log.status || log.level || "N/A"}
                         </td>
                         <td
                           className={`px-6 py-4 text-sm ${
                             darkMode ? "text-gray-400" : "text-gray-600"
                           }`}
                         >
-                          {formatTimestamp(log.L_createdAt || log.timestamp)}
+                          {formatTimestamp(log.timestamp || log.L_createdAt)}
                         </td>
                         <td
                           className={`px-6 py-4 text-sm capitalize ${
                             darkMode ? "text-gray-400" : "text-gray-600"
                           }`}
                         >
-                          {log.role || log.source || "N/A"}
+                          {log.role || "N/A"}
                         </td>
                         <td
                           className={`px-6 py-4 text-sm ${
                             darkMode ? "text-gray-400" : "text-gray-600"
                           }`}
                         >
-                          {log.Details || log.message || "N/A"}
+                          {log.detail || log.message || "N/A"}
                         </td>
                         <td
                           className={`px-6 py-4 text-sm ${
                             darkMode ? "text-gray-400" : "text-gray-600"
                           }`}
                         >
-                          {log.user_Id || log.userId || "N/A"}
+                          {log._id || log.userId || "N/A"}
                         </td>
                       </tr>
                     ))
