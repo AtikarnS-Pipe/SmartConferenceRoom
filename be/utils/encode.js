@@ -1,6 +1,6 @@
 const crypto = require('crypto');
-const { config } = require('dotenv');
-require('dotenv').config({path:"../config/.env"})
+// const { config } = require('dotenv');
+require('dotenv').config({path:"./config/.env"})
 const ENCRYPTION_KEY = Buffer.from(process.env.ENCRYPTION_KEY, 'base64'); // node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
 const IV_LENGTH = 12; 
 

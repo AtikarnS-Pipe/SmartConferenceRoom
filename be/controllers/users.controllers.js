@@ -1,9 +1,12 @@
+// Database
 const { MqttState } = require("../models/MqttState");
+const bookingkey = require("../models/bookingkey");
+
 const { compareKey, adminCompareKey } = require('../services/pin.services');
 require('dotenv').config({ path: './config/.env' });
 const tokenCache = require("../utils/tokenCache");
 const { sendMQTTMessage } = require("../services/mqtt/SendMQTT");
-const { getuserdatabyroom, waitUntil } = require('../services/users.services');
+const { getuserdatabyroom, waitUntil, endMeetingService } = require('../services/users.services');
 // crud microsoft
 const { GeteventId, createMSEvent } = require('../services/users.services');
 const getGraphClient = require("../utils/graph");
@@ -12,7 +15,6 @@ const { getInterval, setIntervalMs } = require("../utils/pollingService");
 
 
 // create ms room
-const bookingkey = require('../models/bookingkey')
 
 //end meeting ms
 // const { GetTimeAPI } = require('../utils/getTodaydatetime');
@@ -78,17 +80,6 @@ const keyPins = async (req, res) => {
         }
 
         const isOpen = await sendMQTTMessage(process.env.MQTT_TOPIC_CMD, `open_${floor}>${room}`);
-        const isUpdated = await MqttState.findOneAndUpdate(
-            { Meeting_room: room_number },   // หา record ตามห้อง
-            { $set: { state: "open", adminOpenAt: null } },     // อัพเดต state = open และลบ adminOpenAt
-            { new: true, upsert: true }      // upsert กันพลาด ถ้าไม่เจอให้สร้าง
-        );
-
-        console.log("MQTT message sent:", isOpen);
-        if (!isUpdated) {
-            console.error("Failed to update MQTT state");
-            return res.status(500).json({ error: "Failed to update MQTT state" });
-        }
         if (!isOpen.success) {
             console.error(`Failed to send MQTT message: ${isOpen.error}`);
             return res.status(500).json({ error: "Failed to send MQTT message" });
@@ -131,17 +122,6 @@ const adminKeyPin = async (req, res) => {
         console.log("Admin pin valid, sending MQTT command to open door");
 
         const isOpen = await sendMQTTMessage(process.env.MQTT_TOPIC_CMD, `adminopen_${floor}>${room}`);
-        const isUpdated = await MqttState.findOneAndUpdate(
-            { Meeting_room: room_number, state: { $ne: "open" } }, // หา record ตามห้อง
-            { $set: { state: "adminopen", adminOpenAt: new Date() } },  // อัพเดต state = adminopen และตั้งเวลา
-            { new: true, upsert: true }       // upsert กันพลาด ถ้าไม่เจอให้สร้าง
-        );
-
-        console.log("MQTT message sent:", isOpen);
-        if (!isUpdated) {
-            console.error("Failed to update MQTT state");
-            return res.status(500).json({ error: "Failed to update MQTT state" });
-        }
         if (!isOpen.success) {
             console.error(`Failed to send MQTT message: ${isOpen.error}`);
             return res.status(500).json({ error: "Failed to send MQTT message" });
@@ -304,68 +284,22 @@ const createsearchpin = async (req, res) => {
 
 const endmeeting = async (req, res) => {
     try {
-        const { endmeetingdata } = req.body; // endmeetingdata = {eventId, startdatetime, isAllDay}
-        const enddate = new Date(); // await GetTimeAPI('UTC');
-        const newenddate = new Date(enddate);
-
-        const AccessToken = tokenCache.getAccessToken();
-        let startDateTime;
-        if (endmeetingdata.isAllDay) {
-            // Parse วันที่จาก startdatetime มาเป็นปี/เดือน/วัน
-            const date = new Date(endmeetingdata.startdatetime);
-            const year = date.getUTCFullYear();
-            const month = date.getUTCMonth();      // zero‑based
-            const day = date.getUTCDate();
-
-            // สร้าง timestamp ของ 00:00 UTC
-            const utcMidnight = Date.UTC(year, month, day);
-            // บวก 1 ชั่วโมง (1 * 60 * 60 * 1000 ms)
-            const oneHourMs = 1 * 60 * 60 * 1000;
-            const dt = new Date(utcMidnight + oneHourMs);
-
-            // toISOString() จะคืนแบบ "...Z" เราเลย .replace เพื่อได้ ".0000000"``
-            startDateTime = dt.toISOString()           // e.g. "2025-07-21T18:00:00.000Z"
-        } else {
-            startDateTime = new Date(endmeetingdata.startdatetime).toISOString()
-        }
-        await getGraphClient(AccessToken)
-            .api(`/me/events/${endmeetingdata.eventId}`)
-            .update({
-                // subject: Meeting in Room ${endmeetingdata.RoomNumber} has end,
-                isAllDay: false,
-                start: {
-                    dateTime: startDateTime,
-                    timeZone: "UTC"
-                },
-                end: {
-                    dateTime: newenddate.toISOString(),
-                    timeZone: "UTC"
-                },
-            })
-        console.log("Update event success");
-
-        // const floor = parseInt(endmeetingdata.room_number.slice(0, 2), 10);
-        // const room = parseInt(endmeetingdata.room_number.slice(2, 4), 10);
-        // console.log("Room for close door:", room);
-        // const isClosed = await sendMQTTMessage(process.env.MQTT_TOPIC_CMD, `close_${floor}>${room}`);
-        // const isUpdated = await MqttState.findOneAndUpdate(
-        //     { Meeting_room: endmeetingdata.room_number }, // หา record ตามห้อง
-        //     { $set: { state: "close" } },     // อัพเดต state = open
-        //     { new: true, upsert: true }      // upsert กันพลาด ถ้าไม่เจอให้สร้าง
-        // );
-        // if (!isUpdated) {
-        //     console.error("Failed to update MQTT state");
-        //     return res.status(500).json({ error: "Failed to update MQTT state" });
-        // }
-        // console.log(`MQTT message sent: ${isClosed}`);
-        // if(!isClosed.success) throw new Error(isClosed.error);
-
-        res.status(200).json({ message: "Update event successfully" });
+      const { endmeetingdata } = req.body;
+  
+      const result = await endMeetingService(endmeetingdata);
+  
+      if (!result.dbUpdated) {
+        console.warn(`Event ID ${endmeetingdata.eventId} not found in bookingkey`);
+      }
+  
+      console.log(`End meeting success for ${endmeetingdata.eventId}`);
+      res.status(200).json({ message: "Update event successfully" });
+  
     } catch (error) {
-        console.error("Error in endtask:", error);
-        res.status(500).json({ error: "Failed to end task" });
+      console.error("Error in endmeeting:", error);
+      res.status(500).json({ error: "Failed to end meeting" });
     }
-}
+};
 
 const closedoor = async (req, res) => {
     const { room_number } = req.body;
@@ -375,17 +309,6 @@ const closedoor = async (req, res) => {
     console.log("Room for close door:", room);
     try {
         const isClosed = await sendMQTTMessage(process.env.MQTT_TOPIC_CMD, `close_${floor}>${room}`);
-        const isUpdated = await MqttState.findOneAndUpdate(
-            { Meeting_room: room_number },          // หา record ตามห้อง
-            { $set: { state: "close" } },     // อัพเดต state = close
-            { new: true, upsert: true }      // upsert กันพลาด ถ้าไม่เจอให้สร้าง
-        );
-
-        if (!isUpdated) {
-            console.error("Failed to update MQTT state");
-            return res.status(500).json({ error: "Failed to update MQTT state" });
-        }
-        console.log(`MQTT message sent: ${isClosed}`);
         if (!isClosed.success) throw new Error(isClosed.error);
         return res.status(200).json({ success: true, message: `Door for room ${room_number} closed successfully` });
     } catch (error) {
