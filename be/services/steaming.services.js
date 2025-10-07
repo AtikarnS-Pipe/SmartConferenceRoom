@@ -70,14 +70,14 @@ async function LogsFromDB(res) {
                       {
                         $dateToString: {
                           format: "%Y-%m-%d %H:%M:%S",
-                          date: "$startDateTime"
+                          date: { $add: ["$startDateTime", 7 * 60 * 60 * 1000] }
                         }
                       },
                       " - ",
                       {
                         $dateToString: {
                           format: "%Y-%m-%d %H:%M:%S",
-                          date: "$endDateTime"
+                          date: { $add: ["$endDateTime", 7 * 60 * 60 * 1000] }
                         }
                       },
                       ")"
@@ -115,14 +115,14 @@ async function LogsFromDB(res) {
                       {
                         $dateToString: {
                           format: "%Y-%m-%d %H:%M:%S",
-                          date: "$startDateTime"
+                          date: { $add: ["$startDateTime", 7 * 60 * 60 * 1000] }
                         }
                       },
                       " - ",
                       {
                         $dateToString: {
                           format: "%Y-%m-%d %H:%M:%S",
-                          date: "$endmeetingAt"
+                          date: { $add: ["$endmeetingAt", 7 * 60 * 60 * 1000] }
                         }
                       },
                       ")"

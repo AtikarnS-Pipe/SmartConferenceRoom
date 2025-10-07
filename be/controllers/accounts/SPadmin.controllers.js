@@ -53,7 +53,7 @@ const createadmin = async (req, res) => {
         user_Id: existingDeactivatedAdmin._id,
         L_status: 'Admin was deleted',
         role: 'Admin',
-        Details: `Old Admin name: ${existingDeactivatedAdmin.name}, email: ${existingDeactivatedAdmin.email} - Replaced by new Admin`,
+        Details: `Admin name: ${ThisAdmin.name}`,
         L_createdAt: new Date(),
       };
       await AddLogmonitoring(deleteLogData);
