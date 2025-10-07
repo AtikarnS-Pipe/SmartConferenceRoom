@@ -11,42 +11,42 @@ const { AddLogmonitoring } = require('../../utils/AddLogmonitoring');
 const isDebug = (process.env.DEBUG_MODE || "true") === "true";
 
 const Auth = async (req, res) => { // admin sign-in
-    console.log(`${req.ip} ${req.method} ${req.originalUrl}`)
-    const { email, password } = req.body;
-    if(isDebug) console.log("ready to auth", email, password);
-    try{
-      const user = await User.findOne({}, 'email role name');
+  console.log(`${req.ip} ${req.method} ${req.originalUrl}`)
+  const { email, password } = req.body;
+  if (isDebug) console.log("ready to auth", email, password);
+  try {
+    const user = await User.findOne({ email, role: { $in: ['Admin', 'Superadmin'] } });
 
-      if(!user){
-        console.log("[Login] User not found:", email);
-        return res.status(404).json({error: "User not found"});
-      } 
-      const isMatch = await bcrypt.compare(password, user.password);
-      if(!isMatch){
-        console.log("Invalid credentials");
-        return res.status(400).json({error: "Invalid credentials"});
-      } 
-
-      user.login_status = 'online';
-      await user.save();
-      // รับ userId:user._id
-      const token = refreshalltoken(req, res, user._id);
-
-      // logsmonitoring function
-      const datalogs = {  
-        user_Id: user._id, 
-        L_status: 'Admin Logged in', 
-        role: user.role, 
-        Details: `Admin name: ${user.name}`, 
-        L_createdAt: new Date() //await GetTimeAPI('Asia/Bangkok'),
-      };
-      const log = await AddLogmonitoring(datalogs);
-
-      res.json({token, name: user.name, pin: user.pin, role: user.role})
-    } catch (error) {
-      console.error("Authentication error:", error);
-      res.status(500).json({ error: 'Internal server error' });
+    if (!user) {
+      console.log("[Login] User not found:", email);
+      return res.status(404).json({ error: "User not found" });
     }
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      console.log("Invalid credentials");
+      return res.status(400).json({ error: "Invalid credentials" });
+    }
+
+    user.login_status = 'online';
+    await user.save();
+    // รับ userId:user._id
+    const token = refreshalltoken(req, res, user._id);
+
+    // logsmonitoring function
+    const datalogs = {
+      user_Id: user._id,
+      L_status: 'Admin Logged in',
+      role: user.role,
+      Details: `Admin name: ${user.name}`,
+      L_createdAt: new Date() //await GetTimeAPI('Asia/Bangkok'),
+    };
+    const log = await AddLogmonitoring(datalogs);
+
+    res.json({ token, name: user.name, pin: user.pin, role: user.role })
+  } catch (error) {
+    console.error("Authentication error:", error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 }
 
 // รับ newpw จาก body //ไม่ส่ง oldpw มาละ
@@ -88,65 +88,65 @@ const ChangeAdminPin = async (req, res) => {
 };
 
 
-const Createhousekeeper = async (req, res) => { 
-    const admin = req.user; // จาก authorize middleware
-    if (admin.role !== 'Admin' && admin.role !== 'Superadmin') {
-        return res.status(403).json({ message: 'Only admin can create housekeeper, Please login to get this access' });
-    }
-    const { name, pin } = req.body;
-    const checkpin = await User.findOne({  // ถ้ามี name or pin สักอันที่ตรง
-      role: { $ne: 'Deactivate' },
-      $or : [
-        { pin }, {name}
-      ]
-     });
-    if (checkpin) {
-      const duplicatefield = [];
-       let message = 'No duplicate';
-      if (checkpin.pin === pin) duplicatefield.push('pin');
-      if (checkpin.name === name) duplicatefield.push('name'); 
-      duplicatefield.length === 1 ? message = `This ${duplicatefield[0]} is exists, Please use a different one.` : message;
-      duplicatefield.length > 1 ? message = `These ${duplicatefield.join('and')} are exists, Please use a different one.`  : message;
-      return res.status(400).json({ message });
-    }
+const Createhousekeeper = async (req, res) => {
+  const admin = req.user; // จาก authorize middleware
+  if (admin.role !== 'Admin' && admin.role !== 'Superadmin') {
+    return res.status(403).json({ message: 'Only admin can create housekeeper, Please login to get this access' });
+  }
+  const { name, pin } = req.body;
+  const checkpin = await User.findOne({  // ถ้ามี name or pin สักอันที่ตรง
+    role: { $ne: 'Deactivate' },
+    $or: [
+      { pin }, { name }
+    ]
+  });
+  if (checkpin) {
+    const duplicatefield = [];
+    let message = 'No duplicate';
+    if (checkpin.pin === pin) duplicatefield.push('pin');
+    if (checkpin.name === name) duplicatefield.push('name');
+    duplicatefield.length === 1 ? message = `This ${duplicatefield[0]} is exists, Please use a different one.` : message;
+    duplicatefield.length > 1 ? message = `These ${duplicatefield.join('and')} are exists, Please use a different one.` : message;
+    return res.status(400).json({ message });
+  }
 
-    const newHousekeeper = await User.create({
-        name,
-        pin,
-        role: 'Housekeeper',
-        createdBy: admin._id,
-        login_status: 'no permission'  
-    })
-    // logsmonitoring function
-    const datalogs = {  
-      user_Id: newHousekeeper._id, 
-      L_status: 'Housekeeper was created', 
-      role: newHousekeeper.role, 
-      Details: `Housekeeper name: ${newHousekeeper.name}`, 
-      L_createdAt: new Date() //await GetTimeAPI('Asia/Bangkok'),
-    };
-    const log = await AddLogmonitoring(datalogs);
-    res.status(201).json({
-        success: true,
-        message: 'Housekeeper created successfully',
-        data: newHousekeeper
-    })
+  const newHousekeeper = await User.create({
+    name,
+    pin,
+    role: 'Housekeeper',
+    createdBy: admin._id,
+    login_status: 'no permission'
+  })
+  // logsmonitoring function
+  const datalogs = {
+    user_Id: newHousekeeper._id,
+    L_status: 'Housekeeper was created',
+    role: newHousekeeper.role,
+    Details: `Housekeeper name: ${newHousekeeper.name}`,
+    L_createdAt: new Date() //await GetTimeAPI('Asia/Bangkok'),
+  };
+  const log = await AddLogmonitoring(datalogs);
+  res.status(201).json({
+    success: true,
+    message: 'Housekeeper created successfully',
+    data: newHousekeeper
+  })
 }
 
 const signout = async (req, res) => {
   const user = req.user; // จาก authorize middleware
   if (user.role !== 'Admin' && user.role !== 'Superadmin') {
-    if(isDebug) console.log("Only admin can sign out");
+    if (isDebug) console.log("Only admin can sign out");
     return res.status(403).json({ message: 'Only admin can sign out' });
   }
   user.login_status = 'offline';
   await user.save();
   // logsmonitoring function
-  const datalogs = {  
-    user_Id: user._id, 
-    L_status: 'Admin Logged out', 
-    role: user.role, 
-    Details: `Admin name: ${user.name}`, 
+  const datalogs = {
+    user_Id: user._id,
+    L_status: 'Admin Logged out',
+    role: user.role,
+    Details: `Admin name: ${user.name}`,
     L_createdAt: new Date(), //await GetTimeAPI('Asia/Bangkok'),
   };
   const log = await AddLogmonitoring(datalogs);
@@ -156,25 +156,25 @@ const signout = async (req, res) => {
 
 //ส่ง name เเม่บ้าน, password ของ admin ที่ลบมาเพื่อลบข้อมูล
 const deletehousekeeper = async (req, res) => {
-  try{
+  try {
     const admin = req.user;
     const { id } = req.body;
     if (admin.role !== 'Admin' && admin.role !== 'Superadmin') return res.status(403).json({ message: 'Only admin can delete housekeeper' });
     if (!id) return res.status(400).json({ message: `Housekeeper ID is required` });
     // const isAdminpw = await bcrypt.compare(password, adminDB.password)
     const ThisHousekeeper = await User.findOneAndUpdate(
-      { _id: id, role: 'Housekeeper'},
+      { _id: id, role: 'Housekeeper' },
       { role: 'Deactivate' }, // not use, log in db     
-      { new: true } 
+      { new: true }
     );
     if (!ThisHousekeeper) return res.status(404).json({ message: 'Housekeeper is not found in Documents' });
 
     // logsmonitoring function
-    const datalogs = {  
-      user_Id: ThisHousekeeper._id, 
-      L_status: 'Housekeeper was deleted', 
-      role: 'Housekeeper', 
-      Details: `Housekeeper name: ${ThisHousekeeper.name}`, 
+    const datalogs = {
+      user_Id: ThisHousekeeper._id,
+      L_status: 'Housekeeper was deleted',
+      role: 'Housekeeper',
+      Details: `Housekeeper name: ${ThisHousekeeper.name}`,
       L_createdAt: new Date(), //await GetTimeAPI('Asia/Bangkok'),
     };
     const log = await AddLogmonitoring(datalogs);
@@ -188,7 +188,7 @@ const deletehousekeeper = async (req, res) => {
 
 // รับ name เเม่บ้าน, newpassword  ที่จะเปลี่ยนมาเพื่อ เเก้ไข pin
 const editpinhousekeeper = async (req, res) => {
-  try{
+  try {
     const admin = req.user;
     const { name, newpin } = req.body;
     if (admin.role !== 'Admin' && admin.role !== 'Superadmin') return res.status(403).json({ message: 'Only admin can edit pin housekeeper.' });
@@ -212,11 +212,11 @@ const editpinhousekeeper = async (req, res) => {
     await ThisHousekeeper.save();
 
     // logsmonitoring function
-    const datalogs = {  
-      user_Id: ThisHousekeeper._id, 
-      L_status: 'Housekeeper was changed pin', 
-      role: ThisHousekeeper.role, 
-      Details: `Housekeeper name: ${ThisHousekeeper.name}`, 
+    const datalogs = {
+      user_Id: ThisHousekeeper._id,
+      L_status: 'Housekeeper was changed pin',
+      role: ThisHousekeeper.role,
+      Details: `Housekeeper name: ${ThisHousekeeper.name}`,
       L_createdAt: new Date(), //await GetTimeAPI('Asia/Bangkok'),
     };
     const log = await AddLogmonitoring(datalogs);
@@ -237,9 +237,9 @@ const sendEmailOTP = async (req, res) => {
 
     if (!result.success) {
       return res.status(200).json({ message: `If the email exists in our system, an OTP has been sent.` });
-    } 
+    }
     return res.status(200).json({ message: `If the email exists in our system, an OTP has been sent.` });
-  } 
+  }
   catch (err) {
     console.log(`${err.message}`);
     return res.status(500).json({ message: err.message });
@@ -257,7 +257,7 @@ const verifyEmailOTP = async (req, res) => {
       console.log(result.message);
       return res.status(200).json({ message: `Your OTP is invalid.` });
     }
-    return res.status(200).json({ message: `Your OTP has been verified. `, reset_token: result.token});
+    return res.status(200).json({ message: `Your OTP has been verified. `, reset_token: result.token });
   }
   catch (err) {
     console.log(err.message);
@@ -272,9 +272,9 @@ const resetEmailPassword = async (req, res) => {
     console.log(`${req.method} ${req.originalUrl}`);
     const result = await resetPassword(reset_token, new_password);
 
-    if(!result.success) {
+    if (!result.success) {
       console.log(result.message);
-      return res.status(200).json({ message: "Failed to change password."});
+      return res.status(200).json({ message: "Failed to change password." });
     }
     return res.status(200).json({ message: result.message });
   }
@@ -297,16 +297,16 @@ const profile = async (req, res) => {
       role: user.role,
       pin: user.pin
     })
-  }catch (error) {
+  } catch (error) {
     console.error("Profile error:", error);
     return res.status(500).json({ error: 'Internal server error' });
   }
 }
 
-module.exports = { 
+module.exports = {
   Auth,
   Createhousekeeper,
-  signout, 
+  signout,
   ChangeAdminPin,
   deletehousekeeper,
   editpinhousekeeper,
