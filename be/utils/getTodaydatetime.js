@@ -8,37 +8,36 @@ let dailyCache = {
 };
 
 async function getTodaydatetime() {
-    // HARD CODE for UTC time for Microsoft Graph API
-    const tzOffset = 7 * 60; // Thailand UTC+7 (minutes)
-    const gettime = new Date();  //await GetTimeAPICache('Asia/Bangkok');
-    const now = new Date(gettime);
+  // HARD CODE for UTC time for Microsoft Graph API
+  const tzOffset = 7 * 60; // Thailand UTC+7 (minutes)
+  const gettime = new Date();  //await GetTimeAPICache('Asia/Bangkok');
+  const now = new Date(gettime);
 
-    const thYear = now.getFullYear();
-    const thMonth = now.getMonth();
-    const thDate = now.getDate();
-    const thHour = now.getHours();
-    console.log(`${now.toISOString()} Today's in Thailand: ${thYear}-${thMonth + 1}-${thDate} Hour: ${thHour}`);
+  const thYear = now.getFullYear();
+  const thMonth = now.getMonth();
+  const thDate = now.getDate();
+  const thHour = now.getHours();
+  // console.log(`${now.toISOString()} Today's in Thailand: ${thYear}-${thMonth + 1}-${thDate} Hour: ${thHour}`);
 
-    // lost time for 1 ms
-    // Start of today in Thailand (00:00)
-    let startTH = new Date(Date.UTC(thYear, thMonth, thDate, 0, 0, 0, 1) - tzOffset * 60 * 1000);
-    // End of today in Thailand (23:59)
-    let endTH = new Date(Date.UTC(thYear, thMonth, thDate, 23, 59, 59, 999) - tzOffset * 60 * 1000);
-    
-    // ถ้ายังไม่ถึง 07:00 ไทย จะขยับวันเป็นปัจจุบัน
-    // if (thHour < 7) {
-    //     startTH = new Date(startTH.getTime() + 24 * 60 * 60 * 1000);
-    //     endTH = new Date(endTH.getTime() + 24 * 60 * 60 * 1000);
-    // }
+  // lost time for 1 ms
+  // Start of today in Thailand (00:00)
+  let startTH = new Date(Date.UTC(thYear, thMonth, thDate, 0, 0, 0, 1) - tzOffset * 60 * 1000);
+  // End of today in Thailand (23:59)
+  let endTH = new Date(Date.UTC(thYear, thMonth, thDate, 23, 59, 59, 999) - tzOffset * 60 * 1000);
 
-    const startDateTime = startTH.toISOString();
-    const endDateTime = endTH.toISOString();
-    console.log(`startDateTime (UTC): ${startDateTime} endDateTime (UTC): ${endDateTime}`);
+  // ถ้ายังไม่ถึง 07:00 ไทย จะขยับวันเป็นปัจจุบัน
+  // if (thHour < 7) {
+  //     startTH = new Date(startTH.getTime() + 24 * 60 * 60 * 1000);
+  //     endTH = new Date(endTH.getTime() + 24 * 60 * 60 * 1000);
+  // }
+
+  const startDateTime = startTH.toISOString();
+  const endDateTime = endTH.toISOString();
 
 
-    return {
-        startDateTime,endDateTime
-        }    
+  return {
+    startDateTime, endDateTime
+  }
 }
 
 
@@ -80,7 +79,7 @@ async function getTodaydatetime() {
 //             console.error("Error fetching time data:", error);
 //             throw new Error("Failed to fetch time data from API");
 //         }
-       
+
 //     }
 //     return timezone === "UTC" ? dailyCache.valueUTC : dailyCache.valueTH; // Date type
 // }
@@ -103,9 +102,9 @@ async function getTodaydatetime() {
 // }
 
 module.exports = {
-    getTodaydatetime,
-    // GetDateTimeTH,
-    // GetDateTimeUTC,
-    // GetTimeAPICache,
-    // GetTimeAPI
+  getTodaydatetime,
+  // GetDateTimeTH,
+  // GetDateTimeUTC,
+  // GetTimeAPICache,
+  // GetTimeAPI
 };

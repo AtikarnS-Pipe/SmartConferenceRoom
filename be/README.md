@@ -10,12 +10,12 @@
 ## 📋 สารบัญ
 
 - [🌟 ภาพรวมโครงการ](#-ภาพรวมโครงการ)
-- [🏗️ สถาปัตยกรรมระบบ](#️-สถาปัตยกรรมระบบ)
-- [🛠️ การติดตั้งแบบ Development](#️-การติดตั้งแบบ-development)
-- [🚀 การติดตั้งแบบ Production](#-การติดตั้งแบบ-production)
-- [🔧 การกำหนดค่า Environment](#-การกำหนดค่า-environment)
-- [📁 โครงสร้างโปรเจกต์](#-โครงสร้างโปรเจกต์)
-- [🔍 Troubleshooting](#-troubleshooting)
+- [🌟 สถาปัตยกรรมระบบ](#️-สถาปัตยกรรมระบบ)
+- [🌟 การติดตั้งแบบ Development](#️-การติดตั้งแบบ-development)
+- [🌟 การติดตั้งแบบ Production](#-การติดตั้งแบบ-production)
+- [🌟 การกำหนดค่า Environment](#-การกำหนดค่า-environment)
+- [🌟 โครงสร้างโปรเจกต์](#-โครงสร้างโปรเจกต์)
+- [🌟 Troubleshooting](#-troubleshooting)
 
 ## 🌟 ภาพรวมโครงการ
 
@@ -30,7 +30,7 @@ Smart Conference Display System เป็นระบบจัดการห้
 
 ![alt text](image.png)
 
-## 🏗️ สถาปัตยกรรมระบบ
+## 🌟 สถาปัตยกรรมระบบ
 
 ```mermaid
 graph TB
@@ -45,7 +45,7 @@ graph TB
 
 ---
 
-## 🛠️ การติดตั้งแบบ Development
+## 🌟 การติดตั้งแบบ Development
 
 ### 📦 ขั้นตอนที่ 1: เตรียมโปรเจกต์
 
@@ -88,7 +88,7 @@ chmod +x initial.sh
 - Windows: เปิดแอป Docker Desktop
 - macOS/Linux: `sudo systemctl start docker`
 
-**รัน Docker Compose**
+**รัน Docker Compose**<br>
 ตรวจสอบ .env ก่อนรัน
 
 ```bash
@@ -160,7 +160,7 @@ npm run dev
 
 ---
 
-## 🚀 การติดตั้งแบบ Production
+## 🌟 การติดตั้งแบบ Production
 
 ### 📦 ขั้นตอนที่ 1: เตรียมเซิร์ฟเวอร์
 
@@ -347,7 +347,7 @@ docker compose logs -f
 
 ---
 
-## 🔧 การกำหนดค่า Environment
+## 🌟 การกำหนดค่า Environment
 
 ### 🔑 ตัวแปรสำคัญ(มีผลกระทบต่อผู้ใช้งาน ถ้าตั้งค่าผิดพลาด)
 
@@ -388,7 +388,7 @@ EXECPT_ROOMS=1503,1504,1519,1520
 
 ---
 
-## 📁 โครงสร้างโปรเจกต์
+## 🌟 โครงสร้างโปรเจกต์
 
 Development
 
@@ -460,7 +460,7 @@ smart-conference-room/
 
 ---
 
-## 🔍 Troubleshooting
+## 🌟 Troubleshooting
 
 ### 🚨 ปัญหาที่พบบ่อย
 

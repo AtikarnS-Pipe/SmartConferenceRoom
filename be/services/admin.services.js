@@ -13,105 +13,103 @@ require('dotenv').config({ path: '../config/.env' });
 const RESET_SECRET = process.env.JWT_RESET_SECRET || "jwt-reset-secret";
 
 async function GetScheduleData(actoken, Room, start, end) {
-  try {
-    const tzOffset = 7 * 60; // Thailand UTC+7 (minutes)
-    const startYear = parseInt(start.slice(4, 8), 10);
-    const startMonth = parseInt(start.slice(2, 4), 10) - 1;
-    const startDay = parseInt(start.slice(0, 2), 10);
-    const endYear = parseInt(end.slice(4, 8), 10);
-    const endMonth = parseInt(end.slice(2, 4), 10) - 1;
-    const endDay = parseInt(end.slice(0, 2), 10);
+    try {
+        // if(!(Room in roomobject)){
+        //     throw new Error(`Invalid room number: ${Room}`)
+        // }
+        const tzOffset = 7 * 60; // Thailand UTC+7 (minutes)
+        const startYear = parseInt(start.slice(4, 8), 10);
+        const startMonth = parseInt(start.slice(2, 4), 10) - 1;
+        const startDay = parseInt(start.slice(0, 2), 10);
+        const endYear = parseInt(end.slice(4, 8), 10);
+        const endMonth = parseInt(end.slice(2, 4), 10) - 1;
+        const endDay = parseInt(end.slice(0, 2), 10);
 
-    const startTH = new Date(Date.UTC(startYear, startMonth, startDay, 0, 0, 0, 1) - tzOffset * 60 * 1000);
-    const endTH = new Date(Date.UTC(endYear, endMonth, endDay, 23, 59, 59, 999) - tzOffset * 60 * 1000);
+        const startTH = new Date(Date.UTC(startYear, startMonth, startDay, 0, 0, 0, 1) - tzOffset * 60 * 1000);
+        const endTH = new Date(Date.UTC(endYear, endMonth, endDay, 23, 59, 59, 999) - tzOffset * 60 * 1000);
 
-    const startDateTime = startTH.toISOString();
-    const endDateTime = endTH.toISOString();
+        const startDateTime = startTH.toISOString();
+        const endDateTime = endTH.toISOString();
 
-    if (process.env.DEBUG_MODE)
-      console.log("start query schedule(UTC):", startDateTime, endDateTime);
+        if (!actoken) throw new Error("No access token in schedule Page.");
 
-    if (!actoken) throw new Error("No access token in schedule Page.");
+        // 1. Query จาก Microsoft Graph API
+        const graphResponse = await getGraphClient(actoken)
+            .api(`https://graph.microsoft.com/v1.0/users/${Room}@tcc-technology.com/calendarView?`)
+            // .api(`https://graph.microsoft.com/v1.0/me/calendars/${roomobject[Room]}/calendarView?`)
+            .query({
+                startDateTime: startDateTime,
+                endDateTime: endDateTime,
+                "$orderby": "start/dateTime",
+                "$top": 100,
+                "$select": "id,organizer,subject,start,end,locations",
+                "$filter": "isCancelled eq false"
+            })
+            .get();
 
-    // 1. Query จาก Microsoft Graph API
-    const graphResponse = await getGraphClient(actoken)
-      .api(`https://graph.microsoft.com/v1.0/users/${Room}@tcc-technology.com/calendarView?`)
-      .query({
-        startDateTime: startDateTime,
-        endDateTime: endDateTime,
-        "$orderby": "start/dateTime",
-        "$top": 100,
-        "$select": "id,organizer,subject,start,end,locations",
-        "$filter": "isCancelled eq false"
-      })
-      .get();
-
-    if (!graphResponse || !graphResponse.value) {
-      throw new Error(`No value in graphResponse for room ${Room}: ${JSON.stringify(graphResponse)}`);
-    }
-
-    const graphEvents = graphResponse.value;
-
-    // 2. แก้ไข Query DB - ใช้เงื่อนไขที่ถูกต้อง
-    const bookingPins = await bookingKey.find({
-        room: Room,
-        startDateTime: { $lte: endDateTime }, // event เริ่มก่อนที่ช่วงจะจบ กำหนด over lap เพราะด้านบนกำหนดเสี้ยววิไว้
-        endDateTime: { $gte: startDateTime }  // และ event จบหลังที่ช่วงเริ่ม
-    }).select("eventId room organizerMail pin isPinVerified startDateTime endDateTime");
-    
-    console.log("📋 DB Query Result:", bookingPins.length, "records found");
-    console.log("admin booking pins =>", bookingPins);
-
-    // 3. normalize fn. ปรับรูปเเบบเวลาก่อนเปรียบเทียบ
-    const normalize = (dateStr) => {
-      if (typeof dateStr === 'string') {
-        // ตัด nanoseconds ออก แล้วแปลงเป็น Date
-        let cleanDateStr = dateStr.replace(/\.\d{7}/, '.000');
-        // เพิ่ม Z ถ้าไม่มี
-        if (!cleanDateStr.endsWith('Z')) {
-          cleanDateStr += 'Z';
+        if (!graphResponse || !graphResponse.value) {
+            throw new Error(`No value in graphResponse for room ${Room}: ${JSON.stringify(graphResponse)}`);
         }
-        return new Date(cleanDateStr).getTime();
-      }
-      return new Date(dateStr).getTime();
-    };
 
-    // 4. ปรับปรุงการ match - เพิ่มการเปรียบเทียบ eventId
-    const mergedResults = graphEvents.map(ev => {
-        const tolerance = 1000; // 1 วินาที = 1000 ms
+        const graphEvents = graphResponse.value;
 
-        const matched = bookingPins.find(p => {
-        const dbStart = normalize(p.startDateTime);
-        const dbEnd   = normalize(p.endDateTime);
-        const evStart = normalize(ev.start.dateTime + 'Z');
-        const evEnd   = normalize(ev.end.dateTime + 'Z');
+        // 2. แก้ไข Query DB - ใช้เงื่อนไขที่ถูกต้อง
+        const bookingPins = await bookingKey.find({
+            room: Room,
+            startDateTime: { $lte: endDateTime }, // event เริ่มก่อนที่ช่วงจะจบ กำหนด over lap เพราะด้านบนกำหนดเสี้ยววิไว้
+            endDateTime: { $gte: startDateTime }  // และ event จบหลังที่ช่วงเริ่ม
+        }).select("eventId room organizerMail pin isPinVerified startDateTime endDateTime");
 
-        // ✅ ตรงกันถ้าเวลาต่างกันไม่เกิน 1 วินาที
-        const startMatch = Math.abs(dbStart - evStart) <= tolerance;
-        const endMatch   = Math.abs(dbEnd - evEnd) <= tolerance;
+        // 3. normalize fn. ปรับรูปเเบบเวลาก่อนเปรียบเทียบ
+        const normalize = (dateStr) => {
+            if (typeof dateStr === 'string') {
+                // ตัด nanoseconds ออก แล้วแปลงเป็น Date
+                let cleanDateStr = dateStr.replace(/\.\d{7}/, '.000');
+                // เพิ่ม Z ถ้าไม่มี
+                if (!cleanDateStr.endsWith('Z')) {
+                    cleanDateStr += 'Z';
+                }
+                return new Date(cleanDateStr).getTime();
+            }
+            return new Date(dateStr).getTime();
+        };
 
-        return startMatch && endMatch;
+        // 4. ปรับปรุงการ match - เพิ่มการเปรียบเทียบ eventId
+        const mergedResults = graphEvents.map(ev => {
+            const tolerance = 1000; // 1 วินาที = 1000 ms
+
+            const matched = bookingPins.find(p => {
+                const dbStart = normalize(p.startDateTime);
+                const dbEnd = normalize(p.endDateTime);
+                const evStart = normalize(ev.start.dateTime + 'Z');
+                const evEnd = normalize(ev.end.dateTime + 'Z');
+
+                // ✅ ตรงกันถ้าเวลาต่างกันไม่เกิน 1 วินาที
+                const startMatch = Math.abs(dbStart - evStart) <= tolerance;
+                const endMatch = Math.abs(dbEnd - evEnd) <= tolerance;
+
+                return startMatch && endMatch;
+            });
+
+            return {
+                eventId: matched ? matched.eventId : "", // ev.id,
+                organizer: ev.organizer?.emailAddress?.address,
+                subject: ev.organizer?.emailAddress?.name,
+                start: ev.start.dateTime,
+                end: ev.end.dateTime,
+                room: Room,
+                pin: matched && matched.pin ? matched.pin : "",
+                isPinVerified: matched ? matched.isPinVerified : "",
+            };
         });
 
-        return {
-            eventId: matched ? matched.eventId : "" ,
-            organizer: ev.organizer?.emailAddress?.address,
-            subject: ev.organizer?.emailAddress?.name,
-            start: ev.start.dateTime,
-            end: ev.end.dateTime,
-            room: Room,
-            pin: matched && matched.pin ? matched.pin : "",
-            isPinVerified: matched ? matched.isPinVerified : "",
-        };
-    });
+        // console.log("admin schedule merged =>", mergedResults);
+        return mergedResults;
 
-    console.log("admin schedule merged =>", mergedResults);
-    return mergedResults;
-
-  } catch (error) {
-    console.error("error in GetScheduleData:", error);
-    return [];
-  }
+    } catch (error) {
+        console.error("error in GetScheduleData:", error);
+        return [];
+    }
 }
 
 async function sendscheduledata(req, res) {
@@ -199,7 +197,7 @@ async function fetchAllRoom(res, accessToken) {
         );
 
         console.log("admin GET API success!!");
-        
+
         // สร้าง JWT token สำหรับ authorized user
         const jwtPayload = {
             role: 'admin',
@@ -207,12 +205,12 @@ async function fetchAllRoom(res, accessToken) {
             iat: Math.floor(Date.now() / 1000),
             exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60) // expire ใน 24 ชั่วโมง
         };
-        
+
         const jwtToken = jwt.sign(jwtPayload, process.env.JWT_SECRET || 'fallback-secret');
         // console.log("🔑 Created JWT token for authorized user");
-        
-        res.write(`data: ${JSON.stringify({ 
-            results, 
+
+        res.write(`data: ${JSON.stringify({
+            results,
             token: jwtToken,
             role: 'admin'
         })}\n\n`);
@@ -326,6 +324,31 @@ async function resetPassword(resetToken, newPassword) {
     }
 }
 
+async function deleteEventByAdminService(eventId, room_number, AccessToken) {
+    // ลบจาก DB พร้อมคืนค่า document
+    const eventRecord = await bookingKey.findOneAndDelete({ eventId, room: room_number });
+
+    if (!eventRecord) {
+        return { success: false, status: 404, message: "Event not found in DB" };
+    }
+
+    // ลบจาก Graph API
+    try {
+        await getGraphClient(AccessToken)
+            .api(`/me/events/${eventId}`)
+            .delete();
+    } catch (graphErr) {
+        console.error("Graph API deletion failed:", graphErr);
+        return {
+            success: false,
+            status: 502,
+            message: "Deleted from DB but failed to delete from Microsoft Graph"
+        };
+    }
+
+    return { success: true, status: 200, eventRecord, message: "Event deleted by admin successfully" };
+}
+
 module.exports = {
     GetScheduleData,
     addCacheandDB,
@@ -334,6 +357,7 @@ module.exports = {
     sendOTP,
     verifyOTP,
     resetPassword,
-    getUserProfile
+    getUserProfile,
+    deleteEventByAdminService
 
 };

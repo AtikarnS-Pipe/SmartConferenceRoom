@@ -1,15 +1,15 @@
 // swagger doc
 const setupSwagger = require('./swagger/swaggerUI');
 
-require('dotenv').config({ path: './config/.env'});
+require('dotenv').config({ path: './config/.env' });
 const syncAllRooms = require('./services/roomsync.services');
 // เชื่อมต่อกับ MongoDB
-const { connectToDatabase} = require("./database/mongodb");
+const { connectToDatabase } = require("./database/mongodb");
 const { monitorToken } = require('./utils/tokenCache');
 const { seedMqttRooms } = require('./models/MqttState');
 const express = require("express");
 const { initMqtt } = require('./services/mqtt/SendMQTT');
-const { initLogger } = require('./services/mqtt/mqttlogger'); 
+const { initLogger } = require('./services/mqtt/mqttlogger');
 
 // Import routes
 const { DeviceState } = require('./models/Log_Device_Status');
@@ -27,9 +27,7 @@ app.use(cors({
 }));
 
 app.use(express.json()); // เเปลง http body เป็น json
-app.use(cookieParser()); 
-
-monitorToken(); // เริ่ม monitor token loop
+app.use(cookieParser());
 
 app.use("/api1/admin", Adminrouter);
 app.use("/api2/user", Userrouter);
@@ -43,7 +41,7 @@ app.get('/', (req, res) => {
 // Sync all rooms for mail sending every 10 s
 const sintervalId = setInterval(() => {
   syncAllRooms();
-}, 7000);
+}, 10000);
 
 async function startServer() {
   try {
@@ -52,23 +50,26 @@ async function startServer() {
     // 1. เชื่อมต่อ Database ก่อน
     await connectToDatabase();
     console.log('✅ Database connected');
-    
-    // 2. set ค่า default state ห้องที่มีจอ for mqtt state
-    await seedMqttRooms(); 
+
+    // 2.เริ่ม monitor token หลังจาก DB พร้อมแล้วเท่านั้น
+    monitorToken(); // เริ่ม monitor token loop
+
+    // 3. set ค่า default state ห้องที่มีจอ for mqtt state
+    await seedMqttRooms();
     console.log('✅ MQTT Rooms seeded');
-    
-    // 3. เริ่ม MQTT connection
+
+    // 4. เริ่ม MQTT connection
     if (process.env.OPEN_MQTT === "true") {
       await initMqtt(); // connect mqtt + door control (topic cmd)
       await initLogger(); // attach logger subscriber of mqtt (topic rssi)
       console.log('✅ MQTT initialized');
     }
-    
-    // 4. เริ่ม HTTP Server
+
+    // 5. เริ่ม HTTP Server
     app.listen(process.env.PORT, () => {
       console.log(`✅ Server running on port ${process.env.PORT}`);
     });
-    
+
   } catch (error) {
     console.error('❌ Server startup failed:', error);
     process.exit(1);

@@ -122,7 +122,7 @@ async function LogsFromDB(res) {
                       {
                         $dateToString: {
                           format: "%Y-%m-%d %H:%M:%S",
-                          date: "$endDateTime"
+                          date: "$endmeetingAt"
                         }
                       },
                       ")"

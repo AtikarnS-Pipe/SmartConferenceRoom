@@ -188,7 +188,7 @@ async function endMeetingService(endmeetingdata) {
     {
       $set: {
         isended: "true",
-        endmeetingAt: now,
+        endmeetingAt: newEndDate,
       },
     },
     { new: true }
