@@ -57,14 +57,14 @@ async function LogsFromDB(res) {
                 $project: {
                   _id: 1,
                   eventId: 1,
-                  status: { $literal: "User access room" },
+                  status: { $literal: "Access room" },
                   // ใช้ updatedAt เป็นเวลา access (เพราะ verify สำเร็จ → updatedAt เปลี่ยน)
                   timestamp: "$updatedAt",
                   role: { $literal: "User" },
-                  // detail: "User access room <room> (<start>-<end>)"
+                  // detail: "User accessed Room <room> (<start>-<end>)"
                   detail: {
                     $concat: [
-                      "User access room ",
+                      "User accessed Room ",
                       { $toString: "$room" },
                       " (",
                       {
@@ -106,10 +106,10 @@ async function LogsFromDB(res) {
                   // ใช้ endmeetingAt เป็นเวลา end
                   timestamp: "$endmeetingAt",
                   role: { $literal: "User" },
-                  // detail: "User end meeting room <room> (<start>-<end>)"
+                  // detail: "User ended meeting in Room <room> (<start>-<end>)"
                   detail: {
                     $concat: [
-                      "User end meeting room ",
+                      "User ended meeting in Room ",
                       { $toString: "$room" },
                       " (",
                       {
