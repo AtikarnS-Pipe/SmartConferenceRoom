@@ -415,7 +415,7 @@ function Log() {
                     </div>
                   </RefreshButton>
                   <div
-                    className={`rounded-lg pl-10 pr-10 py-2 text-white ${
+                    className={`rounded-lg pl-8 pr-8 py-2 text-white ${
                       darkMode ? "bg-gray-600" : "bg-black"
                     }`}
                   >
