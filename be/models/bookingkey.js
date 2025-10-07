@@ -13,6 +13,15 @@ const bookingKeySchema = new mongoose.Schema({
         default: "false",
         enum: ['false', 'true', 'not access'],
     },
+    isended:{
+        type: Boolean,
+        default: false
+    },
+    endmeetingAt: {
+        type: Date,
+        required: false,
+        default: null
+    },
     B_createdAt:{
         type: Date,
         default: Date.now,  

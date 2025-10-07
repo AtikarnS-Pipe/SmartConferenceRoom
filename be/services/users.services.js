@@ -3,6 +3,7 @@ const getGraphClient = require("../utils/graph");
 const tokenCache = require('../utils/tokenCache');
 const {getTodaydatetime} = require('../utils/getTodaydatetime');
 const { roomobject } = require('../utils/tokenCache');
+const Bookingkey = require('../models/bookingkey');
 
 async function getuserdatabyroom(res, RoomNumber) {
     try {
@@ -144,6 +145,58 @@ async function waitUntil(conditionFn, timeout = 15000, interval = 1000) {
     });
 }
 
+/**
+ * บริการจบการประชุม
+ * @param {Object} endmeetingdata - { eventId, startdatetime, isAllDay }
+ */
+async function endMeetingService(endmeetingdata) {
+  const AccessToken = tokenCache.getAccessToken();
+  if (!AccessToken) throw new Error("Access token not found");
+
+  const now = new Date();
+  const newEndDate = new Date(now);
+  let startDateTime;
+
+  // Handle All-day case
+  if (endmeetingdata.isAllDay) {
+    const date = new Date(endmeetingdata.startdatetime);
+    const utcMidnight = Date.UTC(
+      date.getUTCFullYear(),
+      date.getUTCMonth(),
+      date.getUTCDate()
+    );
+    const dt = new Date(utcMidnight + 1000); // บวก 1 วินาที
+    startDateTime = dt.toISOString();
+  } else {
+    startDateTime = new Date(endmeetingdata.startdatetime).toISOString();
+  }
+
+  // อัปเดต event ที่ Graph API
+  await getGraphClient(AccessToken)
+    .api(`/me/events/${endmeetingdata.eventId}`)
+    .update({
+      isAllDay: false,
+      start: { dateTime: startDateTime, timeZone: "UTC" },
+      end: { dateTime: newEndDate.toISOString(), timeZone: "UTC" },
+    });
+
+  console.log(`📤 Graph event updated for ${endmeetingdata.eventId}`);
+
+  // อัปเดตสถานะใน DB
+  const updated = await Bookingkey.findOneAndUpdate(
+    { eventId: endmeetingdata.eventId },
+    {
+      $set: {
+        isended: "true",
+        endmeetingAt: now,
+      },
+    },
+    { new: true }
+  );
+
+  return { dbUpdated: !!updated };
+}
+
 module.exports = {
-    getuserdatabyroom, GeteventId, createMSEvent, waitUntil
+    getuserdatabyroom, GeteventId, createMSEvent, waitUntil, endMeetingService
 };
