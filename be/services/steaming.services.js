@@ -43,7 +43,7 @@ async function LogsFromDB(res) {
             detail: "$Details",               // เปลี่ยนชื่อเป็น detail
             user_Id: "$user_Id",              // คงไว้ตามเดิม (ถ้ามี)
             source: { $literal: "Logsmonitoring" },
-            updatedAt: "$L_createdAt",        // ใช้สำหรับ sort รวม
+            updatedAt: "$updatedAt",        // ใช้สำหรับ sort รวม
           }
         },
   
@@ -64,7 +64,8 @@ async function LogsFromDB(res) {
                   // detail: "User accessed Room <room> (<start>-<end>)"
                   detail: {
                     $concat: [
-                      "User accessed Room ",
+                      { $ifNull: ["$organizerName", "User"] },
+                      " accessed Room ",
                       { $toString: "$room" },
                       " (",
                       {
@@ -109,7 +110,8 @@ async function LogsFromDB(res) {
                   // detail: "User ended meeting in Room <room> (<start>-<end>)"
                   detail: {
                     $concat: [
-                      "User ended meeting in Room ",
+                      { $ifNull: ["$organizerName", "User"] },
+                      " ended meeting in Room ",
                       { $toString: "$room" },
                       " (",
                       {

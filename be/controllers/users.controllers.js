@@ -266,6 +266,7 @@ const createsearchpin = async (req, res) => {
             room: pindata.room_number,
             eventId: pindata.eventId,
             organizerMail: pindata.organizerMail,
+            organizerName: pindata.organizerName,
             pin: pindata.pin,
             startDateTime: new Date(pindata.startDateTime + "Z"),
             endDateTime: new Date(pindata.endDateTime + "Z"),

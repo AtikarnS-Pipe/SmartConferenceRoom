@@ -103,6 +103,7 @@ async function syncAllRooms() {
                                     room: Number(roomData.room),
                                     eventId: event.id,
                                     organizerMail: event.organizer?.emailAddress?.address,
+                                    organizerName: event.organizer?.emailAddress?.name,
                                     pin: key,
                                     startDateTime: new Date(event.start?.dateTime + "Z"),
                                     endDateTime: new Date(event.end?.dateTime + "Z"),
@@ -118,6 +119,7 @@ async function syncAllRooms() {
                                     const mailcontent = getMailContent(
                                         RoomStr,
                                         key,
+                                        event.organizer?.emailAddress?.name,
                                         event.start?.dateTime,
                                         event.end?.dateTime
                                     );
@@ -150,6 +152,7 @@ async function syncAllRooms() {
                                     booking.startDateTime = newStart;
                                     booking.endDateTime   = newEnd;
                                     booking.organizerMail = event.organizer?.emailAddress?.address; // เผื่อเปลี่ยน organizer
+                                    booking.organizerName = event.organizer?.emailAddress?.name; 
                                     await booking.save();
                                 }
                             }

@@ -34,6 +34,6 @@ const logschema = new mongoose.Schema({
     //     type: mongoose.Schema.Types.ObjectId,
     //     ref: 'User',
     // },
-})
+}, { timestamps: { createdAt: false, updatedAt: true }  })
 
 module.exports = mongoose.model('Logs', logschema, 'LogsMonitoring');

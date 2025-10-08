@@ -1,5 +1,5 @@
 
-function getMailContent(RoomStr, key, startIso, endIso) {
+function getMailContent(RoomStr, key, OrganizerName, startIso, endIso) {
     // ----------------------------
     // Format Date & Time
     // ----------------------------
@@ -122,6 +122,12 @@ function getMailContent(RoomStr, key, startIso, endIso) {
                                                 <strong style="color: #4a5568; font-size: 14px; display: inline-block;">Room Number:</strong>
                                                 <span style="color: #4a5568; font-size: 14px; margin-left: 10px;">
                                                     ${roomDisplay}
+                                                </span>
+                                            </div>
+                                            <div style="display: block; padding: 5px 0;">
+                                                <strong style="color: #4a5568; font-size: 14px; display: inline-block;">Organizer:</strong>
+                                                <span style="color: #4a5568; font-size: 14px; margin-left: 10px;">
+                                                    ${OrganizerName}
                                                 </span>
                                             </div>
                                             <div style="display: block; padding: 5px 0;">

@@ -5,6 +5,7 @@ const bookingKeySchema = new mongoose.Schema({
     room: {type: Number, ref: "MqttState"},
     eventId: String,
     organizerMail: String,
+    organizerName: String,
     pin: String,
     startDateTime: Date,
     endDateTime: Date,
