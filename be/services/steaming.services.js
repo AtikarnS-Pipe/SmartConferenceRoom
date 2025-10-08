@@ -86,7 +86,7 @@ async function LogsFromDB(res) {
                   },
                   user_Id: null, // ตามที่ซีนต้องการ “ว่างไว้”
                   source: { $literal: "Bookingkey" },
-                  updatedAt: "$updatedAt" // ให้ sort ได้
+                  updatedAt: { $ifNull: ["$updatedAt", "$B_createdAt"] }
                 }
               }
             ]
