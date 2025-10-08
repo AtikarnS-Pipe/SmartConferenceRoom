@@ -9,7 +9,11 @@ async function connectToDatabase(){
   try {
     await mongoose.connect(process.env.DB_URI);
 
-    console.log(`Connected to database in dev mode`);
+    if(process.env.DEBUG_MODE){
+      console.log(`Connected to database in dev mode`);
+    } else {
+      console.log(`Connected to database in production mode`);
+    }
   } catch (error) {
     console.error('Error connecting to database: ', error);
 
