@@ -121,7 +121,7 @@ function Log() {
     const role = log.role || "";
     const level = log.level || log.status || "";
     const id = log._id ? log._id.toString() : ""; // แปลง ObjectId เป็น string
-    const timestamp = formatTimestamp(log.timestamp || log.L_createdAt); // เพิ่ม timestamp สำหรับ search
+    const timestamp = formatTimestamp(log.timestamp || log.updatedAt); // เพิ่ม timestamp สำหรับ search
 
     const matchesSearch =
       message.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -139,8 +139,8 @@ function Log() {
   // Sort filteredLogs by timestamp (latest first) before paginating
   const sortedFilteredLogs = [...filteredLogs].sort(
     (a, b) =>
-      new Date(b.timestamp || b.L_createdAt) -
-      new Date(a.timestamp || a.L_createdAt)
+      new Date(b.timestamp || b.updatedAt) -
+      new Date(a.timestamp || a.updatedAt)
   );
 
   const totalPages = Math.ceil(sortedFilteredLogs.length / ITEMS_PER_PAGE);
@@ -507,7 +507,7 @@ function Log() {
                             darkMode ? "text-gray-400" : "text-gray-600"
                           }`}
                         >
-                          {formatTimestamp(log.timestamp || log.L_createdAt)}
+                          {formatTimestamp(log.timestamp || log.updatedAt)}
                         </td>
                         <td
                           className={`px-6 py-4 text-sm capitalize ${
