@@ -181,10 +181,10 @@ function Log() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  useEffect(() => {
-    if (profile) {
-    }
-  }, [profile]);
+  // useEffect(() => {
+  //   if (profile) {
+  //   }
+  // }, [profile]);
 
   // Loading Screen Component
   if (loading) {
