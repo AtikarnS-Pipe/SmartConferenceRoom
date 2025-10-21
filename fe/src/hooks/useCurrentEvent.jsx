@@ -42,7 +42,7 @@ export function useCurrentEvent(events) {
       //   end: e.end.dateTime
       // })));
       // console.log('Upcoming events count:', upcomingEvents.length);
-      console.log("Next event:", nextEvent);
+      // console.log("Next event:", nextEvent);
 
       // ตรวจสอบว่า next event อยู่ในช่วง Early Access (15 นาทีก่อน) หรือไม่
       let canEarlyAccessResult = false;
@@ -56,7 +56,7 @@ export function useCurrentEvent(events) {
           canEarlyAccessResult = true; 
         }
         
-        console.log("Can early access:", canEarlyAccessResult);
+        // console.log("Can early access:", canEarlyAccessResult);
       }
 
       setCurrentEvent(ongoing || null);

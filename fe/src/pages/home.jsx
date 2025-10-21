@@ -29,7 +29,7 @@ function Home() {
   const [closeUserPin, setCloseUserPin] = useState(false);
   const [bookingInProgress, setBookingInProgress] = useState(false);
   const [earlyAccessVerifiedEvent, setEarlyAccessVerifiedEvent] =
-    useState(null);
+  useState(null);
 
   const handleCloseUserPin = () => {
     setCloseUserPin(true);
