@@ -200,10 +200,22 @@ export default function TimeSchedule({
     setTimePosition(percent);
   }, [currentTime]);
 
-  function getTimePercent(timeStr) {
+  function getTimePercent(timeStr, isEndTime = false, startTimeStr = null) {
     if (!timeStr || !/^\d{2}:\d{2}$/.test(timeStr)) return 0;
     const [hours, minutes] = timeStr.split(":").map(Number);
-    const totalMinutes = hours * 60 + minutes;
+    let totalMinutes = hours * 60 + minutes;
+    
+    // ถ้าเป็น endTime และมี startTime ให้เช็คว่าข้ามวันหรือไม่
+    if (isEndTime && startTimeStr) {
+      const [startHours, startMinutes] = startTimeStr.split(":").map(Number);
+      const startTotalMinutes = startHours * 60 + startMinutes;
+      
+      // ถ้า endTime น้อยกว่า startTime = ข้ามวัน (เช่น 09:00 - 00:00)
+      if (totalMinutes <= startTotalMinutes) {
+        totalMinutes += 24 * 60; // เพิ่ม 24 ชั่วโมง
+      }
+    }
+    
     const startMinutes = 0; // Start at 00:00
     const endMinutes = 24 * 60; // End at 24:00
     return (totalMinutes / (endMinutes - startMinutes)) * 100;
@@ -487,10 +499,16 @@ export default function TimeSchedule({
                 const start24 = to24HHMM_UTCplus7(event?.start?.dateTime);
                 const end24 = to24HHMM_UTCplus7(event?.end?.dateTime);
                 const startPercent = getTimePercent(start24);
-                const endPercent = getTimePercent(end24);
+                const endPercent = getTimePercent(end24, true, start24); // ส่ง flag และ startTime เพื่อเช็คการข้ามวัน
                 const startAMPM = toAMPM_UTCplus7(event?.start?.dateTime);
                 const endAMPM = toAMPM_UTCplus7(event?.end?.dateTime);
-                const widthPercent = endPercent - startPercent;
+                let widthPercent = endPercent - startPercent;
+                
+                // ถ้า event ข้ามวัน ให้แสดงจนถึงขอบขวาของ timeline (100%)
+                if (widthPercent > 100) {
+                  widthPercent = 100 - startPercent; // แสดงจากจุดเริ่มต้นถึงขอบขวา
+                }
+                
                 const color = "#2E5074";
                 return (
                   <div

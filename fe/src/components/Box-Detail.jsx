@@ -1,119 +1,154 @@
-import { User, Clock, NotepadText, Check, X, Key } from "lucide-react";
-import { useIsFullDayEvent } from "../hooks/useIsFullDayEvent.jsx";
-import BookingModal from "./BookingModal";
-import PinPopup from "./PinPopup";
-import { useEffect, useState } from "react";
-import axios from "axios";
-import { useRoomData } from "../hooks/useRoomData";
-import { useCurrentEvent } from "../hooks/useCurrentEvent";
+import { User, Clock, NotepadText, Check, X, Key} from 'lucide-react';
+import { useIsFullDayEvent } from '../hooks/useIsFullDayEvent.jsx';
+import BookingModal from './BookingModal';
+import PinPopup from './PinPopup';
+import { useEffect, useState } from 'react';
+import axios from 'axios';
+import { useRoomData } from '../hooks/useRoomData';
+import { useCurrentEvent } from '../hooks/useCurrentEvent';
 
-export default function Boxdetail({
-  isOccupied,
-  event,
-  getTimeRemaining,
-  loading,
-  onSetBookingInProgress,
-  events,
-  onPinSuccess,
-}) {
+export default function Boxdetail({ isOccupied, event, getTimeRemaining, loading, onSetBookingInProgress, events}) {
   const isFullDayEvent = useIsFullDayEvent();
-  const { nextBooking, canEarlyAccess } = useCurrentEvent(events);
+  const { nextBooking } = useCurrentEvent(events);
   const [showModal, setShowModal] = useState(false);
   const [isEnding, setIsEnding] = useState(false);
   const [showEndConfirmModal, setShowEndConfirmModal] = useState(false);
   const [showResultModal, setShowResultModal] = useState(false);
-  const [resultMessage, setResultMessage] = useState("");
+  const [resultMessage, setResultMessage] = useState('');
   const [isSuccess, setIsSuccess] = useState(false);
   const [showEarlyAccessPin, setShowEarlyAccessPin] = useState(false);
-  const [pinError, setPinError] = useState("");
+  const [pinError, setPinError] = useState('');
   const [pinWaiting, setPinWaiting] = useState(false);
-  const [isEarlyAccessVerified, setIsEarlyAccessVerified] = useState(false);
-  const { floor, room } = useRoomData();
+  const { floor, room } = useRoomData(); 
   const roomId = `${floor}${room}`;
 
-  // ปิด EndConfirmModal อัตโนมัติใน 30 วิ
-  useEffect(() => {
-    if (!showEndConfirmModal) return;
-    const timeoutId = setTimeout(() => {
-      setShowEndConfirmModal(false);
-    }, 30000); // 30 วินาที
+// ปิด EndConfirmModal อัตโนมัติใน 30 วิ
+useEffect(() => {
+  if (!showEndConfirmModal) return;
+  const timeoutId = setTimeout(() => {
+    setShowEndConfirmModal(false);
+  }, 30000); // 30 วินาที
 
-    return () => clearTimeout(timeoutId);
-  }, [showEndConfirmModal]);
+  return () => clearTimeout(timeoutId);
+}, [showEndConfirmModal]);
 
-  // ปิด ResultModal อัตโนมัติใน 30 วิ
-  useEffect(() => {
-    if (!showResultModal) return;
-    const timeoutId = setTimeout(() => {
-      setShowResultModal(false);
-    }, 30000);
+// ปิด ResultModal อัตโนมัติใน 30 วิ
+useEffect(() => {
+if (!showResultModal) return;
+const timeoutId = setTimeout(() => {
+  setShowResultModal(false);
+}, 30000);
 
-    return () => clearTimeout(timeoutId);
-  }, [showResultModal]);
+return () => clearTimeout(timeoutId);
+}, [showResultModal]);
 
-  // Reset early access verification เมื่อมีการเปลี่ยนแปลง event
-  useEffect(() => {
-    setIsEarlyAccessVerified(false);
-  }, [nextBooking?.id]);
+  // ตรวจสอบว่าสามารถเข้าห้องก่อนเวลาได้หรือไม่
+  const canEarlyAccess = () => {
+
+    
+    if (!nextBooking) {
+      console.log('❌ No nextBooking found');
+      return false;
+    }
+    
+    const now = new Date();
+    const bookingStartTime = new Date(nextBooking.start.dateTime + 'Z');
+    const timeDiff = bookingStartTime.getTime() - now.getTime();
+    const minutesDiff = Math.floor(timeDiff / (1000 * 60));
+    
+    // สามารถเข้าได้ก่อนเวลา 15 นาที
+    if (minutesDiff > 15) {
+      console.log('❌ Too early (more than 15 minutes)');
+      return false;
+    }
+    if (minutesDiff < 0) {
+      console.log('❌ Too late (event already started)');
+      return false;
+    }
+    
+    // ตรวจสอบว่าไม่มีการจองติดกันก่อนหน้า
+    if (!events || events.length === 0) {
+      console.log('✅ No previous events, early access allowed');
+      return true;
+    }
+    
+    const previousBooking = events
+      .filter(e => new Date(e.end.dateTime + 'Z') <= bookingStartTime)
+      .sort((a, b) => new Date(b.end.dateTime + 'Z') - new Date(a.end.dateTime + 'Z'))[0];
+    
+    console.log('Previous booking:', previousBooking);
+    
+    if (previousBooking) {
+      const previousEndTime = new Date(previousBooking.end.dateTime + 'Z');
+      const gapMinutes = Math.floor((bookingStartTime.getTime() - previousEndTime.getTime()) / (1000 * 60));
+      
+      console.log('Previous end time:', previousEndTime.toISOString());
+      console.log('Gap between events (minutes):', gapMinutes);
+      
+      // ถ้ามี gap น้อยกว่า 15 นาที แสดงว่ามีการจองติดกัน
+      if (gapMinutes < 15) {
+        console.log('❌ Back-to-back booking (gap < 15 minutes)');
+        return false;
+      }
+    }
+    
+    console.log('✅ Early access allowed!');
+    return true;
+  };
 
   // ตรวจสอบว่ามีการจองถัดไปหรือไม่ (สำหรับแสดงปุ่ม)
   const hasUpcomingBooking = () => {
-    // แสดงปุ่มตลอด ไม่ขึ้นอยู่กับว่ามี nextBooking หรือไม่
-    return true;
+    console.log('=== hasUpcomingBooking Debug ===');
+    console.log('nextBooking:', nextBooking);
+    console.log('Has upcoming booking:', !!nextBooking);
+    return !!nextBooking;
   };
 
   // Handle Early Access PIN submission
   const handleEarlyAccessPin = async (pin) => {
     setPinWaiting(true);
-    setPinError("");
-
-    // console.log("Early Access Debug:");
-    // console.log("- Next booking from hook:", nextBooking);
-    // console.log("- Event ID:", nextBooking?.id);
-    // console.log("- Room ID:", roomId);
-
+    setPinError('');
+    
+    console.log('Early Access Debug:');
+    console.log('- Next booking from hook:', nextBooking);
+    console.log('- Event ID:', nextBooking?.id);
+    console.log('- Room ID:', roomId);
+    
     if (!nextBooking) {
-      setPinError("No upcoming booking found");
+      setPinError('No upcoming booking found');
       setPinWaiting(false);
       return;
     }
-
+    
     try {
       const requestBody = {
         eventId: nextBooking.id,
         pin: pin,
-        room_number: roomId,
+        room_number: roomId
       };
-      // console.log("Request body:", requestBody);
-
-      const response = await fetch("/api2/user/key", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      console.log('Request body:', requestBody);
+      
+      const response = await fetch('/api2/user/key', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(requestBody),
       });
-
+      
       const result = await response.json();
-      console.log("Response:", response.status, result);
-
+      console.log('Response:', response.status, result);
+      
       if (result.pinValid) {
-        setPinError("Correct password");
-        setIsEarlyAccessVerified(true); // ✅ ตั้งค่าว่า early access verify แล้ว
-
-        // ✅ แจ้ง PinPopupManager ว่า early access verify แล้ว
-        if (onPinSuccess) {
-          onPinSuccess(pin, nextBooking.id);
-        }
-
+        setPinError('Correct password');
         setTimeout(() => {
           setShowEarlyAccessPin(false);
-          setPinError("");
+          setPinError('');
         }, 2000);
       } else {
-        setPinError("Incorrect password");
+        setPinError(result.error || 'Incorrect password');
       }
     } catch (error) {
-      console.error("Early access error:", error);
-      setPinError("Network error");
+      console.error('Early access error:', error);
+      setPinError('PIN verification failed');
     } finally {
       setPinWaiting(false);
     }
@@ -125,31 +160,27 @@ export default function Boxdetail({
 
     try {
       const endmeetingdata = {
-        eventId: event.id,
-        startdatetime: event.start.dateTime + "Z",
+        eventId : event.id,
+        startdatetime: event.start.dateTime + 'Z',
         enddatetime: formatToUtcWith7Digits(now),
         room_number: roomId,
-        isAllDay: event.isAllDay,
+        isAllDay : event.isAllDay,
       };
-      console.log("Sending endmeeting data:", endmeetingdata);
+      console.log('Sending endmeeting data:', endmeetingdata);
 
-      const response = await axios.patch("/api2/user/endmeeting", {
-        endmeetingdata,
-      });
-
+      const response = await axios.patch('/api2/user/endmeeting', { endmeetingdata });
+      
       if (response.status === 200) {
         setIsSuccess(true);
-        setResultMessage("Meeting ended successfully!");
+        setResultMessage('Meeting ended successfully!');
         setShowEndConfirmModal(false);
         setShowResultModal(true);
       }
     } catch (error) {
-      console.error("Error ending meeting:", error);
+      console.error('Error ending meeting:', error);
       setIsSuccess(false);
       setResultMessage(`Failed to end meeting.`);
-      console.log(
-        `Failed to end meeting: ${error.response?.data?.error || error.message}`
-      );
+      console.log(`Failed to end meeting: ${error.response?.data?.error || error.message}`);
       setShowEndConfirmModal(false);
       setShowResultModal(true);
     } finally {
@@ -158,22 +189,17 @@ export default function Boxdetail({
   };
 
   function formatToUtcWith7Digits(date) {
-    const pad = (n, length = 2) => n.toString().padStart(length, "0");
-    return (
-      date.getUTCFullYear() +
-      "-" +
-      pad(date.getUTCMonth() + 1) +
-      "-" +
-      pad(date.getUTCDate()) +
-      "T" +
-      pad(date.getUTCHours()) +
-      ":" +
-      pad(date.getUTCMinutes()) +
-      ":" +
-      pad(date.getUTCSeconds()) +
-      ".0000000Z"
-    );
-  }
+  const pad = (n, length = 2) => n.toString().padStart(length, '0');
+  return (
+    date.getUTCFullYear() +
+    '-' + pad(date.getUTCMonth() + 1) +
+    '-' + pad(date.getUTCDate()) +
+    'T' + pad(date.getUTCHours()) +
+    ':' + pad(date.getUTCMinutes()) +
+    ':' + pad(date.getUTCSeconds()) +
+    '.0000000Z'
+  );
+}
 
   // Function เพื่อเปิด confirmation modal
   const handleEndButtonClick = () => {
@@ -182,286 +208,254 @@ export default function Boxdetail({
 
   // End Confirmation Modal Component ***************
   const EndConfirmModal = () => (
-    <div className="modal-overlay" style={{ zIndex: 3 }}>
-      <div
-        className="modal-container"
-        style={{
-          maxWidth: "400px",
-          borderRadius: "1rem",
-          backgroundColor: "white",
-          boxShadow:
-            "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
-        }}
-      >
-        <div
-          className="modal-header"
-          style={{ textAlign: "center", marginBottom: "0.5rem" }}
-        >
-          <div
-            style={{
-              width: "80px",
-              height: "80px",
-              borderRadius: "50%",
-              backgroundColor: "#fecaca",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              margin: "0 auto 1.5rem auto",
-            }}
-          >
-            <div
-              style={{
-                width: "60px",
-                height: "60px",
-                borderRadius: "50%",
-                backgroundColor: "#DC2626",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "white",
-                fontSize: "24px",
-                fontWeight: "bold",
-              }}
-            >
-              !
-            </div>
-          </div>
-
-          <h2
-            style={{
-              color: "#ffffffff",
-              fontSize: "2rem",
-              fontWeight: "bold",
-              margin: "0 0 0.5rem 0",
-            }}
-          >
-            End Meeting?
-          </h2>
-        </div>
-
-        <div className="modal-body" style={{ textAlign: "center" }}>
-          <p
-            style={{
-              marginBottom: "0.5rem",
-              color: "#6B7280",
-              fontSize: "1.125rem",
-              lineHeight: "1.5",
-            }}
-          >
-            Are you sure you want to end this meeting?
-          </p>
-          <p
-            style={{
-              marginBottom: "1.5rem",
-              color: "#9CA3AF",
-              fontSize: "1rem",
-            }}
-          >
-            This action cannot be undone.
-          </p>
-
-          <div
-            style={{
-              display: "flex",
-              gap: "1rem",
-              justifyContent: "center",
-              flexWrap: "wrap",
-            }}
-          >
-            <button
-              onClick={() => setShowEndConfirmModal(false)}
-              style={{
-                padding: "0.75rem 2rem",
-                backgroundColor: "#E5E7EB",
-                color: "#374151",
-                border: "none",
-                borderRadius: "0.5rem",
-                fontSize: "1.125rem",
-                fontWeight: "500",
-                fontFamily: "kanit",
-                cursor: "pointer",
-                minWidth: "120px",
-              }}
-              onMouseOver={(e) => {
-                e.target.style.backgroundColor = "#D1D5DB";
-                e.target.style.transform = "translateY(-1px)";
-              }}
-              onMouseOut={(e) => {
-                e.target.style.backgroundColor = "#E5E7EB";
-                e.target.style.transform = "translateY(0)";
-              }}
-            >
-              Keep Meeting
-            </button>
-            <button
-              onClick={handleEndMeeting}
-              disabled={isEnding}
-              style={{
-                padding: "0.75rem 2rem",
-                backgroundColor: isEnding ? "#FCA5A5" : "#EF4444",
-                color: "white",
-                border: "none",
-                borderRadius: "0.5rem",
-                fontSize: "1.125rem",
-                fontWeight: "500",
-                fontFamily: "kanit",
-                cursor: isEnding ? "not-allowed" : "pointer",
-                minWidth: "120px",
-                opacity: isEnding ? 0.6 : 1,
-              }}
-              onMouseOver={(e) => {
-                if (!isEnding) {
-                  e.target.style.backgroundColor = "#DC2626";
-                  e.target.style.transform = "translateY(-1px)";
-                }
-              }}
-              onMouseOut={(e) => {
-                if (!isEnding) {
-                  e.target.style.backgroundColor = "#EF4444";
-                  e.target.style.transform = "translateY(0)";
-                }
-              }}
-            >
-              {isEnding ? (
-                <span>
-                  Ending
-                  <span
-                    style={{
-                      display: "inline-block",
-                      animation: "dots 1.4s infinite",
-                      fontSize: "inherit",
-                    }}
-                  >
-                    ...
-                  </span>
-                </span>
-              ) : (
-                "Yes, End"
-              )}
-            </button>
+   <div className="modal-overlay" style={{ zIndex: 3 }}>
+    <div className="modal-container" style={{
+      maxWidth: '400px',
+      borderRadius: '1rem',
+      backgroundColor: 'white',
+      boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
+    }}>
+      <div className="modal-header" style={{ textAlign: 'center', marginBottom: '0.5rem' }}>
+        <div style={{
+          width: '80px',
+          height: '80px',
+          borderRadius: '50%',
+          backgroundColor: '#fecaca',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          margin: '0 auto 1.5rem auto',
+        }}>
+          <div style={{
+            width: '60px',
+            height: '60px',
+            borderRadius: '50%',
+            backgroundColor: '#DC2626',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'white',
+            fontSize: '24px',
+            fontWeight: 'bold'
+          }}>
+            !
           </div>
         </div>
 
-        <style jsx>{`
-          @keyframes dots {
-            0%,
-            20% {
-              color: transparent;
-              text-shadow: 0.25em 0 0 transparent, 0.5em 0 0 transparent;
-            }
-            40% {
-              color: currentColor;
-              text-shadow: 0.25em 0 0 transparent, 0.5em 0 0 transparent;
-            }
-            60% {
-              text-shadow: 0.25em 0 0 currentColor, 0.5em 0 0 transparent;
-            }
-            80%,
-            100% {
-              text-shadow: 0.25em 0 0 currentColor, 0.5em 0 0 currentColor;
-            }
-          }
-        `}</style>
+        <h2 style={{
+          color: '#ffffffff',
+          fontSize: '2rem',
+          fontWeight: 'bold',
+          margin: '0 0 0.5rem 0'
+        }}>
+          End Meeting?
+        </h2>
       </div>
+
+      <div className="modal-body" style={{ textAlign: 'center' }}>
+        <p style={{
+          marginBottom: '0.5rem',
+          color: '#6B7280',
+          fontSize: '1.125rem',
+          lineHeight: '1.5'
+        }}>
+          Are you sure you want to end this meeting?
+        </p>
+        <p style={{
+          marginBottom: '1.5rem',
+          color: '#9CA3AF',
+          fontSize: '1rem'
+        }}>
+          This action cannot be undone.
+        </p>
+
+        <div style={{
+          display: 'flex',
+          gap: '1rem',
+          justifyContent: 'center',
+          flexWrap: 'wrap'
+        }}>
+          <button
+            onClick={() => setShowEndConfirmModal(false)}
+            style={{
+              padding: '0.75rem 2rem',
+              backgroundColor: '#E5E7EB',
+              color: '#374151',
+              border: 'none',
+              borderRadius: '0.5rem',
+              fontSize: '1.125rem',
+              fontWeight: '500',
+              fontFamily: 'kanit',
+              cursor: 'pointer',
+              minWidth: '120px'
+            }}
+            onMouseOver={(e) => {
+              e.target.style.backgroundColor = '#D1D5DB';
+              e.target.style.transform = 'translateY(-1px)';
+            }}
+            onMouseOut={(e) => {
+              e.target.style.backgroundColor = '#E5E7EB';
+              e.target.style.transform = 'translateY(0)';
+            }}
+          >
+            Keep Meeting
+          </button>
+          <button
+            onClick={handleEndMeeting}
+            disabled={isEnding}
+            style={{
+              padding: '0.75rem 2rem',
+              backgroundColor: isEnding ? '#FCA5A5' : '#EF4444',
+              color: 'white',
+              border: 'none',
+              borderRadius: '0.5rem',
+              fontSize: '1.125rem',
+              fontWeight: '500',
+              fontFamily: 'kanit',
+              cursor: isEnding ? 'not-allowed' : 'pointer',
+              minWidth: '120px',
+              opacity: isEnding ? 0.6 : 1
+            }}
+            onMouseOver={(e) => {
+              if (!isEnding) {
+                e.target.style.backgroundColor = '#DC2626';
+                e.target.style.transform = 'translateY(-1px)';
+              }
+            }}
+            onMouseOut={(e) => {
+              if (!isEnding) {
+                e.target.style.backgroundColor = '#EF4444';
+                e.target.style.transform = 'translateY(0)';
+              }
+            }}
+          >
+            {isEnding ? (
+              <span>
+                Ending
+                <span
+                  style={{
+                    display: 'inline-block',
+                    animation: 'dots 1.4s infinite',
+                    fontSize: 'inherit'
+                  }}
+                >
+                  ...
+                </span>
+              </span>
+            ) : (
+              'Yes, End'
+            )}
+          </button>
+        </div>
+      </div>
+
+      <style jsx>{`
+        @keyframes dots {
+          0%, 20% {
+            color: transparent;
+            text-shadow: 
+              0.25em 0 0 transparent,
+              0.5em 0 0 transparent;
+          }
+          40% {
+            color: currentColor;
+            text-shadow: 
+              0.25em 0 0 transparent,
+              0.5em 0 0 transparent;
+          }
+          60% {
+            text-shadow: 
+              0.25em 0 0 currentColor,
+              0.5em 0 0 transparent;
+          }
+          80%, 100% {
+            text-shadow: 
+              0.25em 0 0 currentColor,
+              0.5em 0 0 currentColor;
+          }
+        }
+      `}</style>
     </div>
-  );
+  </div>
+);
 
   // Result Modal Component ***************
   const ResultModal = () => (
     <div className="modal-overlay" style={{ zIndex: 3 }}>
-      <div
-        className="modal-container"
-        style={{
-          maxWidth: "400px",
-          borderRadius: "1rem",
-          backgroundColor: "white",
-          boxShadow:
-            "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
-        }}
-      >
-        <div
-          className="modal-header"
-          style={{ textAlign: "center", marginBottom: "1rem" }}
-        >
-          <div
-            style={{
-              width: "80px",
-              height: "80px",
-              borderRadius: "50%",
-              backgroundColor: isSuccess ? "#dcfce7" : "#fecaca",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              margin: "0 auto 1.5rem auto",
-            }}
-          >
-            <div
-              style={{
-                width: "60px",
-                height: "60px",
-                borderRadius: "50%",
-                backgroundColor: isSuccess ? "#16a34a" : "#DC2626",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "white",
-                fontSize: "24px",
-                fontWeight: "bold",
-              }}
-            >
-              {isSuccess ? <Check /> : <X />}
+      <div className="modal-container" style={{
+        maxWidth: '400px',
+        borderRadius: '1rem',
+        backgroundColor: 'white',
+        boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
+      }}>
+        <div className="modal-header" style={{ textAlign: 'center', marginBottom: '1rem' }}>
+          <div style={{
+            width: '80px',
+            height: '80px',
+            borderRadius: '50%',
+            backgroundColor: isSuccess ? '#dcfce7' : '#fecaca',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            margin: '0 auto 1.5rem auto',
+          }}>
+            <div style={{
+              width: '60px',
+              height: '60px',
+              borderRadius: '50%',
+              backgroundColor: isSuccess ? '#16a34a' : '#DC2626',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'white',
+              fontSize: '24px',
+              fontWeight: 'bold'
+            }}>
+              {isSuccess ? <Check/> : <X />}
             </div>
           </div>
 
-          <h2
-            style={{
-              color: "#ffffffff",
-              fontSize: "2rem",
-              fontWeight: "bold",
-              margin: "0 0 0.5rem 0",
-            }}
-          >
-            {isSuccess ? "Success!" : "Error!"}
+          <h2 style={{
+            color: '#ffffffff',
+            fontSize: '2rem',
+            fontWeight: 'bold',
+            margin: '0 0 0.5rem 0'
+          }}>
+            {isSuccess ? 'Success!' : 'Error!'}
           </h2>
         </div>
 
-        <div className="modal-body" style={{ textAlign: "center" }}>
-          <p
-            style={{
-              marginBottom: "2rem",
-              color: "#6B7280",
-              fontSize: "1.25rem",
-              lineHeight: "1.5",
-            }}
-          >
+        <div className="modal-body" style={{ textAlign: 'center' }}>
+          <p style={{
+            marginBottom: '2rem',
+            color: '#6B7280',
+            fontSize: '1.25rem',
+            lineHeight: '1.5'
+          }}>
             {resultMessage}
           </p>
 
           <button
             onClick={() => setShowResultModal(false)}
             style={{
-              padding: "0.75rem 2rem",
-              backgroundColor: isSuccess ? "#16a34a" : "#EF4444",
-              color: "white",
-              border: "none",
-              borderRadius: "0.5rem",
-              fontSize: "1.125rem",
-              fontWeight: "500",
-              fontFamily: "kanit",
-              cursor: "pointer",
-              minWidth: "120px",
+              padding: '0.75rem 2rem',
+              backgroundColor: isSuccess ? '#16a34a' : '#EF4444',
+              color: 'white',
+              border: 'none',
+              borderRadius: '0.5rem',
+              fontSize: '1.125rem',
+              fontWeight: '500',
+              fontFamily: 'kanit',
+              cursor: 'pointer',
+              minWidth: '120px'
             }}
             onMouseOver={(e) => {
-              e.target.style.backgroundColor = isSuccess
-                ? "#15803d"
-                : "#DC2626";
-              e.target.style.transform = "translateY(-1px)";
+              e.target.style.backgroundColor = isSuccess ? '#15803d' : '#DC2626';
+              e.target.style.transform = 'translateY(-1px)';
             }}
             onMouseOut={(e) => {
-              e.target.style.backgroundColor = isSuccess
-                ? "#16a34a"
-                : "#EF4444";
-              e.target.style.transform = "translateY(0)";
+              e.target.style.backgroundColor = isSuccess ? '#16a34a' : '#EF4444';
+              e.target.style.transform = 'translateY(0)';
             }}
           >
             OK
@@ -490,15 +484,14 @@ export default function Boxdetail({
                 <span className="detail-label">
                   <NotepadText size={30} /> Subject :
                 </span>
-                <span className="detail-value">{event.subject}</span>
+                <span className="detail-value">
+                  {event.subject}
+                </span>
               </div>
             </div>
 
             {/* ✅ Organizer */}
-            <div
-              style={{ marginBottom: "10px" }}
-              className="detail-row flex-row-between"
-            >
+            <div style={{ marginBottom: "10px" }} className="detail-row flex-row-between">
               <div className="detail-row-left">
                 <span className="detail-label">
                   <User size={30} /> Organizer :
@@ -510,43 +503,37 @@ export default function Boxdetail({
             </div>
 
             {/* ✅ Time */}
-            <div
-              style={{ marginBottom: "10px" }}
-              className="detail-row flex-row-between"
-            >
+            <div style={{ marginBottom: "10px" }} className="detail-row flex-row-between">
               <div className="detail-row-left">
                 <span className="detail-label">
                   <Clock size={30} /> Time :
                 </span>
                 <span className="time-value">
                   {isFullDayEvent(event)
-                    ? "Full day"
-                    : `${new Date(
-                        event.start.dateTime + "Z"
-                      ).toLocaleTimeString("en-US", {
-                        timeZone: "Asia/Bangkok",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                        hour12: true,
-                      })} - ${new Date(
-                        event.end.dateTime + "Z"
-                      ).toLocaleTimeString("en-US", {
-                        timeZone: "Asia/Bangkok",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                        hour12: true,
-                      })}`}
+                    ? 'Full day'
+                    : `${new Date(event.start.dateTime + 'Z').toLocaleTimeString('en-US', {
+                        timeZone: 'Asia/Bangkok',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: true
+                      })} - ${new Date(event.end.dateTime + 'Z').toLocaleTimeString('en-US', {
+                        timeZone: 'Asia/Bangkok',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: true
+                      })}`
+                  }
                 </span>
               </div>
             </div>
           </div>
           <div className="box-detail-action-buttons">
-            <button
-              className="end-button"
+            <button 
+              className="end-button" 
               onClick={handleEndButtonClick}
               disabled={isEnding}
             >
-              {isEnding ? "Ending..." : "End"}
+              {isEnding ? 'Ending...' : 'End'}
             </button>
             <button
               className="book-next-button"
@@ -563,14 +550,7 @@ export default function Boxdetail({
         <div className="box-detail available">
           <div className="detail-content available">
             <div>( The room is currently available )</div>
-            <div
-              style={{
-                display: "flex",
-                gap: "1rem",
-                flexWrap: "wrap",
-                justifyContent: "center",
-              }}
-            >
+            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>
               <button
                 className="pin-button"
                 onClick={() => {
@@ -580,52 +560,48 @@ export default function Boxdetail({
               >
                 <span className="pin-text">Book Now</span>
               </button>
-
-              {/* แสดงปุ่ม Early Access ตลอดเวลา แต่ enable เฉพาะเมื่อถึงช่วง Early Access และยังไม่ได้ verify */}
-              <button
-                className="early-access-button"
-                onClick={() => {
-                  if (canEarlyAccess) {
-                    setShowEarlyAccessPin(true);
-                  }
-                }}
-                disabled={!canEarlyAccess || isEarlyAccessVerified}
-                style={{
-                  backgroundColor:
-                    canEarlyAccess && !isEarlyAccessVerified
-                      ? "#F59E0B"
-                      : "#9CA3AF",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "8px",
-                  padding: "1rem 1.5rem",
-                  fontSize: "1.1rem",
-                  fontWeight: "600",
-                  cursor:
-                    canEarlyAccess && !isEarlyAccessVerified
-                      ? "pointer"
-                      : "not-allowed",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "0.5rem",
-                  transition: "all 0.2s ease",
-                  opacity: canEarlyAccess && !isEarlyAccessVerified ? 1 : 0.6,
-                }}
-                onMouseOver={(e) => {
-                  if (canEarlyAccess && !isEarlyAccessVerified) {
-                    e.target.style.backgroundColor = "#D97706";
-                    e.target.style.transform = "translateY(-2px)";
-                  }
-                }}
-                onMouseOut={(e) => {
-                  if (canEarlyAccess && !isEarlyAccessVerified) {
-                    e.target.style.backgroundColor = "#F59E0B";
-                    e.target.style.transform = "translateY(0)";
-                  }
-                }}
-              >
-                Early Access
-              </button>
+              
+              {/* แสดงปุ่ม Early Access เสมอ แต่ disable ตามเงื่อนไข */}
+              {hasUpcomingBooking() && (
+                <button
+                  className="early-access-button"
+                  onClick={() => {
+                    if (canEarlyAccess()) {
+                      setShowEarlyAccessPin(true);
+                    }
+                  }}
+                  disabled={!canEarlyAccess()}
+                  style={{
+                    backgroundColor: canEarlyAccess() ? '#F59E0B' : '#9CA3AF',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '0.75rem',
+                    padding: '1rem 1.5rem',
+                    fontSize: '1.1rem',
+                    fontWeight: '600',
+                    cursor: canEarlyAccess() ? 'pointer' : 'not-allowed',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    transition: 'all 0.2s ease',
+                    opacity: canEarlyAccess() ? 1 : 0.6,
+                  }}
+                  onMouseOver={(e) => {
+                    if (canEarlyAccess()) {
+                      e.target.style.backgroundColor = '#D97706';
+                      e.target.style.transform = 'translateY(-2px)';
+                    }
+                  }}
+                  onMouseOut={(e) => {
+                    if (canEarlyAccess()) {
+                      e.target.style.backgroundColor = '#F59E0B';
+                      e.target.style.transform = 'translateY(0)';
+                    }
+                  }}
+                >
+                  Early Access
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -638,25 +614,40 @@ export default function Boxdetail({
             setShowModal(false);
             onSetBookingInProgress?.(false);
           }}
-          onSubmit={() => {}}
+          onSubmit={() => { }}
           event
         />
       )}
 
       {showEarlyAccessPin && (
-        <PinPopup
-          onSubmit={handleEarlyAccessPin}
-          error={pinError}
-          waiting={pinWaiting}
-          showIcon={true}
-          showCloseButton={true}
-          showOverlayClose={true}
-          onClose={() => {
-            setShowEarlyAccessPin(false);
-            setPinError("");
-          }}
-          disableCountdown={false}
-        />
+        <>
+          {/* Overlay สำหรับกดปิด popup */}
+          <div
+            style={{
+              position: 'fixed',
+              inset: 0,
+              backgroundColor: 'rgba(0,0,0,0.5)',
+              zIndex: 9998,
+            }}
+            onClick={() => {
+              setShowEarlyAccessPin(false);
+              setPinError('');
+            }}
+          />
+          
+          <PinPopup
+            onSubmit={handleEarlyAccessPin}
+            error={pinError}
+            waiting={pinWaiting}
+            title="Early Access PIN"
+            showIcon={true}
+            onClose={() => {
+              setShowEarlyAccessPin(false);
+              setPinError('');
+            }}
+            disableCountdown={false}
+          />
+        </>
       )}
 
       {showEndConfirmModal && <EndConfirmModal />}
