@@ -209,10 +209,10 @@ const deleteeventbyadmin = async (req, res) => {
         }
 
         const isLogSuccess = await AddLogmonitoring({
-            user_Id: result.eventRecord.user_Id,
+            user_Id: result.eventRecord.user_Id || 'N/A',
             L_status: 'Admin has deleted the room.',
-            role: admin.role,
-            Details: `Admin name: ${admin.name}, Room number: ${room_number}`,
+            role: admin.role || 'Admin',
+            Details: `Admin name: ${admin.name || admin.email || 'Admin'}, Room number: ${room_number}`,
             L_createdAt: new Date(), //await GetTimeAPI('Asia/Bangkok'),
         })
 
