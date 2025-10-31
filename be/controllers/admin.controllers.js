@@ -93,7 +93,7 @@ const getAllusers = async (req, res) => {
 
             if (userProfile.mail !== 'meetingroom@tcc-technology.com') {
                 console.error(`💥 Unauthorized email with cached token: ${userProfile.mail}`);
-                console.log("📤 Sending forceLogout event to frontend");
+                console.log("�� Sending forceLogout event to frontend");
                 res.write(`event: forceLogout\ndata: ${JSON.stringify({
                     error: `Unauthorized email: ${userProfile.mail}`
                 })}\n\n`);
