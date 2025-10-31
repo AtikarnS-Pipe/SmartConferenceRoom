@@ -2,7 +2,7 @@ require('dotenv').config({ path: './config/.env' });
 const { getTokenByCode } = require("../utils/AuthProvider");
 const tokenCache = require('../utils/tokenCache')
 const { encryptToken } = require('../utils/encode')
-const AddLogmonitoring = require('../utils/AddLogmonitoring');
+const { AddLogmonitoring } = require('../utils/AddLogmonitoring');
 const {
     addCacheandDB,
     sendscheduledata,
@@ -208,16 +208,21 @@ const deleteeventbyadmin = async (req, res) => {
             return res.status(result.status).json({ error: result.message });
         }
 
-        const isLogSuccess = await AddLogmonitoring({
-            user_Id: result.eventRecord.user_Id,
-            L_status: 'Admin has deleted the room.',
-            role: admin.role,
-            Details: `Admin name: ${admin.name}, Room number: ${room_number}`,
-            L_createdAt: new Date(), //await GetTimeAPI('Asia/Bangkok'),
-        })
+        // บันทึก log โดยไม่ให้ error จาก log ทำให้ request fail
+        try {
+            const logResult = await AddLogmonitoring({
+                user_Id: result.eventRecord.user_Id || 'N/A',
+                L_status: 'Admin has deleted the room.',
+                role: admin.role || 'Admin',
+                Details: `Admin name: ${admin.name || admin.email || 'Admin'}, Room number: ${room_number}`,
+                L_createdAt: new Date(), //await GetTimeAPI('Asia/Bangkok'),
+            });
 
-        if (!isLogSuccess) {
-            console.error("Failed to log admin delete action");
+            if (!logResult.success) {
+                console.error("Failed to log admin delete action:", logResult.error);
+            }
+        } catch (logError) {
+            console.error("Error logging admin delete action:", logError);
         }
 
         return res.status(200).json({ message: result.message });
